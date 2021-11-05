@@ -1,0 +1,46 @@
+{
+  "name": "fuel-system",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "MIT",
+  "engines": {
+    "npm": "please-use-yarn"
+  },
+  "scripts": {
+    "dev": "ts-node ./src/index.ts",
+    "lint": "eslint src/**/*.ts",
+    "format": "eslint src/**/*.ts --fix"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.13",
+    "@types/express-request-id": "^1.4.3",
+    "@types/node": "^16.11.6",
+    "@typescript-eslint/eslint-plugin": "^5.3.0",
+    "@typescript-eslint/parser": "^5.3.0",
+    "eslint": "^8.1.0",
+    "prettier": "^2.4.1",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.4.4"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "envalid": "^7.2.2",
+    "express": "^4.17.1",
+    "express-request-id": "^1.4.1",
+    "helmet": "^4.6.0",
+    "husky": "^7.0.4",
+    "module-alias": "^2.2.2",
+    "pino": "^7.1.0"
+  },
+  "_moduleAliases": {
+    "@modules": "dist/rest/modules",
+    "@lib": "dist/lib"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn lint"
+    }
+  }
+}
