@@ -7,7 +7,9 @@
     "npm": "please-use-yarn"
   },
   "scripts": {
-    "dev": "ts-node ./src/index.ts",
+    "predev": "yarn run build",
+    "dev": "NODE_ENV=dev ts-node ./src/index.ts --project ./tsconfig.json",
+    "build": "tsc",
     "lint": "eslint src/**/*.ts",
     "format": "eslint src/**/*.ts --fix"
   },
@@ -24,6 +26,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
+    "@wesleytodd/openapi": "^0.1.0",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "envalid": "^7.2.2",
@@ -35,8 +38,8 @@
     "pino": "^7.1.0"
   },
   "_moduleAliases": {
-    "@modules": "dist/rest/modules",
-    "@lib": "dist/lib"
+    "@lib": "dist/lib",
+    "@openApi": "dist/openApi"
   },
   "husky": {
     "hooks": {
