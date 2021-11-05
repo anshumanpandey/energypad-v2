@@ -1,6 +1,6 @@
 import { OpenApiDefinition } from "../OpenApiDefinition";
 
-OpenApiDefinition.schema('User', {
+OpenApiDefinition.component("schemas",'User', {
   "type": "object",
   "required": [
     "name"
