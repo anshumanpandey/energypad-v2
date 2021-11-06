@@ -14,7 +14,7 @@ userRoutes.post(
     /**
      * Route handler logic to run when `request.body` has been validated.
      */
-    response.send({ success: true });
+    response.send({ success: '', aextra: 1 });
   },
 );
 

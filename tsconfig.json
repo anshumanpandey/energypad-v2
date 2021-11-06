@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es5",
     "module": "commonjs",
+    "rootDir": "./src",
     "paths": {
       "@lib": [
         "./src/lib"
@@ -20,6 +21,10 @@
     "forceConsistentCasingInFileNames": true,
 
     "strict": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "inlineSourceMap": true,
+  },
+  "exclude": [
+    "test/**/*.ts"
+  ]
 }

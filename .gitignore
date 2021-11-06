@@ -1,6 +1,7 @@
 node_modules/
 **/*.log
-.vscode
+.vscode/settings.json
 dist/*
 src/types/Generated.ts
 src/types/Schema.json
+.env

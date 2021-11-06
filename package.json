@@ -7,11 +7,11 @@
     "npm": "please-use-yarn"
   },
   "scripts": {
-    "predev": "yarn run generate:types && yarn run build",
+    "predev": "npm run generate:types && npm run generate:schema && npm run build",
     "dev": "NODE_ENV=dev ts-node ./src/index.ts --project ./tsconfig.json",
     "build": "tsc --project ./tsconfig.json",
-    "generate:types": "yarn build && tsc --project ./types-tsconfig.json && npx ts-node ./src/scripts/GenerateTypes.ts",
-    "generate:schema": "yarn build && tsc --project ./types-tsconfig.json && npx ts-node ./src/scripts/GenerateSchema.ts",
+    "generate:types": "ts-node ./src/scripts/GenerateTypes.ts",
+    "generate:schema": "ts-node ./src/scripts/GenerateSchema.ts",
     "lint": "eslint src/**/*.ts",
     "format": "eslint src/**/*.ts --fix",
     "test": "jest"
