@@ -1,7 +1,8 @@
 import express from "express";
+import { ValidationError } from "express-json-validator-middleware";
 import { ApiError, AppLogger } from "@lib";
 
-const ErrorMiddleware = (err: express.Errback, req: express.Request, res: express.Response) => {
+const ErrorMiddleware = (err: express.Errback, req: express.Request, res: express.Response, _: express.NextFunction) => {
   let errResponse = {
     statusCode: 500,
     message: 'Unknown Error',
@@ -12,6 +13,18 @@ const ErrorMiddleware = (err: express.Errback, req: express.Request, res: expres
       statusCode: err.code,
       message: err.message,
     }
+  } else if (err instanceof ValidationError) {
+    let message = 'Invalid Body'
+    if (err.validationErrors.body) {
+      const error = err.validationErrors.body.pop()?.message
+      if (error) {
+        message = error;
+      }
+    }
+    errResponse = {
+      statusCode: 400,
+      message
+    }
   } else if (err.name === 'UnauthorizedError') {
     errResponse = {
       statusCode: 401,
@@ -21,7 +34,8 @@ const ErrorMiddleware = (err: express.Errback, req: express.Request, res: expres
     AppLogger.fatal({ err, 'id-req': req.id });
   }
 
-  res.status(500).json(errResponse);
+
+  res.status(errResponse.statusCode).json(errResponse);
 }
 
 export default ErrorMiddleware;
