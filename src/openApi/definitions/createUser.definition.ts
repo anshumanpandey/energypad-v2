@@ -16,6 +16,7 @@ OpenApiDefinition.component('responses', 'CreateUser', {
     'application/json': {
       schema: {
         type: 'object',
+        additionalProperties: false,
         required: ['success'],
         properties: {
           success: {

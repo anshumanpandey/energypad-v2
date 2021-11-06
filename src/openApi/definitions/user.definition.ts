@@ -2,6 +2,7 @@ import { OpenApiDefinition } from '../OpenApiDefinition';
 
 OpenApiDefinition.component('schemas', 'User', {
   type: 'object',
+  additionalProperties: false,
   required: ['name'],
   properties: {
     name: {
