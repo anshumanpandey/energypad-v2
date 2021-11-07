@@ -11,7 +11,7 @@
     "dev": "NODE_ENV=dev ts-node ./src/index.ts --project ./tsconfig.json",
     "build": "tsc --project ./tsconfig.json",
     "generate:types": "ts-node ./src/scripts/GenerateTypes.ts",
-    "generate:schema": "ts-node ./src/scripts/GenerateSchema.ts",
+    "generate:schema": "tsc --project ./types-tsconfig.json && ts-node --project ./types-tsconfig.json ./src/scripts/GenerateSchema.ts",
     "lint": "eslint src/**/*.ts",
     "format": "eslint src/**/*.ts --fix",
     "test": "jest --runInBand"

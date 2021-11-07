@@ -13,9 +13,7 @@ app.use(cors());
 app.use(addRequestId());
 app.use(OpenApiDefinition);
 app.use(express.json());
-app.use("/api", v1);
+app.use('/api', v1);
 app.use(ErrorMiddleware);
 
-export {
-  app
-}
+export { app };

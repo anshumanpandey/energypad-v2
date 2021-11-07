@@ -2,11 +2,13 @@ import express from 'express';
 import { AllowedSchema } from 'express-json-validator-middleware';
 import { RequestValidatorMiddleware } from '@middleware';
 import schema from '../../types/Schema.json';
+import { CreateUserPath } from '@openApi';
 
-const userRoutes = express();
+const userRoutes = express.Router();
 
 userRoutes.post(
   '/address',
+  CreateUserPath,
   RequestValidatorMiddleware({
     body: schema.components.requestBodies.CreateUser.content['application/json'].schema as AllowedSchema,
   }),

@@ -4,11 +4,32 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "./dist/openApi"
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "paths": {
+      "@lib": [
+        "./src/lib"
+      ],
+      "@middleware": ["./src/middleware"],
+      "@routes/v1": [
+        "./src/routes/v1"
+      ],
+      "@openApi": [
+        "./src/openApi"
+      ]
+    }
   },
   "include": [
-    "./src/openApi/**/*"
+    "./src/openApi/**/*",
+    "./src/routes/**/*",
+    "./src/types/**/*",
+    "./src/middlewares/**/*"
+  ],
+  "exclude": [
+    "test/**/*.ts",
+    "src/scripts/**/*.ts"
   ]
 }

@@ -4,13 +4,14 @@ import { Resolver } from '@stoplight/json-ref-resolver';
 import { writeFile } from 'fs';
 import { get } from 'http';
 import express from 'express';
+import v1 from '@routes/v1';
 import OpenApiDefinition from '@openApi';
 
 const PORT_NUMBER = 5454;
 const resolver = new Resolver();
 const app = express();
-
 app.use(OpenApiDefinition);
+app.use('/api', v1);
 
 const makeRequest = () => {
   return new Promise<Record<string, string>>((resolved, rejected) => {
