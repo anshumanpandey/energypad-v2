@@ -1,16 +1,15 @@
-import { OpenApiDefinition } from '../OpenApiDefinition';
+import { createSchema, CreateSchemaParams } from '../OpenApiDefinition';
 
-OpenApiDefinition.component('schemas', 'User', {
-  type: 'object',
-  additionalProperties: false,
-  required: ['name'],
-  properties: {
-    name: {
-      type: 'string',
+const schema: CreateSchemaParams = {
+  name: 'User',
+  schema: {
+    required: ['name'],
+    properties: {
+      name: {
+        type: 'string',
+      },
     },
   },
-});
+};
 
-const UserSchema = OpenApiDefinition.component('schemas', 'User');
-
-export default UserSchema;
+createSchema(schema);

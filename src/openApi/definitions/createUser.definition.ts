@@ -1,11 +1,10 @@
-import { OpenApiDefinition } from '../OpenApiDefinition';
-import UserSchema from './user.definition';
+import { OpenApiDefinition, getSchemaComponentFor } from '../OpenApiDefinition';
 
 OpenApiDefinition.component('requestBodies', 'CreateUser', {
   description: 'User to add to the system',
   content: {
     'application/json': {
-      schema: UserSchema,
+      schema: getSchemaComponentFor({ for: 'schemas', name: 'User' }),
     },
   },
 });

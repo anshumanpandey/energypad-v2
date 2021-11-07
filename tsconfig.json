@@ -22,9 +22,10 @@
 
     "strict": true,
     "skipLibCheck": true,
-    "inlineSourceMap": true,
+    "inlineSourceMap": true
   },
   "exclude": [
-    "test/**/*.ts"
+    "test/**/*.ts",
+    "src/scripts/**/*.ts"
   ]
 }

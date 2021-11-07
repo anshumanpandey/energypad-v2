@@ -15,7 +15,7 @@ app.use(OpenApiDefinition);
 const makeRequest = () => {
   return new Promise<Record<string, string>>((resolved, rejected) => {
     get(`http://localhost:${PORT_NUMBER}/openapi.json`, (res) => {
-      const data: any = [];
+      const data: Uint8Array[] = [];
 
       res.on('data', (chunk) => {
         data.push(chunk);

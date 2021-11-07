@@ -14,7 +14,7 @@
     "generate:schema": "ts-node ./src/scripts/GenerateSchema.ts",
     "lint": "eslint src/**/*.ts",
     "format": "eslint src/**/*.ts --fix",
-    "test": "jest"
+    "test": "jest --runInBand"
   },
   "devDependencies": {
     "@openapi-contrib/openapi-schema-to-json-schema": "^3.1.1",
