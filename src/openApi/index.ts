@@ -1,7 +1,7 @@
 import './definitions/user.definition';
 
-import { OpenApiDefinition } from './OpenApiDefinition';
 import { CreateUserPath } from './definitions/createUser.definition';
+import { OpenApiDefinition } from './OpenApiDefinition';
 
 export default OpenApiDefinition;
 export { CreateUserPath };

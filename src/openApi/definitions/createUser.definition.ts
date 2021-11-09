@@ -1,22 +1,23 @@
+import { OpenAPIV3 } from 'openapi-types';
 import { OpenApiDefinition, getSchemaComponentFor } from '../OpenApiDefinition';
 
-export const CreateUserPath = OpenApiDefinition.path({
+export const CreateUserOperation: OpenAPIV3.OperationObject = {
+  description: 'Returns all pets from the system that the user has access to',
   responses: {
-    200: {
-      description: 'Successful response',
+    '200': {
+      description: 'A list of pets.',
       content: {
         'application/json': {
           schema: {
-            type: 'object',
-            properties: {
-              hello: { type: 'string' },
-            },
+            $ref: '#/components/responses/CreateUser',
           },
         },
       },
     },
   },
-});
+};
+
+export const CreateUserPath = OpenApiDefinition.path(CreateUserOperation);
 
 OpenApiDefinition.component('requestBodies', 'CreateUser', {
   description: 'User to add to the system',
