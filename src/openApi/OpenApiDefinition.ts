@@ -12,7 +12,7 @@ const OpenApi: Pick<OpenAPIV3.Document, 'openapi' | 'info' | 'servers'> = {
 };
 export const OpenApiDefinition = openapi(OpenApi);
 
-type SchemaNames = 'User' | 'CreateUser';
+type SchemaNames = 'User' | 'CreateUser' | 'SuccessMessage' | 'GenericError';
 
 export type CreateSchemaParams = {
   name: SchemaNames;
@@ -27,9 +27,17 @@ export const createSchema = (p: CreateSchemaParams) => {
 };
 
 type GetSchemaComponentForParams = {
-  name: SchemaNames;
+  name: string;
   for: 'schemas' | 'responses' | 'requestBodies';
 };
 export const getSchemaComponentFor = (p: GetSchemaComponentForParams) => {
   return OpenApiDefinition.component(p.for, p.name);
+};
+
+export const addRequestComponentFor = (name: string, p: OpenAPIV3.RequestBodyObject) => {
+  return OpenApiDefinition.component('requestBodies', name, p);
+};
+
+export const addResponseComponentFor = (name: string, p: OpenAPIV3.ResponseObject) => {
+  return OpenApiDefinition.component('responses', name, p);
 };

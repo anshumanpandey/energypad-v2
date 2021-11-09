@@ -15,7 +15,9 @@
       "@routes/v1": ["./src/routes/v1"],
       "@openApi": ["./src/openApi"],
       "@types": ["./src/types"],
-      "@controllers": ["./src/controllers"]
+      "@controllers": ["./src/controllers"],
+      "@services": ["./src/services"],
+      "@utils": ["./src/utils"]
     }
   },
   "include": ["./src/openApi/**/*", "./src/routes/**/*", "./src/types/**/*", "./src/middlewares/**/*"],

@@ -9,6 +9,7 @@ const GlobalEnv = cleanEnv(process.env, {
   DB_PASSWORD: str({ devDefault: '' }),
   DB_USERNAME: str({ devDefault: '' }),
   PORT: num({ devDefault: 5000 }),
+  NODE_ENV: str({ choices: ['development', 'test', 'production', 'staging'] }),
 });
 
 export default GlobalEnv;

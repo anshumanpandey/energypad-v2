@@ -19,6 +19,12 @@
       ],
       "@controllers": [
         "./src/controllers"
+      ],
+      "@services": [
+        "./src/services"
+      ],
+      "@utils": [
+        "./src/utils"
       ]
     },
     "resolveJsonModule": true,
@@ -32,6 +38,7 @@
   },
   "exclude": [
     "test/**/*.ts",
+    "migrations/**/*.ts",
     "src/scripts/**/*.ts"
   ]
 }

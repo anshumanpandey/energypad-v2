@@ -5,3 +5,4 @@ dist/*
 src/types/Generated.ts
 src/types/Schema.json
 .env
+**/*.sqlite*

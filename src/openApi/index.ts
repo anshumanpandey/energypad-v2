@@ -1,7 +1,9 @@
+import './definitions/genericError.definition';
 import './definitions/user.definition';
+import './definitions/success.definition';
 
-import { CreateUserPath } from './definitions/createUser.definition';
+import { RegisterPath } from './definitions/auth.register.definition';
 import { OpenApiDefinition } from './OpenApiDefinition';
 
 export default OpenApiDefinition;
-export { CreateUserPath };
+export { RegisterPath };
