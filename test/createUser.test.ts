@@ -8,6 +8,7 @@ describe('GET / ', () => {
   test('It should respond with success message', async () => {
     const response = await supertest(app).post('/api/user/address').send({
       name: 'New Student',
+      age: 18,
     });
     expect(response.body).toMatchSchema(schema.components.responses.CreateUser.content['application/json'].schema);
     expect(response.statusCode).toBe(200);

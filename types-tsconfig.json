@@ -10,26 +10,14 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "paths": {
-      "@lib": [
-        "./src/lib"
-      ],
+      "@lib": ["./src/lib"],
       "@middleware": ["./src/middleware"],
-      "@routes/v1": [
-        "./src/routes/v1"
-      ],
-      "@openApi": [
-        "./src/openApi"
-      ]
+      "@routes/v1": ["./src/routes/v1"],
+      "@openApi": ["./src/openApi"],
+      "@types": ["./src/types"],
+      "@controllers": ["./src/controllers"]
     }
   },
-  "include": [
-    "./src/openApi/**/*",
-    "./src/routes/**/*",
-    "./src/types/**/*",
-    "./src/middlewares/**/*"
-  ],
-  "exclude": [
-    "test/**/*.ts",
-    "src/scripts/**/*.ts"
-  ]
+  "include": ["./src/openApi/**/*", "./src/routes/**/*", "./src/types/**/*", "./src/middlewares/**/*"],
+  "exclude": ["test/**/*.ts", "src/scripts/**/*.ts"]
 }

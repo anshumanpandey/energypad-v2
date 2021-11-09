@@ -13,6 +13,12 @@
       ],
       "@openApi": [
         "./src/openApi"
+      ],
+      "@types": [
+        "./src/types"
+      ],
+      "@controllers": [
+        "./src/controllers"
       ]
     },
     "resolveJsonModule": true,

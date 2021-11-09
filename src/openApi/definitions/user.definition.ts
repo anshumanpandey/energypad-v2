@@ -8,6 +8,10 @@ const schema: CreateSchemaParams = {
       name: {
         type: 'string',
       },
+      age: {
+        type: 'number',
+        minimum: 18,
+      },
     },
   },
 };

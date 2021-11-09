@@ -7,7 +7,7 @@
     "npm": "please-use-yarn"
   },
   "scripts": {
-    "predev": "npm run generate:types && npm run generate:schema && npm run build",
+    "predev": "NODE_ENV=dev npm run generate:types && npm run generate:schema && npm run build",
     "dev": "NODE_ENV=dev ts-node ./src/index.ts --project ./tsconfig.json",
     "build": "tsc --project ./tsconfig.json",
     "generate:types": "tsc --project ./types-tsconfig.json && ts-node ./src/scripts/GenerateTypes.ts",
@@ -15,7 +15,7 @@
     "lint": "eslint src/**/*.ts",
     "format": "eslint src/**/*.ts --fix",
     "pretest": "npm run predev",
-    "test": "jest --runInBand",
+    "test": "NODE_ENV=test jest --runInBand",
     "jest": "jest --runInBand"
   },
   "devDependencies": {
@@ -58,7 +58,9 @@
     "@lib": "dist/lib",
     "@openApi": "dist/openApi",
     "@routes/v1": "dist/routes/v1",
-    "@middleware": "dist/middleware"
+    "@middleware": "dist/middleware",
+    "@types": "dist/types",
+    "@controllers": "dist/controllers"
   },
   "husky": {
     "hooks": {

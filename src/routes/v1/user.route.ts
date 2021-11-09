@@ -1,5 +1,6 @@
 import express from 'express';
-import { RequestValidatorMiddleware } from '@middleware';
+import { ExpressAsync, RequestValidatorMiddleware } from '@middleware';
+import { createUserController } from '@controllers';
 import { CreateUserPath } from '@openApi';
 
 const userRoutes = express.Router();
@@ -10,13 +11,7 @@ userRoutes.post(
   RequestValidatorMiddleware({
     body: 'CreateUser',
   }),
-  (request, response) => {
-    /**
-     * Route handler logic to run when `request.body` has been validated.
-     */
-    //TODO: 2ksjlakjsd
-    response.send({ success: '' });
-  },
+  ExpressAsync(createUserController),
 );
 
 export default userRoutes;
