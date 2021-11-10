@@ -15,8 +15,8 @@
     "generate:schema": "tsc --project ./types-tsconfig.json && ts-node --project ./types-tsconfig.json ./src/scripts/GenerateSchema.ts",
     "lint": "eslint src/**/*.ts",
     "format": "eslint src/**/*.ts --fix",
-    "pretest": "npm run predev",
-    "test": "NODE_ENV=test jest --runInBand",
+    "pretest": "rm testdb.sqlite3 && npm run predev",
+    "test": "NODE_ENV=test jest --runInBand --detectOpenHandles",
     "jest": "jest --runInBand --detectOpenHandles"
   },
   "devDependencies": {

@@ -26,11 +26,11 @@ export const createSchema = (p: CreateSchemaParams) => {
   });
 };
 
-type GetSchemaComponentForParams = {
+type GetReferenceForParams = {
   name: string;
   for: 'schemas' | 'responses' | 'requestBodies';
 };
-export const getSchemaComponentFor = (p: GetSchemaComponentForParams) => {
+export const getReferenceFor = (p: GetReferenceForParams): OpenAPIV3.ReferenceObject => {
   return OpenApiDefinition.component(p.for, p.name);
 };
 

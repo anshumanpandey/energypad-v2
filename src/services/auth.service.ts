@@ -2,12 +2,18 @@ import { DB } from '@lib';
 import { RequestBodyParams } from '@types';
 import { encryptPassword } from '@utils';
 
-const registerUser = async (p: RequestBodyParams<'Register'>) => {
-  const params: RequestBodyParams<'Register'> = {
+const registerUser = async (params: RequestBodyParams<'Register'>) => {
+  const { floors, ...p } = params;
+  const businessParams = {
     ...p,
     password: await encryptPassword(p.password),
   };
-  return DB('Users').insert(params);
+
+  return DB.transaction(function (trx) {
+    return trx('Businesses')
+      .insert(businessParams)
+      .then(() => trx('Floors').insert(floors));
+  });
 };
 
 export default {
