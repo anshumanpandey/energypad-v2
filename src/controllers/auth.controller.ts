@@ -4,6 +4,9 @@ import { ApiError } from '@lib';
 import { validPassword } from '@utils';
 
 export const registerUser: AppController<'Register'> = async (req) => {
+  const user = await UserService.getUserBy({ email: req.body.email });
+  if (user) return new ApiError('Email already registered');
+
   await AuthService.registerUser(req.body);
   return { success: true };
 };

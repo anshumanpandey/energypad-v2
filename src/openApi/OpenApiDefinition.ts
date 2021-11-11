@@ -17,7 +17,14 @@ const OpenApi: Pick<OpenAPIV3.Document, 'openapi' | 'info' | 'servers' | 'securi
 };
 export const OpenApiDefinition = openapi(OpenApi);
 
-type SchemaNames = 'User' | 'SuccessMessage' | 'GenericError' | 'JWTToken' | 'RegisterBody';
+type SchemaNames =
+  | 'User'
+  | 'SuccessMessage'
+  | 'GenericError'
+  | 'JWTToken'
+  | 'RegisterBody'
+  | 'SiteRequestBody'
+  | 'Site';
 type PathNames = 'CreateUser' | 'Register' | 'Login' | 'Site';
 
 export type CreateSchemaParams = {

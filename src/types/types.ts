@@ -19,3 +19,14 @@ type AppRequest<ReqBody, ResBody> = express.Request<{ [key: string]: string }, R
 export type AppController<T extends ResponseKeys> = (
   req: AppRequest<RequestBodyParams<T>, ControllerReturnType<T>>,
 ) => Promise<ControllerReturnType<T>>;
+
+type AuthAppRequest<ReqBody, ResBody> = { user: { id: number } } & express.Request<
+  { [key: string]: string },
+  ResBody,
+  ReqBody
+>;
+export type AuthAppController<T extends ResponseKeys> = (
+  req: AuthAppRequest<RequestBodyParams<T>, ControllerReturnType<T>>,
+) => Promise<ControllerReturnType<T>>;
+
+export type MixAppController<T extends ResponseKeys> = AppController<T> | AuthAppController<T>;

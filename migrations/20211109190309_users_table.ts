@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 export async function up(knex: Knex): Promise<void> {
   return knex.schema
     .createTable('Businesses', function (table) {
-      table.increments('id');
+      table.increments('id').primary();
       table.string('businessName', 255).notNullable();
       table.string('businessType', 255).notNullable();
       table.string('businessService', 255).notNullable();

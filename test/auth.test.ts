@@ -9,7 +9,7 @@ beforeAll(async () => {
   await DB.migrate.latest();
 });
 
-describe('GET / ', () => {
+describe('/auth', () => {
   test('It should respond with success message when register', async () => {
     const response = await supertest(app)
       .post('/api/auth')
@@ -23,7 +23,7 @@ describe('GET / ', () => {
         contactName: 'labore exercitation id',
         position: 'ullamco tempor exercitation laboris consectetur',
         phoneNumber: 'velit',
-        email: 'irure quis non mollit',
+        email: 'mail1a@mail.com',
         country: 'velit irure dolor',
         state: 'consequat',
         town: 'magna dolore dolor in',
@@ -48,16 +48,6 @@ describe('GET / ', () => {
             area: -76791716.29185855,
             population: -66051788.61218466,
           },
-          {
-            size: 'dolor',
-            area: -27659464.5653591,
-            population: -16922374.744337156,
-          },
-          {
-            size: 'proident aliqua sed ad amet',
-            area: 82719690.13532364,
-            population: -25006391.526693374,
-          },
         ],
       });
     expect(response.body).toMatchSchema(schema.components.responses.Register.content['application/json'].schema);
@@ -75,7 +65,7 @@ describe('GET / ', () => {
       contactName: 'labore exercitation id',
       position: 'ullamco tempor exercitation laboris consectetur',
       phoneNumber: 'velit',
-      email: 'irure quis non mollit',
+      email: 'mail2@mail.com',
       country: 'velit irure dolor',
       state: 'consequat',
       town: 'magna dolore dolor in',
@@ -100,16 +90,6 @@ describe('GET / ', () => {
           area: -76791716.29185855,
           population: -66051788.61218466,
         },
-        {
-          size: 'dolor',
-          area: -27659464.5653591,
-          population: -16922374.744337156,
-        },
-        {
-          size: 'proident aliqua sed ad amet',
-          area: 82719690.13532364,
-          population: -25006391.526693374,
-        },
       ],
     };
 
@@ -120,6 +100,7 @@ describe('GET / ', () => {
 
     const badBody2 = {
       ...correctBody,
+      email: 'mail4@mail.com',
       floors: [
         {
           size: 'proident aliqua sed ad amet',
@@ -159,7 +140,7 @@ describe('GET / ', () => {
       contactName: 'labore exercitation id',
       position: 'ullamco tempor exercitation laboris consectetur',
       phoneNumber: 'velit',
-      email: 'irure quis non mollit',
+      email: 'mail5@mail.com',
       country: 'velit irure dolor',
       state: 'consequat',
       town: 'magna dolore dolor in',
@@ -197,7 +178,7 @@ describe('GET / ', () => {
       contactName: 'labore exercitation id',
       position: 'ullamco tempor exercitation laboris consectetur',
       phoneNumber: 'velit',
-      email: 'irure quis non mollit',
+      email: 'mail6@mail.com',
       country: 'velit irure dolor',
       state: 'consequat',
       town: 'magna dolore dolor in',
@@ -231,5 +212,45 @@ describe('GET / ', () => {
     expect(response2.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response2.body.message).toBe('Credentials not found');
     expect(response2.statusCode).toBe(400);
+  });
+
+  test('It should respond with error when using existing email', async () => {
+    const body = {
+      businessName: 'proident nulla dolor',
+      businessType: 'dolor',
+      businessService: 'sit nisi',
+      password: 'irure in eiusmod sint nostrud',
+      siteName: 'nulla esse id voluptate eiusmod',
+      buildingName: 'sint consequat',
+      contactName: 'labore exercitation id',
+      position: 'ullamco tempor exercitation laboris consectetur',
+      phoneNumber: 'velit',
+      email: 'mail10@mail.com',
+      country: 'velit irure dolor',
+      state: 'consequat',
+      town: 'magna dolore dolor in',
+      postCode: 'velit id',
+      subscriptionDate: '1989-07-20',
+      holydayDate: '1942-04-26',
+      totalArea: -76421184.56177847,
+      totalPopulation: -78438954.75821584,
+      floors: [
+        {
+          size: 'ea sunt ad occaecat nisi',
+          area: -80468912.0731943,
+          population: 45307773.70958948,
+        },
+      ],
+    };
+    await supertest(app).post('/api/auth').send(body);
+    const response = await supertest(app)
+      .post('/api/auth')
+      .send({
+        ...body,
+        email: 'mail10@mail.com',
+      });
+
+    expect(response.body).toMatchSchema(schema.components.responses.Login.content['application/json'].schema.oneOf[1]);
+    expect(response.statusCode).toBe(400);
   });
 });

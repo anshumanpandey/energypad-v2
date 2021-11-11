@@ -7,23 +7,10 @@ import {
 } from '../OpenApiDefinition';
 
 addRequestComponentFor('Site', {
+  required: true,
   content: {
     'application/json': {
-      schema: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['type', 'address', 'postCode', 'town', 'population', 'size', 'fuel', 'uses'],
-        properties: {
-          type: { type: 'string' },
-          address: { type: 'string' },
-          postCode: { type: 'string' },
-          town: { type: 'number' },
-          population: { type: 'number' },
-          size: { type: 'string' },
-          fuel: { type: 'string' },
-          uses: { type: 'string' },
-        },
-      },
+      schema: getReferenceFor({ for: 'schemas', name: 'SiteRequestBody' }),
     },
   },
 });
@@ -44,6 +31,7 @@ addResponseComponentFor('Site', {
 
 const CreateSiteOperation: OpenAPIV3.OperationObject = {
   description: 'Create a new site for a business.',
+  security: [{ BearerAuth: [] }],
   parameters: OpenApiDefinition.component('requestBodies', 'Site'),
   responses: {
     '200': {
@@ -57,4 +45,4 @@ const CreateSiteOperation: OpenAPIV3.OperationObject = {
   },
 };
 
-export const RegisterPath = OpenApiDefinition.path(CreateSiteOperation);
+export const CreateSitePath = OpenApiDefinition.path(CreateSiteOperation);

@@ -15,9 +15,10 @@
     "generate:schema": "tsc --project ./types-tsconfig.json && ts-node --project ./types-tsconfig.json ./src/scripts/GenerateSchema.ts",
     "lint": "eslint src/**/*.ts",
     "format": "eslint src/**/*.ts --fix",
-    "pretest": "rm testdb.sqlite3 && npm run predev",
+    "pretest": "rm -f testdb.sqlite3 && npm run predev",
     "test": "NODE_ENV=test jest --runInBand --detectOpenHandles",
-    "jest": "jest --runInBand --detectOpenHandles"
+    "jest": "jest --runInBand --detectOpenHandles",
+    "generate:migration": "knex migrate:make --env development --knexfile ./src/lib/db/knexfile.ts"
   },
   "devDependencies": {
     "@openapi-contrib/openapi-schema-to-json-schema": "^3.1.1",
