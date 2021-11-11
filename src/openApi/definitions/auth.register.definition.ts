@@ -2,9 +2,9 @@ import { OpenAPIV3 } from 'openapi-types';
 import {
   OpenApiDefinition,
   addRequestComponentFor,
-  addResponseComponentFor,
   getReferenceFor,
   createSchema,
+  addResponseComponentFor,
 } from '../OpenApiDefinition';
 
 createSchema({
@@ -79,28 +79,17 @@ addResponseComponentFor('Register', {
   description: 'Success message',
   content: {
     'application/json': {
-      schema: {
-        oneOf: [
-          getReferenceFor({ for: 'schemas', name: 'SuccessMessage' }),
-          getReferenceFor({ for: 'schemas', name: 'GenericError' }),
-        ],
-      },
+      schema: getReferenceFor({ for: 'schemas', name: 'SuccessMessage' }),
     },
   },
 });
 
 const CreateUserOperation: OpenAPIV3.OperationObject = {
   description: 'Create a new user.',
-  parameters: [getReferenceFor({ for: 'responses', name: 'Register' })],
+  parameters: [getReferenceFor({ for: 'requestBodies', name: 'Register' })],
   responses: {
-    '200': {
-      description: 'Success message',
-      content: {
-        'application/json': {
-          schema: getReferenceFor({ for: 'responses', name: 'Register' }),
-        },
-      },
-    },
+    '200': getReferenceFor({ for: 'responses', name: 'Register' }),
+    '400': getReferenceFor({ for: 'schemas', name: 'GenericError' }),
   },
 };
 

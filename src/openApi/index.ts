@@ -1,7 +1,7 @@
-import './definitions/site.definition';
-import './definitions/jwt.definition';
 import './definitions/genericError.definition';
 import './definitions/success.definition';
+import './definitions/site.definition';
+import './definitions/jwt.definition';
 import { RegisterPath } from './definitions/auth.register.definition';
 import './definitions/user.definition';
 

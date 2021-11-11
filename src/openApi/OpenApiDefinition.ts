@@ -25,7 +25,7 @@ type SchemaNames =
   | 'RegisterBody'
   | 'SiteRequestBody'
   | 'Site';
-type PathNames = 'CreateUser' | 'Register' | 'Login' | 'Site';
+type PathNames = 'CreateUser' | 'Register' | 'Site' | 'Login';
 
 export type CreateSchemaParams = {
   name: SchemaNames;

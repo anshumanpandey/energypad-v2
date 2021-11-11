@@ -23,7 +23,7 @@ describe('/Site ', () => {
       fuel: 'sed sint incididunt',
       uses: 'anim consectetur eu',
     });
-    expect(response.body).toMatchSchema(schema.components.responses.Site.content['application/json'].schema.oneOf[0]);
+    expect(response.body).toMatchSchema(schema.components.responses.Site.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
   });
 
@@ -39,7 +39,7 @@ describe('/Site ', () => {
       fuel: 'sed sint incididunt',
       uses: 'anim consectetur eu',
     });
-    expect(response.body).toMatchSchema(schema.components.responses.Site.content['application/json'].schema.oneOf[1]);
+    expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response.statusCode).toBe(400);
   });
 });

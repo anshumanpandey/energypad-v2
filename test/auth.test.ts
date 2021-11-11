@@ -250,7 +250,7 @@ describe('/auth', () => {
         email: 'mail10@mail.com',
       });
 
-    expect(response.body).toMatchSchema(schema.components.responses.Login.content['application/json'].schema.oneOf[1]);
+    expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response.statusCode).toBe(400);
   });
 });

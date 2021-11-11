@@ -2,8 +2,8 @@ import { OpenAPIV3 } from 'openapi-types';
 import {
   OpenApiDefinition,
   addRequestComponentFor,
-  addResponseComponentFor,
   getReferenceFor,
+  addResponseComponentFor,
 } from '../OpenApiDefinition';
 
 addRequestComponentFor('Site', {
@@ -19,12 +19,7 @@ addResponseComponentFor('Site', {
   description: 'Success message',
   content: {
     'application/json': {
-      schema: {
-        oneOf: [
-          getReferenceFor({ for: 'schemas', name: 'SuccessMessage' }),
-          getReferenceFor({ for: 'schemas', name: 'GenericError' }),
-        ],
-      },
+      schema: getReferenceFor({ for: 'schemas', name: 'SuccessMessage' }),
     },
   },
 });
@@ -32,16 +27,10 @@ addResponseComponentFor('Site', {
 const CreateSiteOperation: OpenAPIV3.OperationObject = {
   description: 'Create a new site for a business.',
   security: [{ BearerAuth: [] }],
-  parameters: OpenApiDefinition.component('requestBodies', 'Site'),
+  parameters: [getReferenceFor({ for: 'requestBodies', name: 'Site' })],
   responses: {
-    '200': {
-      description: 'Success message',
-      content: {
-        'application/json': {
-          schema: getReferenceFor({ for: 'responses', name: 'Site' }),
-        },
-      },
-    },
+    '200': getReferenceFor({ for: 'responses', name: 'Site' }),
+    '400': getReferenceFor({ for: 'schemas', name: 'GenericError' }),
   },
 };
 
