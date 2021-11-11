@@ -6,6 +6,6 @@ export const encryptPassword = async (password: string) => {
   return hashValue;
 };
 
-export const validPassword = async (password: string, hash: string) => {
-  return compare(password, hash);
+export const validPassword = (password: string, encrypted: string) => {
+  return compare(password, encrypted);
 };

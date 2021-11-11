@@ -3,7 +3,8 @@ import { AppController, ResponseKeys } from '@types';
 import { ApiError } from '@lib';
 
 const expressAsync =
-  (fn: AppController<ResponseKeys>) => (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  <T extends ResponseKeys>(fn: AppController<T>) =>
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
     fn(req)
       .then((response) => {
         if (response instanceof ApiError) {

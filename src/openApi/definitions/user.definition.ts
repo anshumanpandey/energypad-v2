@@ -1,18 +1,21 @@
-import { createSchema, CreateSchemaParams } from '../OpenApiDefinition';
+import { createSchema, CreateSchemaParams, getReferenceFor } from '../OpenApiDefinition';
 
 const schema: CreateSchemaParams = {
   name: 'User',
   schema: {
-    required: ['name'],
-    properties: {
-      name: {
-        type: 'string',
+    allOf: [
+      getReferenceFor({ for: 'schemas', name: 'RegisterBody' }),
+      {
+        type: 'object',
+        required: ['id'],
+        additionalProperties: false,
+        properties: {
+          id: {
+            type: 'string',
+          },
+        },
       },
-      age: {
-        type: 'number',
-        minimum: 18,
-      },
-    },
+    ],
   },
 };
 

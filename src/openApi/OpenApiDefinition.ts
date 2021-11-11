@@ -2,17 +2,23 @@
 import openapi from '@wesleytodd/openapi';
 import { OpenAPIV3 } from 'openapi-types';
 
-const OpenApi: Pick<OpenAPIV3.Document, 'openapi' | 'info' | 'servers'> = {
+const OpenApi: Pick<OpenAPIV3.Document, 'openapi' | 'info' | 'servers' | 'security'> = {
   openapi: '3.0.0',
   info: {
     title: 'Express Application',
     description: 'Generated docs from an Express api',
     version: '1.0.0',
   },
+  security: [
+    {
+      BearerAuth: ['http', 'bearer'],
+    },
+  ],
 };
 export const OpenApiDefinition = openapi(OpenApi);
 
-type SchemaNames = 'User' | 'CreateUser' | 'SuccessMessage' | 'GenericError';
+type SchemaNames = 'User' | 'SuccessMessage' | 'GenericError' | 'JWTToken' | 'RegisterBody';
+type PathNames = 'CreateUser' | 'Register' | 'Login' | 'Site';
 
 export type CreateSchemaParams = {
   name: SchemaNames;
@@ -26,18 +32,25 @@ export const createSchema = (p: CreateSchemaParams) => {
   });
 };
 
-type GetReferenceForParams = {
-  name: string;
-  for: 'schemas' | 'responses' | 'requestBodies';
+type ReferenceForParamsDict = {
+  schemas: SchemaNames;
+  responses: PathNames;
+  requestBodies: PathNames;
 };
-export const getReferenceFor = (p: GetReferenceForParams): OpenAPIV3.ReferenceObject => {
+type GetReferenceForParams<T extends keyof ReferenceForParamsDict> = {
+  for: T;
+  name: ReferenceForParamsDict[T];
+};
+export function getReferenceFor<A extends keyof ReferenceForParamsDict>(
+  p: GetReferenceForParams<A>,
+): OpenAPIV3.ReferenceObject {
   return OpenApiDefinition.component(p.for, p.name);
-};
+}
 
-export const addRequestComponentFor = (name: string, p: OpenAPIV3.RequestBodyObject) => {
+export const addRequestComponentFor = (name: PathNames, p: OpenAPIV3.RequestBodyObject) => {
   return OpenApiDefinition.component('requestBodies', name, p);
 };
 
-export const addResponseComponentFor = (name: string, p: OpenAPIV3.ResponseObject) => {
+export const addResponseComponentFor = (name: PathNames, p: OpenAPIV3.ResponseObject) => {
   return OpenApiDefinition.component('responses', name, p);
 };

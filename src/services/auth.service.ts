@@ -1,4 +1,5 @@
-import { DB } from '@lib';
+import { sign } from 'jsonwebtoken';
+import { DB, GlobalEnv } from '@lib';
 import { RequestBodyParams } from '@types';
 import { encryptPassword } from '@utils';
 
@@ -16,6 +17,11 @@ const registerUser = async (params: RequestBodyParams<'Register'>) => {
   });
 };
 
+const generateJwt = (user: { id: string }) => {
+  return sign(user, GlobalEnv.JWT_SECRET);
+};
+
 export default {
   registerUser,
+  generateJwt,
 };

@@ -10,7 +10,7 @@ beforeAll(async () => {
 });
 
 describe('GET / ', () => {
-  test('It should respond with success message', async () => {
+  test('It should respond with success message when register', async () => {
     const response = await supertest(app)
       .post('/api/auth')
       .send({
@@ -146,5 +146,90 @@ describe('GET / ', () => {
     const response3 = await supertest(app).post('/api/auth').send(badBody3);
     expect(response3.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response3.statusCode).toBe(400);
+  });
+
+  test('It should respond with success message when login', async () => {
+    const body = {
+      businessName: 'proident nulla dolor',
+      businessType: 'dolor',
+      businessService: 'sit nisi',
+      password: 'irure in eiusmod sint nostrud',
+      siteName: 'nulla esse id voluptate eiusmod',
+      buildingName: 'sint consequat',
+      contactName: 'labore exercitation id',
+      position: 'ullamco tempor exercitation laboris consectetur',
+      phoneNumber: 'velit',
+      email: 'irure quis non mollit',
+      country: 'velit irure dolor',
+      state: 'consequat',
+      town: 'magna dolore dolor in',
+      postCode: 'velit id',
+      subscriptionDate: '1989-07-20',
+      holydayDate: '1942-04-26',
+      totalArea: -76421184.56177847,
+      totalPopulation: -78438954.75821584,
+      floors: [
+        {
+          size: 'ea sunt ad occaecat nisi',
+          area: -80468912.0731943,
+          population: 45307773.70958948,
+        },
+      ],
+    };
+    await supertest(app).post('/api/auth').send(body);
+
+    const response = await supertest(app).post('/api/auth/login').send({
+      email: body.email,
+      password: body.password,
+    });
+    expect(response.body).toMatchSchema(schema.components.responses.Login.content['application/json'].schema);
+    expect(response.statusCode).toBe(200);
+  });
+
+  test('It should respond with error message when login with wron credentials', async () => {
+    const body = {
+      businessName: 'proident nulla dolor',
+      businessType: 'dolor',
+      businessService: 'sit nisi',
+      password: 'irure in eiusmod sint nostrud',
+      siteName: 'nulla esse id voluptate eiusmod',
+      buildingName: 'sint consequat',
+      contactName: 'labore exercitation id',
+      position: 'ullamco tempor exercitation laboris consectetur',
+      phoneNumber: 'velit',
+      email: 'irure quis non mollit',
+      country: 'velit irure dolor',
+      state: 'consequat',
+      town: 'magna dolore dolor in',
+      postCode: 'velit id',
+      subscriptionDate: '1989-07-20',
+      holydayDate: '1942-04-26',
+      totalArea: -76421184.56177847,
+      totalPopulation: -78438954.75821584,
+      floors: [
+        {
+          size: 'ea sunt ad occaecat nisi',
+          area: -80468912.0731943,
+          population: 45307773.70958948,
+        },
+      ],
+    };
+    await supertest(app).post('/api/auth').send(body);
+
+    const response = await supertest(app).post('/api/auth/login').send({
+      email: body.email,
+      password: 'wrong!!',
+    });
+    expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
+    expect(response.body.message).toBe('Wrong credentials');
+    expect(response.statusCode).toBe(400);
+
+    const response2 = await supertest(app).post('/api/auth/login').send({
+      email: 'wrong@mail.com',
+      password: body.password,
+    });
+    expect(response2.body).toMatchSchema(schema.components.schemas.GenericError);
+    expect(response2.body.message).toBe('Credentials not found');
+    expect(response2.statusCode).toBe(400);
   });
 });
