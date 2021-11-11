@@ -1,18 +1,18 @@
 import express from 'express';
 import { AuthMiddleware, ExpressAsync, RequestValidatorMiddleware } from '@middleware';
-import { SitesController } from '@controllers';
-import { CreateSitePath } from '@openApi';
+import { UtilityController } from '@controllers';
+import { CreateUtilityPath } from '@openApi';
 
 const authRoutes = express.Router();
 
 authRoutes.post(
   '/',
-  CreateSitePath,
+  CreateUtilityPath,
   AuthMiddleware,
   RequestValidatorMiddleware({
-    body: 'Site',
+    body: 'CreateUtility',
   }),
-  ExpressAsync(SitesController.createSite),
+  ExpressAsync(UtilityController.createUtility),
 );
 
 export default authRoutes;

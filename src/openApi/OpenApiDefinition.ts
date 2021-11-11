@@ -25,11 +25,11 @@ type SchemaNames =
   | 'RegisterBody'
   | 'SiteRequestBody'
   | 'Site';
-type PathNames = 'CreateUser' | 'Register' | 'Site' | 'Login';
+type PathNames = 'CreateUser' | 'Register' | 'Site' | 'Login' | 'CreateUtility';
 
 export type CreateSchemaParams = {
   name: SchemaNames;
-  schema: Omit<OpenAPIV3.SchemaObject, 'type'>;
+  schema: Omit<OpenAPIV3.SchemaObject, 'type' | 'additionalProperties'>;
 };
 export const createSchema = (p: CreateSchemaParams) => {
   OpenApiDefinition.component('schemas', p.name, {

@@ -1,6 +1,6 @@
 import express from 'express';
 import { ExpressAsync, RequestValidatorMiddleware } from '@middleware';
-import { registerUser, loginUser } from '@controllers';
+import { AuthController } from '@controllers';
 import { RegisterPath, LoginPath } from '@openApi';
 
 const authRoutes = express.Router();
@@ -11,7 +11,7 @@ authRoutes.post(
   RequestValidatorMiddleware({
     body: 'Register',
   }),
-  ExpressAsync(registerUser),
+  ExpressAsync(AuthController.registerUser),
 );
 
 authRoutes.post(
@@ -20,7 +20,7 @@ authRoutes.post(
   RequestValidatorMiddleware({
     body: 'Login',
   }),
-  ExpressAsync(loginUser),
+  ExpressAsync(AuthController.loginUser),
 );
 
 export default authRoutes;
