@@ -2,7 +2,7 @@ import supertest from 'supertest';
 import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
-import { loginUser } from './testhelp';
+import { loginUser, NO_EXTRA_PROPERTY_ERROR_MESSAGE, WRONG_NUMBER_ERROR_MESSAGE } from './testhelp';
 import schema from '../src/types/Schema.json';
 import DB from '../src/lib/db/Db';
 
@@ -40,6 +40,7 @@ describe('/Site ', () => {
       uses: 'anim consectetur eu',
     });
     expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
+    expect(response.body.message).toBe('should be number');
     expect(response.statusCode).toBe(400);
 
     const response2 = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
@@ -54,6 +55,7 @@ describe('/Site ', () => {
       another: 1,
     });
     expect(response2.body).toMatchSchema(schema.components.schemas.GenericError);
+    expect(response2.body.message).toBe(NO_EXTRA_PROPERTY_ERROR_MESSAGE);
     expect(response2.statusCode).toBe(400);
   });
 });

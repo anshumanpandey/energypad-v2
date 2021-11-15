@@ -2,7 +2,7 @@ import supertest from 'supertest';
 import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
-import { loginUser } from './testhelp';
+import { loginUser, NO_EXTRA_PROPERTY_ERROR_MESSAGE } from './testhelp';
 import schema from '../src/types/Schema.json';
 import DB from '../src/lib/db/Db';
 
@@ -27,6 +27,7 @@ describe('/Utility ', () => {
       another: 1,
     });
     expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
+    expect(response.body.message).toBe(NO_EXTRA_PROPERTY_ERROR_MESSAGE);
     expect(response.statusCode).toBe(400);
   });
 

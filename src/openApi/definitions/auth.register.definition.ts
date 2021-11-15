@@ -8,6 +8,19 @@ import {
 } from '../OpenApiDefinition';
 
 createSchema({
+  name: 'BusinessService',
+  schema: {
+    required: ['startDate', 'endDate', 'consumption', 'daysOnYear'],
+    properties: {
+      startDate: { type: 'string', format: 'date' },
+      endDate: { type: 'string', format: 'date' },
+      consumption: { type: 'number', format: 'int32' },
+      daysOnYear: { type: 'number', format: 'int32' },
+    },
+  },
+});
+
+createSchema({
   name: 'RegisterBody',
   schema: {
     required: [
@@ -63,6 +76,10 @@ createSchema({
           },
         },
       },
+      cooling: getReferenceFor({ for: 'schemas', name: 'BusinessService' }),
+      heating: getReferenceFor({ for: 'schemas', name: 'BusinessService' }),
+      lighting: getReferenceFor({ for: 'schemas', name: 'BusinessService' }),
+      powering: getReferenceFor({ for: 'schemas', name: 'BusinessService' }),
     },
   },
 });

@@ -28,6 +28,16 @@ export async function up(knex: Knex): Promise<void> {
       table.string('size', 255).notNullable();
       table.integer('area').notNullable();
       table.integer('population').notNullable();
+    })
+    .createTable('BusinessService', function (table) {
+      table.increments('id');
+      table.string('name', 255).notNullable();
+      table.string('startDate', 255).notNullable();
+      table.string('endDate', 255).notNullable();
+      table.integer('consumption').notNullable();
+      table.integer('daysOnYear').notNullable();
+      table.integer('businessId', 255).notNullable();
+      table.foreign('businessId').references('Businesses.id').deferrable('deferred');
     });
 }
 

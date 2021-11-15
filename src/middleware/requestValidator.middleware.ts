@@ -43,6 +43,60 @@ ajv.addFormat('int32', {
   },
 });
 
+ajv.addFormat('date', {
+  type: 'string',
+  validate: (val) => {
+    const reg = new RegExp(/^(\d+)-(0[1-9]|1[012])-(0[1-9]|[12]\d|3[01])$/);
+    if (reg.test(val) === false) return false;
+
+    const [, month, day] = val.split('-');
+    const numberDay = parseInt(day, 10);
+
+    switch (month) {
+      case '01':
+        if (numberDay > 31) return false;
+        break;
+      case '02':
+        if (numberDay > 29) return false;
+        break;
+      case '03':
+        if (numberDay > 31) return false;
+        break;
+      case '04':
+        if (numberDay > 30) return false;
+        break;
+      case '05':
+        if (numberDay > 31) return false;
+        break;
+      case '06':
+        if (numberDay > 30) return false;
+        break;
+      case '07':
+        if (numberDay > 31) return false;
+        break;
+      case '08':
+        if (numberDay > 31) return false;
+        break;
+      case '09':
+        if (numberDay > 30) return false;
+        break;
+      case '10':
+        if (numberDay > 31) return false;
+        break;
+      case '11':
+        if (numberDay > 30) return false;
+        break;
+      case '12':
+        if (numberDay > 31) return false;
+        break;
+      default:
+        return true;
+    }
+
+    return true;
+  },
+});
+
 const requestValidator = (p: List<RequestBodieKeys>) => {
   const result = getJsonSchema();
   let schema = CurrentSchema;

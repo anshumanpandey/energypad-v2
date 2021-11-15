@@ -41,3 +41,7 @@ export const loginUser = async () => {
       return res.body;
     });
 };
+
+export const NO_EXTRA_PROPERTY_ERROR_MESSAGE = 'should NOT have additional properties';
+export const WRONG_DATE_ERROR_MESSAGE = 'should match format "date"';
+export const WRONG_NUMBER_ERROR_MESSAGE = 'should match format "int32"';
