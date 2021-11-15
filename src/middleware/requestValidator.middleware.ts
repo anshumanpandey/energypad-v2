@@ -3,7 +3,6 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { OpenAPIV3 } from 'openapi-types';
 import { RequestBodieKeys } from '../types/types';
-
 let CurrentSchema: Pick<OpenAPIV3.Document, 'components'> = {
   components: {
     requestBodies: {},
@@ -31,7 +30,10 @@ const validatorOptions = {
   validateSchema: true,
   inlineRefs: true,
 };
-const { validate } = new Validator(validatorOptions);
+const { validate, ajv } = new Validator(validatorOptions);
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+require('ajv-keywords')(ajv, 'transform');
 
 const requestValidator = (p: List<RequestBodieKeys>) => {
   const result = getJsonSchema();

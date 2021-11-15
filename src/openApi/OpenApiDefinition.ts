@@ -29,7 +29,15 @@ type PathNames = 'CreateUser' | 'Register' | 'Site' | 'Login' | 'CreateUtility' 
 
 export type CreateSchemaParams = {
   name: SchemaNames;
-  schema: Omit<OpenAPIV3.SchemaObject, 'type' | 'additionalProperties'>;
+  schema: Omit<OpenAPIV3.SchemaObject, 'type' | 'additionalProperties'> & {
+    properties?: {
+      [name: string]:
+        | OpenAPIV3.ReferenceObject
+        | (OpenAPIV3.SchemaObject & {
+            transform?: string[];
+          });
+    };
+  };
 };
 export const createSchema = (p: CreateSchemaParams) => {
   OpenApiDefinition.component('schemas', p.name, {
@@ -54,7 +62,14 @@ export function getReferenceFor<A extends keyof ReferenceForParamsDict>(
   return OpenApiDefinition.component(p.for, p.name);
 }
 
-export const addRequestComponentFor = (name: PathNames, p: OpenAPIV3.RequestBodyObject) => {
+type RequestComponent = OpenAPIV3.RequestBodyObject & {
+  content: {
+    [media: string]: OpenAPIV3.MediaTypeObject & {
+      schema: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject;
+    };
+  };
+};
+export const addRequestComponentFor = (name: PathNames, p: RequestComponent) => {
   return OpenApiDefinition.component('requestBodies', name, p);
 };
 
