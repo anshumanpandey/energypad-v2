@@ -30,23 +30,23 @@ describe('/auth', () => {
         postCode: 'velit id',
         subscriptionDate: '1989-07-20',
         holydayDate: '1942-04-26',
-        totalArea: -76421184.56177847,
-        totalPopulation: -78438954.75821584,
+        totalArea: 76421184.56177847,
+        totalPopulation: 78438954.75821584,
         floors: [
           {
             size: 'ea sunt ad occaecat nisi',
-            area: -80468912.0731943,
+            area: 80468912.0731943,
             population: 45307773.70958948,
           },
           {
             size: 'qui sint nostrud amet',
             area: 56596671.00636953,
-            population: -40456363.3113292,
+            population: 40456363.3113292,
           },
           {
             size: 'do enim Excepteur',
-            area: -76791716.29185855,
-            population: -66051788.61218466,
+            area: 76791716.29185855,
+            population: 66051788.61218466,
           },
         ],
       });
@@ -72,23 +72,23 @@ describe('/auth', () => {
       postCode: 'velit id',
       subscriptionDate: '1989-07-20',
       holydayDate: '1942-04-26',
-      totalArea: -76421184.56177847,
-      totalPopulation: -78438954.75821584,
+      totalArea: 76421184.56177847,
+      totalPopulation: 78438954.75821584,
       floors: [
         {
           size: 'ea sunt ad occaecat nisi',
-          area: -80468912.0731943,
+          area: 80468912.0731943,
           population: 45307773.70958948,
         },
         {
           size: 'qui sint nostrud amet',
           area: 56596671.00636953,
-          population: -40456363.3113292,
+          population: 40456363.3113292,
         },
         {
           size: 'do enim Excepteur',
-          area: -76791716.29185855,
-          population: -66051788.61218466,
+          area: 76791716.29185855,
+          population: 66051788.61218466,
         },
       ],
     };
@@ -105,7 +105,7 @@ describe('/auth', () => {
         {
           size: 'proident aliqua sed ad amet',
           area: 'some',
-          population: -25006391.526693374,
+          population: 25006391.526693374,
         },
       ],
     };
@@ -118,8 +118,8 @@ describe('/auth', () => {
       floors: [
         {
           size: 'proident aliqua sed ad amet',
-          area: -25006391.526693374,
-          population: -25006391.526693374,
+          area: 25006391.526693374,
+          population: 25006391.526693374,
           extra: 55,
         },
       ],
@@ -147,12 +147,12 @@ describe('/auth', () => {
       postCode: 'velit id',
       subscriptionDate: '1989-07-20',
       holydayDate: '1942-04-26',
-      totalArea: -76421184.56177847,
-      totalPopulation: -78438954.75821584,
+      totalArea: 76421184.56177847,
+      totalPopulation: 78438954.75821584,
       floors: [
         {
           size: 'ea sunt ad occaecat nisi',
-          area: -80468912.0731943,
+          area: 80468912.0731943,
           population: 45307773.70958948,
         },
       ],
@@ -185,12 +185,12 @@ describe('/auth', () => {
       postCode: 'velit id',
       subscriptionDate: '1989-07-20',
       holydayDate: '1942-04-26',
-      totalArea: -76421184.56177847,
-      totalPopulation: -78438954.75821584,
+      totalArea: 76421184.56177847,
+      totalPopulation: 78438954.75821584,
       floors: [
         {
           size: 'ea sunt ad occaecat nisi',
-          area: -80468912.0731943,
+          area: 80468912.0731943,
           population: 45307773.70958948,
         },
       ],
@@ -232,12 +232,12 @@ describe('/auth', () => {
       postCode: 'velit id',
       subscriptionDate: '1989-07-20',
       holydayDate: '1942-04-26',
-      totalArea: -76421184.56177847,
-      totalPopulation: -78438954.75821584,
+      totalArea: 76421184.56177847,
+      totalPopulation: 78438954.75821584,
       floors: [
         {
           size: 'ea sunt ad occaecat nisi',
-          area: -80468912.0731943,
+          area: 80468912.0731943,
           population: 45307773.70958948,
         },
       ],

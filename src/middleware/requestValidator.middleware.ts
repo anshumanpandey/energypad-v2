@@ -35,6 +35,14 @@ const { validate, ajv } = new Validator(validatorOptions);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('ajv-keywords')(ajv, 'transform');
 
+ajv.addFormat('int32', {
+  type: 'number',
+  validate: (val) => {
+    if (val < 0) return false;
+    return true;
+  },
+});
+
 const requestValidator = (p: List<RequestBodieKeys>) => {
   const result = getJsonSchema();
   let schema = CurrentSchema;

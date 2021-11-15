@@ -17,8 +17,8 @@ addRequestComponentFor('AddUtilityEmission', {
         required: ['date', 'consumption', 'cost'],
         properties: {
           date: { type: 'string', format: 'date' },
-          consumption: { type: 'number' },
-          cost: { type: 'number' },
+          consumption: { type: 'number', format: 'int32' },
+          cost: { type: 'number', format: 'int32' },
         },
       },
     },

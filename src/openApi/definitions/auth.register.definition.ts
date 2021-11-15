@@ -48,8 +48,8 @@ createSchema({
       postCode: { type: 'string' },
       subscriptionDate: { type: 'string', format: 'date' },
       holydayDate: { type: 'string', format: 'date' },
-      totalArea: { type: 'number' },
-      totalPopulation: { type: 'number' },
+      totalArea: { type: 'number', format: 'int32' },
+      totalPopulation: { type: 'number', format: 'int32' },
       floors: {
         type: 'array',
         items: {
@@ -58,8 +58,8 @@ createSchema({
           required: ['size', 'area', 'population'],
           properties: {
             size: { type: 'string' },
-            area: { type: 'number' },
-            population: { type: 'number' },
+            area: { type: 'number', format: 'int32' },
+            population: { type: 'number', format: 'int32' },
           },
         },
       },
