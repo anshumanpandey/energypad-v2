@@ -11,7 +11,7 @@ export async function up(knex: Knex): Promise<void> {
     table.integer('size').notNullable();
     table.string('fuel', 255).notNullable();
     table.string('uses', 255).notNullable();
-    table.string('businessId', 255).notNullable();
+    table.integer('businessId', 255).notNullable();
     table.foreign('businessId').references('Businesses.id').deferrable('deferred');
   });
 }

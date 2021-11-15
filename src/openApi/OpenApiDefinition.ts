@@ -25,7 +25,7 @@ type SchemaNames =
   | 'RegisterBody'
   | 'SiteRequestBody'
   | 'Site';
-type PathNames = 'CreateUser' | 'Register' | 'Site' | 'Login' | 'CreateUtility';
+type PathNames = 'CreateUser' | 'Register' | 'Site' | 'Login' | 'CreateUtility' | 'AddUtilityEmission';
 
 export type CreateSchemaParams = {
   name: SchemaNames;
@@ -60,4 +60,8 @@ export const addRequestComponentFor = (name: PathNames, p: OpenAPIV3.RequestBody
 
 export const addResponseComponentFor = (name: PathNames, p: OpenAPIV3.ResponseObject) => {
   return OpenApiDefinition.component('responses', name, p);
+};
+
+export const addParameterComponentFor = (name: PathNames, p: OpenAPIV3.ParameterObject) => {
+  return OpenApiDefinition.component('parameters', name, p);
 };

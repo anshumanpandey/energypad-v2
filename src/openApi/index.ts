@@ -8,7 +8,8 @@ import './definitions/user.definition';
 import { LoginPath } from './definitions/auth.login.definition';
 import { CreateSitePath } from './definitions/site.create.definition';
 import { CreateUtilityPath } from './definitions/utility.create.definition';
+import { AddUtilityPath } from './definitions/utilityEmission.add.definition';
 import { OpenApiDefinition } from './OpenApiDefinition';
 
 export default OpenApiDefinition;
-export { RegisterPath, LoginPath, CreateSitePath, CreateUtilityPath };
+export { RegisterPath, LoginPath, CreateSitePath, CreateUtilityPath, AddUtilityPath };

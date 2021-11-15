@@ -29,4 +29,24 @@ describe('/Utility ', () => {
     expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response.statusCode).toBe(400);
   });
+
+  test('It should respond with success when adding a consuption to a utility', async () => {
+    const body = await loginUser();
+    await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
+      name: 'in amet enim',
+    });
+
+    const response = await supertest(app)
+      .post('/api/utility/addEmission/1')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send({
+        date: '2020-01-01',
+        consumption: 100,
+        cost: 100,
+      });
+    expect(response.body).toMatchSchema(
+      schema.components.responses.AddUtilityEmission.content['application/json'].schema,
+    );
+    expect(response.statusCode).toBe(200);
+  });
 });
