@@ -9,9 +9,12 @@ addResponseComponentFor('GetDashboardData', {
         type: 'array',
         items: {
           additionalProperties: false,
+          required: ['date', 'averageConsumption', 'averageCost', 'consumption'],
           properties: {
             date: { type: 'string', format: 'date' },
-            avarage: { type: 'number', format: 'int32' },
+            averageConsumption: { type: 'number', format: 'int32' },
+            averageCost: { type: 'number', format: 'int32' },
+            consumption: { type: 'number', format: 'int32' },
           },
         },
       },
