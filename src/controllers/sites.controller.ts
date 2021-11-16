@@ -1,11 +1,11 @@
 import { AuthAppController } from '@types';
-import { SitesServices } from '@services';
+import { SitesService } from '@services';
 
-export const createSite: AuthAppController<'Site'> = async (req) => {
+export const createSite: AuthAppController<'Site', 'Site'> = async (req) => {
   const params = {
     ...req.body,
     businessId: req.user.id,
   };
-  await SitesServices.createSite(params);
+  await SitesService.createSite(params);
   return { success: true };
 };

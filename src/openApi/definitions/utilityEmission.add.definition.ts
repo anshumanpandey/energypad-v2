@@ -5,25 +5,47 @@ import {
   getReferenceFor,
   addResponseComponentFor,
   addParameterComponentFor,
+  CreateSchemaParams,
+  createSchema,
 } from '../OpenApiDefinition';
+
+const bodySchema: CreateSchemaParams = {
+  name: 'AddUtilityEmissionBody',
+  schema: {
+    required: ['date', 'consumption', 'cost'],
+    properties: {
+      date: { type: 'string', format: 'date' },
+      consumption: { type: 'number', format: 'int32' },
+      cost: { type: 'number', format: 'int32' },
+    },
+  },
+};
+createSchema(bodySchema);
 
 addRequestComponentFor('AddUtilityEmission', {
   required: true,
   content: {
     'application/json': {
-      schema: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['date', 'consumption', 'cost'],
-        properties: {
-          date: { type: 'string', format: 'date' },
-          consumption: { type: 'number', format: 'int32' },
-          cost: { type: 'number', format: 'int32' },
-        },
-      },
+      schema: getReferenceFor({ for: 'schemas', name: 'AddUtilityEmissionBody' }),
     },
   },
 });
+
+const schema: CreateSchemaParams = {
+  name: 'UtilityConsumption',
+  schema: {
+    allOf: [
+      getReferenceFor({ for: 'schemas', name: 'AddUtilityEmissionBody' }),
+      {
+        required: ['id'],
+        properties: {
+          id: { type: 'number', format: 'int32', readOnly: true },
+        },
+      },
+    ],
+  },
+};
+createSchema(schema);
 
 addResponseComponentFor('AddUtilityEmission', {
   description: 'Success message',
@@ -48,7 +70,7 @@ const AddUtilityEmission: OpenAPIV3.OperationObject = {
   parameters: [getReferenceFor({ for: 'requestBodies', name: 'CreateUtility' })],
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'AddUtilityEmission' }),
-    '400': getReferenceFor({ for: 'schemas', name: 'GenericError' }),
+    '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),
   },
 };
 

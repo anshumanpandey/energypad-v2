@@ -1,36 +1,46 @@
-import { AppController, AuthAppController } from '@types';
-import { UtilityServices } from '@services';
+import { AuthAppController, AuthGetAppController } from '@types';
+import { UtilityService } from '@services';
 import { ApiError, ExcelClient } from '@lib';
 import { AddConsumptionToUtilityParam } from '../services/utility.service';
 
-export const createUtility: AuthAppController<'CreateUtility'> = async (req) => {
+export const createUtility: AuthAppController<'CreateUtility', 'CreateUtility'> = async (req) => {
   const data = {
     ...req.body,
     businessId: req.user.id,
   };
-  await UtilityServices.create(data);
+  await UtilityService.create(data);
 
   return { success: true };
 };
 
-export const addEmission: AppController<'AddUtilityEmission'> = async (req) => {
+export const getUtilities: AuthGetAppController<'GetUtilities', '/api/utility/'> = async (req) => {
+  const utilities = await UtilityService.findBy({ businessId: req.user.id });
+  return utilities;
+};
+
+export const addEmission: AuthAppController<'AddUtilityEmission', 'AddUtilityEmission'> = async (req) => {
   const utilityId = req.params.utilityId;
+  const found = await UtilityService.findBy({ id: parseInt(utilityId, 10) });
+  if (found.length === 0) {
+    return new ApiError('Utility to add not found');
+  }
+
   const params = {
     ...req.body,
     utilityId: parseInt(utilityId, 10),
   };
 
-  await UtilityServices.addConsumptionToUtility(params);
+  await UtilityService.addConsumptionToUtility(params);
 
   return { success: true };
 };
 
-export const importFile: AuthAppController<'UtilityFileImport'> = async (req) => {
+export const importFile: AuthAppController<'UtilityFileImport', 'UtilityFileImport'> = async (req) => {
   const excelFile = req.file;
   if (!excelFile) return new ApiError('Missing file');
 
   const data = await ExcelClient.getUtilityData(excelFile.buffer);
-  const utilities = await UtilityServices.findBy({ name: data.map((i) => i.utilityName), businessId: req.user.id });
+  const utilities = await UtilityService.findBy({ name: data.map((i) => i.utilityName), businessId: req.user.id });
 
   const dataToInsert: AddConsumptionToUtilityParam[] = [];
   for (let i = 0, len = data.length; i < len; i++) {
@@ -58,7 +68,7 @@ export const importFile: AuthAppController<'UtilityFileImport'> = async (req) =>
     return new ApiError('No data was imported');
   }
 
-  await UtilityServices.addConsumptionToUtility(dataToInsert);
+  await UtilityService.addConsumptionToUtility(dataToInsert);
 
   return { success: true };
 };

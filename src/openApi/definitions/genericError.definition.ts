@@ -1,4 +1,4 @@
-import { createSchema, CreateSchemaParams } from '../OpenApiDefinition';
+import { addResponseComponentFor, createSchema, CreateSchemaParams, getReferenceFor } from '../OpenApiDefinition';
 
 const schema: CreateSchemaParams = {
   name: 'GenericError',
@@ -16,3 +16,12 @@ const schema: CreateSchemaParams = {
 };
 
 createSchema(schema);
+
+addResponseComponentFor('GenericError', {
+  description: 'Error message',
+  content: {
+    'application/json': {
+      schema: getReferenceFor({ for: 'schemas', name: 'GenericError' }),
+    },
+  },
+});

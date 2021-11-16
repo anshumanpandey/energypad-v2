@@ -4,7 +4,7 @@ import { ApiError } from '@lib';
 import { validPassword } from '@utils';
 import { AddServiceParams } from '../services/user.service';
 
-export const registerUser: AppController<'Register'> = async (req) => {
+export const registerUser: AppController<'Register', 'Register'> = async (req) => {
   const user = await UserService.getUserBy({ email: req.body.email });
   if (user) return new ApiError('Email already registered');
 
@@ -59,7 +59,7 @@ export const registerUser: AppController<'Register'> = async (req) => {
   return { success: true };
 };
 
-export const loginUser: AppController<'Login'> = async (req) => {
+export const loginUser: AppController<'Login', 'Login'> = async (req) => {
   const user = await UserService.getUserBy({ email: req.body.email });
   if (!user) return new ApiError('Credentials not found');
 

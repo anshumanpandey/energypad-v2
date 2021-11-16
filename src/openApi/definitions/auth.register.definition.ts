@@ -106,7 +106,7 @@ const CreateUserOperation: OpenAPIV3.OperationObject = {
   parameters: [getReferenceFor({ for: 'requestBodies', name: 'Register' })],
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'Register' }),
-    '400': getReferenceFor({ for: 'schemas', name: 'GenericError' }),
+    '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),
   },
 };
 

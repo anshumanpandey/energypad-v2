@@ -25,7 +25,9 @@ type SchemaNames =
   | 'RegisterBody'
   | 'SiteRequestBody'
   | 'Utility'
+  | 'UtilityConsumption'
   | 'Site'
+  | 'AddUtilityEmissionBody'
   | 'BusinessService';
 type PathNames =
   | 'CreateUser'
@@ -33,8 +35,12 @@ type PathNames =
   | 'Site'
   | 'Login'
   | 'CreateUtility'
+  | 'GetDashboardData'
   | 'AddUtilityEmission'
+  | 'GetUtilities'
   | 'UtilityFileImport';
+
+type ResponsesName = 'GenericError' | PathNames;
 
 export type CreateSchemaParams = {
   name: SchemaNames;
@@ -58,7 +64,7 @@ export const createSchema = (p: CreateSchemaParams) => {
 
 type ReferenceForParamsDict = {
   schemas: SchemaNames;
-  responses: PathNames;
+  responses: ResponsesName;
   requestBodies: PathNames;
 };
 type GetReferenceForParams<T extends keyof ReferenceForParamsDict> = {
@@ -82,7 +88,7 @@ export const addRequestComponentFor = (name: PathNames, p: RequestComponent) => 
   return OpenApiDefinition.component('requestBodies', name, p);
 };
 
-export const addResponseComponentFor = (name: PathNames, p: OpenAPIV3.ResponseObject) => {
+export const addResponseComponentFor = (name: ResponsesName, p: OpenAPIV3.ResponseObject) => {
   return OpenApiDefinition.component('responses', name, p);
 };
 

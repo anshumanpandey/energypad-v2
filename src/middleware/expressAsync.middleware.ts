@@ -1,9 +1,9 @@
 import express from 'express';
-import { MixAppController, ResponseKeys } from '@types';
+import { MixAppController, QueryParamsKeys, RequestBodyKeys, ResponseKeys } from '@types';
 import { ApiError } from '@lib';
 
 const expressAsync =
-  <T extends ResponseKeys>(fn: MixAppController<T>) =>
+  <T extends ResponseKeys, A extends RequestBodyKeys, F extends QueryParamsKeys>(fn: MixAppController<T, A, F>) =>
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
     //@ts-expect-error TODO: fix this type
     fn(req)

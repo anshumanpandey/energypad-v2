@@ -16,8 +16,8 @@ export type RequestBodieKeys = keyof components['requestBodies'];
 type ControllerReturnType<T extends ResponseKeys> = RequestResponses<T> | ApiError;
 
 type AppRequest<ReqBody, ResBody> = express.Request<{ [key: string]: string }, ResBody, ReqBody>;
-export type AppController<T extends ResponseKeys> = (
-  req: AppRequest<RequestBodyParams<T>, ControllerReturnType<T>>,
+export type AppController<T extends ResponseKeys, A extends RequestBodyKeys> = (
+  req: AppRequest<RequestBodyParams<A>, ControllerReturnType<T>>,
 ) => Promise<ControllerReturnType<T>>;
 
 type AuthAppRequest<ReqBody, ResBody> = { user: { id: number } } & express.Request<
@@ -25,8 +25,20 @@ type AuthAppRequest<ReqBody, ResBody> = { user: { id: number } } & express.Reque
   ResBody,
   ReqBody
 >;
-export type AuthAppController<T extends ResponseKeys> = (
-  req: AuthAppRequest<RequestBodyParams<T>, ControllerReturnType<T>>,
+export type AuthAppController<T extends ResponseKeys, A extends RequestBodyKeys> = (
+  req: AuthAppRequest<RequestBodyParams<A>, ControllerReturnType<T>>,
 ) => Promise<ControllerReturnType<T>>;
 
-export type MixAppController<T extends ResponseKeys> = AppController<T> | AuthAppController<T>;
+export type QueryParamsKeys = '/api/dashboard/' | '/api/utility/';
+//export type QueryParams<T extends QueryParamsKeys> = paths[T]['get']['parameters']['query'];
+export type QueryParams<T extends QueryParamsKeys> = never;
+
+type AuthGetAppRequest<ReqBody, ResBody> = { user: { id: number } } & express.Request<never, ResBody, never, ReqBody>;
+export type AuthGetAppController<T extends ResponseKeys, A extends QueryParamsKeys> = (
+  req: AuthGetAppRequest<QueryParams<A>, ControllerReturnType<T>>,
+) => Promise<ControllerReturnType<T>>;
+
+export type MixAppController<T extends ResponseKeys, A extends RequestBodyKeys, F extends QueryParamsKeys> =
+  | AppController<T, A>
+  | AuthAppController<T, A>
+  | AuthGetAppController<T, F>;

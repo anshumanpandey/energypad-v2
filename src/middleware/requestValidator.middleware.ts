@@ -35,17 +35,18 @@ const { validate, ajv } = new Validator(validatorOptions);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('ajv-keywords')(ajv, 'transform');
 
-ajv.addFormat('int32', {
-  type: 'number',
-  validate: (val) => {
+export const int32Format = {
+  type: 'number' as const,
+  validate: (val: number) => {
     if (val < 0) return false;
     return true;
   },
-});
+};
+ajv.addFormat('int32', int32Format);
 
-ajv.addFormat('date', {
-  type: 'string',
-  validate: (val) => {
+export const dateFormat = {
+  type: 'string' as const,
+  validate: (val: string) => {
     const reg = new RegExp(/^(\d+)-(0[1-9]|1[012])-(0[1-9]|[12]\d|3[01])$/);
     if (reg.test(val) === false) return false;
 
@@ -101,7 +102,8 @@ ajv.addFormat('date', {
 
     return true;
   },
-});
+};
+ajv.addFormat('date', dateFormat);
 
 const requestValidator = (p: List<RequestBodieKeys>) => {
   const result = getJsonSchema();

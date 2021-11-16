@@ -10,7 +10,11 @@ const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam | Ad
   return DB('UtilityConsumptions').insert(params);
 };
 
-const findBy = async (by: { name: string | string[]; businessId?: number }): Promise<AppModels['Utility'][]> => {
+const findBy = async (by: {
+  name?: string | string[];
+  businessId?: number;
+  id?: number;
+}): Promise<AppModels['Utility'][]> => {
   const query = DB('Utilities');
 
   if (by.name) {
@@ -25,6 +29,21 @@ const findBy = async (by: { name: string | string[]; businessId?: number }): Pro
     query.where({ businessId: by.businessId });
   }
 
+  if (by.id) {
+    query.where({ id: by.id });
+  }
+
+  return query;
+};
+
+const getConsumptionPerUtility = (p: { utilityId: number | number[] }): Promise<AppModels['UtilityConsumption'][]> => {
+  const query = DB('UtilityConsumptions');
+
+  if (Array.isArray(p.utilityId)) {
+    query.whereIn('utilityId', p.utilityId);
+  } else {
+    query.where('utilityId', p.utilityId);
+  }
   return query;
 };
 
@@ -32,4 +51,5 @@ export default {
   create,
   addConsumptionToUtility,
   findBy,
+  getConsumptionPerUtility,
 };
