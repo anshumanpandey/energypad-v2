@@ -14,7 +14,7 @@ describe('/Utility ', () => {
   test('It should respond with success message when create an utility', async () => {
     const body = await loginUser();
     const response = await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
-      name: 'in amet enim',
+      name: 'Gas',
     });
     expect(response.body).toMatchSchema(schema.components.responses.CreateUtility.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
@@ -34,11 +34,11 @@ describe('/Utility ', () => {
   test('It should respond with success when adding a consuption to a utility', async () => {
     const body = await loginUser();
     await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
-      name: 'in amet enim',
+      name: 'Heat',
     });
 
     const response = await supertest(app)
-      .post('/api/utility/addEmission/1')
+      .post('/api/utility/addEmission/2')
       .set('Authorization', `Bearer ${body.jwt}`)
       .send({
         date: '2020-01-01',
@@ -49,5 +49,33 @@ describe('/Utility ', () => {
       schema.components.responses.AddUtilityEmission.content['application/json'].schema,
     );
     expect(response.statusCode).toBe(200);
+  });
+
+  test('It should respond with success message when importing from file', async () => {
+    const body = await loginUser('gas2business@mail.com');
+
+    await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
+      name: 'Gas',
+    });
+
+    const response = await supertest(app)
+      .post('/api/utility/importUtility')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .attach('excel', 'test/fixtures/sample_good.xlsx');
+    expect(response.body).toMatchSchema(
+      schema.components.responses.UtilityFileImport.content['application/json'].schema,
+    );
+    expect(response.statusCode).toBe(200);
+  });
+
+  test('It should respond with error message when importing from excel sheet has not correct name', async () => {
+    const body = await loginUser();
+    const response = await supertest(app)
+      .post('/api/utility/importUtility')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .attach('excel', 'test/fixtures/sample_badname.xlsx');
+    expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
+    expect(response.body.message).toBe('No data was imported');
+    expect(response.statusCode).toBe(400);
   });
 });

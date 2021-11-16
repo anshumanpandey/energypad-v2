@@ -24,9 +24,17 @@ type SchemaNames =
   | 'JWTToken'
   | 'RegisterBody'
   | 'SiteRequestBody'
+  | 'Utility'
   | 'Site'
   | 'BusinessService';
-type PathNames = 'CreateUser' | 'Register' | 'Site' | 'Login' | 'CreateUtility' | 'AddUtilityEmission';
+type PathNames =
+  | 'CreateUser'
+  | 'Register'
+  | 'Site'
+  | 'Login'
+  | 'CreateUtility'
+  | 'AddUtilityEmission'
+  | 'UtilityFileImport';
 
 export type CreateSchemaParams = {
   name: SchemaNames;

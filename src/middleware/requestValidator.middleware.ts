@@ -49,15 +49,21 @@ ajv.addFormat('date', {
     const reg = new RegExp(/^(\d+)-(0[1-9]|1[012])-(0[1-9]|[12]\d|3[01])$/);
     if (reg.test(val) === false) return false;
 
-    const [, month, day] = val.split('-');
+    const [year, month, day] = val.split('-');
     const numberDay = parseInt(day, 10);
+    const numberYear = parseInt(year, 10);
+    const isLeapYear = numberYear % 100 === 0 ? numberYear % 400 === 0 : numberYear % 4 === 0;
 
     switch (month) {
       case '01':
         if (numberDay > 31) return false;
         break;
       case '02':
-        if (numberDay > 29) return false;
+        if (isLeapYear) {
+          if (numberDay > 29) return false;
+        } else {
+          if (numberDay > 28) return false;
+        }
         break;
       case '03':
         if (numberDay > 31) return false;

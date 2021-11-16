@@ -1,7 +1,7 @@
 import express from 'express';
-import { AuthMiddleware, ExpressAsync, RequestValidatorMiddleware } from '@middleware';
+import { AuthMiddleware, ExpressAsync, FileUpload, RequestValidatorMiddleware } from '@middleware';
 import { UtilityController } from '@controllers';
-import { AddUtilityPath, CreateUtilityPath } from '@openApi';
+import { AddUtilityPath, CreateUtilityPath, UtilityFileImportPath } from '@openApi';
 
 const authRoutes = express.Router();
 
@@ -23,6 +23,14 @@ authRoutes.post(
     body: 'AddUtilityEmission',
   }),
   ExpressAsync(UtilityController.addEmission),
+);
+
+authRoutes.post(
+  '/importUtility',
+  UtilityFileImportPath,
+  AuthMiddleware,
+  FileUpload.single('excel'),
+  ExpressAsync(UtilityController.importFile),
 );
 
 export default authRoutes;

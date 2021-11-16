@@ -4,7 +4,22 @@ import {
   addRequestComponentFor,
   getReferenceFor,
   addResponseComponentFor,
+  CreateSchemaParams,
+  createSchema,
 } from '../OpenApiDefinition';
+
+const utilityBodySchema: CreateSchemaParams = {
+  name: 'Utility',
+  schema: {
+    required: ['name', 'id'],
+    properties: {
+      id: { type: 'number', readOnly: true },
+      name: { type: 'string' },
+    },
+  },
+};
+
+createSchema(utilityBodySchema);
 
 addRequestComponentFor('CreateUtility', {
   content: {

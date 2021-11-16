@@ -1,7 +1,7 @@
 import supertest from 'supertest';
 import { app } from '../src/app';
 
-export const loginUser = async () => {
+export const loginUser = async (email?: string) => {
   const body = {
     businessName: 'proident nulla dolor',
     businessType: 'dolor',
@@ -12,7 +12,7 @@ export const loginUser = async () => {
     contactName: 'labore exercitation id',
     position: 'ullamco tempor exercitation laboris consectetur',
     phoneNumber: 'velit',
-    email: `mail${new Date().toString()}@mail.com`,
+    email: email ? email : `mail${new Date().valueOf().toString()}@mail.com`,
     country: 'velit irure dolor',
     state: 'consequat',
     town: 'magna dolore dolor in',
