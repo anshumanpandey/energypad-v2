@@ -1,5 +1,5 @@
 import { DB } from '@lib';
-import { AppModels } from '@types';
+import { AppModels, Transactionable } from '@types';
 
 const getUserBy = (params: { id?: number; email?: string }) => {
   const query = DB('Businesses').select<AppModels['User']>('*');
@@ -13,7 +13,7 @@ const getUserBy = (params: { id?: number; email?: string }) => {
 };
 
 export type AddServiceParams = { businessId: number; service: { name: string } & AppModels['BusinessService'] };
-const addService = async (params: AddServiceParams | AddServiceParams[]) => {
+const addService = async (params: AddServiceParams | AddServiceParams[], opt?: Transactionable) => {
   const data = [];
 
   if (Array.isArray(params)) {
@@ -39,7 +39,12 @@ const addService = async (params: AddServiceParams | AddServiceParams[]) => {
     });
   }
 
-  return DB('BusinessService').insert(data);
+  const query = DB('BusinessService').insert(data);
+  if (opt?.txr) {
+    query.transacting(opt.txr);
+  }
+
+  return query;
 };
 
 const updateUser = (p: AppModels['User']) => {
@@ -64,7 +69,7 @@ type SaveSupportedServicesParams = {
   lighting?: AppModels['BusinessService'];
   powering?: AppModels['BusinessService'];
 };
-const saveSupportedServices = (p: SaveSupportedServicesParams) => {
+const saveSupportedServices = (p: SaveSupportedServicesParams, opt?: Transactionable) => {
   const services: AddServiceParams[] = [];
   if (p.cooling) {
     const service: AddServiceParams = {
@@ -108,7 +113,7 @@ const saveSupportedServices = (p: SaveSupportedServicesParams) => {
   }
 
   if (services.length !== 0) {
-    return addService(services);
+    return addService(services, opt);
   }
 
   return Promise.resolve();

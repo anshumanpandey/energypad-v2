@@ -1,4 +1,5 @@
 import express from 'express';
+import { Knex } from 'knex';
 import { ApiError } from '@lib';
 import { components } from './Generated';
 
@@ -42,3 +43,7 @@ export type MixAppController<T extends ResponseKeys, A extends RequestBodyKeys, 
   | AppController<T, A>
   | AuthAppController<T, A>
   | AuthGetAppController<T, F>;
+
+export interface Transactionable {
+  txr?: Knex.Transaction;
+}

@@ -1,13 +1,25 @@
 import { DB } from '@lib';
-import { AppModels, RequestBodyParams } from '@types';
+import { AppModels, RequestBodyParams, Transactionable } from '@types';
 
-const create = async (params: RequestBodyParams<'CreateUtility'>) => {
-  return DB('Utilities').insert(params);
+const create = async (params: RequestBodyParams<'CreateUtility'>, opt?: Transactionable) => {
+  const query = DB('Utilities').insert(params);
+  if (opt?.txr) {
+    query.transacting(opt.txr);
+  }
+  return query;
 };
 
 export type AddConsumptionToUtilityParam = { utilityId: number } & RequestBodyParams<'AddUtilityEmission'>;
-const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam | AddConsumptionToUtilityParam[]) => {
-  return DB('UtilityConsumptions').insert(params);
+const addConsumptionToUtility = async (
+  params: AddConsumptionToUtilityParam | AddConsumptionToUtilityParam[],
+  opt?: Transactionable,
+) => {
+  const query = DB('UtilityConsumptions').insert(params);
+
+  if (opt?.txr) {
+    query.transacting(opt.txr);
+  }
+  return query;
 };
 
 const findBy = async (by: {
