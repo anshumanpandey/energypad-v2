@@ -34,7 +34,7 @@ export type QueryParamsKeys = '/api/dashboard/' | '/api/utility/';
 export type QueryParams<T extends QueryParamsKeys> = never;
 
 type AuthGetAppRequest<ReqBody, ResBody> = { user: { id: number } } & express.Request<never, ResBody, never, ReqBody>;
-export type AuthGetAppController<T extends ResponseKeys, A extends QueryParamsKeys> = (
+export type AuthGetAppController<T extends ResponseKeys, A extends QueryParamsKeys = never> = (
   req: AuthGetAppRequest<QueryParams<A>, ControllerReturnType<T>>,
 ) => Promise<ControllerReturnType<T>>;
 

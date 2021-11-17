@@ -11,7 +11,7 @@ const schema: CreateSchemaParams = {
         additionalProperties: false,
         properties: {
           id: {
-            type: 'string',
+            type: 'number',
           },
         },
       },

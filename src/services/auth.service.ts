@@ -13,11 +13,16 @@ const registerUser = async (params: RequestBodyParams<'Register'>) => {
   return DB.transaction(function (trx) {
     return trx('Businesses')
       .insert(businessParams)
-      .then(() => trx('Floors').insert(floors));
+      .returning('id')
+      .then((insertedId) => {
+        const mapFloors = (f: typeof floors[0]) => ({ ...f, businessId: insertedId });
+        const floorsData = floors.map(mapFloors);
+        return trx('Floors').insert(floorsData);
+      });
   });
 };
 
-const generateJwt = (user: { id: string }) => {
+const generateJwt = (user: { id: number }) => {
   return sign(user, GlobalEnv.JWT_SECRET);
 };
 

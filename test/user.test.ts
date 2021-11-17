@@ -1,0 +1,59 @@
+import supertest from 'supertest';
+import { matchers } from 'jest-json-schema';
+expect.extend(matchers);
+import { app } from '../src/app';
+import { loginUser, NO_EXTRA_PROPERTY_ERROR_MESSAGE } from './testhelp';
+import schema from '../src/types/Schema.json';
+import DB from '../src/lib/db/Db';
+
+beforeAll(async () => {
+  await DB.migrate.latest();
+});
+
+describe('/Utility ', () => {
+  test('It should respond with success message when updating an user', async () => {
+    const body = await loginUser();
+    const newData = {
+      businessName: 'new_businessName',
+      businessType: 'new_businessType',
+      businessService: 'new_businessService',
+      password: 'new_password',
+      siteName: 'new_siteName',
+      buildingName: 'new_buildingName',
+      contactName: 'new_contactName',
+      position: 'new_position',
+      phoneNumber: 'new_phoneNumber',
+      email: 'new_email',
+      country: 'new_country',
+      state: 'new_state',
+      town: 'new_town',
+      postCode: 'new_postCode',
+      subscriptionDate: '2021-01-01',
+      holydayDate: '2020-01-01',
+      totalArea: 9,
+      totalPopulation: 10,
+      floors: [
+        {
+          size: 'NEW_floor_1',
+          area: 200,
+          population: 100,
+        },
+      ],
+      cooling: {
+        startDate: '2020-01-01',
+        endDate: '2020-03-02',
+        consumption: 200,
+        daysOnYear: 50,
+      },
+      heating: {
+        startDate: '2020-05-05',
+        endDate: '2020-06-05',
+        consumption: 300,
+        daysOnYear: 20,
+      },
+    };
+    const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
+    expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
+    expect(response.statusCode).toBe(200);
+  });
+});

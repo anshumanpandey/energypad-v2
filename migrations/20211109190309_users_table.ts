@@ -28,6 +28,8 @@ export async function up(knex: Knex): Promise<void> {
       table.string('size', 255).notNullable();
       table.integer('area').notNullable();
       table.integer('population').notNullable();
+      table.integer('businessId', 255).notNullable();
+      table.foreign('businessId').references('Businesses.id').deferrable('deferred');
     })
     .createTable('BusinessService', function (table) {
       table.increments('id');

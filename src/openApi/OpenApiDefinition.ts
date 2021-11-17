@@ -38,9 +38,11 @@ type PathNames =
   | 'GetDashboardData'
   | 'AddUtilityEmission'
   | 'GetUtilities'
+  | 'GetUser'
+  | 'UpdateUser'
   | 'UtilityFileImport';
 
-type ResponsesName = 'GenericError' | PathNames;
+type ResponsesName = 'GenericError' | 'UpdateUser' | PathNames;
 
 export type CreateSchemaParams = {
   name: SchemaNames;

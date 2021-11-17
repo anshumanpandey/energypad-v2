@@ -2,6 +2,7 @@ import './definitions/genericError.definition';
 import './definitions/success.definition';
 import './definitions/site.definition';
 import './definitions/jwt.definition';
+import './definitions/businessService.definition';
 import { RegisterPath } from './definitions/auth.register.definition';
 import './definitions/user.definition';
 
@@ -13,6 +14,8 @@ import { UtilityFileImportPath } from './definitions/utilityFile.import.definiti
 import { OpenApiDefinition } from './OpenApiDefinition';
 import { GetDashboardDataPath } from './definitions/dashboard.get.definition';
 import { GetUtilitiesPath } from './definitions/utility.get.definition';
+import { UpdateUserPath } from './definitions/user.update.definition';
+import { GetUserPath } from './definitions/user.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -24,4 +27,6 @@ export {
   UtilityFileImportPath,
   GetDashboardDataPath,
   GetUtilitiesPath,
+  UpdateUserPath,
+  GetUserPath,
 };
