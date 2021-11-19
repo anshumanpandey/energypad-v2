@@ -24,4 +24,5 @@ artifacts:
   files:
     - 'dist/**/*'
     - 'node_modules/**/*'
+    - 'deploy_scripts/**/*'
     - 'appspec.yml'
