@@ -9,6 +9,6 @@ sudo -s
 export NVM_DIR="$HOME/.nvm"
 sudo [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
 sudo [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-sudo nvm install v14.17.5
+nvm install v14.17.5
 
-sudo npm install -g yarn
+npm install -g yarn
