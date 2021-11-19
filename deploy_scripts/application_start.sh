@@ -1,4 +1,4 @@
 #!/bin/bash
 
-source /home/ubuntu/.bash_profile
+source ~/.bashrc
 node /home/ubuntu/nodejs/index.js

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /home/ubuntu/.bash_profile
+source ~/.bashrc
 cd /home/ubuntu/nodejs
 
 yarn install
