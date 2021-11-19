@@ -10,4 +10,4 @@ nvm install v14.17.5
 npm install --global yarn
 cd /home/ubuntu/nodejs
 
-yarn install
+sudo yarn install
