@@ -2,4 +2,4 @@
 
 cd /home/ubuntu/nodejs
 
-sudo yarn install
+yarn install
