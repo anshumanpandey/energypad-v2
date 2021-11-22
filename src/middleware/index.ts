@@ -3,3 +3,4 @@ export { default as RequestValidatorMiddleware } from './requestValidator.middle
 export { default as ExpressAsync } from './expressAsync.middleware';
 export { default as AuthMiddleware } from './auth.middleware';
 export { default as FileUpload } from './fileupload.middleware';
+export { default as AppHelmet } from './appHelmet.middleware';
