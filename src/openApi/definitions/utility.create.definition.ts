@@ -47,7 +47,7 @@ addResponseComponentFor('CreateUtility', {
 
 const CreateUtilityOperation: OpenAPIV3.OperationObject = {
   description: 'Create a new utility.',
-  parameters: [getReferenceFor({ for: 'requestBodies', name: 'CreateUtility' })],
+  requestBody: getReferenceFor({ for: 'requestBodies', name: 'CreateUtility' }),
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'CreateUtility' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),

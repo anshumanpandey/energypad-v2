@@ -11,11 +11,17 @@ const OpenApi: Pick<OpenAPIV3.Document, 'openapi' | 'info' | 'servers' | 'securi
   },
   security: [
     {
-      BearerAuth: ['http', 'bearer'],
+      bearer: [],
     },
   ],
 };
 export const OpenApiDefinition = openapi(OpenApi);
+
+OpenApiDefinition.component('securitySchemes', 'bearer', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'JWT',
+});
 
 type SchemaNames =
   | 'User'

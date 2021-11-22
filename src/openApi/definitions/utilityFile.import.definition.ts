@@ -42,7 +42,7 @@ addResponseComponentFor('UtilityFileImport', {
 
 const UtilityFileImport: OpenAPIV3.OperationObject = {
   description: 'Import excel file.',
-  parameters: [getReferenceFor({ for: 'requestBodies', name: 'UtilityFileImport' })],
+  requestBody: getReferenceFor({ for: 'requestBodies', name: 'UtilityFileImport' }),
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'UtilityFileImport' }),
     '400': getReferenceFor({ for: 'schemas', name: 'GenericError' }),

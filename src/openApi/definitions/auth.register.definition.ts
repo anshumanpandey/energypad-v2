@@ -90,7 +90,7 @@ addResponseComponentFor('Register', {
 
 const CreateUserOperation: OpenAPIV3.OperationObject = {
   description: 'Create a new user.',
-  parameters: [getReferenceFor({ for: 'requestBodies', name: 'Register' })],
+  requestBody: getReferenceFor({ for: 'requestBodies', name: 'Register' }),
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'Register' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),

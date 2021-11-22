@@ -25,7 +25,7 @@ addResponseComponentFor('UpdateUser', {
 
 const UpdateUserOperation: OpenAPIV3.OperationObject = {
   description: 'Create a new user.',
-  parameters: [getReferenceFor({ for: 'requestBodies', name: 'UpdateUser' })],
+  requestBody: getReferenceFor({ for: 'requestBodies', name: 'UpdateUser' }),
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'UpdateUser' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),

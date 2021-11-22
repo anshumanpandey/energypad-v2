@@ -26,8 +26,8 @@ addResponseComponentFor('Site', {
 
 const CreateSiteOperation: OpenAPIV3.OperationObject = {
   description: 'Create a new site for a business.',
-  security: [{ BearerAuth: [] }],
-  parameters: [getReferenceFor({ for: 'requestBodies', name: 'Site' })],
+  security: [{ bearer: [] }],
+  requestBody: getReferenceFor({ for: 'requestBodies', name: 'Site' }),
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'Site' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),

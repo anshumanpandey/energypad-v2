@@ -67,7 +67,7 @@ addParameterComponentFor('AddUtilityEmission', {
 
 const AddUtilityEmission: OpenAPIV3.OperationObject = {
   description: 'Add emision to utility.',
-  parameters: [getReferenceFor({ for: 'requestBodies', name: 'CreateUtility' })],
+  requestBody: getReferenceFor({ for: 'requestBodies', name: 'CreateUtility' }),
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'AddUtilityEmission' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),

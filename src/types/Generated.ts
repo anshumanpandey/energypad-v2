@@ -7,31 +7,31 @@ export interface paths {
   "/api/auth/": {
     /** Create a new user. */
     post: {
-      parameters: {};
       responses: {
         200: components["responses"]["Register"];
         400: components["responses"]["GenericError"];
       };
+      requestBody: components["requestBodies"]["Register"];
     };
   };
   "/api/auth/login": {
     /** Return JWT token. */
     post: {
-      parameters: {};
       responses: {
         200: components["responses"]["Login"];
         400: components["responses"]["GenericError"];
       };
+      requestBody: components["requestBodies"]["Login"];
     };
   };
   "/api/site/": {
     /** Create a new site for a business. */
     post: {
-      parameters: {};
       responses: {
         200: components["responses"]["Site"];
         400: components["responses"]["GenericError"];
       };
+      requestBody: components["requestBodies"]["Site"];
     };
   };
   "/api/utility/": {
@@ -45,11 +45,11 @@ export interface paths {
     };
     /** Create a new utility. */
     post: {
-      parameters: {};
       responses: {
         200: components["responses"]["CreateUtility"];
         400: components["responses"]["GenericError"];
       };
+      requestBody: components["requestBodies"]["CreateUtility"];
     };
   };
   "/api/utility/addEmission/{utilityId}": {
@@ -64,16 +64,17 @@ export interface paths {
         200: components["responses"]["AddUtilityEmission"];
         400: components["responses"]["GenericError"];
       };
+      requestBody: components["requestBodies"]["CreateUtility"];
     };
   };
   "/api/utility/importUtility": {
     /** Import excel file. */
     post: {
-      parameters: {};
       responses: {
         200: components["responses"]["UtilityFileImport"];
         400: components["schemas"]["GenericError"];
       };
+      requestBody: components["requestBodies"]["UtilityFileImport"];
     };
   };
   "/api/dashboard/": {
@@ -97,11 +98,11 @@ export interface paths {
     };
     /** Create a new user. */
     put: {
-      parameters: {};
       responses: {
         200: components["responses"]["UpdateUser"];
         400: components["responses"]["GenericError"];
       };
+      requestBody: components["requestBodies"]["UpdateUser"];
     };
   };
 }
