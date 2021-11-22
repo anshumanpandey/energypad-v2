@@ -7,7 +7,7 @@ export const config = {
   development: {
     client: 'sqlite3',
     connection: {
-      filename: path.resolve('dev.sqlite3'),
+      filename: process.env.PWD + '/dev.sqlite3',
     },
     migrations: {
       tableName: 'knex_migrations',
