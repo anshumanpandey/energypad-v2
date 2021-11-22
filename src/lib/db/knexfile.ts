@@ -1,4 +1,6 @@
 // Update with your config settings.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+require('dotenv').config();
 import path from 'path';
 
 export const config = {
@@ -43,11 +45,13 @@ export const config = {
   },
 
   production: {
-    client: 'postgresql',
+    client: process.env.DB_DIALECT,
     connection: {
-      database: 'my_db',
-      user: 'username',
-      password: 'password',
+      host: process.env.PROD_DB_HOSTNAME,
+      port: 5432,
+      user: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
     },
     pool: {
       min: 2,
@@ -55,6 +59,8 @@ export const config = {
     },
     migrations: {
       tableName: 'knex_migrations',
+      directory: path.resolve('..', '..', '..', 'migrations'),
+      loadExtensions: ['.ts'],
     },
   },
 };
