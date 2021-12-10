@@ -1,15 +1,41 @@
 import { DB } from '@lib';
 import { AppModels, Transactionable } from '@types';
 
-const getUserBy = (params: { id?: number; email?: string }) => {
-  const query = DB('Businesses').select<AppModels['User']>('*');
+const getUserBy = async (params: { id?: number; email?: string }) => {
+  const query = DB('Businesses')
+    .select(['Businesses.*', 'Programmes.id as ProgrammeId', 'Programmes.question', 'ProgrammeAnswers.answer'])
+    .leftJoin('Utilities', 'Businesses.id', 'Utilities.businessId')
+    .leftJoin('Programmes', 'Utilities.id', 'Programmes.utilityId')
+    .leftJoin('ProgrammeAnswers', 'Programmes.id', 'ProgrammeAnswers.programmeId')
+    .leftJoin({ B: 'Businesses' }, 'Utilities.businessId', 'B.id');
   if (params.id) {
-    query.where({ id: params.id });
+    query.where({ 'Businesses.id': params.id });
   }
   if (params.email) {
-    query.where({ email: params.email });
+    query.where({ 'Businesses.email': params.email });
   }
-  return query.first();
+  const records = await query;
+  const reduceRecords = (r: any[]) => {
+    const programmes = new Map();
+    for (let i = 0, len = r.length; i < len; i++) {
+      const el = r[i];
+      const { question, answer, ProgrammeId } = el;
+      if (programmes.has(question) === false) {
+        programmes.set(question, { id: ProgrammeId, question, answers: [answer] });
+      } else {
+        const programme = programmes.get(question);
+        programme.answers.push(answer);
+        programmes.set(question, programme);
+      }
+    }
+    const first = r[0];
+    if (first) {
+      first.programmes = Array.from(programmes.values());
+    }
+    return first;
+  };
+  const record = reduceRecords(records);
+  return record;
 };
 
 export type AddServiceParams = { businessId: number; service: { name: string } & AppModels['BusinessService'] };
@@ -76,6 +102,12 @@ const updateUser = (p: AppModels['User']) => {
     await trx('Floors').insert(floorsData);
 
     if (programmes && programmes.length !== 0) {
+      await trx()
+        .del()
+        .from('Programmes')
+        .whereIn('Programmes.utilityId', (q) => {
+          return q.select('id').from('Utilities').where('businessId', id);
+        });
       const data = reduceProgrammesData(programmes);
       await trx('Programmes').insert(data.programmes);
 

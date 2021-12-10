@@ -12,7 +12,7 @@ export async function up(knex: Knex): Promise<void> {
       table.increments('id');
       table.string('answer').notNullable();
       table.integer('programmeId').notNullable();
-      table.foreign('programmeId').references('Programmes.id').deferrable('deferred');
+      table.foreign('programmeId').references('Programmes.id').deferrable('deferred').onDelete('CASCADE');
     });
 }
 

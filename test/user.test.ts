@@ -108,5 +108,18 @@ describe('/Business ', () => {
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
     expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
+
+    const newData2 = newData;
+    newData2.programmes[0].answers.push('Daily');
+    const response2 = await supertest(app)
+      .put('/api/business')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send(newData2);
+
+    expect(response2.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
+    expect(response2.statusCode).toBe(200);
+
+    const meData = await supertest(app).get('/api/business').set('Authorization', `Bearer ${body.jwt}`);
+    expect(meData.body.programmes[0].answers.length).toBe(3);
   });
 });
