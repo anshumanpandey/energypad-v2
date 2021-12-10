@@ -48,17 +48,51 @@ const addService = async (params: AddServiceParams | AddServiceParams[], opt?: T
 };
 
 const updateUser = (p: AppModels['User']) => {
-  const { id, floors, ...vals } = p;
+  const { id, floors, programmes, ...vals } = p;
+  type Programme = NonNullable<typeof programmes>[0];
 
   const mapFloors = (f: typeof floors[0]) => ({ ...f, businessId: id });
   const floorsData = floors.map(mapFloors);
 
-  return DB.transaction(function (trx) {
-    return trx('Businesses')
-      .where('id', id)
-      .update(vals)
-      .then(() => trx('Floors').where('businessId', id).del())
-      .then(() => trx('Floors').insert(floorsData));
+  const reduceProgrammesData = (p: Programme[]) => {
+    const data = {
+      programmes: [] as Pick<Programme, 'question' | 'utilityId'>[],
+      answers: [] as { answer: string; question: string }[],
+    };
+    for (let i = 0, len = p.length; i < len; i++) {
+      const el = p[i];
+      const { answers, ...programme } = el;
+      data.programmes.push(programme);
+      data.answers.push(...answers.map((a) => ({ answer: a, question: programme.question })));
+    }
+
+    return data;
+  };
+
+  return DB.transaction(async function (trx) {
+    await trx('Businesses').where('id', id).update(vals);
+
+    await trx('Floors').where('businessId', id).del();
+    await trx('Floors').insert(floorsData);
+
+    if (programmes && programmes.length !== 0) {
+      const data = reduceProgrammesData(programmes);
+      await trx('Programmes').insert(data.programmes);
+
+      const mapAnswerQuery = (a: typeof data.answers[0]) => ({
+        answer: a.answer,
+        programmeId: trx('Programmes')
+          .select('Programmes.id')
+          .where({
+            question: a.question,
+          })
+          .innerJoin('Utilities', 'Programmes.utilityId', 'Utilities.id')
+          .innerJoin('Businesses', 'Utilities.businessId', 'Businesses.id')
+          .first(),
+      });
+
+      await trx('ProgrammeAnswers').insert(data.answers.map(mapAnswerQuery));
+    }
   });
 };
 

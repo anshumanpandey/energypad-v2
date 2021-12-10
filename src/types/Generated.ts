@@ -139,6 +139,11 @@ export interface components {
       consumption: number;
       daysOnYear: number;
     };
+    Programme: {
+      question: string;
+      utilityId: number;
+      answers: string[];
+    };
     RegisterBody: {
       businessName: string;
       businessType: string;
@@ -167,6 +172,7 @@ export interface components {
       heating?: components["schemas"]["BusinessService"];
       lighting?: components["schemas"]["BusinessService"];
       powering?: components["schemas"]["BusinessService"];
+      programmes?: components["schemas"]["Programme"][];
     };
     User: components["schemas"]["RegisterBody"] & {
       id: number;

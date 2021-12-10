@@ -67,6 +67,10 @@ createSchema({
       heating: getReferenceFor({ for: 'schemas', name: 'BusinessService' }),
       lighting: getReferenceFor({ for: 'schemas', name: 'BusinessService' }),
       powering: getReferenceFor({ for: 'schemas', name: 'BusinessService' }),
+      programmes: {
+        type: 'array',
+        items: getReferenceFor({ for: 'schemas', name: 'Programme' }),
+      },
     },
   },
 });

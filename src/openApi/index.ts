@@ -3,6 +3,7 @@ import './definitions/success.definition';
 import './definitions/site.definition';
 import './definitions/jwt.definition';
 import './definitions/businessService.definition';
+import './definitions/progamme.definition';
 import { RegisterPath } from './definitions/auth.register.definition';
 import './definitions/user.definition';
 

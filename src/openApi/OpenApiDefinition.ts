@@ -34,6 +34,7 @@ type SchemaNames =
   | 'UtilityConsumption'
   | 'Site'
   | 'AddUtilityEmissionBody'
+  | 'Programme'
   | 'BusinessService';
 type PathNames =
   | 'CreateUser'
