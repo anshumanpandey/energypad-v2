@@ -105,6 +105,16 @@ export interface paths {
       requestBody: components["requestBodies"]["UpdateUser"];
     };
   };
+  "/api/business/setBrands": {
+    /** Create a new user. */
+    post: {
+      responses: {
+        200: components["responses"]["SetBrands"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["SetBrands"];
+    };
+  };
 }
 
 export interface components {
@@ -143,6 +153,13 @@ export interface components {
       question: string;
       utilityId: number;
       answers: string[];
+    };
+    Brand: {
+      name: string;
+      rate: number;
+      startTime: string;
+      endTime: string;
+      days: string[];
     };
     RegisterBody: {
       businessName: string;
@@ -262,6 +279,12 @@ export interface components {
         "application/json": components["schemas"]["User"];
       };
     };
+    /** Success message */
+    SetBrands: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddUtilityEmission: number;
@@ -308,6 +331,13 @@ export interface components {
     UpdateUser: {
       content: {
         "application/json": components["schemas"]["RegisterBody"];
+      };
+    };
+    SetBrands: {
+      content: {
+        "application/json": {
+          brands: components["schemas"]["Brand"][];
+        };
       };
     };
   };

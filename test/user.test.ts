@@ -2,7 +2,7 @@ import supertest from 'supertest';
 import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
-import { loginUser, NO_EXTRA_PROPERTY_ERROR_MESSAGE } from './testhelp';
+import { loginUser } from './testhelp';
 import schema from '../src/types/Schema.json';
 import DB from '../src/lib/db/Db';
 
@@ -121,5 +121,46 @@ describe('/Business ', () => {
 
     const meData = await supertest(app).get('/api/business').set('Authorization', `Bearer ${body.jwt}`);
     expect(meData.body.programmes[0].answers.length).toBe(3);
+  });
+
+  test('It should respond with success message when updating an user with programmes', async () => {
+    const body = await loginUser();
+    const newData = {
+      brands: [
+        {
+          name: 'All Time',
+          startTime: '00:00:00',
+          endTime: '00:20:00',
+          days: ['Mon', 'Tue'],
+          rate: 200,
+        },
+        {
+          name: 'Rate 1',
+          startTime: '00:00:00',
+          endTime: '00:12:00',
+          days: ['Mon', 'Tue'],
+          rate: 300,
+        },
+      ],
+    };
+    const response = await supertest(app)
+      .post('/api/business/setBrands')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send(newData);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
+
+    const newData2 = newData;
+    newData2.brands[0].days.push('Wed');
+    const response2 = await supertest(app)
+      .post('/api/business/setBrands')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send(newData2);
+
+    expect(response2.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
+    expect(response2.statusCode).toBe(200);
+
+    const meData = await supertest(app).get('/api/business').set('Authorization', `Bearer ${body.jwt}`);
+    expect(meData.body.brands[0].days.length).toBe(3);
   });
 });

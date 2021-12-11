@@ -39,7 +39,6 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
     const consumptionFilter = filterByMonth(idx);
     const consumptionOfMonth = consumptions.filter(consumptionFilter).sort(sortByDate);
     if (consumptionOfMonth.length !== 0) {
-      console.log({ consumptionOfMonth });
       const mostRecentRecord = consumptionOfMonth[consumptionOfMonth.length - 1];
       avaragePerMonth.push({
         date: `${new Date().getFullYear()}-${('0' + idx).slice(-2)}-01`,

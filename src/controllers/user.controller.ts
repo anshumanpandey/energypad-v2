@@ -24,3 +24,18 @@ export const getMet: AuthGetAppController<'GetUser'> = async (req) => {
 
   return user;
 };
+
+export const addBrands: AuthAppController<'SetBrands', 'SetBrands'> = async (req) => {
+  const brands = req.body.brands;
+  if (brands && brands) {
+    const mapBrand = (b: typeof brands[0]) => {
+      return {
+        ...b,
+        businessId: req.user.id,
+      };
+    };
+    await UserService.addBrands(brands.map(mapBrand));
+  }
+
+  return { success: true };
+};

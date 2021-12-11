@@ -44,6 +44,27 @@ export const int32Format = {
 };
 ajv.addFormat('int32', int32Format);
 
+export const timeFormat = {
+  type: 'string' as const,
+  validate: (val: string) => {
+    const [hours, minutes, seconds] = val.split(':');
+    if (!hours) return false;
+    if (!minutes) return false;
+    if (!seconds) return false;
+
+    const hoursNumber = parseInt(hours, 10);
+    const minutesNumber = parseInt(minutes, 10);
+    const secondsNumber = parseInt(seconds, 10);
+
+    if (hoursNumber < 0 || hoursNumber > 24) return false;
+    if (minutesNumber < 0 || minutesNumber > 60) return false;
+    if (secondsNumber < 0 || secondsNumber > 60) return false;
+
+    return true;
+  },
+};
+ajv.addFormat('time', timeFormat);
+
 export const dateFormat = {
   type: 'string' as const,
   validate: (val: string) => {

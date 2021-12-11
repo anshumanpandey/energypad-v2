@@ -3,34 +3,61 @@ import { AppModels, Transactionable } from '@types';
 
 const getUserBy = async (params: { id?: number; email?: string }) => {
   const query = DB('Businesses')
-    .select(['Businesses.*', 'Programmes.id as ProgrammeId', 'Programmes.question', 'ProgrammeAnswers.answer'])
+    .select([
+      'Businesses.*',
+      'Programmes.id as ProgrammeId',
+      'Programmes.question',
+      'ProgrammeAnswers.answer',
+      'Brands.id as BrandId',
+      'Brands.name as brandName',
+      'Brands.startTime as brandStartTime',
+      'Brands.endTime as brandEndTime',
+      'Brands.rate as brandRate',
+      'BrandDays.name as brandDay',
+    ])
     .leftJoin('Utilities', 'Businesses.id', 'Utilities.businessId')
     .leftJoin('Programmes', 'Utilities.id', 'Programmes.utilityId')
     .leftJoin('ProgrammeAnswers', 'Programmes.id', 'ProgrammeAnswers.programmeId')
-    .leftJoin({ B: 'Businesses' }, 'Utilities.businessId', 'B.id');
+    .leftJoin({ B: 'Businesses' }, 'Utilities.businessId', 'B.id')
+    .leftJoin('Brands', 'Businesses.id', 'Brands.businessId')
+    .leftJoin('BrandDays', 'Brands.id', 'BrandDays.brandId');
+
   if (params.id) {
     query.where({ 'Businesses.id': params.id });
   }
   if (params.email) {
     query.where({ 'Businesses.email': params.email });
   }
+
   const records = await query;
   const reduceRecords = (r: any[]) => {
     const programmes = new Map();
+    const brands = new Map();
+
     for (let i = 0, len = r.length; i < len; i++) {
       const el = r[i];
       const { question, answer, ProgrammeId } = el;
-      if (programmes.has(question) === false) {
-        programmes.set(question, { id: ProgrammeId, question, answers: [answer] });
+      if (programmes.has(ProgrammeId) === false) {
+        programmes.set(ProgrammeId, { id: ProgrammeId, question, answers: [answer] });
       } else {
-        const programme = programmes.get(question);
+        const programme = programmes.get(ProgrammeId);
         programme.answers.push(answer);
-        programmes.set(question, programme);
+        programmes.set(ProgrammeId, programme);
+      }
+
+      const { BrandId, brandName, brandStartTime, brandEndTime, brandRate, brandDay } = el;
+      if (BrandId && brands.has(BrandId) === false) {
+        brands.set(BrandId, { id: BrandId, brandName, brandStartTime, brandEndTime, brandRate, days: [brandDay] });
+      } else if (BrandId && brands.has(BrandId) === true) {
+        const brand = brands.get(BrandId);
+        brand.days.push(brandDay);
+        brands.set(BrandId, brand);
       }
     }
     const first = r[0];
     if (first) {
-      first.programmes = Array.from(programmes.values());
+      first.programmes = Array.from(programmes.values()) || [];
+      first.brands = Array.from(brands.values()) || [];
     }
     return first;
   };
@@ -185,7 +212,43 @@ const saveSupportedServices = (p: SaveSupportedServicesParams, opt?: Transaction
   return Promise.resolve();
 };
 
+type AddBrandParams = {
+  businessId: number;
+  name: string;
+  startTime: string;
+  endTime: string;
+  days: string[];
+  rate: number;
+};
+const addBrands = (params: AddBrandParams[]) => {
+  return DB.transaction(async function (trx) {
+    const data = {
+      brands: [] as Omit<AddBrandParams, 'days'>[],
+      days: [] as { name: string; brandId: string }[],
+    };
+    for (let i = 0, len = params.length; i < len; i++) {
+      const el = params[i];
+      const { days, ...brand } = el;
+
+      const mapD = (d: string) => {
+        return {
+          brandId: trx('Brands').select('id').where(brand).first() as unknown as string,
+          name: d,
+        };
+      };
+
+      data.brands.push(brand);
+      data.days.push(...days.map(mapD));
+    }
+
+    await trx('Brands').delete().where('businessId', data.brands[0].businessId);
+    await trx('Brands').insert(data.brands);
+    await trx('BrandDays').insert(data.days);
+  });
+};
+
 export default {
+  addBrands,
   getUserBy,
   addService,
   updateUser,

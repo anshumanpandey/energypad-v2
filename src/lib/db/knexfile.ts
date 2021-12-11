@@ -9,6 +9,7 @@ export const config = {
     connection: {
       filename: process.env.PWD + '/dev.sqlite3',
     },
+    useNullAsDefault: true,
     migrations: {
       tableName: 'knex_migrations',
       directory: path.resolve('..', '..', '..', 'migrations'),
@@ -21,6 +22,7 @@ export const config = {
     connection: {
       filename: path.resolve('testdb.sqlite3'),
     },
+    useNullAsDefault: true,
     migrations: {
       tableName: 'knex_migrations',
       directory: path.resolve('migrations'),
