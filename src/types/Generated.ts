@@ -77,6 +77,16 @@ export interface paths {
       requestBody: components["requestBodies"]["UtilityFileImport"];
     };
   };
+  "/api/utility/savingTips": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {};
+      responses: {
+        200: components["responses"]["GetSavingTips"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/dashboard/": {
     /** Get dashboard data per date. */
     get: {
@@ -160,6 +170,12 @@ export interface components {
       startTime: string;
       endTime: string;
       days: string[];
+    };
+    SavingTip: {
+      id: number;
+      category: string;
+      text: string;
+      imageUrl?: string | null;
     };
     RegisterBody: {
       businessName: string;
@@ -283,6 +299,12 @@ export interface components {
     SetBrands: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
+    /** Success message */
+    GetSavingTips: {
+      content: {
+        "application/json": components["schemas"]["SavingTip"][];
       };
     };
   };

@@ -7,7 +7,9 @@ import schema from '../src/types/Schema.json';
 import DB from '../src/lib/db/Db';
 
 beforeAll(async () => {
-  await DB.migrate.latest();
+  await DB.migrate.latest().then(function () {
+    return DB.seed.run();
+  });
 });
 
 describe('/Utility ', () => {
@@ -77,5 +79,16 @@ describe('/Utility ', () => {
     expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response.body.message).toBe('No data was imported');
     expect(response.statusCode).toBe(400);
+  });
+
+  test('It should respond with saving tips succesfully', async () => {
+    const body = await loginUser();
+    const response = await supertest(app).get('/api/utility/savingTips').set('Authorization', `Bearer ${body.jwt}`);
+    expect(response.body.length).toBeGreaterThan(0);
+    expect(response.body[0].id).toBe(1);
+    expect(typeof response.body[0].category).toBe('string');
+    expect(typeof response.body[0].text).toBe('string');
+    expect(response.body[0].imageUrl).toBe(null);
+    expect(response.statusCode).toBe(200);
   });
 });

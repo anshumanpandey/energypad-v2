@@ -10,22 +10,23 @@ const registerUser = async (params: RequestBodyParams<'Register'>, opt?: Transac
     password: await encryptPassword(p.password),
   };
 
-  const query = DB('Businesses').insert(businessParams).returning('id');
+  const query = DB('Businesses').insert(businessParams);
 
   if (opt?.txr) {
-    query.transacting(opt?.txr);
+    query.transacting(opt.txr);
   }
 
   if (floors.length !== 0) {
-    return query.then((insertedId) => {
-      const mapFloors = (f: typeof floors[0]) => ({ ...f, businessId: insertedId });
-      const floorsData = floors.map(mapFloors);
-      const floorQuery = DB('Floors').insert(floorsData);
-      if (opt?.txr) {
-        floorQuery.transacting(opt?.txr);
-      }
-      return floorQuery;
-    });
+    const insertedId = await query;
+
+    const mapFloors = (f: typeof floors[0]) => ({ ...f, businessId: insertedId[0] });
+    const floorsData = floors.map(mapFloors);
+    const floorQuery = DB('Floors').insert(floorsData);
+    if (opt?.txr) {
+      floorQuery.transacting(opt.txr);
+    }
+    await floorQuery;
+    return insertedId;
   }
 
   return query;

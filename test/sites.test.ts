@@ -7,7 +7,9 @@ import schema from '../src/types/Schema.json';
 import DB from '../src/lib/db/Db';
 
 beforeAll(async () => {
-  await DB.migrate.latest();
+  await DB.migrate.latest().then(function () {
+    return DB.seed.run();
+  });
 });
 
 describe('/Site ', () => {

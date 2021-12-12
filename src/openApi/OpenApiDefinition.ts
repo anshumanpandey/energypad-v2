@@ -36,6 +36,7 @@ type SchemaNames =
   | 'AddUtilityEmissionBody'
   | 'Programme'
   | 'Brand'
+  | 'SavingTip'
   | 'BusinessService';
 type PathNames =
   | 'CreateUser'
@@ -49,6 +50,7 @@ type PathNames =
   | 'GetUser'
   | 'UpdateUser'
   | 'SetBrands'
+  | 'GetSavingTips'
   | 'UtilityFileImport';
 
 type ResponsesName = 'GenericError' | 'UpdateUser' | PathNames;

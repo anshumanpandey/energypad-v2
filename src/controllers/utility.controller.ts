@@ -72,3 +72,8 @@ export const importFile: AuthAppController<'UtilityFileImport', 'UtilityFileImpo
 
   return { success: true };
 };
+
+export const getSavingTips: AuthGetAppController<'GetSavingTips'> = async () => {
+  const tips = await UtilityService.getSavingTips();
+  return tips;
+};

@@ -39,6 +39,7 @@
   "exclude": [
     "test/**/*.ts",
     "migrations/**/*.ts",
+    "seeds/**/*.ts",
     "src/scripts/**/*.ts"
   ]
 }

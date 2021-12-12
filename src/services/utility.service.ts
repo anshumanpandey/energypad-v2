@@ -59,9 +59,16 @@ const getConsumptionPerUtility = (p: { utilityId: number | number[] }): Promise<
   return query;
 };
 
+const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
+  const query = DB('EnergySavingTips').select();
+
+  return query;
+};
+
 export default {
   create,
   addConsumptionToUtility,
   findBy,
   getConsumptionPerUtility,
+  getSavingTips,
 };

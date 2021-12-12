@@ -15,6 +15,11 @@ export const config = {
       directory: path.resolve('..', '..', '..', 'migrations'),
       loadExtensions: ['.ts'],
     },
+    seeds: {
+      directory: path.resolve('..', '..', '..', 'seeds', 'dev'),
+      loadExtensions: ['.ts'],
+      timestampFilenamePrefix: true,
+    },
   },
 
   test: {
@@ -27,6 +32,11 @@ export const config = {
       tableName: 'knex_migrations',
       directory: path.resolve('migrations'),
       loadExtensions: ['.ts'],
+    },
+    seeds: {
+      directory: path.resolve('seeds', 'test'),
+      loadExtensions: ['.ts'],
+      timestampFilenamePrefix: true,
     },
   },
 
@@ -63,6 +73,11 @@ export const config = {
       tableName: 'knex_migrations',
       directory: path.resolve('..', '..', '..', 'migrations'),
       loadExtensions: ['.ts'],
+    },
+    seeds: {
+      directory: path.resolve('..', '..', '..', 'seeds', 'prod'),
+      loadExtensions: ['.ts'],
+      timestampFilenamePrefix: true,
     },
   },
 };

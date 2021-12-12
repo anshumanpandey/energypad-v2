@@ -1,7 +1,13 @@
 import express from 'express';
 import { AuthMiddleware, ExpressAsync, FileUpload, RequestValidatorMiddleware } from '@middleware';
 import { UtilityController } from '@controllers';
-import { AddUtilityPath, CreateUtilityPath, GetUtilitiesPath, UtilityFileImportPath } from '@openApi';
+import {
+  AddUtilityPath,
+  CreateUtilityPath,
+  GetSavingTipsPath,
+  GetUtilitiesPath,
+  UtilityFileImportPath,
+} from '@openApi';
 
 const authRoutes = express.Router();
 
@@ -34,5 +40,7 @@ authRoutes.post(
 );
 
 authRoutes.get('/', GetUtilitiesPath, AuthMiddleware, ExpressAsync(UtilityController.getUtilities));
+
+authRoutes.get('/savingTips', GetSavingTipsPath, AuthMiddleware, ExpressAsync(UtilityController.getSavingTips));
 
 export default authRoutes;

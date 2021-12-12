@@ -5,6 +5,7 @@ import './definitions/jwt.definition';
 import './definitions/businessService.definition';
 import './definitions/progamme.definition';
 import './definitions/brand.definition';
+import './definitions/savingTip.definition';
 import { RegisterPath } from './definitions/auth.register.definition';
 import './definitions/user.definition';
 
@@ -19,6 +20,7 @@ import { GetUtilitiesPath } from './definitions/utility.get.definition';
 import { UpdateUserPath } from './definitions/user.update.definition';
 import { GetUserPath } from './definitions/user.get.definition';
 import { AddBrandToBusinessPath } from './definitions/user.addBrand.definition';
+import { GetSavingTipsPath } from './definitions/savingTips.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -33,4 +35,5 @@ export {
   UpdateUserPath,
   GetUserPath,
   AddBrandToBusinessPath,
+  GetSavingTipsPath,
 };
