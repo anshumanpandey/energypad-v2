@@ -2,7 +2,7 @@ import './definitions/genericError.definition';
 import './definitions/success.definition';
 import './definitions/site.definition';
 import './definitions/jwt.definition';
-import './definitions/businessService.definition';
+import './definitions/businessPattern.definition';
 import './definitions/progamme.definition';
 import './definitions/businessEnergyBrand.definition';
 import './definitions/businessEnergyCost.definition';

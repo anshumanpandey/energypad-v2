@@ -12,11 +12,13 @@ import {
 const bodySchema: CreateSchemaParams = {
   name: 'AddUtilityEmissionBody',
   schema: {
-    required: ['date', 'consumption', 'cost'],
+    required: ['date', 'consumption', 'cost', 'usedInId', 'siteId'],
     properties: {
       date: { type: 'string', format: 'date' },
       consumption: { type: 'number', format: 'int32' },
       cost: { type: 'number', format: 'int32' },
+      siteId: { type: 'number', format: 'int32' },
+      usedInId: { type: 'number', format: 'int32' },
     },
   },
 };

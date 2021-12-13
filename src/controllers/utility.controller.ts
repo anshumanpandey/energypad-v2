@@ -37,29 +37,30 @@ export const addEmission: AuthAppController<'AddUtilityEmission', 'AddUtilityEmi
 
 export const importFile: AuthAppController<'UtilityFileImport', 'UtilityFileImport'> = async (req) => {
   const excelFile = req.file;
+  const id = (req.body as unknown as Record<string, string>).utilityId;
+  const utilityId = parseInt(id, 10);
+  if (!utilityId) return new ApiError('Missing utilityId');
   if (!excelFile) return new ApiError('Missing file');
 
   const data = await ExcelClient.getUtilityData(excelFile.buffer);
-  const utilities = await UtilityService.findBy({ name: data.map((i) => i.utilityName), businessId: req.user.id });
 
   const dataToInsert: AddConsumptionToUtilityParam[] = [];
   for (let i = 0, len = data.length; i < len; i++) {
     const entry = data[i];
-    const found = utilities.find((u) => u.name.toLocaleLowerCase() === entry.utilityName.toLocaleLowerCase());
 
-    if (found) {
-      for (let a = 0, len = entry.rows.length; a < len; a++) {
-        const yearEntry = entry.rows[a];
+    for (let a = 0, len = entry.rows.length; a < len; a++) {
+      const yearEntry = entry.rows[a];
 
-        for (let m = 0, len = yearEntry.months.length; m < len; m++) {
-          const currentMonth = yearEntry.months[m];
-          dataToInsert.push({
-            utilityId: found.id,
-            date: `${yearEntry.year}-${currentMonth.month}-01`,
-            consumption: parseInt(currentMonth.value, 10),
-            cost: 0,
-          });
-        }
+      for (let m = 0, len = yearEntry.months.length; m < len; m++) {
+        const currentMonth = yearEntry.months[m];
+        dataToInsert.push({
+          utilityId: utilityId,
+          date: `${yearEntry.year}-${currentMonth.month}-01`,
+          consumption: parseInt(currentMonth.consumption, 10),
+          cost: currentMonth.cost,
+          siteId: currentMonth.siteId,
+          usedInId: currentMonth.usedInId,
+        });
       }
     }
   }

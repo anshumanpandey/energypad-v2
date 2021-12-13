@@ -26,7 +26,9 @@ export const updateUser: AuthAppController<'UpdateUser', 'UpdateUser'> = async (
     .then(() => {
       return { success: true };
     })
-    .catch((err) => err);
+    .catch((err) => {
+      throw err;
+    });
 };
 
 export const getMet: AuthGetAppController<'GetUser'> = async (req) => {

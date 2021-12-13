@@ -241,6 +241,8 @@ export interface components {
       date: string;
       consumption: number;
       cost: number;
+      siteId: number;
+      usedInId: number;
     };
     UtilityConsumption: components["schemas"]["AddUtilityEmissionBody"] & {
       id: number;

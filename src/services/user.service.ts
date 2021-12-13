@@ -23,9 +23,9 @@ const getUserBy = async (params: { id?: number; email?: string }) => {
     for (let i = 0, len = r.length; i < len; i++) {
       const el = r[i];
       const { question, answer, ProgrammeId } = el;
-      if (programmes.has(ProgrammeId) === false) {
+      if (ProgrammeId && programmes.has(ProgrammeId) === false) {
         programmes.set(ProgrammeId, { id: ProgrammeId, question, answers: [answer] });
-      } else {
+      } else if (ProgrammeId && programmes.has(ProgrammeId) === true) {
         const programme = programmes.get(ProgrammeId);
         programme.answers.push(answer);
         programmes.set(ProgrammeId, programme);

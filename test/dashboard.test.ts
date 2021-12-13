@@ -8,43 +8,15 @@ const matcher = matchersWithOptions({
 });
 expect.extend(matcher);
 import { app } from '../src/app';
-import { registerUser } from './testhelp';
+import { loginUser } from './testhelp';
 import schema from '../src/types/Schema.json';
 
 describe('/Dashboard ', () => {
   test('It should respond with success message when create an utility', async () => {
-    const body = await registerUser('userdashboard1@mail.com');
+    const body = await loginUser('userdashboard1@mail.com');
     await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
       name: 'Heat',
     });
-
-    const utilitiesResponse = await supertest(app).get('/api/utility').set('Authorization', `Bearer ${body.jwt}`);
-    const utility = utilitiesResponse.body[0];
-
-    await supertest(app)
-      .post('/api/utility/addEmission/' + utility.id)
-      .set('Authorization', `Bearer ${body.jwt}`)
-      .send({
-        date: '2020-01-01',
-        consumption: 100,
-        cost: 100,
-      });
-    await supertest(app)
-      .post('/api/utility/addEmission/' + utility.id)
-      .set('Authorization', `Bearer ${body.jwt}`)
-      .send({
-        date: '2019-01-01',
-        consumption: 150,
-        cost: 200,
-      });
-    await supertest(app)
-      .post('/api/utility/addEmission/' + utility.id)
-      .set('Authorization', `Bearer ${body.jwt}`)
-      .send({
-        date: '2019-02-01',
-        consumption: 150,
-        cost: 200,
-      });
 
     const response = await supertest(app).get('/api/dashboard').set('Authorization', `Bearer ${body.jwt}`);
 
@@ -56,7 +28,7 @@ describe('/Dashboard ', () => {
     expect(response.body[0].date).toBe('2021-01-01');
     expect(response.body[0].averageCost).toBe(150);
     expect(response.body[0].averageConsumption).toBe(125);
-    expect(response.body[0].consumption).toBe(100);
+    expect(response.body[0].consumption).toBe(150);
 
     expect(response.body[1].date).toBe('2021-02-01');
     expect(response.body[1].averageCost).toBe(200);

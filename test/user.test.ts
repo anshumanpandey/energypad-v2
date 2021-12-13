@@ -59,7 +59,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when updating an user with programmes', async () => {
-    const body = await registerUser('email7799@mail.com');
+    const body = await loginUser('mail218@mail.com');
     const newData = {
       businessName: 'new_businessName',
       businessType: 'new_businessType',
@@ -87,13 +87,10 @@ describe('/Business ', () => {
         },
       ],
       programmes: [
-        { question: 'How often?', answers: ['Montly', 'Yearly'], utilityId: 1 },
-        { question: 'What type?', answers: ['Single', 'Triple'], utilityId: 1 },
+        { question: 'How often?', answers: ['Montly', 'Yearly'], utilityId: 184 },
+        { question: 'What type?', answers: ['Single', 'Triple'], utilityId: 184 },
       ],
     };
-    await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
-      name: 'Gas',
-    });
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
@@ -109,6 +106,7 @@ describe('/Business ', () => {
     expect(response2.statusCode).toBe(200);
 
     const meData = await supertest(app).get('/api/business').set('Authorization', `Bearer ${body.jwt}`);
+    expect(meData.body.programmes.length).toBe(2);
     expect(meData.body.programmes[0].answers.length).toBe(3);
   });
 
