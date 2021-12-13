@@ -1,4 +1,5 @@
 import { DB } from '@lib';
+import { getSinglePropArr } from '@utils';
 import { AppModels, RequestBodies, Transactionable } from '@types';
 
 const getUserBy = async (params: { id?: number; email?: string }) => {
@@ -341,6 +342,26 @@ const saveLog = (p: SaveLogParams) => {
   return query;
 };
 
+type SetTenantsParams = {
+  businessId: number;
+  tenants: AppModels['Tenant'][];
+};
+const setTenants = (p: SetTenantsParams) => {
+  return DB.transaction((trx) => {
+    const delQuery = trx('BusinessTenant')
+      .del()
+      .where((builder) =>
+        builder
+          .whereIn('siteId', getSinglePropArr({ arr: p.tenants, prop: 'siteId' }))
+          .whereIn('usedInId', getSinglePropArr({ arr: p.tenants, prop: 'usedInId' }))
+          .whereIn('siteId', trx('Sites').select(['id']).where('businessId', p.businessId)),
+      );
+
+    const query = delQuery.then(() => trx('BusinessTenant').insert(p.tenants));
+    return query;
+  });
+};
+
 export default {
   saveEnergy,
   setBrands,
@@ -349,4 +370,5 @@ export default {
   updateUser,
   getBusinessEnergies,
   saveLog,
+  setTenants,
 };

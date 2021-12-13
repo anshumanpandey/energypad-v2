@@ -160,6 +160,16 @@ export interface paths {
       requestBody: components["requestBodies"]["SaveBusinessEnergy"];
     };
   };
+  "/api/business/setTenants": {
+    /** Create a new user. */
+    post: {
+      responses: {
+        200: components["responses"]["SetTenants"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["SaveBusinessEnergy"];
+    };
+  };
 }
 
 export interface components {
@@ -227,6 +237,13 @@ export interface components {
       brands: components["schemas"]["BusinessBrand"][];
       distance: components["schemas"]["BusinessDistance"][];
       cost: components["schemas"]["BusinessCost"];
+    };
+    Tenant: {
+      siteId: number;
+      usedInId: number;
+      date: string;
+      regularTenantAmount: number;
+      irregularTenantAmount: number;
     };
     RegisterBody: {
       businessName: string;
@@ -385,6 +402,12 @@ export interface components {
         "application/json": components["schemas"]["SuccessMessage"];
       };
     };
+    /** Success message */
+    SetTenants: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddUtilityConsumption: number;
@@ -454,6 +477,11 @@ export interface components {
           startDate: string;
           endDate: string;
         };
+      };
+    };
+    SetTenants: {
+      content: {
+        "application/json": components["schemas"]["Tenant"][];
       };
     };
   };

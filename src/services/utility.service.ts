@@ -1,5 +1,6 @@
 import { DB } from '@lib';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
+import { getSinglePropArr } from '@utils';
 
 const create = async (params: RequestBodyParams<'CreateUtility'>, opt?: Transactionable) => {
   const query = DB('Utilities').insert(params);
@@ -89,7 +90,6 @@ type SetUtilityEmissionsParams = {
   value: number;
 };
 const setUtilityEmissions = (p: SetUtilityEmissionsParams[]) => {
-  const getSinglePropArr = <T>(p: { arr: T[]; prop: keyof T }) => p.arr.map((i) => i[p.prop]);
   return DB.transaction((trx) => {
     const delQuery = trx('UtilityEmissions')
       .where((builder) =>
@@ -105,10 +105,7 @@ const setUtilityEmissions = (p: SetUtilityEmissionsParams[]) => {
       )
       .del();
 
-    console.log(delQuery.toString());
-
-    return delQuery.then((r) => {
-      console.log({ r });
+    return delQuery.then(() => {
       const mapRecord = (r: typeof p[0]) => {
         const { businessId: _, ...data } = r;
         return data;

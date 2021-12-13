@@ -7,6 +7,7 @@ import {
   AddBrandToBusinessPath,
   GetBusinessEnergyPath,
   AddBusinessLogPath,
+  SetBusinessTenantPath,
 } from '@openApi';
 
 const businessRoutes = express.Router();
@@ -42,6 +43,16 @@ businessRoutes.post(
     body: 'AddLog',
   }),
   ExpressAsync(UserController.addLog),
+);
+
+businessRoutes.post(
+  '/setTenants',
+  SetBusinessTenantPath,
+  AuthMiddleware,
+  RequestValidatorMiddleware({
+    body: 'SetTenants',
+  }),
+  ExpressAsync(UserController.setTenants),
 );
 
 export default businessRoutes;

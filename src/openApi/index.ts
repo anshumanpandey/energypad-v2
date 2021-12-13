@@ -9,6 +9,7 @@ import './definitions/businessEnergyCost.definition';
 import './definitions/businessEnergyDistance.definition';
 import './definitions/savingTip.definition';
 import './definitions/businessEnergy.definition';
+import './definitions/tenant.definition';
 import { RegisterPath } from './definitions/auth.register.definition';
 import './definitions/user.definition';
 
@@ -27,6 +28,7 @@ import { GetSavingTipsPath } from './definitions/savingTips.get.definition';
 import { GetBusinessEnergyPath } from './definitions/user.energy.get.definition';
 import { AddUtilityEmissionPath } from './definitions/utilityEmission.add.definition';
 import { AddBusinessLogPath } from './definitions/user.log.post.definition';
+import { SetBusinessTenantPath } from './definitions/user.tenant.post.definition';
 
 export default OpenApiDefinition;
 export {
@@ -45,4 +47,5 @@ export {
   GetSavingTipsPath,
   GetBusinessEnergyPath,
   AddBusinessLogPath,
+  SetBusinessTenantPath,
 };

@@ -1,6 +1,7 @@
 import { AuthAppController, AuthGetAppController } from '@types';
 import { UserService, SitesService, UtilityService } from '@services';
 import { ApiError, DB } from '@lib';
+import { getSinglePropArr } from '@utils';
 
 export const updateUser: AuthAppController<'UpdateUser', 'UpdateUser'> = async (req) => {
   const { patterns, ...registerData } = req.body;
@@ -66,5 +67,23 @@ export const addLog: AuthAppController<'AddLog', 'AddLog'> = async (req) => {
     return new ApiError('Site not found');
   }
   await UserService.saveLog(req.body);
+  return { success: true };
+};
+
+export const setTenants: AuthAppController<'SetTenants', 'SetTenants'> = async (req) => {
+  const sitesIds = Array.from(
+    new Set(getSinglePropArr({ arr: req.body, prop: 'siteId' }).map((i) => Number(i))).values(),
+  );
+  const sites = await SitesService.findBy({
+    id: sitesIds,
+    businessId: req.user.id,
+  });
+  if (sites.length !== sitesIds.length) {
+    return new ApiError('Site not found');
+  }
+  await UserService.setTenants({
+    businessId: req.user.id,
+    tenants: req.body,
+  });
   return { success: true };
 };

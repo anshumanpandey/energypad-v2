@@ -185,4 +185,36 @@ describe('/Business ', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.AddLog.content['application/json'].schema);
   });
+
+  test('It should respond with success message when saving tenants', async () => {
+    const body = await loginUser('mail226@mail.com');
+    const newData = [
+      {
+        siteId: 454,
+        usedInId: 2,
+        date: '2021-08-01',
+        regularTenantAmount: 25,
+        irregularTenantAmount: 50,
+      },
+      { siteId: 454, usedInId: 3, date: '2021-08-09', regularTenantAmount: 25, irregularTenantAmount: 55 },
+    ];
+    const response = await supertest(app)
+      .post('/api/business/setTenants')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send(newData);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
+
+    const response2 = await supertest(app)
+      .post('/api/business/setTenants')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send([
+        {
+          ...newData[0],
+          date: '2020-08-01',
+        },
+      ]);
+    expect(response2.statusCode).toBe(200);
+    expect(response2.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
+  });
 });
