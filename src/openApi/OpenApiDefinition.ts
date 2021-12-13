@@ -40,7 +40,7 @@ type SchemaNames =
   | 'BusinessDistance'
   | 'BusinessEnergy'
   | 'SavingTip'
-  | 'BusinessService';
+  | 'BusinessPattern';
 type PathNames =
   | 'CreateUser'
   | 'Register'

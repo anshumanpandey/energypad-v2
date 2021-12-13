@@ -20,10 +20,10 @@
     "pretest": "rm -f testdb.sqlite3 && npm run predev",
     "test": "NODE_ENV=test jest --runInBand --detectOpenHandles",
     "jest": "rm -f testdb.sqlite3 && NODE_ENV=test jest --runInBand --detectOpenHandles",
-    "generate:migration": "NODE_ENV=development knex migrate:make --knexfile ./src/lib/db/knexfile.ts",
-    "generate:seed:test": "NODE_ENV=test knex seed:make --knexfile ./src/lib/db/knexfile.ts",
-    "generate:seed:dev": "NODE_ENV=development knex seed:make --knexfile ./src/lib/db/knexfile.ts",
     "migration:execute": "knex migrate:latest --knexfile ./src/lib/db/knexfile.ts",
+    "migration:generate": "NODE_ENV=development knex migrate:make --knexfile ./src/lib/db/knexfile.ts",
+    "seed:generate:test": "NODE_ENV=test knex seed:make --knexfile ./src/lib/db/knexfile.ts",
+    "seed:generate:dev": "NODE_ENV=development knex seed:make --knexfile ./src/lib/db/knexfile.ts",
     "seed:execute": "knex seed:latest --knexfile ./src/lib/db/knexfile.ts"
   },
   "devDependencies": {

@@ -7,20 +7,16 @@ export const registerUser: AppController<'Register', 'Register'> = async (req) =
   const user = await UserService.getUserBy({ email: req.body.email });
   if (user) return new ApiError('Email already registered');
 
-  const { cooling, heating, lighting, powering, ...registerData } = req.body;
+  const { patterns, ...registerData } = req.body;
 
   return DB.transaction(async (txr) => {
     const result = await AuthService.registerUser(registerData, { txr });
-    await UserService.saveSupportedServices(
-      {
+    if (patterns && patterns.length !== 0) {
+      await UserService.savePattern({
         businessId: result[0],
-        cooling,
-        heating,
-        lighting,
-        powering,
-      },
-      { txr },
-    );
+        patterns,
+      });
+    }
     return { success: true };
   });
 };

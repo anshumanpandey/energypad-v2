@@ -163,11 +163,13 @@ export interface components {
     JWTToken: {
       jwt: string;
     };
-    BusinessService: {
+    BusinessPattern: {
       startDate: string;
       endDate: string;
       consumption: number;
       daysOnYear: number;
+      siteId: number;
+      usedInId: number;
     };
     Programme: {
       question: string;
@@ -225,10 +227,7 @@ export interface components {
         area: number;
         population: number;
       }[];
-      cooling?: components["schemas"]["BusinessService"];
-      heating?: components["schemas"]["BusinessService"];
-      lighting?: components["schemas"]["BusinessService"];
-      powering?: components["schemas"]["BusinessService"];
+      patterns?: components["schemas"]["BusinessPattern"][];
       programmes?: components["schemas"]["Programme"][];
     };
     User: components["schemas"]["RegisterBody"] & {

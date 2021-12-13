@@ -79,21 +79,9 @@ describe('/auth', () => {
             population: 45307773.70958948,
           },
         ],
-        cooling: {
-          startDate: '2020-01-01',
-          endDate: '2020-03-02',
-          consumption: 200,
-          daysOnYear: 50,
-        },
-        heating: {
-          startDate: '2020-05-05',
-          endDate: '2020-06-05',
-          consumption: 300,
-          daysOnYear: 20,
-        },
       });
-    expect(response.body).toMatchSchema(schema.components.responses.Register.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.Register.content['application/json'].schema);
   });
 
   test('It should respond with error message when register when services has wrong data', async () => {
@@ -123,18 +111,6 @@ describe('/auth', () => {
           population: 66051788.61218466,
         },
       ],
-      cooling: {
-        startDate: '2020-01-01',
-        endDate: '2020-03-02',
-        consumption: 200,
-        daysOnYear: 50,
-      },
-      heating: {
-        startDate: '2020-05-05',
-        endDate: '2020-06-05',
-        consumption: 300,
-        daysOnYear: 20,
-      },
     };
     const response1 = await supertest(app)
       .post('/api/auth')
@@ -155,12 +131,14 @@ describe('/auth', () => {
       .post('/api/auth')
       .send({
         ...goodData,
-        heating: {
-          startDate: '2020-05-05',
-          endDate: '2020-06-05',
-          consumption: -300,
-          daysOnYear: 20,
-        },
+        patterns: [
+          {
+            startDate: '2020-05-05',
+            endDate: '2020-06-05',
+            consumption: -300,
+            daysOnYear: 20,
+          },
+        ],
       });
     expect(response2.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response2.body.message).toBe(WRONG_NUMBER_ERROR_MESSAGE);
@@ -169,12 +147,14 @@ describe('/auth', () => {
       .post('/api/auth')
       .send({
         ...goodData,
-        heating: {
-          startDate: '2020-05-35',
-          endDate: '2020-06-05',
-          consumption: 300,
-          daysOnYear: 20,
-        },
+        patterns: [
+          {
+            startDate: '2020-05-35',
+            endDate: '2020-06-05',
+            consumption: 300,
+            daysOnYear: 20,
+          },
+        ],
       });
     expect(response3.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response3.body.message).toBe(WRONG_DATE_ERROR_MESSAGE);

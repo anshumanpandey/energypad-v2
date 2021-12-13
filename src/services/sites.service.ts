@@ -6,13 +6,13 @@ const createSite = async (params: RequestBodyParams<'Site'>) => {
 };
 
 type FindByParams = {
-  id?: number;
+  id?: number | number[];
   businessId?: number;
 };
 const findBy = async (params?: FindByParams) => {
   const query = DB('Sites').select();
   if (params?.id) {
-    query.where('id', params.id);
+    Array.isArray(params?.id) ? query.whereIn('id', params.id) : query.where('id', params.id);
   }
   if (params?.businessId) {
     query.where('businessId', params.businessId);

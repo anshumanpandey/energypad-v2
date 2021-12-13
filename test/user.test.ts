@@ -34,18 +34,24 @@ describe('/Business ', () => {
           population: 100,
         },
       ],
-      cooling: {
-        startDate: '2020-01-01',
-        endDate: '2020-03-02',
-        consumption: 200,
-        daysOnYear: 50,
-      },
-      heating: {
-        startDate: '2020-05-05',
-        endDate: '2020-06-05',
-        consumption: 300,
-        daysOnYear: 20,
-      },
+      patterns: [
+        {
+          startDate: '2020-01-01',
+          endDate: '2020-03-02',
+          consumption: 200,
+          daysOnYear: 50,
+          usedInId: 2,
+          siteId: 353,
+        },
+        {
+          startDate: '2020-05-05',
+          endDate: '2020-06-05',
+          consumption: 300,
+          daysOnYear: 20,
+          usedInId: 3,
+          siteId: 353,
+        },
+      ],
     };
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
     expect(response.statusCode).toBe(200);
@@ -53,7 +59,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when updating an user with programmes', async () => {
-    const body = await registerUser();
+    const body = await registerUser('email7799@mail.com');
     const newData = {
       businessName: 'new_businessName',
       businessType: 'new_businessType',
@@ -80,18 +86,6 @@ describe('/Business ', () => {
           population: 100,
         },
       ],
-      cooling: {
-        startDate: '2020-01-01',
-        endDate: '2020-03-02',
-        consumption: 200,
-        daysOnYear: 50,
-      },
-      heating: {
-        startDate: '2020-05-05',
-        endDate: '2020-06-05',
-        consumption: 300,
-        daysOnYear: 20,
-      },
       programmes: [
         { question: 'How often?', answers: ['Montly', 'Yearly'], utilityId: 1 },
         { question: 'What type?', answers: ['Single', 'Triple'], utilityId: 1 },

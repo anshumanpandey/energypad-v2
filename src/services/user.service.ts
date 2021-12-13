@@ -41,34 +41,23 @@ const getUserBy = async (params: { id?: number; email?: string }) => {
   return record;
 };
 
-export type AddServiceParams = { businessId: number; service: { name: string } & AppModels['BusinessService'] };
-const addService = async (params: AddServiceParams | AddServiceParams[], opt?: Transactionable) => {
+export type AddServiceParams = { businessId: number; patterns: AppModels['BusinessPattern'][] };
+export const savePattern = async (params: AddServiceParams, opt?: Transactionable) => {
   const data = [];
 
-  if (Array.isArray(params)) {
-    for (let index = 0, lng = params.length; index < lng; index++) {
-      const element = params[index];
-      data.push({
-        businessId: element.businessId,
-        name: element.service.name,
-        startDate: element.service.startDate,
-        endDate: element.service.endDate,
-        consumption: element.service.consumption,
-        daysOnYear: element.service.daysOnYear,
-      });
-    }
-  } else {
+  for (let i = 0, len = params.patterns.length; i < len; i++) {
+    const element = params.patterns[i];
     data.push({
-      businessId: params.businessId,
-      name: params.service.name,
-      startDate: params.service.startDate,
-      endDate: params.service.endDate,
-      consumption: params.service.consumption,
-      daysOnYear: params.service.daysOnYear,
+      siteId: element.siteId,
+      usedInId: element.usedInId,
+      startDate: element.startDate,
+      endDate: element.endDate,
+      consumption: element.consumption,
+      daysOnYear: element.daysOnYear,
     });
   }
 
-  const query = DB('BusinessService').insert(data);
+  const query = DB('BusinessPatterns').insert(data);
   if (opt?.txr) {
     query.transacting(opt.txr);
   }
@@ -76,7 +65,7 @@ const addService = async (params: AddServiceParams | AddServiceParams[], opt?: T
   return query;
 };
 
-const updateUser = (p: AppModels['User']) => {
+const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
   const { id, floors, programmes, ...vals } = p;
   type Programme = NonNullable<typeof programmes>[0];
 
@@ -98,94 +87,49 @@ const updateUser = (p: AppModels['User']) => {
     return data;
   };
 
-  return DB.transaction(async function (trx) {
-    await trx('Businesses').where('id', id).update(vals);
+  const trx = opt?.txr || (await DB.transaction());
 
-    await trx('Floors').where('businessId', id).del();
-    await trx('Floors').insert(floorsData);
+  return trx('Businesses')
+    .where('id', id)
+    .update(vals)
+    .then(() => {
+      return trx('Floors').where('businessId', id).del();
+    })
+    .then(() => {
+      return trx('Floors').insert(floorsData);
+    })
+    .then(() => {
+      if (programmes && programmes.length !== 0) {
+        const data = reduceProgrammesData(programmes);
 
-    if (programmes && programmes.length !== 0) {
-      await trx()
-        .del()
-        .from('Programmes')
-        .whereIn('Programmes.utilityId', (q) => {
-          return q.select('id').from('Utilities').where('businessId', id);
-        });
-      const data = reduceProgrammesData(programmes);
-      await trx('Programmes').insert(data.programmes);
-
-      const mapAnswerQuery = (a: typeof data.answers[0]) => ({
-        answer: a.answer,
-        programmeId: trx('Programmes')
-          .select('Programmes.id')
-          .where({
-            question: a.question,
+        return trx()
+          .del()
+          .from('Programmes')
+          .whereIn('Programmes.utilityId', (q) => {
+            return q.select('id').from('Utilities').where('businessId', id);
           })
-          .innerJoin('Utilities', 'Programmes.utilityId', 'Utilities.id')
-          .innerJoin('Businesses', 'Utilities.businessId', 'Businesses.id')
-          .first(),
-      });
+          .then(() => {
+            return trx('Programmes').insert(data.programmes);
+          })
+          .then(() => {
+            const mapAnswerQuery = (a: typeof data.answers[0]) => ({
+              answer: a.answer,
+              programmeId: trx('Programmes')
+                .select('Programmes.id')
+                .where({
+                  question: a.question,
+                })
+                .innerJoin('Utilities', 'Programmes.utilityId', 'Utilities.id')
+                .innerJoin('Businesses', 'Utilities.businessId', 'Businesses.id')
+                .first(),
+            });
 
-      await trx('ProgrammeAnswers').insert(data.answers.map(mapAnswerQuery));
-    }
-  });
-};
-
-type SaveSupportedServicesParams = {
-  businessId: number;
-  cooling?: AppModels['BusinessService'];
-  heating?: AppModels['BusinessService'];
-  lighting?: AppModels['BusinessService'];
-  powering?: AppModels['BusinessService'];
-};
-const saveSupportedServices = (p: SaveSupportedServicesParams, opt?: Transactionable) => {
-  const services: AddServiceParams[] = [];
-  if (p.cooling) {
-    const service: AddServiceParams = {
-      businessId: p.businessId,
-      service: {
-        name: 'Cooling',
-        ...p.cooling,
-      },
-    };
-    services.push(service);
-  }
-  if (p.heating) {
-    const service: AddServiceParams = {
-      businessId: p.businessId,
-      service: {
-        name: 'Heating',
-        ...p.heating,
-      },
-    };
-    services.push(service);
-  }
-  if (p.lighting) {
-    const service: AddServiceParams = {
-      businessId: p.businessId,
-      service: {
-        name: 'Lighting',
-        ...p.lighting,
-      },
-    };
-    services.push(service);
-  }
-  if (p.powering) {
-    const service: AddServiceParams = {
-      businessId: p.businessId,
-      service: {
-        name: 'Powering',
-        ...p.powering,
-      },
-    };
-    services.push(service);
-  }
-
-  if (services.length !== 0) {
-    return addService(services, opt);
-  }
-
-  return Promise.resolve();
+            return trx('ProgrammeAnswers').insert(data.answers.map(mapAnswerQuery));
+          });
+      }
+    })
+    .then(trx.commit)
+    .catch(trx.rollback);
 };
 
 type AddBrandParams = {
@@ -217,7 +161,7 @@ const setBrands = async (params: AddBrandParams[], opt?: Transactionable) => {
     .delete()
     .where('fuelSourceId', data.brands[0].fuelSourceId)
     .andWhere('siteId', data.brands[0].siteId);
-  await trx('BusinessBrands').insert(data.brands);
+  return trx('BusinessBrands').insert(data.brands);
 };
 
 type SaveEnergyParams = {
@@ -227,39 +171,43 @@ type SaveEnergyParams = {
 const saveEnergy = async (p: SaveEnergyParams & RequestBodies['SaveBusinessEnergy']['content']['application/json']) => {
   const txr = await DB.transaction();
 
-  const brands = p.brands;
-  if (brands && brands.length !== 0) {
-    const mapBrand = (b: typeof brands[0]) => {
-      return {
-        ...b,
-        fuelSourceId: p.fuelSourceId,
-        siteId: p.siteId,
+  try {
+    const brands = p.brands;
+    if (brands && brands.length !== 0) {
+      const mapBrand = (b: typeof brands[0]) => {
+        return {
+          ...b,
+          fuelSourceId: p.fuelSourceId,
+          siteId: p.siteId,
+        };
       };
-    };
-    await setBrands(brands.map(mapBrand), { txr });
-  }
+      await setBrands(brands.map(mapBrand), { txr });
+    }
 
-  if (p.cost) {
-    await DB('BusinessFuelsPricing')
-      .insert({
-        currencyCode: p.cost.currencyCode,
-        vat: p.cost.vat,
+    if (p.cost) {
+      await DB('BusinessFuelsPricing')
+        .insert({
+          currencyCode: p.cost.currencyCode,
+          vat: p.cost.vat,
+          fuelSourceId: p.fuelSourceId,
+          siteId: p.siteId,
+        })
+        .transacting(txr);
+    }
+
+    if (p.distance) {
+      const mapDistance = (b: typeof p.distance[0]) => ({
         fuelSourceId: p.fuelSourceId,
         siteId: p.siteId,
-      })
-      .transacting(txr);
-  }
+        meters: b.meters,
+      });
+      await DB('BusinessFuelsSize').insert(p.distance.map(mapDistance)).transacting(txr);
+    }
 
-  if (p.distance) {
-    const mapDistance = (b: typeof p.distance[0]) => ({
-      fuelSourceId: p.fuelSourceId,
-      siteId: p.siteId,
-      meters: b.meters,
-    });
-    await DB('BusinessFuelsSize').insert(p.distance.map(mapDistance)).transacting(txr);
+    return txr.commit();
+  } catch (err) {
+    return txr.rollback();
   }
-
-  return txr.commit();
 };
 
 type GetBusinessEnergiesParams = {
@@ -384,8 +332,7 @@ export default {
   saveEnergy,
   setBrands,
   getUserBy,
-  addService,
+  savePattern,
   updateUser,
-  saveSupportedServices,
   getBusinessEnergies,
 };

@@ -1,21 +1,32 @@
 import { AuthAppController, AuthGetAppController } from '@types';
 import { UserService, SitesService, UtilityService } from '@services';
-import { ApiError } from '@lib';
+import { ApiError, DB } from '@lib';
 
 export const updateUser: AuthAppController<'UpdateUser', 'UpdateUser'> = async (req) => {
-  const { cooling, heating, lighting, powering, ...registerData } = req.body;
+  const { patterns, ...registerData } = req.body;
 
-  await UserService.updateUser({ ...registerData, id: req.user.id });
+  return DB.transaction(async (txr) => {
+    await UserService.updateUser({ ...registerData, id: req.user.id }, { txr });
 
-  await UserService.saveSupportedServices({
-    businessId: req.user.id,
-    cooling,
-    heating,
-    lighting,
-    powering,
-  });
-
-  return { success: true };
+    if (patterns && patterns.length !== 0) {
+      const mapSiteId = (r: typeof patterns[0]) => r.siteId;
+      const sites = await SitesService.findBy({ id: patterns.map(mapSiteId), businessId: req.user.id });
+      if (sites.length !== patterns.length) {
+        throw new ApiError('Site not found');
+      }
+      await UserService.savePattern(
+        {
+          businessId: req.user.id,
+          patterns,
+        },
+        { txr },
+      );
+    }
+  })
+    .then(() => {
+      return { success: true };
+    })
+    .catch((err) => err);
 };
 
 export const getMet: AuthGetAppController<'GetUser'> = async (req) => {
