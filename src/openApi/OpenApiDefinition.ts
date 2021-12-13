@@ -35,7 +35,10 @@ type SchemaNames =
   | 'Site'
   | 'AddUtilityEmissionBody'
   | 'Programme'
-  | 'Brand'
+  | 'BusinessBrand'
+  | 'BusinessCost'
+  | 'BusinessDistance'
+  | 'BusinessEnergy'
   | 'SavingTip'
   | 'BusinessService';
 type PathNames =
@@ -49,7 +52,8 @@ type PathNames =
   | 'GetUtilities'
   | 'GetUser'
   | 'UpdateUser'
-  | 'SetBrands'
+  | 'SaveBusinessEnergy'
+  | 'GetBusinessEnergy'
   | 'GetSavingTips'
   | 'UtilityFileImport';
 

@@ -2,7 +2,7 @@ import supertest from 'supertest';
 import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
-import { loginUser, NO_EXTRA_PROPERTY_ERROR_MESSAGE, WRONG_NUMBER_ERROR_MESSAGE } from './testhelp';
+import { loginUser, NO_EXTRA_PROPERTY_ERROR_MESSAGE } from './testhelp';
 import schema from '../src/types/Schema.json';
 import DB from '../src/lib/db/Db';
 

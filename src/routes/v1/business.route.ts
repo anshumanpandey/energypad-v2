@@ -1,7 +1,7 @@
 import express from 'express';
 import { AuthMiddleware, ExpressAsync, RequestValidatorMiddleware } from '@middleware';
 import { UserController } from '@controllers';
-import { GetUserPath, UpdateUserPath, AddBrandToBusinessPath } from '@openApi';
+import { GetUserPath, UpdateUserPath, AddBrandToBusinessPath, GetBusinessEnergyPath } from '@openApi';
 
 const businessRoutes = express.Router();
 
@@ -16,15 +16,16 @@ businessRoutes.put(
 );
 
 businessRoutes.get('/', GetUserPath, AuthMiddleware, ExpressAsync(UserController.getMet));
+businessRoutes.get('/energies', GetBusinessEnergyPath, AuthMiddleware, ExpressAsync(UserController.getBusinessEnergy));
 
 businessRoutes.post(
-  '/setBrands',
+  '/saveEnergy',
   AddBrandToBusinessPath,
   AuthMiddleware,
   RequestValidatorMiddleware({
-    body: 'SetBrands',
+    body: 'SaveBusinessEnergy',
   }),
-  ExpressAsync(UserController.addBrands),
+  ExpressAsync(UserController.saveEnergy),
 );
 
 export default businessRoutes;

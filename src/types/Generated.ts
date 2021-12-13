@@ -115,14 +115,24 @@ export interface paths {
       requestBody: components["requestBodies"]["UpdateUser"];
     };
   };
-  "/api/business/setBrands": {
+  "/api/business/energies": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {};
+      responses: {
+        200: components["responses"]["GetBusinessEnergy"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
+  "/api/business/saveEnergy": {
     /** Create a new user. */
     post: {
       responses: {
-        200: components["responses"]["SetBrands"];
+        200: components["responses"]["SaveBusinessEnergy"];
         400: components["responses"]["GenericError"];
       };
-      requestBody: components["requestBodies"]["SetBrands"];
+      requestBody: components["requestBodies"]["SaveBusinessEnergy"];
     };
   };
 }
@@ -164,18 +174,32 @@ export interface components {
       utilityId: number;
       answers: string[];
     };
-    Brand: {
+    BusinessBrand: {
       name: string;
       rate: number;
       startTime: string;
       endTime: string;
       days: string[];
     };
+    BusinessCost: {
+      currencyCode: string;
+      vat: number;
+    };
+    BusinessDistance: {
+      meters: string;
+    };
     SavingTip: {
       id: number;
       category: string;
       text: string;
       imageUrl?: string | null;
+    };
+    BusinessEnergy: {
+      usedInId: number;
+      siteId: number;
+      brands: components["schemas"]["BusinessBrand"][];
+      distance: components["schemas"]["BusinessDistance"][];
+      cost: components["schemas"]["BusinessCost"];
     };
     RegisterBody: {
       businessName: string;
@@ -296,7 +320,7 @@ export interface components {
       };
     };
     /** Success message */
-    SetBrands: {
+    SaveBusinessEnergy: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
       };
@@ -305,6 +329,12 @@ export interface components {
     GetSavingTips: {
       content: {
         "application/json": components["schemas"]["SavingTip"][];
+      };
+    };
+    /** Success message */
+    GetBusinessEnergy: {
+      content: {
+        "application/json": components["schemas"]["BusinessEnergy"][];
       };
     };
   };
@@ -355,11 +385,9 @@ export interface components {
         "application/json": components["schemas"]["RegisterBody"];
       };
     };
-    SetBrands: {
+    SaveBusinessEnergy: {
       content: {
-        "application/json": {
-          brands: components["schemas"]["Brand"][];
-        };
+        "application/json": components["schemas"]["BusinessEnergy"];
       };
     };
   };

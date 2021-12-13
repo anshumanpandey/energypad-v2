@@ -2,7 +2,7 @@ import supertest from 'supertest';
 import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
-import { loginUser } from './testhelp';
+import { loginUser, registerUser } from './testhelp';
 import schema from '../src/types/Schema.json';
 import DB from '../src/lib/db/Db';
 
@@ -14,7 +14,7 @@ beforeAll(async () => {
 
 describe('/Business ', () => {
   test('It should respond with success message when updating an user', async () => {
-    const body = await loginUser();
+    const body = await registerUser();
     const newData = {
       businessName: 'new_businessName',
       businessType: 'new_businessType',
@@ -55,12 +55,12 @@ describe('/Business ', () => {
       },
     };
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
-    expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
   });
 
   test('It should respond with success message when updating an user with programmes', async () => {
-    const body = await loginUser();
+    const body = await registerUser();
     const newData = {
       businessName: 'new_businessName',
       businessType: 'new_businessType',
@@ -108,8 +108,8 @@ describe('/Business ', () => {
       name: 'Gas',
     });
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
-    expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
 
     const newData2 = newData;
     newData2.programmes[0].answers.push('Daily');
@@ -126,8 +126,10 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when updating an user with programmes', async () => {
-    const body = await loginUser();
+    const body = await loginUser('mail482@mail.com');
     const newData = {
+      usedInId: 105,
+      siteId: 101,
       brands: [
         {
           name: 'All Time',
@@ -144,9 +146,21 @@ describe('/Business ', () => {
           rate: 300,
         },
       ],
+      distance: [
+        {
+          meters: '54984315135',
+        },
+        {
+          meters: '445ads654sd',
+        },
+      ],
+      cost: {
+        currencyCode: 'GBP',
+        vat: 200,
+      },
     };
     const response = await supertest(app)
-      .post('/api/business/setBrands')
+      .post('/api/business/saveEnergy')
       .set('Authorization', `Bearer ${body.jwt}`)
       .send(newData);
     expect(response.statusCode).toBe(200);
@@ -155,14 +169,17 @@ describe('/Business ', () => {
     const newData2 = newData;
     newData2.brands[0].days.push('Wed');
     const response2 = await supertest(app)
-      .post('/api/business/setBrands')
+      .post('/api/business/saveEnergy')
       .set('Authorization', `Bearer ${body.jwt}`)
       .send(newData2);
 
     expect(response2.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
     expect(response2.statusCode).toBe(200);
 
-    const meData = await supertest(app).get('/api/business').set('Authorization', `Bearer ${body.jwt}`);
-    expect(meData.body.brands[0].days.length).toBe(3);
+    const meData = await supertest(app).get('/api/business/energies').set('Authorization', `Bearer ${body.jwt}`);
+    expect(meData.statusCode).toBe(200);
+    expect(meData.body[0].brands.length).toBe(2);
+    expect(meData.body[0].distance.length).toBe(2);
+    expect(meData.body[0].brands[0].days.length).toBe(3);
   });
 });

@@ -6,24 +6,15 @@ import {
   addResponseComponentFor,
 } from '../OpenApiDefinition';
 
-addRequestComponentFor('SetBrands', {
+addRequestComponentFor('SaveBusinessEnergy', {
   content: {
     'application/json': {
-      schema: {
-        type: 'object',
-        required: ['brands'],
-        properties: {
-          brands: {
-            type: 'array',
-            items: getReferenceFor({ for: 'schemas', name: 'Brand' }),
-          },
-        },
-      },
+      schema: getReferenceFor({ for: 'schemas', name: 'BusinessEnergy' }),
     },
   },
 });
 
-addResponseComponentFor('SetBrands', {
+addResponseComponentFor('SaveBusinessEnergy', {
   description: 'Success message',
   content: {
     'application/json': {
@@ -34,9 +25,9 @@ addResponseComponentFor('SetBrands', {
 
 const AddBrandToBusinessOperation: OpenAPIV3.OperationObject = {
   description: 'Create a new user.',
-  requestBody: getReferenceFor({ for: 'requestBodies', name: 'SetBrands' }),
+  requestBody: getReferenceFor({ for: 'requestBodies', name: 'SaveBusinessEnergy' }),
   responses: {
-    '200': getReferenceFor({ for: 'responses', name: 'SetBrands' }),
+    '200': getReferenceFor({ for: 'responses', name: 'SaveBusinessEnergy' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),
   },
 };

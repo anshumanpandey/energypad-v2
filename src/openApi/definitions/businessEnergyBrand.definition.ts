@@ -1,7 +1,7 @@
 import { createSchema } from '../OpenApiDefinition';
 
 createSchema({
-  name: 'Brand',
+  name: 'BusinessBrand',
   schema: {
     required: ['name', 'startTime', 'endTime', 'days', 'rate'],
     properties: {

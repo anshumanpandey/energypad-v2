@@ -1,5 +1,5 @@
 import { AuthAppController, AuthGetAppController } from '@types';
-import { UserService } from '@services';
+import { UserService, SitesService, UtilityService } from '@services';
 import { ApiError } from '@lib';
 
 export const updateUser: AuthAppController<'UpdateUser', 'UpdateUser'> = async (req) => {
@@ -25,17 +25,24 @@ export const getMet: AuthGetAppController<'GetUser'> = async (req) => {
   return user;
 };
 
-export const addBrands: AuthAppController<'SetBrands', 'SetBrands'> = async (req) => {
-  const brands = req.body.brands;
-  if (brands && brands) {
-    const mapBrand = (b: typeof brands[0]) => {
-      return {
-        ...b,
-        businessId: req.user.id,
-      };
-    };
-    await UserService.addBrands(brands.map(mapBrand));
+export const saveEnergy: AuthAppController<'SaveBusinessEnergy', 'SaveBusinessEnergy'> = async (req) => {
+  const [siteFound] = await SitesService.findBy({ id: req.body.siteId, businessId: req.user.id });
+  if (!siteFound) {
+    return new ApiError('Site not found');
   }
+  const [fuelFound] = await UtilityService.findFuelBy({ usedInId: req.body.usedInId });
+  if (!fuelFound) {
+    return new ApiError('Fuel not found');
+  }
+  await UserService.saveEnergy({
+    fuelSourceId: fuelFound.id,
+    ...req.body,
+  });
 
   return { success: true };
+};
+
+export const getBusinessEnergy: AuthGetAppController<'GetBusinessEnergy'> = async (req) => {
+  const energies = await UserService.getBusinessEnergies({ businessId: req.user.id });
+  return energies;
 };

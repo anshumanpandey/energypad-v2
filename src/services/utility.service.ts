@@ -65,10 +65,26 @@ const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   return query;
 };
 
+type FindFuelByParams = {
+  usedInId?: number;
+};
+const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]> => {
+  const query = DB('FuelSources')
+    .select('FuelSources.*')
+    .innerJoin('FuelUses', 'FuelSources.id', 'FuelUses.fuelSourceId');
+
+  if (p.usedInId) {
+    query.where('FuelUses.id', p.usedInId);
+  }
+
+  return query;
+};
+
 export default {
   create,
   addConsumptionToUtility,
   findBy,
   getConsumptionPerUtility,
   getSavingTips,
+  findFuelBy,
 };

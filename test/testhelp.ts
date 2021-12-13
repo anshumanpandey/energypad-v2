@@ -1,12 +1,12 @@
 import supertest from 'supertest';
 import { app } from '../src/app';
 
-export const loginUser = async (email?: string) => {
+export const registerUser = async (email?: string, password?: string) => {
   const body = {
     businessName: 'proident nulla dolor',
     businessType: 'dolor',
     businessService: 'sit nisi',
-    password: 'irure in eiusmod sint nostrud',
+    password: password || 'irure in eiusmod sint nostrud',
     siteName: 'nulla esse id voluptate eiusmod',
     buildingName: 'sint consequat',
     contactName: 'labore exercitation id',
@@ -36,6 +36,18 @@ export const loginUser = async (email?: string) => {
     .send({
       email: body.email,
       password: body.password,
+    })
+    .then((res) => {
+      return res.body;
+    });
+};
+
+export const loginUser = (email: string, password?: string) => {
+  return supertest(app)
+    .post('/api/auth/login')
+    .send({
+      email: email,
+      password: password || '123456Abc!',
     })
     .then((res) => {
       return res.body;
