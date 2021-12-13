@@ -373,6 +373,63 @@ const setTenants = (p: SetTenantsParams) => {
   });
 };
 
+type SetReviewsParams = {
+  businessId: number;
+  reviews: AppModels['Review'][];
+};
+const setReviews = (p: SetReviewsParams) => {
+  const reduceReviewsData = (p: AppModels['Review'][]) => {
+    const data = {
+      reviews: [] as Pick<AppModels['Review'], 'question'>[],
+      answers: [] as { answer: string; question: string; siteId: number }[],
+    };
+    for (let i = 0, len = p.length; i < len; i++) {
+      const el = p[i];
+      const { answers, ...review } = el;
+      data.reviews.push(review);
+      data.answers.push(
+        ...answers.map((a) => ({
+          answer: a,
+          question: review.question,
+          siteId: review.siteId,
+        })),
+      );
+    }
+
+    return data;
+  };
+
+  const data = reduceReviewsData(p.reviews);
+
+  return DB.transaction((trx) => {
+    return trx()
+      .del()
+      .from('Reviews')
+      .where((builder) =>
+        builder
+          .whereIn('siteId', getSinglePropArr({ arr: p.reviews, prop: 'siteId' }))
+          .whereIn('siteId', trx('Sites').select(['id']).where('businessId', p.businessId)),
+      )
+      .then(() => {
+        return trx('Reviews').insert(data.reviews);
+      })
+      .then(() => {
+        const mapAnswerQuery = (a: typeof data.answers[0]) => ({
+          answer: a.answer,
+          reviewId: trx('Reviews')
+            .select('Reviews.id')
+            .where({
+              question: a.question,
+              siteId: a.siteId,
+            })
+            .first(),
+        });
+
+        return trx('ReviewsAnswers').insert(data.answers.map(mapAnswerQuery));
+      });
+  });
+};
+
 export default {
   saveEnergy,
   setBrands,
@@ -382,4 +439,5 @@ export default {
   getBusinessEnergies,
   saveLog,
   setTenants,
+  setReviews,
 };

@@ -87,3 +87,21 @@ export const setTenants: AuthAppController<'SetTenants', 'SetTenants'> = async (
   });
   return { success: true };
 };
+
+export const setReviews: AuthAppController<'SetReviews', 'SetReviews'> = async (req) => {
+  const sitesIds = Array.from(
+    new Set(getSinglePropArr({ arr: req.body, prop: 'siteId' }).map((i) => Number(i))).values(),
+  );
+  const sites = await SitesService.findBy({
+    id: sitesIds,
+    businessId: req.user.id,
+  });
+  if (sites.length !== sitesIds.length) {
+    return new ApiError('Site not found');
+  }
+  await UserService.setReviews({
+    businessId: req.user.id,
+    reviews: req.body,
+  });
+  return { success: true };
+};

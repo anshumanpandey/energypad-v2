@@ -8,6 +8,7 @@ import {
   GetBusinessEnergyPath,
   AddBusinessLogPath,
   SetBusinessTenantPath,
+  SetBusinessReviewPath,
 } from '@openApi';
 
 const businessRoutes = express.Router();
@@ -53,6 +54,16 @@ businessRoutes.post(
     body: 'SetTenants',
   }),
   ExpressAsync(UserController.setTenants),
+);
+
+businessRoutes.post(
+  '/setReviews',
+  SetBusinessReviewPath,
+  AuthMiddleware,
+  RequestValidatorMiddleware({
+    body: 'SetReviews',
+  }),
+  ExpressAsync(UserController.setReviews),
 );
 
 export default businessRoutes;

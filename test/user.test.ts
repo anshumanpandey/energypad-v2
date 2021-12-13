@@ -217,4 +217,39 @@ describe('/Business ', () => {
     expect(response2.statusCode).toBe(200);
     expect(response2.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
   });
+
+  test('It should respond with success message when saving reviews', async () => {
+    const body = await loginUser('mail230@mail.com');
+    const newData = [
+      {
+        siteId: 460,
+        question: 'How often?',
+        answers: ['montly', 'Quarterly', 'Bianually'],
+      },
+      {
+        siteId: 460,
+        question: 'How near?',
+        answers: ['montly', 'Quarterly', 'Bianually'],
+      },
+    ];
+    const response = await supertest(app)
+      .post('/api/business/setReviews')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send(newData);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
+
+    const response2 = await supertest(app)
+      .post('/api/business/setReviews')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send([
+        {
+          siteId: 460,
+          question: 'How near?',
+          answers: ['Montly', 'Quarterly', 'Bianually'],
+        },
+      ]);
+    expect(response2.statusCode).toBe(200);
+    expect(response2.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
+  });
 });

@@ -3,7 +3,8 @@ import './definitions/success.definition';
 import './definitions/site.definition';
 import './definitions/jwt.definition';
 import './definitions/businessPattern.definition';
-import './definitions/progamme.definition';
+import './definitions/programme.definition';
+import './definitions/review.definition';
 import './definitions/businessEnergyBrand.definition';
 import './definitions/businessEnergyCost.definition';
 import './definitions/businessEnergyDistance.definition';
@@ -29,6 +30,7 @@ import { GetBusinessEnergyPath } from './definitions/user.energy.get.definition'
 import { AddUtilityEmissionPath } from './definitions/utilityEmission.add.definition';
 import { AddBusinessLogPath } from './definitions/user.log.post.definition';
 import { SetBusinessTenantPath } from './definitions/user.tenant.post.definition';
+import { SetBusinessReviewPath } from './definitions/user.review.post.definition';
 
 export default OpenApiDefinition;
 export {
@@ -48,4 +50,5 @@ export {
   GetBusinessEnergyPath,
   AddBusinessLogPath,
   SetBusinessTenantPath,
+  SetBusinessReviewPath,
 };

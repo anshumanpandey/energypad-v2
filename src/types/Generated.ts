@@ -170,6 +170,16 @@ export interface paths {
       requestBody: components["requestBodies"]["SaveBusinessEnergy"];
     };
   };
+  "/api/business/setReviews": {
+    /** Create a new user. */
+    post: {
+      responses: {
+        200: components["responses"]["SetReviews"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["SaveBusinessEnergy"];
+    };
+  };
 }
 
 export interface components {
@@ -210,6 +220,11 @@ export interface components {
       question: string;
       siteId: number;
       usedInId: number;
+      answers: string[];
+    };
+    Review: {
+      question: string;
+      siteId: number;
       answers: string[];
     };
     BusinessBrand: {
@@ -409,6 +424,12 @@ export interface components {
         "application/json": components["schemas"]["SuccessMessage"];
       };
     };
+    /** Success message */
+    SetReviews: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddUtilityConsumption: number;
@@ -483,6 +504,11 @@ export interface components {
     SetTenants: {
       content: {
         "application/json": components["schemas"]["Tenant"][];
+      };
+    };
+    SetReviews: {
+      content: {
+        "application/json": components["schemas"]["Review"][];
       };
     };
   };

@@ -43,6 +43,7 @@ type SchemaNames =
   | 'BusinessEnergy'
   | 'SavingTip'
   | 'Tenant'
+  | 'Review'
   | 'BusinessPattern';
 type PathNames =
   | 'CreateUser'
@@ -58,6 +59,7 @@ type PathNames =
   | 'UpdateUser'
   | 'AddLog'
   | 'SetTenants'
+  | 'SetReviews'
   | 'SaveBusinessEnergy'
   | 'GetBusinessEnergy'
   | 'GetSavingTips'
