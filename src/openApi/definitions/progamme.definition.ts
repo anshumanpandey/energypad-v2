@@ -3,10 +3,11 @@ import { createSchema } from '../OpenApiDefinition';
 createSchema({
   name: 'Programme',
   schema: {
-    required: ['question', 'utilityId', 'answers'],
+    required: ['question', 'answers', 'siteId', 'usedInId'],
     properties: {
       question: { type: 'string' },
-      utilityId: { type: 'number', readOnly: true },
+      siteId: { type: 'number', format: 'int32' },
+      usedInId: { type: 'number', format: 'int32' },
       answers: {
         type: 'array',
         items: {

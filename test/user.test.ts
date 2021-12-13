@@ -59,7 +59,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when updating an user with programmes', async () => {
-    const body = await loginUser('mail218@mail.com');
+    const body = await loginUser('mail230@mail.com');
     const newData = {
       businessName: 'new_businessName',
       businessType: 'new_businessType',
@@ -87,8 +87,8 @@ describe('/Business ', () => {
         },
       ],
       programmes: [
-        { question: 'How often?', answers: ['Montly', 'Yearly'], utilityId: 184 },
-        { question: 'What type?', answers: ['Single', 'Triple'], utilityId: 184 },
+        { question: 'How often?', answers: ['Montly', 'Yearly'], siteId: 458, usedInId: 2 },
+        { question: 'What type?', answers: ['Single', 'Triple'], siteId: 458, usedInId: 2 },
       ],
     };
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);

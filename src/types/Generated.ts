@@ -208,7 +208,8 @@ export interface components {
     };
     Programme: {
       question: string;
-      utilityId: number;
+      siteId: number;
+      usedInId: number;
       answers: string[];
     };
     BusinessBrand: {

@@ -6,9 +6,10 @@ const getUserBy = async (params: { id?: number; email?: string }) => {
   const query = DB('Businesses')
     .select(['Businesses.*', 'Programmes.id as ProgrammeId', 'Programmes.question', 'ProgrammeAnswers.answer'])
     .leftJoin('Utilities', 'Businesses.id', 'Utilities.businessId')
-    .leftJoin('Programmes', 'Utilities.id', 'Programmes.utilityId')
-    .leftJoin('ProgrammeAnswers', 'Programmes.id', 'ProgrammeAnswers.programmeId')
-    .leftJoin({ B: 'Businesses' }, 'Utilities.businessId', 'B.id');
+    .leftJoin({ B: 'Businesses' }, 'Utilities.businessId', 'B.id')
+    .leftJoin('Sites', 'B.id', 'Sites.businessId')
+    .leftJoin('Programmes', 'Sites.id', 'Programmes.siteId')
+    .leftJoin('ProgrammeAnswers', 'Programmes.id', 'ProgrammeAnswers.programmeId');
 
   if (params.id) {
     query.where({ 'Businesses.id': params.id });
@@ -67,22 +68,29 @@ export const savePattern = async (params: AddServiceParams, opt?: Transactionabl
 };
 
 const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
-  const { id, floors, programmes, ...vals } = p;
+  const { id: businessId, floors, programmes, ...vals } = p;
   type Programme = NonNullable<typeof programmes>[0];
 
-  const mapFloors = (f: typeof floors[0]) => ({ ...f, businessId: id });
+  const mapFloors = (f: typeof floors[0]) => ({ ...f, businessId });
   const floorsData = floors.map(mapFloors);
 
   const reduceProgrammesData = (p: Programme[]) => {
     const data = {
-      programmes: [] as Pick<Programme, 'question' | 'utilityId'>[],
-      answers: [] as { answer: string; question: string }[],
+      programmes: [] as Pick<Programme, 'question'>[],
+      answers: [] as { answer: string; question: string; siteId: number; usedInId: number }[],
     };
     for (let i = 0, len = p.length; i < len; i++) {
       const el = p[i];
       const { answers, ...programme } = el;
       data.programmes.push(programme);
-      data.answers.push(...answers.map((a) => ({ answer: a, question: programme.question })));
+      data.answers.push(
+        ...answers.map((a) => ({
+          answer: a,
+          question: programme.question,
+          siteId: programme.siteId,
+          usedInId: programme.usedInId,
+        })),
+      );
     }
 
     return data;
@@ -91,10 +99,10 @@ const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
   const trx = opt?.txr || (await DB.transaction());
 
   return trx('Businesses')
-    .where('id', id)
+    .where('id', businessId)
     .update(vals)
     .then(() => {
-      return trx('Floors').where('businessId', id).del();
+      return trx('Floors').where('businessId', businessId).del();
     })
     .then(() => {
       return trx('Floors').insert(floorsData);
@@ -106,9 +114,12 @@ const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
         return trx()
           .del()
           .from('Programmes')
-          .whereIn('Programmes.utilityId', (q) => {
-            return q.select('id').from('Utilities').where('businessId', id);
-          })
+          .where((builder) =>
+            builder
+              .whereIn('siteId', getSinglePropArr({ arr: programmes, prop: 'siteId' }))
+              .whereIn('usedInId', getSinglePropArr({ arr: programmes, prop: 'usedInId' }))
+              .whereIn('siteId', trx('Sites').select(['id']).where('businessId', businessId)),
+          )
           .then(() => {
             return trx('Programmes').insert(data.programmes);
           })
@@ -119,9 +130,9 @@ const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
                 .select('Programmes.id')
                 .where({
                   question: a.question,
+                  siteId: a.siteId,
+                  usedInId: a.usedInId,
                 })
-                .innerJoin('Utilities', 'Programmes.utilityId', 'Utilities.id')
-                .innerJoin('Businesses', 'Utilities.businessId', 'Businesses.id')
                 .first(),
             });
 
