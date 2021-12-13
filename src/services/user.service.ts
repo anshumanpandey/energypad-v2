@@ -328,6 +328,19 @@ const getBusinessEnergies = async (p: GetBusinessEnergiesParams) => {
   return reduceRecords(records);
 };
 
+type SaveLogParams = {
+  siteId: number;
+  usedInId: number;
+  startDate: string;
+  endDate: string;
+  comments: string;
+  operation: string;
+};
+const saveLog = (p: SaveLogParams) => {
+  const query = DB('BusinessLog').insert(p);
+  return query;
+};
+
 export default {
   saveEnergy,
   setBrands,
@@ -335,4 +348,5 @@ export default {
   savePattern,
   updateUser,
   getBusinessEnergies,
+  saveLog,
 };

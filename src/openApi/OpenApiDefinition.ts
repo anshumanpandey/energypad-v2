@@ -55,6 +55,7 @@ type PathNames =
   | 'GetUtilities'
   | 'GetUser'
   | 'UpdateUser'
+  | 'AddLog'
   | 'SaveBusinessEnergy'
   | 'GetBusinessEnergy'
   | 'GetSavingTips'

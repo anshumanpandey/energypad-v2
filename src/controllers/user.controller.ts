@@ -59,3 +59,12 @@ export const getBusinessEnergy: AuthGetAppController<'GetBusinessEnergy'> = asyn
   const energies = await UserService.getBusinessEnergies({ businessId: req.user.id });
   return energies;
 };
+
+export const addLog: AuthAppController<'AddLog', 'AddLog'> = async (req) => {
+  const [siteFound] = await SitesService.findBy({ id: req.body.siteId, businessId: req.user.id });
+  if (!siteFound) {
+    return new ApiError('Site not found');
+  }
+  await UserService.saveLog(req.body);
+  return { success: true };
+};

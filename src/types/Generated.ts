@@ -150,6 +150,16 @@ export interface paths {
       requestBody: components["requestBodies"]["SaveBusinessEnergy"];
     };
   };
+  "/api/business/addLog": {
+    /** Create a new user. */
+    post: {
+      responses: {
+        200: components["responses"]["AddLog"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["SaveBusinessEnergy"];
+    };
+  };
 }
 
 export interface components {
@@ -369,6 +379,12 @@ export interface components {
         "application/json": components["schemas"]["SuccessMessage"];
       };
     };
+    /** Success message */
+    AddLog: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddUtilityConsumption: number;
@@ -426,6 +442,18 @@ export interface components {
     AddUtilityEmission: {
       content: {
         "application/json": components["schemas"]["AddUtilityEmissionBody"][];
+      };
+    };
+    AddLog: {
+      content: {
+        "application/json": {
+          siteId: number;
+          usedInId: number;
+          operation: string;
+          comments: string;
+          startDate: string;
+          endDate: string;
+        };
       };
     };
   };

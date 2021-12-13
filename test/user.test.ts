@@ -167,4 +167,22 @@ describe('/Business ', () => {
     expect(meData.body[0].distance.length).toBe(2);
     expect(meData.body[0].brands[0].days.length).toBe(3);
   });
+
+  test('It should respond with success message when saving a log', async () => {
+    const body = await loginUser('mail226@mail.com');
+    const newData = {
+      usedInId: 2,
+      siteId: 454,
+      operation: 'an opetation',
+      comments: 'some comments',
+      startDate: '2020-10-01',
+      endDate: '2020-10-08',
+    };
+    const response = await supertest(app)
+      .post('/api/business/addLog')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send(newData);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.AddLog.content['application/json'].schema);
+  });
 });

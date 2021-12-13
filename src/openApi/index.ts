@@ -26,6 +26,7 @@ import { AddBrandToBusinessPath } from './definitions/user.saveEnergy.definition
 import { GetSavingTipsPath } from './definitions/savingTips.get.definition';
 import { GetBusinessEnergyPath } from './definitions/user.energy.get.definition';
 import { AddUtilityEmissionPath } from './definitions/utilityEmission.add.definition';
+import { AddBusinessLogPath } from './definitions/user.log.post.definition';
 
 export default OpenApiDefinition;
 export {
@@ -43,4 +44,5 @@ export {
   AddBrandToBusinessPath,
   GetSavingTipsPath,
   GetBusinessEnergyPath,
+  AddBusinessLogPath,
 };
