@@ -26,9 +26,9 @@ authRoutes.post(
   AddUtilityPath,
   AuthMiddleware,
   RequestValidatorMiddleware({
-    body: 'AddUtilityEmission',
+    body: 'AddUtilityConsumption',
   }),
-  ExpressAsync(UtilityController.addEmission),
+  ExpressAsync(UtilityController.addConsumption),
 );
 
 authRoutes.post(

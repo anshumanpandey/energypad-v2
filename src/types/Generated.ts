@@ -61,7 +61,7 @@ export interface paths {
         };
       };
       responses: {
-        200: components["responses"]["AddUtilityEmission"];
+        200: components["responses"]["AddUtilityConsumption"];
         400: components["responses"]["GenericError"];
       };
       requestBody: components["requestBodies"]["CreateUtility"];
@@ -237,14 +237,14 @@ export interface components {
       id: number;
       name: string;
     };
-    AddUtilityEmissionBody: {
+    AddUtilityConsumptionBody: {
       date: string;
       consumption: number;
       cost: number;
       siteId: number;
       usedInId: number;
     };
-    UtilityConsumption: components["schemas"]["AddUtilityEmissionBody"] & {
+    UtilityConsumption: components["schemas"]["AddUtilityConsumptionBody"] & {
       id: number;
     };
   };
@@ -280,7 +280,7 @@ export interface components {
       };
     };
     /** Success message */
-    AddUtilityEmission: {
+    AddUtilityConsumption: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
       };
@@ -340,7 +340,7 @@ export interface components {
     };
   };
   parameters: {
-    AddUtilityEmission: number;
+    AddUtilityConsumption: number;
   };
   requestBodies: {
     Register: {
@@ -368,9 +368,9 @@ export interface components {
         };
       };
     };
-    AddUtilityEmission: {
+    AddUtilityConsumption: {
       content: {
-        "application/json": components["schemas"]["AddUtilityEmissionBody"];
+        "application/json": components["schemas"]["AddUtilityConsumptionBody"];
       };
     };
     UtilityFileImport: {

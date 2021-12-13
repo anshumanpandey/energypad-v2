@@ -40,7 +40,7 @@ describe('/Utility ', () => {
         usedInId: 2,
       });
     expect(response.body).toMatchSchema(
-      schema.components.responses.AddUtilityEmission.content['application/json'].schema,
+      schema.components.responses.AddUtilityConsumption.content['application/json'].schema,
     );
     expect(response.statusCode).toBe(200);
   });

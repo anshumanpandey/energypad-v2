@@ -18,7 +18,7 @@ export const getUtilities: AuthGetAppController<'GetUtilities', '/api/utility/'>
   return utilities;
 };
 
-export const addEmission: AuthAppController<'AddUtilityEmission', 'AddUtilityEmission'> = async (req) => {
+export const addConsumption: AuthAppController<'AddUtilityConsumption', 'AddUtilityConsumption'> = async (req) => {
   const utilityId = req.params.utilityId;
   const found = await UtilityService.findBy({ id: parseInt(utilityId, 10) });
   if (found.length === 0) {

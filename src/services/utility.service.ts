@@ -9,7 +9,7 @@ const create = async (params: RequestBodyParams<'CreateUtility'>, opt?: Transact
   return query;
 };
 
-export type AddConsumptionToUtilityParam = { utilityId: number } & RequestBodyParams<'AddUtilityEmission'>;
+export type AddConsumptionToUtilityParam = { utilityId: number } & RequestBodyParams<'AddUtilityConsumption'>;
 const addConsumptionToUtility = async (
   params: AddConsumptionToUtilityParam | AddConsumptionToUtilityParam[],
   opt?: Transactionable,
@@ -78,6 +78,18 @@ const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]>
   }
 
   return query;
+};
+
+type SetUtilityEmissionsParams = {
+  businessId: number;
+  siteId: number;
+  fuelSourceId: number;
+  year: string;
+  factorType: string;
+  value: number;
+};
+const setUtilityEmissions = (p: SetUtilityEmissionsParams) => {
+  const query = DB('UtilityEmissions').select();
 };
 
 export default {
