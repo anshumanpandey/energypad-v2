@@ -4,13 +4,6 @@ expect.extend(matchers);
 import { app } from '../src/app';
 import { loginUser, registerUser } from './testhelp';
 import schema from '../src/types/Schema.json';
-import DB from '../src/lib/db/Db';
-
-beforeAll(async () => {
-  await DB.migrate.latest().then(function () {
-    return DB.seed.run();
-  });
-});
 
 describe('/Business ', () => {
   test('It should respond with success message when updating an user', async () => {
@@ -125,7 +118,7 @@ describe('/Business ', () => {
     expect(meData.body.programmes[0].answers.length).toBe(3);
   });
 
-  test('It should respond with success message when updating an user with programmes', async () => {
+  test('It should respond with success message when saving energy', async () => {
     const body = await loginUser('mail482@mail.com');
     const newData = {
       usedInId: 105,

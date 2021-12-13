@@ -2,15 +2,8 @@ import supertest from 'supertest';
 import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
-import DB from '../src/lib/db/Db';
 import schema from '../src/types/Schema.json';
 import { NO_EXTRA_PROPERTY_ERROR_MESSAGE, WRONG_DATE_ERROR_MESSAGE, WRONG_NUMBER_ERROR_MESSAGE } from './testhelp';
-
-beforeAll(async () => {
-  await DB.migrate.latest().then(function () {
-    return DB.seed.run();
-  });
-});
 
 describe('/auth', () => {
   test('It should respond with success message when register', async () => {

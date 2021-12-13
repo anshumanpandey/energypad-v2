@@ -2,19 +2,12 @@ import supertest from 'supertest';
 import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
-import { loginUser, NO_EXTRA_PROPERTY_ERROR_MESSAGE } from './testhelp';
+import { NO_EXTRA_PROPERTY_ERROR_MESSAGE, registerUser } from './testhelp';
 import schema from '../src/types/Schema.json';
-import DB from '../src/lib/db/Db';
-
-beforeAll(async () => {
-  await DB.migrate.latest().then(function () {
-    return DB.seed.run();
-  });
-});
 
 describe('/Utility ', () => {
   test('It should respond with success message when create an utility', async () => {
-    const body = await loginUser();
+    const body = await registerUser();
     const response = await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
       name: 'Gas',
     });
@@ -23,7 +16,7 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with error message when sending wrong params', async () => {
-    const body = await loginUser();
+    const body = await registerUser();
     const response = await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
       name: 'in amet enim',
       another: 1,
@@ -34,7 +27,7 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with success when adding a consuption to a utility', async () => {
-    const body = await loginUser();
+    const body = await registerUser();
     await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
       name: 'Heat',
     });
@@ -54,7 +47,7 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with success message when importing from file', async () => {
-    const body = await loginUser('gas2business@mail.com');
+    const body = await registerUser('gas2business@mail.com');
 
     await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
       name: 'Gas',
@@ -71,7 +64,7 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with error message when importing from excel sheet has not correct name', async () => {
-    const body = await loginUser();
+    const body = await registerUser();
     const response = await supertest(app)
       .post('/api/utility/importUtility')
       .set('Authorization', `Bearer ${body.jwt}`)
@@ -82,7 +75,7 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with saving tips succesfully', async () => {
-    const body = await loginUser();
+    const body = await registerUser();
     const response = await supertest(app).get('/api/utility/savingTips').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.body.length).toBeGreaterThan(0);
     expect(response.body[0].id).toBe(1);

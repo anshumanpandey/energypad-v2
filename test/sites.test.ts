@@ -2,19 +2,12 @@ import supertest from 'supertest';
 import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
-import { loginUser, NO_EXTRA_PROPERTY_ERROR_MESSAGE } from './testhelp';
+import { registerUser, NO_EXTRA_PROPERTY_ERROR_MESSAGE } from './testhelp';
 import schema from '../src/types/Schema.json';
-import DB from '../src/lib/db/Db';
-
-beforeAll(async () => {
-  await DB.migrate.latest().then(function () {
-    return DB.seed.run();
-  });
-});
 
 describe('/Site ', () => {
   test('It should respond with success message when create a site', async () => {
-    const body = await loginUser();
+    const body = await registerUser();
     const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       type: 'in amet enim',
       address: 'irure aliquip cillum esse magna',
@@ -30,7 +23,7 @@ describe('/Site ', () => {
   });
 
   test('It should respond with fail message when create a site', async () => {
-    const body = await loginUser();
+    const body = await registerUser();
     const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       type: 'in amet enim',
       address: 'irure aliquip cillum esse magna',

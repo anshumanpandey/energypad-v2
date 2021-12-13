@@ -8,19 +8,12 @@ const matcher = matchersWithOptions({
 });
 expect.extend(matcher);
 import { app } from '../src/app';
-import { loginUser } from './testhelp';
+import { registerUser } from './testhelp';
 import schema from '../src/types/Schema.json';
-import DB from '../src/lib/db/Db';
-
-beforeAll(async () => {
-  await DB.migrate.latest().then(function () {
-    return DB.seed.run();
-  });
-});
 
 describe('/Dashboard ', () => {
   test('It should respond with success message when create an utility', async () => {
-    const body = await loginUser('userdashboard1@mail.com');
+    const body = await registerUser('userdashboard1@mail.com');
     await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
       name: 'Heat',
     });

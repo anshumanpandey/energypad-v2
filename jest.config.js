@@ -13,5 +13,6 @@ module.exports = {
   ],
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
   testEnvironment: 'node',
-  moduleNameMapper: pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' })
+  moduleNameMapper: pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' }),
+  globalSetup: "<rootDir>/jest.setup.ts",
 };
