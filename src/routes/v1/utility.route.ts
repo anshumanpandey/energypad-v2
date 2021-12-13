@@ -2,7 +2,8 @@ import express from 'express';
 import { AuthMiddleware, ExpressAsync, FileUpload, RequestValidatorMiddleware } from '@middleware';
 import { UtilityController } from '@controllers';
 import {
-  AddUtilityPath,
+  AddUtilityConsumptionPath,
+  AddUtilityEmissionPath,
   CreateUtilityPath,
   GetSavingTipsPath,
   GetUtilitiesPath,
@@ -23,7 +24,17 @@ authRoutes.post(
 
 authRoutes.post(
   '/addEmission/:utilityId',
-  AddUtilityPath,
+  AddUtilityEmissionPath,
+  AuthMiddleware,
+  RequestValidatorMiddleware({
+    body: 'AddUtilityEmission',
+  }),
+  ExpressAsync(UtilityController.addEmission),
+);
+
+authRoutes.post(
+  '/addConsumption/:utilityId',
+  AddUtilityConsumptionPath,
   AuthMiddleware,
   RequestValidatorMiddleware({
     body: 'AddUtilityConsumption',

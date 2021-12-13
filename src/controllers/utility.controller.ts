@@ -20,7 +20,7 @@ export const getUtilities: AuthGetAppController<'GetUtilities', '/api/utility/'>
 
 export const addConsumption: AuthAppController<'AddUtilityConsumption', 'AddUtilityConsumption'> = async (req) => {
   const utilityId = req.params.utilityId;
-  const found = await UtilityService.findBy({ id: parseInt(utilityId, 10) });
+  const found = await UtilityService.findBy({ id: parseInt(utilityId, 10), businessId: req.user.id });
   if (found.length === 0) {
     return new ApiError('Utility to add not found');
   }
@@ -31,6 +31,25 @@ export const addConsumption: AuthAppController<'AddUtilityConsumption', 'AddUtil
   };
 
   await UtilityService.addConsumptionToUtility(params);
+
+  return { success: true };
+};
+
+export const addEmission: AuthAppController<'AddUtilityEmission', 'AddUtilityEmission'> = async (req) => {
+  const utilityId = req.params.utilityId;
+  const found = await UtilityService.findBy({ id: parseInt(utilityId, 10), businessId: req.user.id });
+  if (found.length === 0) {
+    return new ApiError('Utility to add not found');
+  }
+
+  const mapEmission = (r: typeof req.body[0]) => {
+    return {
+      ...r,
+      businessId: req.user.id,
+    };
+  };
+
+  await UtilityService.setUtilityEmissions(req.body.map(mapEmission));
 
   return { success: true };
 };

@@ -61,6 +61,21 @@ export interface paths {
         };
       };
       responses: {
+        200: components["responses"]["AddUtilityEmission"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["CreateUtility"];
+    };
+  };
+  "/api/utility/addConsumption/{utilityId}": {
+    /** Add emision to utility. */
+    post: {
+      parameters: {
+        path: {
+          utilityId: string;
+        };
+      };
+      responses: {
         200: components["responses"]["AddUtilityConsumption"];
         400: components["responses"]["GenericError"];
       };
@@ -247,6 +262,16 @@ export interface components {
     UtilityConsumption: components["schemas"]["AddUtilityConsumptionBody"] & {
       id: number;
     };
+    AddUtilityEmissionBody: {
+      emissionFactor: string;
+      value: number;
+      year: number;
+      siteId: number;
+      usedInId: number;
+    };
+    UtilityEmission: components["schemas"]["AddUtilityEmissionBody"] & {
+      id: number;
+    };
   };
   responses: {
     /** Error message */
@@ -338,9 +363,16 @@ export interface components {
         "application/json": components["schemas"]["BusinessEnergy"][];
       };
     };
+    /** Success message */
+    AddUtilityEmission: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddUtilityConsumption: number;
+    AddUtilityEmission: number;
   };
   requestBodies: {
     Register: {
@@ -389,6 +421,11 @@ export interface components {
     SaveBusinessEnergy: {
       content: {
         "application/json": components["schemas"]["BusinessEnergy"];
+      };
+    };
+    AddUtilityEmission: {
+      content: {
+        "application/json": components["schemas"]["AddUtilityEmissionBody"][];
       };
     };
   };

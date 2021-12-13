@@ -10,13 +10,13 @@ import {
 } from '../OpenApiDefinition';
 
 const bodySchema: CreateSchemaParams = {
-  name: 'AddUtilityConsumptionBody',
+  name: 'AddUtilityEmissionBody',
   schema: {
-    required: ['date', 'consumption', 'cost', 'usedInId', 'siteId'],
+    required: ['emissionFactor', 'value', 'year', 'siteId', 'usedInId'],
     properties: {
-      date: { type: 'string', format: 'date' },
-      consumption: { type: 'number', format: 'int32' },
-      cost: { type: 'number', format: 'int32' },
+      emissionFactor: { type: 'string' },
+      value: { type: 'number', format: 'int32' },
+      year: { type: 'number', format: 'int32' },
       siteId: { type: 'number', format: 'int32' },
       usedInId: { type: 'number', format: 'int32' },
     },
@@ -24,20 +24,23 @@ const bodySchema: CreateSchemaParams = {
 };
 createSchema(bodySchema);
 
-addRequestComponentFor('AddUtilityConsumption', {
+addRequestComponentFor('AddUtilityEmission', {
   required: true,
   content: {
     'application/json': {
-      schema: getReferenceFor({ for: 'schemas', name: 'AddUtilityConsumptionBody' }),
+      schema: {
+        type: 'array',
+        items: getReferenceFor({ for: 'schemas', name: 'AddUtilityEmissionBody' }),
+      },
     },
   },
 });
 
 const schema: CreateSchemaParams = {
-  name: 'UtilityConsumption',
+  name: 'UtilityEmission',
   schema: {
     allOf: [
-      getReferenceFor({ for: 'schemas', name: 'AddUtilityConsumptionBody' }),
+      getReferenceFor({ for: 'schemas', name: 'AddUtilityEmissionBody' }),
       {
         required: ['id'],
         properties: {
@@ -49,7 +52,7 @@ const schema: CreateSchemaParams = {
 };
 createSchema(schema);
 
-addResponseComponentFor('AddUtilityConsumption', {
+addResponseComponentFor('AddUtilityEmission', {
   description: 'Success message',
   content: {
     'application/json': {
@@ -58,7 +61,7 @@ addResponseComponentFor('AddUtilityConsumption', {
   },
 });
 
-addParameterComponentFor('AddUtilityConsumption', {
+addParameterComponentFor('AddUtilityEmission', {
   name: 'utilityId',
   in: 'path',
   required: true,
@@ -67,13 +70,13 @@ addParameterComponentFor('AddUtilityConsumption', {
   },
 });
 
-const AddUtilityConsumption: OpenAPIV3.OperationObject = {
+const AddUtilityEmission: OpenAPIV3.OperationObject = {
   description: 'Add emision to utility.',
   requestBody: getReferenceFor({ for: 'requestBodies', name: 'CreateUtility' }),
   responses: {
-    '200': getReferenceFor({ for: 'responses', name: 'AddUtilityConsumption' }),
+    '200': getReferenceFor({ for: 'responses', name: 'AddUtilityEmission' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),
   },
 };
 
-export const AddUtilityConsumptionPath = OpenApiDefinition.path(AddUtilityConsumption);
+export const AddUtilityEmissionPath = OpenApiDefinition.path(AddUtilityEmission);

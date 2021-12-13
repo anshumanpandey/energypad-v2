@@ -30,7 +30,7 @@ describe('/Utility ', () => {
     const body = await loginUser('mail198@mail.com');
 
     const response = await supertest(app)
-      .post('/api/utility/addEmission/498')
+      .post('/api/utility/addConsumption/498')
       .set('Authorization', `Bearer ${body.jwt}`)
       .send({
         date: '2020-01-01',
@@ -72,5 +72,43 @@ describe('/Utility ', () => {
     expect(typeof response.body[0].text).toBe('string');
     expect(response.body[0].imageUrl).toBe(null);
     expect(response.statusCode).toBe(200);
+  });
+
+  test('It should respond with success when saving energy emission', async () => {
+    const body = await loginUser('mail224@mail.com');
+    const response = await supertest(app)
+      .post('/api/utility/addEmission/188')
+      .send([
+        {
+          emissionFactor: 'special',
+          value: 600,
+          year: 2001,
+          siteId: 452,
+          usedInId: 2,
+        },
+      ])
+      .set('Authorization', `Bearer ${body.jwt}`);
+    expect(response.statusCode).toBe(200);
+
+    const response2 = await supertest(app)
+      .post('/api/utility/addEmission/188')
+      .send([
+        {
+          emissionFactor: 'special',
+          value: 600,
+          year: 2003,
+          siteId: 452,
+          usedInId: 2,
+        },
+        {
+          emissionFactor: 'special',
+          value: 600,
+          year: 2002,
+          siteId: 452,
+          usedInId: 2,
+        },
+      ])
+      .set('Authorization', `Bearer ${body.jwt}`);
+    expect(response2.statusCode).toBe(200);
   });
 });

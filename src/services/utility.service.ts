@@ -83,13 +83,40 @@ const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]>
 type SetUtilityEmissionsParams = {
   businessId: number;
   siteId: number;
-  fuelSourceId: number;
-  year: string;
-  factorType: string;
+  usedInId: number;
+  year: number;
+  emissionFactor: string;
   value: number;
 };
-const setUtilityEmissions = (p: SetUtilityEmissionsParams) => {
-  const query = DB('UtilityEmissions').select();
+const setUtilityEmissions = (p: SetUtilityEmissionsParams[]) => {
+  const getSinglePropArr = <T>(p: { arr: T[]; prop: keyof T }) => p.arr.map((i) => i[p.prop]);
+  return DB.transaction((trx) => {
+    const delQuery = trx('UtilityEmissions')
+      .where((builder) =>
+        builder
+          .whereIn('siteId', getSinglePropArr({ arr: p, prop: 'siteId' }))
+          .whereIn('usedInId', getSinglePropArr({ arr: p, prop: 'usedInId' }))
+          .whereIn(
+            'siteId',
+            trx('Sites')
+              .select(['id'])
+              .whereIn('businessId', getSinglePropArr({ arr: p, prop: 'businessId' })),
+          ),
+      )
+      .del();
+
+    console.log(delQuery.toString());
+
+    return delQuery.then((r) => {
+      console.log({ r });
+      const mapRecord = (r: typeof p[0]) => {
+        const { businessId: _, ...data } = r;
+        return data;
+      };
+      const query = trx('UtilityEmissions').insert(p.map(mapRecord));
+      return query;
+    });
+  });
 };
 
 export default {
@@ -99,4 +126,5 @@ export default {
   getConsumptionPerUtility,
   getSavingTips,
   findFuelBy,
+  setUtilityEmissions,
 };
