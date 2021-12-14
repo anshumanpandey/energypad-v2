@@ -111,4 +111,12 @@ describe('/Utility ', () => {
       .set('Authorization', `Bearer ${body.jwt}`);
     expect(response2.statusCode).toBe(200);
   });
+
+  test('It should respond with fuel sources', async () => {
+    const body = await registerUser();
+    const response = await supertest(app).get('/api/utility/fuelSources').set('Authorization', `Bearer ${body.jwt}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.length).toBe(1);
+    expect(response.body[0].usedIn.length).toBe(4);
+  });
 });

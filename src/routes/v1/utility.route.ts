@@ -5,12 +5,17 @@ import {
   AddUtilityConsumptionPath,
   AddUtilityEmissionPath,
   CreateUtilityPath,
+  GetFuelSourcesPath,
   GetSavingTipsPath,
   GetUtilitiesPath,
   UtilityFileImportPath,
 } from '@openApi';
 
 const authRoutes = express.Router();
+
+authRoutes.get('/', GetUtilitiesPath, AuthMiddleware, ExpressAsync(UtilityController.getUtilities));
+authRoutes.get('/savingTips', GetSavingTipsPath, AuthMiddleware, ExpressAsync(UtilityController.getSavingTips));
+authRoutes.get('/fuelSources', GetFuelSourcesPath, AuthMiddleware, ExpressAsync(UtilityController.getFuelSources));
 
 authRoutes.post(
   '/',
@@ -49,9 +54,5 @@ authRoutes.post(
   FileUpload.single('excel'),
   ExpressAsync(UtilityController.importFile),
 );
-
-authRoutes.get('/', GetUtilitiesPath, AuthMiddleware, ExpressAsync(UtilityController.getUtilities));
-
-authRoutes.get('/savingTips', GetSavingTipsPath, AuthMiddleware, ExpressAsync(UtilityController.getSavingTips));
 
 export default authRoutes;

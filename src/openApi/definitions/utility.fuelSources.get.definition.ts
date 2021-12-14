@@ -1,7 +1,7 @@
 import { OpenAPIV3 } from 'openapi-types';
 import { OpenApiDefinition, getReferenceFor, addResponseComponentFor } from '../OpenApiDefinition';
 
-addResponseComponentFor('GetSites', {
+addResponseComponentFor('GetFuelSources', {
   description: 'Success message',
   content: {
     'application/json': {
@@ -9,13 +9,8 @@ addResponseComponentFor('GetSites', {
         type: 'array',
         items: {
           allOf: [
-            getReferenceFor({ for: 'schemas', name: 'Site' }),
-            {
-              required: ['id'],
-              properties: {
-                id: { type: 'number' },
-              },
-            },
+            getReferenceFor({ for: 'schemas', name: 'FuelSource' }),
+            { required: ['id'], properties: { id: { type: 'number' } } },
           ],
         },
       },
@@ -23,13 +18,13 @@ addResponseComponentFor('GetSites', {
   },
 });
 
-const GetBusinessSites: OpenAPIV3.OperationObject = {
+const GetFuelSources: OpenAPIV3.OperationObject = {
   description: 'Get dashboard data per date.',
   parameters: [],
   responses: {
-    '200': getReferenceFor({ for: 'responses', name: 'GetSites' }),
+    '200': getReferenceFor({ for: 'responses', name: 'GetFuelSources' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),
   },
 };
 
-export const GetBusinessSitesPath = OpenApiDefinition.path(GetBusinessSites);
+export const GetFuelSourcesPath = OpenApiDefinition.path(GetFuelSources);

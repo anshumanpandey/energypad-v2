@@ -66,6 +66,38 @@ const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   return query;
 };
 
+type FuelSourceRecord = Omit<AppModels['FuelSource'], 'usedIn'> & { id: number; use: string };
+type FuelSource = AppModels['FuelSource'] & { id: number };
+const getFuelSources = async (): Promise<FuelSource[]> => {
+  const query = DB('FuelSources')
+    .select(['FuelSources.*', 'FuelUses.use'])
+    .innerJoin('FuelUses', 'FuelSources.id', 'FuelUses.fuelSourceId');
+
+  const records = await query;
+
+  const reduceRecords = (r: FuelSourceRecord[]) => {
+    const map = new Map();
+    for (let i = 0, len = r.length; i < len; i++) {
+      const el = r[i];
+      const current = map.get(el.id);
+      if (current) {
+        current.usedIn.push(el.use);
+        map.set(el.id, current);
+      } else {
+        const { use, ...fuel } = el;
+        map.set(el.id, {
+          ...fuel,
+          usedIn: [use],
+        });
+      }
+    }
+
+    return Array.from(map.values());
+  };
+
+  return reduceRecords(records);
+};
+
 type FindFuelByParams = {
   usedInId?: number;
 };
@@ -123,5 +155,6 @@ export default {
   getConsumptionPerUtility,
   getSavingTips,
   findFuelBy,
+  getFuelSources,
   setUtilityEmissions,
 };

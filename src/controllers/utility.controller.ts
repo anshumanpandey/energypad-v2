@@ -97,3 +97,8 @@ export const getSavingTips: AuthGetAppController<'GetSavingTips'> = async () => 
   const tips = await UtilityService.getSavingTips();
   return tips;
 };
+
+export const getFuelSources: AuthGetAppController<'GetFuelSources'> = async () => {
+  const tips = await UtilityService.getFuelSources();
+  return tips;
+};

@@ -52,6 +52,26 @@ export interface paths {
       requestBody: components["requestBodies"]["CreateUtility"];
     };
   };
+  "/api/utility/savingTips": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {};
+      responses: {
+        200: components["responses"]["GetSavingTips"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
+  "/api/utility/fuelSources": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {};
+      responses: {
+        200: components["responses"]["GetFuelSources"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/utility/addEmission/{utilityId}": {
     /** Add emision to utility. */
     post: {
@@ -90,16 +110,6 @@ export interface paths {
         400: components["schemas"]["GenericError"];
       };
       requestBody: components["requestBodies"]["UtilityFileImport"];
-    };
-  };
-  "/api/utility/savingTips": {
-    /** Get dashboard data per date. */
-    get: {
-      parameters: {};
-      responses: {
-        200: components["responses"]["GetSavingTips"];
-        400: components["responses"]["GenericError"];
-      };
     };
   };
   "/api/dashboard/": {
@@ -220,8 +230,6 @@ export interface components {
       size: number;
       fuel: string;
       uses: string;
-      id: number;
-      businessId: number;
     };
     JWTToken: {
       jwt: string;
@@ -278,6 +286,10 @@ export interface components {
       date: string;
       regularTenantAmount: number;
       irregularTenantAmount: number;
+    };
+    FuelSource: {
+      source: string;
+      usedIn: string[];
     };
     RegisterBody: {
       businessName: string;
@@ -456,7 +468,17 @@ export interface components {
     /** Success message */
     GetSites: {
       content: {
-        "application/json": components["schemas"]["Site"][];
+        "application/json": (components["schemas"]["Site"] & {
+          id: number;
+        })[];
+      };
+    };
+    /** Success message */
+    GetFuelSources: {
+      content: {
+        "application/json": (components["schemas"]["FuelSource"] & {
+          id: number;
+        })[];
       };
     };
   };

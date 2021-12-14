@@ -11,6 +11,7 @@ import './definitions/businessEnergyDistance.definition';
 import './definitions/savingTip.definition';
 import './definitions/businessEnergy.definition';
 import './definitions/tenant.definition';
+import './definitions/fuelSource.definition';
 import { RegisterPath } from './definitions/auth.register.definition';
 import './definitions/user.definition';
 
@@ -33,6 +34,7 @@ import { SetBusinessTenantPath } from './definitions/user.tenant.post.definition
 import { SetBusinessReviewPath } from './definitions/user.review.post.definition';
 import { SetBusinessSetProgrammesPath } from './definitions/user.programmes.post.definition';
 import { GetBusinessSitesPath } from './definitions/user.get.sites.definition';
+import { GetFuelSourcesPath } from './definitions/utility.fuelSources.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -55,4 +57,5 @@ export {
   SetBusinessReviewPath,
   SetBusinessSetProgrammesPath,
   GetBusinessSitesPath,
+  GetFuelSourcesPath,
 };
