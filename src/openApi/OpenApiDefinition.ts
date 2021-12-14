@@ -58,6 +58,7 @@ type PathNames =
   | 'GetUser'
   | 'UpdateUser'
   | 'AddLog'
+  | 'SetProgrammes'
   | 'SetTenants'
   | 'SetReviews'
   | 'SaveBusinessEnergy'

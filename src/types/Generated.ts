@@ -180,6 +180,16 @@ export interface paths {
       requestBody: components["requestBodies"]["SaveBusinessEnergy"];
     };
   };
+  "/api/business/setProgrammes": {
+    /** Create a new user. */
+    post: {
+      responses: {
+        200: components["responses"]["SetProgrammes"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["SaveBusinessEnergy"];
+    };
+  };
 }
 
 export interface components {
@@ -286,7 +296,6 @@ export interface components {
         population: number;
       }[];
       patterns?: components["schemas"]["BusinessPattern"][];
-      programmes?: components["schemas"]["Programme"][];
     };
     User: components["schemas"]["RegisterBody"] & {
       id: number;
@@ -430,6 +439,12 @@ export interface components {
         "application/json": components["schemas"]["SuccessMessage"];
       };
     };
+    /** Success message */
+    SetProgrammes: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddUtilityConsumption: number;
@@ -509,6 +524,11 @@ export interface components {
     SetReviews: {
       content: {
         "application/json": components["schemas"]["Review"][];
+      };
+    };
+    SetProgrammes: {
+      content: {
+        "application/json": components["schemas"]["Programme"][];
       };
     };
   };

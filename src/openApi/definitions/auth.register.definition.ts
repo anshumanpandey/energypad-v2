@@ -67,10 +67,6 @@ createSchema({
         type: 'array',
         items: getReferenceFor({ for: 'schemas', name: 'BusinessPattern' }),
       },
-      programmes: {
-        type: 'array',
-        items: getReferenceFor({ for: 'schemas', name: 'Programme' }),
-      },
     },
   },
 });

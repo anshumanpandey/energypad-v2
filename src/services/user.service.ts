@@ -68,33 +68,10 @@ export const savePattern = async (params: AddServiceParams, opt?: Transactionabl
 };
 
 const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
-  const { id: businessId, floors, programmes, ...vals } = p;
-  type Programme = NonNullable<typeof programmes>[0];
+  const { id: businessId, floors, ...vals } = p;
 
   const mapFloors = (f: typeof floors[0]) => ({ ...f, businessId });
   const floorsData = floors.map(mapFloors);
-
-  const reduceProgrammesData = (p: Programme[]) => {
-    const data = {
-      programmes: [] as Pick<Programme, 'question'>[],
-      answers: [] as { answer: string; question: string; siteId: number; usedInId: number }[],
-    };
-    for (let i = 0, len = p.length; i < len; i++) {
-      const el = p[i];
-      const { answers, ...programme } = el;
-      data.programmes.push(programme);
-      data.answers.push(
-        ...answers.map((a) => ({
-          answer: a,
-          question: programme.question,
-          siteId: programme.siteId,
-          usedInId: programme.usedInId,
-        })),
-      );
-    }
-
-    return data;
-  };
 
   const trx = opt?.txr || (await DB.transaction());
 
@@ -106,39 +83,6 @@ const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
     })
     .then(() => {
       return trx('Floors').insert(floorsData);
-    })
-    .then(() => {
-      if (programmes && programmes.length !== 0) {
-        const data = reduceProgrammesData(programmes);
-
-        return trx()
-          .del()
-          .from('Programmes')
-          .where((builder) =>
-            builder
-              .whereIn('siteId', getSinglePropArr({ arr: programmes, prop: 'siteId' }))
-              .whereIn('usedInId', getSinglePropArr({ arr: programmes, prop: 'usedInId' }))
-              .whereIn('siteId', trx('Sites').select(['id']).where('businessId', businessId)),
-          )
-          .then(() => {
-            return trx('Programmes').insert(data.programmes);
-          })
-          .then(() => {
-            const mapAnswerQuery = (a: typeof data.answers[0]) => ({
-              answer: a.answer,
-              programmeId: trx('Programmes')
-                .select('Programmes.id')
-                .where({
-                  question: a.question,
-                  siteId: a.siteId,
-                  usedInId: a.usedInId,
-                })
-                .first(),
-            });
-
-            return trx('ProgrammeAnswers').insert(data.answers.map(mapAnswerQuery));
-          });
-      }
     })
     .then(trx.commit)
     .catch(trx.rollback);
@@ -430,6 +374,68 @@ const setReviews = (p: SetReviewsParams) => {
   });
 };
 
+type SetProgrammesParams = {
+  businessId: number;
+  programmes: AppModels['Programme'][];
+};
+const setProgrammes = (p: SetProgrammesParams) => {
+  type Programme = NonNullable<typeof p.programmes>[0];
+
+  const reduceProgrammesData = (p: Programme[]) => {
+    const data = {
+      programmes: [] as Pick<Programme, 'question'>[],
+      answers: [] as { answer: string; question: string; siteId: number; usedInId: number }[],
+    };
+    for (let i = 0, len = p.length; i < len; i++) {
+      const el = p[i];
+      const { answers, ...programme } = el;
+      data.programmes.push(programme);
+      data.answers.push(
+        ...answers.map((a) => ({
+          answer: a,
+          question: programme.question,
+          siteId: programme.siteId,
+          usedInId: programme.usedInId,
+        })),
+      );
+    }
+
+    return data;
+  };
+
+  const data = reduceProgrammesData(p.programmes);
+
+  return DB.transaction((trx) => {
+    return trx()
+      .del()
+      .from('Programmes')
+      .where((builder) =>
+        builder
+          .whereIn('siteId', getSinglePropArr({ arr: p.programmes, prop: 'siteId' }))
+          .whereIn('usedInId', getSinglePropArr({ arr: p.programmes, prop: 'usedInId' }))
+          .whereIn('siteId', trx('Sites').select(['id']).where('businessId', p.businessId)),
+      )
+      .then(() => {
+        return trx('Programmes').insert(data.programmes);
+      })
+      .then(() => {
+        const mapAnswerQuery = (a: typeof data.answers[0]) => ({
+          answer: a.answer,
+          programmeId: trx('Programmes')
+            .select('Programmes.id')
+            .where({
+              question: a.question,
+              siteId: a.siteId,
+              usedInId: a.usedInId,
+            })
+            .first(),
+        });
+
+        return trx('ProgrammeAnswers').insert(data.answers.map(mapAnswerQuery));
+      });
+  });
+};
+
 export default {
   saveEnergy,
   setBrands,
@@ -440,4 +446,5 @@ export default {
   saveLog,
   setTenants,
   setReviews,
+  setProgrammes,
 };

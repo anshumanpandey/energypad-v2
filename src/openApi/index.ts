@@ -31,6 +31,7 @@ import { AddUtilityEmissionPath } from './definitions/utilityEmission.add.defini
 import { AddBusinessLogPath } from './definitions/user.log.post.definition';
 import { SetBusinessTenantPath } from './definitions/user.tenant.post.definition';
 import { SetBusinessReviewPath } from './definitions/user.review.post.definition';
+import { SetBusinessSetProgrammesPath } from './definitions/user.programmes.post.definition';
 
 export default OpenApiDefinition;
 export {
@@ -51,4 +52,5 @@ export {
   AddBusinessLogPath,
   SetBusinessTenantPath,
   SetBusinessReviewPath,
+  SetBusinessSetProgrammesPath,
 };

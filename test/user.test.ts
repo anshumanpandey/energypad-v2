@@ -86,17 +86,12 @@ describe('/Business ', () => {
           population: 100,
         },
       ],
-      programmes: [
-        { question: 'How often?', answers: ['Montly', 'Yearly'], siteId: 458, usedInId: 2 },
-        { question: 'What type?', answers: ['Single', 'Triple'], siteId: 458, usedInId: 2 },
-      ],
     };
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
 
     const newData2 = newData;
-    newData2.programmes[0].answers.push('Daily');
     const response2 = await supertest(app)
       .put('/api/business')
       .set('Authorization', `Bearer ${body.jwt}`)
@@ -104,10 +99,6 @@ describe('/Business ', () => {
 
     expect(response2.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
     expect(response2.statusCode).toBe(200);
-
-    const meData = await supertest(app).get('/api/business').set('Authorization', `Bearer ${body.jwt}`);
-    expect(meData.body.programmes.length).toBe(2);
-    expect(meData.body.programmes[0].answers.length).toBe(3);
   });
 
   test('It should respond with success message when saving energy', async () => {
@@ -251,5 +242,19 @@ describe('/Business ', () => {
       ]);
     expect(response2.statusCode).toBe(200);
     expect(response2.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
+  });
+
+  test('It should respond with success message when saving programmes', async () => {
+    const body = await loginUser('mail234@mail.com');
+    const newData = [
+      { question: 'How often?', answers: ['Montly', 'Yearly'], siteId: 464, usedInId: 2 },
+      { question: 'What type?', answers: ['Single', 'Triple'], siteId: 464, usedInId: 2 },
+    ];
+    const response = await supertest(app)
+      .post('/api/business/setProgrammes')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send(newData);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
   });
 });
