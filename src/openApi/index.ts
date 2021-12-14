@@ -32,6 +32,7 @@ import { AddBusinessLogPath } from './definitions/user.log.post.definition';
 import { SetBusinessTenantPath } from './definitions/user.tenant.post.definition';
 import { SetBusinessReviewPath } from './definitions/user.review.post.definition';
 import { SetBusinessSetProgrammesPath } from './definitions/user.programmes.post.definition';
+import { GetBusinessSitesPath } from './definitions/user.get.sites.definition';
 
 export default OpenApiDefinition;
 export {
@@ -53,4 +54,5 @@ export {
   SetBusinessTenantPath,
   SetBusinessReviewPath,
   SetBusinessSetProgrammesPath,
+  GetBusinessSitesPath,
 };

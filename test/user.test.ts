@@ -1,9 +1,9 @@
 import supertest from 'supertest';
-import { matchers } from 'jest-json-schema';
-expect.extend(matchers);
 import { app } from '../src/app';
-import { loginUser, registerUser } from './testhelp';
+import { loginUser, registerUser, matcher } from './testhelp';
 import schema from '../src/types/Schema.json';
+
+expect.extend(matcher);
 
 describe('/Business ', () => {
   test('It should respond with success message when updating an user', async () => {
@@ -56,49 +56,6 @@ describe('/Business ', () => {
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
-  });
-
-  test('It should respond with success message when updating an user with programmes', async () => {
-    const body = await loginUser('mail230@mail.com');
-    const newData = {
-      businessName: 'new_businessName',
-      businessType: 'new_businessType',
-      businessService: 'new_businessService',
-      password: 'new_password',
-      siteName: 'new_siteName',
-      buildingName: 'new_buildingName',
-      contactName: 'new_contactName',
-      position: 'new_position',
-      phoneNumber: 'new_phoneNumber',
-      email: 'new_email',
-      country: 'new_country',
-      state: 'new_state',
-      town: 'new_town',
-      postCode: 'new_postCode',
-      subscriptionDate: '2021-01-01',
-      holydayDate: '2020-01-01',
-      totalArea: 9,
-      totalPopulation: 10,
-      floors: [
-        {
-          size: 'NEW_floor_2',
-          area: 200,
-          population: 100,
-        },
-      ],
-    };
-    const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
-    expect(response.statusCode).toBe(200);
-    expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
-
-    const newData2 = newData;
-    const response2 = await supertest(app)
-      .put('/api/business')
-      .set('Authorization', `Bearer ${body.jwt}`)
-      .send(newData2);
-
-    expect(response2.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
-    expect(response2.statusCode).toBe(200);
   });
 
   test('It should respond with success message when saving energy', async () => {
@@ -210,7 +167,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when saving reviews', async () => {
-    const body = await loginUser('mail230@mail.com');
+    const body = await loginUser('mail232@mail.com');
     const newData = [
       {
         siteId: 460,
@@ -256,5 +213,14 @@ describe('/Business ', () => {
       .send(newData);
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
+  });
+
+  test('It should respond with correct sites for user', async () => {
+    const body = await loginUser('mail236@mail.com');
+    const response = await supertest(app).get('/api/business/sites').set('Authorization', `Bearer ${body.jwt}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.length).toBe(2);
+    expect(response.body[0]).toMatchSchema(schema.components.schemas.Site);
+    expect(response.body[1]).toMatchSchema(schema.components.schemas.Site);
   });
 });

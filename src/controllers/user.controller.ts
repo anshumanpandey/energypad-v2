@@ -123,3 +123,11 @@ export const setProgrammes: AuthAppController<'SetProgrammes', 'SetProgrammes'> 
   });
   return { success: true };
 };
+
+export const getSites: AuthGetAppController<'GetSites'> = async (req) => {
+  const sites = await SitesService.findBy({
+    businessId: req.user.id,
+  });
+
+  return sites;
+};

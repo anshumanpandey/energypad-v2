@@ -1,5 +1,13 @@
 import supertest from 'supertest';
+import { int32Format } from '../src/middleware/requestValidator.middleware';
+import { matchersWithOptions } from 'jest-json-schema';
 import { app } from '../src/app';
+
+export const matcher = matchersWithOptions({
+  formats: {
+    int32: int32Format,
+  },
+});
 
 export const registerUser = async (email?: string, password?: string) => {
   const body = {

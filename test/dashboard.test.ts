@@ -1,15 +1,9 @@
 import supertest from 'supertest';
-import { int32Format } from '../src/middleware/requestValidator.middleware';
-import { matchersWithOptions } from 'jest-json-schema';
-const matcher = matchersWithOptions({
-  formats: {
-    int32: int32Format,
-  },
-});
-expect.extend(matcher);
 import { app } from '../src/app';
-import { loginUser } from './testhelp';
+import { loginUser, matcher } from './testhelp';
 import schema from '../src/types/Schema.json';
+
+expect.extend(matcher);
 
 describe('/Dashboard ', () => {
   test('It should respond with success message when create an utility', async () => {

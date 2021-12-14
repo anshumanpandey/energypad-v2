@@ -140,6 +140,16 @@ export interface paths {
       };
     };
   };
+  "/api/business/sites": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {};
+      responses: {
+        200: components["responses"]["GetSites"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/business/saveEnergy": {
     /** Create a new user. */
     post: {
@@ -201,19 +211,17 @@ export interface components {
     SuccessMessage: {
       success: boolean;
     };
-    SiteRequestBody: {
+    Site: {
       type: string;
       address: string;
       postCode: string;
-      town: number;
+      town: string;
       population: number;
       size: number;
       fuel: string;
       uses: string;
-    };
-    Site: components["schemas"]["SiteRequestBody"] & {
       id: number;
-      businessId: string;
+      businessId: number;
     };
     JWTToken: {
       jwt: string;
@@ -445,6 +453,12 @@ export interface components {
         "application/json": components["schemas"]["SuccessMessage"];
       };
     };
+    /** Success message */
+    GetSites: {
+      content: {
+        "application/json": components["schemas"]["Site"][];
+      };
+    };
   };
   parameters: {
     AddUtilityConsumption: number;
@@ -466,7 +480,7 @@ export interface components {
     };
     Site: {
       content: {
-        "application/json": components["schemas"]["SiteRequestBody"];
+        "application/json": components["schemas"]["Site"];
       };
     };
     CreateUtility: {

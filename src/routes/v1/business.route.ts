@@ -10,9 +10,14 @@ import {
   SetBusinessTenantPath,
   SetBusinessReviewPath,
   SetBusinessSetProgrammesPath,
+  GetBusinessSitesPath,
 } from '@openApi';
 
 const businessRoutes = express.Router();
+
+businessRoutes.get('/', GetUserPath, AuthMiddleware, ExpressAsync(UserController.getMet));
+businessRoutes.get('/energies', GetBusinessEnergyPath, AuthMiddleware, ExpressAsync(UserController.getBusinessEnergy));
+businessRoutes.get('/sites', GetBusinessSitesPath, AuthMiddleware, ExpressAsync(UserController.getSites));
 
 businessRoutes.put(
   '/',
@@ -23,9 +28,6 @@ businessRoutes.put(
   }),
   ExpressAsync(UserController.updateUser),
 );
-
-businessRoutes.get('/', GetUserPath, AuthMiddleware, ExpressAsync(UserController.getMet));
-businessRoutes.get('/energies', GetBusinessEnergyPath, AuthMiddleware, ExpressAsync(UserController.getBusinessEnergy));
 
 businessRoutes.post(
   '/saveEnergy',

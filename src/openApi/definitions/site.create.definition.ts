@@ -10,7 +10,7 @@ addRequestComponentFor('Site', {
   required: true,
   content: {
     'application/json': {
-      schema: getReferenceFor({ for: 'schemas', name: 'SiteRequestBody' }),
+      schema: getReferenceFor({ for: 'schemas', name: 'Site' }),
     },
   },
 });
