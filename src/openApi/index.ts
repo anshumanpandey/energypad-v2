@@ -37,6 +37,7 @@ import { SetBusinessSetProgrammesPath } from './definitions/user.programmes.post
 import { GetBusinessSitesPath } from './definitions/user.get.sites.definition';
 import { GetFuelSourcesPath } from './definitions/utility.fuelSources.get.definition';
 import { SetBusinessSetFloorsPath } from './definitions/user.floors.post.definition';
+import { GetBusinessFloorsPath } from './definitions/user.get.floors.definition';
 
 export default OpenApiDefinition;
 export {
@@ -61,4 +62,5 @@ export {
   GetBusinessSitesPath,
   GetFuelSourcesPath,
   SetBusinessSetFloorsPath,
+  GetBusinessFloorsPath,
 };

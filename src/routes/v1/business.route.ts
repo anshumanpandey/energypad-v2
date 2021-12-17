@@ -12,6 +12,7 @@ import {
   SetBusinessSetProgrammesPath,
   GetBusinessSitesPath,
   SetBusinessSetFloorsPath,
+  GetBusinessFloorsPath,
 } from '@openApi';
 
 const businessRoutes = express.Router();
@@ -19,6 +20,7 @@ const businessRoutes = express.Router();
 businessRoutes.get('/', GetUserPath, AuthMiddleware, ExpressAsync(UserController.getMet));
 businessRoutes.get('/energies', GetBusinessEnergyPath, AuthMiddleware, ExpressAsync(UserController.getBusinessEnergy));
 businessRoutes.get('/sites', GetBusinessSitesPath, AuthMiddleware, ExpressAsync(UserController.getSites));
+businessRoutes.get('/foors', GetBusinessFloorsPath, AuthMiddleware, ExpressAsync(UserController.getBusinessFloors));
 
 businessRoutes.put(
   '/',

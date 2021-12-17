@@ -44,7 +44,7 @@ const getUserBy = async (params: { id?: number; email?: string }) => {
 };
 
 export type AddServiceParams = { businessId: number; patterns: AppModels['BusinessPattern'][] };
-export const savePattern = async (params: AddServiceParams, opt?: Transactionable) => {
+const savePattern = async (params: AddServiceParams, opt?: Transactionable) => {
   const data = [];
 
   for (let i = 0, len = params.patterns.length; i < len; i++) {
@@ -441,6 +441,23 @@ const setFloors = (p: SetFloorsParams) => {
     return query;
   });
 };
+
+type GetSitesByParams = {
+  id?: number | number[];
+  businessId?: number;
+};
+const getFloorsBy = async (params?: GetSitesByParams): Promise<(AppModels['BusinessFloor'] & { id: number })[]> => {
+  const query = DB('Floors').select();
+  if (params?.id) {
+    Array.isArray(params?.id) ? query.whereIn('id', params.id) : query.where('id', params.id);
+  }
+  if (params?.businessId) {
+    query.where('businessId', params.businessId);
+  }
+
+  return query;
+};
+
 export default {
   saveEnergy,
   setBrands,
@@ -453,4 +470,5 @@ export default {
   setReviews,
   setProgrammes,
   setFloors,
+  getFloorsBy,
 };

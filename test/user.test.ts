@@ -241,4 +241,13 @@ describe('/Business ', () => {
     expect(response2.statusCode).toBe(200);
     expect(response2.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
   });
+
+  test('It should respond with correct floors for user', async () => {
+    const body = await loginUser('mail242@mail.com');
+    const response = await supertest(app).get('/api/business/foors').set('Authorization', `Bearer ${body.jwt}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.length).toBe(2);
+    expect(response.body[0].id).toBe(10);
+    expect(response.body[1].id).toBe(12);
+  });
 });

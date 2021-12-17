@@ -119,3 +119,11 @@ export const setFloors: AuthAppController<'SetFloors', 'SetFloors'> = async (req
 
   return { success: true };
 };
+
+export const getBusinessFloors: AuthGetAppController<'GetFloors'> = async (req) => {
+  const floors = await UserService.getFloorsBy({
+    businessId: req.user.id,
+  });
+
+  return floors;
+};

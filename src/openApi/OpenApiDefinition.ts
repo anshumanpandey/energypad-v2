@@ -57,6 +57,7 @@ type PathNames =
   | 'AddUtilityEmission'
   | 'GetUtilities'
   | 'GetSites'
+  | 'GetFloors'
   | 'GetUser'
   | 'GetFuelSources'
   | 'UpdateUser'

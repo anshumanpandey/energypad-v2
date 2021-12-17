@@ -160,6 +160,16 @@ export interface paths {
       };
     };
   };
+  "/api/business/foors": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {};
+      responses: {
+        200: components["responses"]["GetFloors"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/business/saveEnergy": {
     /** Create a new user. */
     post: {
@@ -500,6 +510,12 @@ export interface components {
     SetFloors: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
+    /** Success message */
+    GetFloors: {
+      content: {
+        "application/json": components["schemas"]["BusinessFloor"][];
       };
     };
   };
