@@ -68,24 +68,11 @@ export const savePattern = async (params: AddServiceParams, opt?: Transactionabl
 };
 
 const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
-  const { id: businessId, floors, ...vals } = p;
-
-  const mapFloors = (f: typeof floors[0]) => ({ ...f, businessId });
-  const floorsData = floors.map(mapFloors);
+  const { id: businessId, ...vals } = p;
 
   const trx = opt?.txr || (await DB.transaction());
 
-  return trx('Businesses')
-    .where('id', businessId)
-    .update(vals)
-    .then(() => {
-      return trx('Floors').where('businessId', businessId).del();
-    })
-    .then(() => {
-      return trx('Floors').insert(floorsData);
-    })
-    .then(trx.commit)
-    .catch(trx.rollback);
+  return trx('Businesses').where('id', businessId).update(vals).then(trx.commit).catch(trx.rollback);
 };
 
 type AddBrandParams = {
@@ -436,6 +423,24 @@ const setProgrammes = (p: SetProgrammesParams) => {
   });
 };
 
+type SetFloorsParams = {
+  businessId: number;
+  floors: AppModels['BusinessFloor'][];
+};
+const setFloors = (p: SetFloorsParams) => {
+  const mapFloor = (f: typeof p.floors[0]) => {
+    return {
+      ...f,
+      businessId: p.businessId,
+    };
+  };
+  return DB.transaction((trx) => {
+    const delQuery = trx('Floors').del().where('businessId', p.businessId);
+
+    const query = delQuery.then(() => trx('Floors').insert(p.floors.map(mapFloor)));
+    return query;
+  });
+};
 export default {
   saveEnergy,
   setBrands,
@@ -447,4 +452,5 @@ export default {
   setTenants,
   setReviews,
   setProgrammes,
+  setFloors,
 };

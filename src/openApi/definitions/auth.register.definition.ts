@@ -29,7 +29,6 @@ createSchema({
       'holydayDate',
       'totalArea',
       'totalPopulation',
-      'floors',
     ],
     properties: {
       businessName: { type: 'string' },
@@ -50,23 +49,6 @@ createSchema({
       holydayDate: { type: 'string', format: 'date' },
       totalArea: { type: 'number', format: 'int32' },
       totalPopulation: { type: 'number', format: 'int32' },
-      floors: {
-        type: 'array',
-        items: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['size', 'area', 'population'],
-          properties: {
-            size: { type: 'string' },
-            area: { type: 'number', format: 'int32' },
-            population: { type: 'number', format: 'int32' },
-          },
-        },
-      },
-      patterns: {
-        type: 'array',
-        items: getReferenceFor({ for: 'schemas', name: 'BusinessPattern' }),
-      },
     },
   },
 });

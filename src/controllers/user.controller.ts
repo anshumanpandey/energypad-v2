@@ -1,35 +1,14 @@
 import { AuthAppController, AuthGetAppController } from '@types';
 import { UserService, SitesService, UtilityService } from '@services';
-import { ApiError, DB } from '@lib';
+import { ApiError } from '@lib';
 import { getSinglePropArr } from '@utils';
 
 export const updateUser: AuthAppController<'UpdateUser', 'UpdateUser'> = async (req) => {
-  const { patterns, ...registerData } = req.body;
+  const { ...registerData } = req.body;
 
-  return DB.transaction(async (txr) => {
-    await UserService.updateUser({ ...registerData, id: req.user.id }, { txr });
+  await UserService.updateUser({ ...registerData, id: req.user.id });
 
-    if (patterns && patterns.length !== 0) {
-      const mapSiteId = (r: typeof patterns[0]) => r.siteId;
-      const sites = await SitesService.findBy({ id: patterns.map(mapSiteId), businessId: req.user.id });
-      if (sites.length !== patterns.length) {
-        throw new ApiError('Site not found');
-      }
-      await UserService.savePattern(
-        {
-          businessId: req.user.id,
-          patterns,
-        },
-        { txr },
-      );
-    }
-  })
-    .then(() => {
-      return { success: true };
-    })
-    .catch((err) => {
-      throw err;
-    });
+  return { success: true };
 };
 
 export const getMet: AuthGetAppController<'GetUser'> = async (req) => {
@@ -130,4 +109,13 @@ export const getSites: AuthGetAppController<'GetSites'> = async (req) => {
   });
 
   return sites;
+};
+
+export const setFloors: AuthAppController<'SetFloors', 'SetFloors'> = async (req) => {
+  await UserService.setFloors({
+    floors: req.body,
+    businessId: req.user.id,
+  });
+
+  return { success: true };
 };

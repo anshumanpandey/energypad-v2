@@ -27,32 +27,8 @@ describe('/Business ', () => {
       holydayDate: '2020-01-01',
       totalArea: 9,
       totalPopulation: 10,
-      floors: [
-        {
-          size: 'NEW_floor_1',
-          area: 200,
-          population: 100,
-        },
-      ],
-      patterns: [
-        {
-          startDate: '2020-01-01',
-          endDate: '2020-03-02',
-          consumption: 200,
-          daysOnYear: 50,
-          usedInId: 2,
-          siteId: 353,
-        },
-        {
-          startDate: '2020-05-05',
-          endDate: '2020-06-05',
-          consumption: 300,
-          daysOnYear: 20,
-          usedInId: 3,
-          siteId: 353,
-        },
-      ],
     };
+
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
@@ -229,5 +205,40 @@ describe('/Business ', () => {
     expect(response2.body.length).toBe(2);
     expect(response2.body[0].id).toBe(470);
     expect(response2.body[1].id).toBe(472);
+  });
+
+  test('It should respond with success message when saving floors', async () => {
+    const body = await registerUser();
+    const newData = [
+      {
+        size: 'floor_1',
+        area: 200,
+        population: 100,
+      },
+      {
+        size: 'floor_2',
+        area: 300,
+        population: 200,
+      },
+    ];
+    const response = await supertest(app)
+      .post('/api/business/setFloors')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send(newData);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
+
+    const response2 = await supertest(app)
+      .post('/api/business/setFloors')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send([
+        {
+          size: 'floor_3',
+          area: 300,
+          population: 200,
+        },
+      ]);
+    expect(response2.statusCode).toBe(200);
+    expect(response2.body).toMatchSchema(schema.components.responses.SetTenants.content['application/json'].schema);
   });
 });

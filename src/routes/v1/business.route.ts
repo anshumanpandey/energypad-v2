@@ -11,6 +11,7 @@ import {
   SetBusinessReviewPath,
   SetBusinessSetProgrammesPath,
   GetBusinessSitesPath,
+  SetBusinessSetFloorsPath,
 } from '@openApi';
 
 const businessRoutes = express.Router();
@@ -57,6 +58,16 @@ businessRoutes.post(
     body: 'SetTenants',
   }),
   ExpressAsync(UserController.setTenants),
+);
+
+businessRoutes.post(
+  '/setFloors',
+  SetBusinessSetFloorsPath,
+  AuthMiddleware,
+  RequestValidatorMiddleware({
+    body: 'SetFloors',
+  }),
+  ExpressAsync(UserController.setFloors),
 );
 
 businessRoutes.post(

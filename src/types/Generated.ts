@@ -190,6 +190,16 @@ export interface paths {
       requestBody: components["requestBodies"]["SaveBusinessEnergy"];
     };
   };
+  "/api/business/setFloors": {
+    /** Create a new user. */
+    post: {
+      responses: {
+        200: components["responses"]["SetFloors"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["SetFloors"];
+    };
+  };
   "/api/business/setReviews": {
     /** Create a new user. */
     post: {
@@ -267,6 +277,11 @@ export interface components {
     BusinessDistance: {
       meters: string;
     };
+    BusinessFloor: {
+      size: string;
+      area: number;
+      population: number;
+    };
     SavingTip: {
       id: number;
       category: string;
@@ -310,15 +325,15 @@ export interface components {
       holydayDate: string;
       totalArea: number;
       totalPopulation: number;
-      floors: {
+    };
+    User: components["schemas"]["RegisterBody"] & {
+      id: number;
+      floors?: {
         size: string;
         area: number;
         population: number;
       }[];
       patterns?: components["schemas"]["BusinessPattern"][];
-    };
-    User: components["schemas"]["RegisterBody"] & {
-      id: number;
     };
     Utility: {
       id: number;
@@ -481,6 +496,12 @@ export interface components {
         })[];
       };
     };
+    /** Success message */
+    SetFloors: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddUtilityConsumption: number;
@@ -565,6 +586,11 @@ export interface components {
     SetProgrammes: {
       content: {
         "application/json": components["schemas"]["Programme"][];
+      };
+    };
+    SetFloors: {
+      content: {
+        "application/json": components["schemas"]["BusinessFloor"][];
       };
     };
   };

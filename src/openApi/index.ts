@@ -8,6 +8,7 @@ import './definitions/review.definition';
 import './definitions/businessEnergyBrand.definition';
 import './definitions/businessEnergyCost.definition';
 import './definitions/businessEnergyDistance.definition';
+import './definitions/businessFloor.definition';
 import './definitions/savingTip.definition';
 import './definitions/businessEnergy.definition';
 import './definitions/tenant.definition';
@@ -35,6 +36,7 @@ import { SetBusinessReviewPath } from './definitions/user.review.post.definition
 import { SetBusinessSetProgrammesPath } from './definitions/user.programmes.post.definition';
 import { GetBusinessSitesPath } from './definitions/user.get.sites.definition';
 import { GetFuelSourcesPath } from './definitions/utility.fuelSources.get.definition';
+import { SetBusinessSetFloorsPath } from './definitions/user.floors.post.definition';
 
 export default OpenApiDefinition;
 export {
@@ -58,4 +60,5 @@ export {
   SetBusinessSetProgrammesPath,
   GetBusinessSitesPath,
   GetFuelSourcesPath,
+  SetBusinessSetFloorsPath,
 };

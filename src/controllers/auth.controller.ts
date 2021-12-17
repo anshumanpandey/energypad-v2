@@ -1,24 +1,16 @@
 import { AppController } from '@types';
 import { AuthService, UserService } from '@services';
-import { ApiError, DB } from '@lib';
+import { ApiError } from '@lib';
 import { validPassword } from '@utils';
 
 export const registerUser: AppController<'Register', 'Register'> = async (req) => {
   const user = await UserService.getUserBy({ email: req.body.email });
   if (user) return new ApiError('Email already registered');
 
-  const { patterns, ...registerData } = req.body;
+  const { ...registerData } = req.body;
 
-  return DB.transaction(async (txr) => {
-    const result = await AuthService.registerUser(registerData, { txr });
-    if (patterns && patterns.length !== 0) {
-      await UserService.savePattern({
-        businessId: result[0],
-        patterns,
-      });
-    }
-    return { success: true };
-  });
+  await AuthService.registerUser(registerData);
+  return { success: true };
 };
 
 export const loginUser: AppController<'Login', 'Login'> = async (req) => {

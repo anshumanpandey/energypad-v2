@@ -29,13 +29,6 @@ export const registerUser = async (email?: string, password?: string) => {
     holydayDate: '1942-04-26',
     totalArea: 76421184.56177847,
     totalPopulation: 78438954.75821584,
-    floors: [
-      {
-        size: 'ea sunt ad occaecat nisi',
-        area: 80468912.0731943,
-        population: 45307773.70958948,
-      },
-    ],
   };
 
   await supertest(app).post('/api/auth').send(body);
