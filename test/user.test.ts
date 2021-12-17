@@ -220,7 +220,14 @@ describe('/Business ', () => {
     const response = await supertest(app).get('/api/business/sites').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(2);
-    expect(response.body[0]).toMatchSchema(schema.components.schemas.Site);
-    expect(response.body[1]).toMatchSchema(schema.components.schemas.Site);
+    expect(response.body[0].id).toBe(466);
+    expect(response.body[1].id).toBe(468);
+
+    const body2 = await loginUser('mail240@mail.com');
+    const response2 = await supertest(app).get('/api/business/sites').set('Authorization', `Bearer ${body2.jwt}`);
+    expect(response2.statusCode).toBe(200);
+    expect(response2.body.length).toBe(2);
+    expect(response2.body[0].id).toBe(470);
+    expect(response2.body[1].id).toBe(472);
   });
 });
