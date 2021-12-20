@@ -3,7 +3,7 @@ import { UtilityService } from '@services';
 import { AuthGetAppController } from '@types';
 
 export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashboard/'> = async (req) => {
-  const userUtilities = await UtilityService.findBy({ businessId: req.user.id });
+  const userUtilities = await UtilityService.findFuelBy({ fuelSourceId: req.user.id });
   const consumptions = await UtilityService.getConsumptionPerUtility({ utilityId: userUtilities.map((i) => i.id) });
 
   const filterByMonth = (monthToSearch: number) => (c: typeof consumptions[0]) => {

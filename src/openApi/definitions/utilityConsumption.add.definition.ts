@@ -69,7 +69,7 @@ addParameterComponentFor('AddUtilityConsumption', {
 
 const AddUtilityConsumption: OpenAPIV3.OperationObject = {
   description: 'Add emision to utility.',
-  requestBody: getReferenceFor({ for: 'requestBodies', name: 'CreateUtility' }),
+  requestBody: getReferenceFor({ for: 'requestBodies', name: 'AddUtilityConsumption' }),
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'AddUtilityConsumption' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),

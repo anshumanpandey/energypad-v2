@@ -10,27 +10,25 @@ import {
 } from '../OpenApiDefinition';
 
 const bodySchema: CreateSchemaParams = {
-  name: 'AddUtilityEmissionBody',
+  name: 'AddFuelSourceEmissionBody',
   schema: {
-    required: ['emissionFactor', 'value', 'year', 'siteId', 'usedInId'],
+    required: ['emissionFactor', 'value', 'year'],
     properties: {
       emissionFactor: { type: 'string' },
       value: { type: 'number', format: 'int32' },
       year: { type: 'number', format: 'int32' },
-      siteId: { type: 'number', format: 'int32' },
-      usedInId: { type: 'number', format: 'int32' },
     },
   },
 };
 createSchema(bodySchema);
 
-addRequestComponentFor('AddUtilityEmission', {
+addRequestComponentFor('AddFuelSourceEmission', {
   required: true,
   content: {
     'application/json': {
       schema: {
         type: 'array',
-        items: getReferenceFor({ for: 'schemas', name: 'AddUtilityEmissionBody' }),
+        items: getReferenceFor({ for: 'schemas', name: 'AddFuelSourceEmissionBody' }),
       },
     },
   },
@@ -40,7 +38,7 @@ const schema: CreateSchemaParams = {
   name: 'UtilityEmission',
   schema: {
     allOf: [
-      getReferenceFor({ for: 'schemas', name: 'AddUtilityEmissionBody' }),
+      getReferenceFor({ for: 'schemas', name: 'AddFuelSourceEmissionBody' }),
       {
         required: ['id'],
         properties: {
@@ -52,7 +50,7 @@ const schema: CreateSchemaParams = {
 };
 createSchema(schema);
 
-addResponseComponentFor('AddUtilityEmission', {
+addResponseComponentFor('AddFuelSourceEmission', {
   description: 'Success message',
   content: {
     'application/json': {
@@ -61,7 +59,7 @@ addResponseComponentFor('AddUtilityEmission', {
   },
 });
 
-addParameterComponentFor('AddUtilityEmission', {
+addParameterComponentFor('AddFuelSourceEmission', {
   name: 'utilityId',
   in: 'path',
   required: true,
@@ -72,9 +70,9 @@ addParameterComponentFor('AddUtilityEmission', {
 
 const AddUtilityEmission: OpenAPIV3.OperationObject = {
   description: 'Add emision to utility.',
-  requestBody: getReferenceFor({ for: 'requestBodies', name: 'CreateUtility' }),
+  requestBody: getReferenceFor({ for: 'requestBodies', name: 'AddFuelSourceEmission' }),
   responses: {
-    '200': getReferenceFor({ for: 'responses', name: 'AddUtilityEmission' }),
+    '200': getReferenceFor({ for: 'responses', name: 'AddFuelSourceEmission' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),
   },
 };

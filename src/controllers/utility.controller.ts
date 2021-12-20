@@ -3,24 +3,9 @@ import { UtilityService } from '@services';
 import { ApiError, ExcelClient } from '@lib';
 import { AddConsumptionToUtilityParam } from '../services/utility.service';
 
-export const createUtility: AuthAppController<'CreateUtility', 'CreateUtility'> = async (req) => {
-  const data = {
-    ...req.body,
-    businessId: req.user.id,
-  };
-  await UtilityService.create(data);
-
-  return { success: true };
-};
-
-export const getUtilities: AuthGetAppController<'GetUtilities', '/api/utility/'> = async (req) => {
-  const utilities = await UtilityService.findBy({ businessId: req.user.id });
-  return utilities;
-};
-
 export const addConsumption: AuthAppController<'AddUtilityConsumption', 'AddUtilityConsumption'> = async (req) => {
   const utilityId = req.params.utilityId;
-  const found = await UtilityService.findBy({ id: parseInt(utilityId, 10), businessId: req.user.id });
+  const found = await UtilityService.findFuelBy({ fuelSourceId: parseInt(utilityId, 10) });
   if (found.length === 0) {
     return new ApiError('Utility to add not found');
   }
@@ -35,21 +20,22 @@ export const addConsumption: AuthAppController<'AddUtilityConsumption', 'AddUtil
   return { success: true };
 };
 
-export const addEmission: AuthAppController<'AddUtilityEmission', 'AddUtilityEmission'> = async (req) => {
-  const utilityId = req.params.utilityId;
-  const found = await UtilityService.findBy({ id: parseInt(utilityId, 10), businessId: req.user.id });
+export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSourceEmission'> = async (req) => {
+  const fuelSourceId = parseInt(req.params.fuelSourceId, 10);
+  const found = await UtilityService.findFuelBy({ fuelSourceId: fuelSourceId });
   if (found.length === 0) {
-    return new ApiError('Utility to add not found');
+    return new ApiError('Foul Source to add not found');
   }
 
   const mapEmission = (r: typeof req.body[0]) => {
     return {
       ...r,
+      fuelSourceId,
       businessId: req.user.id,
     };
   };
 
-  await UtilityService.setUtilityEmissions(req.body.map(mapEmission));
+  await UtilityService.addUtilityEmissions(req.body.map(mapEmission));
 
   return { success: true };
 };

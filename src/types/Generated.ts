@@ -34,24 +34,6 @@ export interface paths {
       requestBody: components["requestBodies"]["Site"];
     };
   };
-  "/api/utility/": {
-    /** Get dashboard data per date. */
-    get: {
-      parameters: {};
-      responses: {
-        200: components["responses"]["GetUtilities"];
-        400: components["responses"]["GenericError"];
-      };
-    };
-    /** Create a new utility. */
-    post: {
-      responses: {
-        200: components["responses"]["CreateUtility"];
-        400: components["responses"]["GenericError"];
-      };
-      requestBody: components["requestBodies"]["CreateUtility"];
-    };
-  };
   "/api/utility/savingTips": {
     /** Get dashboard data per date. */
     get: {
@@ -72,19 +54,19 @@ export interface paths {
       };
     };
   };
-  "/api/utility/addEmission/{utilityId}": {
+  "/api/utility/addEmission/{fuelSourceId}": {
     /** Add emision to utility. */
     post: {
       parameters: {
         path: {
-          utilityId: string;
+          fuelSourceId: string;
         };
       };
       responses: {
-        200: components["responses"]["AddUtilityEmission"];
+        200: components["responses"]["AddFuelSourceEmission"];
         400: components["responses"]["GenericError"];
       };
-      requestBody: components["requestBodies"]["CreateUtility"];
+      requestBody: components["requestBodies"]["AddFuelSourceEmission"];
     };
   };
   "/api/utility/addConsumption/{utilityId}": {
@@ -99,7 +81,7 @@ export interface paths {
         200: components["responses"]["AddUtilityConsumption"];
         400: components["responses"]["GenericError"];
       };
-      requestBody: components["requestBodies"]["CreateUtility"];
+      requestBody: components["requestBodies"]["AddUtilityConsumption"];
     };
   };
   "/api/utility/importUtility": {
@@ -345,10 +327,6 @@ export interface components {
       }[];
       patterns?: components["schemas"]["BusinessPattern"][];
     };
-    Utility: {
-      id: number;
-      name: string;
-    };
     AddUtilityConsumptionBody: {
       date: string;
       consumption: number;
@@ -359,14 +337,12 @@ export interface components {
     UtilityConsumption: components["schemas"]["AddUtilityConsumptionBody"] & {
       id: number;
     };
-    AddUtilityEmissionBody: {
+    AddFuelSourceEmissionBody: {
       emissionFactor: string;
       value: number;
       year: number;
-      siteId: number;
-      usedInId: number;
     };
-    UtilityEmission: components["schemas"]["AddUtilityEmissionBody"] & {
+    UtilityEmission: components["schemas"]["AddFuelSourceEmissionBody"] & {
       id: number;
     };
   };
@@ -396,12 +372,6 @@ export interface components {
       };
     };
     /** Success message */
-    CreateUtility: {
-      content: {
-        "application/json": components["schemas"]["SuccessMessage"];
-      };
-    };
-    /** Success message */
     AddUtilityConsumption: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
@@ -422,12 +392,6 @@ export interface components {
           averageCost: number;
           consumption: number;
         }[];
-      };
-    };
-    /** Success message */
-    GetUtilities: {
-      content: {
-        "application/json": components["schemas"]["Utility"][];
       };
     };
     /** Success message */
@@ -461,7 +425,7 @@ export interface components {
       };
     };
     /** Success message */
-    AddUtilityEmission: {
+    AddFuelSourceEmission: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
       };
@@ -521,7 +485,7 @@ export interface components {
   };
   parameters: {
     AddUtilityConsumption: number;
-    AddUtilityEmission: number;
+    AddFuelSourceEmission: number;
   };
   requestBodies: {
     Register: {
@@ -540,13 +504,6 @@ export interface components {
     Site: {
       content: {
         "application/json": components["schemas"]["Site"];
-      };
-    };
-    CreateUtility: {
-      content: {
-        "application/json": {
-          name: string;
-        };
       };
     };
     AddUtilityConsumption: {
@@ -572,9 +529,9 @@ export interface components {
         "application/json": components["schemas"]["BusinessEnergy"];
       };
     };
-    AddUtilityEmission: {
+    AddFuelSourceEmission: {
       content: {
-        "application/json": components["schemas"]["AddUtilityEmissionBody"][];
+        "application/json": components["schemas"]["AddFuelSourceEmissionBody"][];
       };
     };
     AddLog: {

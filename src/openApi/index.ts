@@ -18,12 +18,10 @@ import './definitions/user.definition';
 
 import { LoginPath } from './definitions/auth.login.definition';
 import { CreateSitePath } from './definitions/site.create.definition';
-import { CreateUtilityPath } from './definitions/utility.create.definition';
 import { AddUtilityConsumptionPath } from './definitions/utilityConsumption.add.definition';
 import { UtilityFileImportPath } from './definitions/utilityFile.import.definition';
 import { OpenApiDefinition } from './OpenApiDefinition';
 import { GetDashboardDataPath } from './definitions/dashboard.get.definition';
-import { GetUtilitiesPath } from './definitions/utility.get.definition';
 import { UpdateUserPath } from './definitions/user.update.definition';
 import { GetUserPath } from './definitions/user.get.definition';
 import { AddBrandToBusinessPath } from './definitions/user.saveEnergy.definition';
@@ -44,12 +42,10 @@ export {
   RegisterPath,
   LoginPath,
   CreateSitePath,
-  CreateUtilityPath,
   AddUtilityConsumptionPath,
   AddUtilityEmissionPath,
   UtilityFileImportPath,
   GetDashboardDataPath,
-  GetUtilitiesPath,
   UpdateUserPath,
   GetUserPath,
   AddBrandToBusinessPath,

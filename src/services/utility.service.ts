@@ -1,14 +1,5 @@
 import { DB } from '@lib';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
-import { getSinglePropArr } from '@utils';
-
-const create = async (params: RequestBodyParams<'CreateUtility'>, opt?: Transactionable) => {
-  const query = DB('Utilities').insert(params);
-  if (opt?.txr) {
-    query.transacting(opt.txr);
-  }
-  return query;
-};
 
 export type AddConsumptionToUtilityParam = { utilityId: number } & RequestBodyParams<'AddUtilityConsumption'>;
 const addConsumptionToUtility = async (
@@ -20,32 +11,6 @@ const addConsumptionToUtility = async (
   if (opt?.txr) {
     query.transacting(opt.txr);
   }
-  return query;
-};
-
-const findBy = async (by: {
-  name?: string | string[];
-  businessId?: number;
-  id?: number;
-}): Promise<AppModels['Utility'][]> => {
-  const query = DB('Utilities');
-
-  if (by.name) {
-    if (Array.isArray(by.name)) {
-      query.whereIn('name', by.name);
-    } else {
-      query.where({ name: by.name });
-    }
-  }
-
-  if (by.businessId) {
-    query.where({ businessId: by.businessId });
-  }
-
-  if (by.id) {
-    query.where({ id: by.id });
-  }
-
   return query;
 };
 
@@ -100,6 +65,7 @@ const getFuelSources = async (): Promise<FuelSource[]> => {
 
 type FindFuelByParams = {
   usedInId?: number;
+  fuelSourceId?: number;
 };
 const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]> => {
   const query = DB('FuelSources')
@@ -110,51 +76,32 @@ const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]>
     query.where('FuelUses.id', p.usedInId);
   }
 
+  if (p.fuelSourceId) {
+    query.where('FuelSources.id', p.fuelSourceId);
+  }
+
   return query;
 };
 
-type SetUtilityEmissionsParams = {
-  businessId: number;
-  siteId: number;
-  usedInId: number;
+type AddUtilityEmissionsParams = {
   year: number;
   emissionFactor: string;
   value: number;
+  fuelSourceId: number;
+  businessId: number;
 };
-const setUtilityEmissions = (p: SetUtilityEmissionsParams[]) => {
+const addUtilityEmissions = (p: AddUtilityEmissionsParams[]) => {
   return DB.transaction((trx) => {
-    const delQuery = trx('UtilityEmissions')
-      .where((builder) =>
-        builder
-          .whereIn('siteId', getSinglePropArr({ arr: p, prop: 'siteId' }))
-          .whereIn('usedInId', getSinglePropArr({ arr: p, prop: 'usedInId' }))
-          .whereIn(
-            'siteId',
-            trx('Sites')
-              .select(['id'])
-              .whereIn('businessId', getSinglePropArr({ arr: p, prop: 'businessId' })),
-          ),
-      )
-      .del();
-
-    return delQuery.then(() => {
-      const mapRecord = (r: typeof p[0]) => {
-        const { businessId: _, ...data } = r;
-        return data;
-      };
-      const query = trx('UtilityEmissions').insert(p.map(mapRecord));
-      return query;
-    });
+    const query = trx('UtilityEmissions').insert(p);
+    return query;
   });
 };
 
 export default {
-  create,
   addConsumptionToUtility,
-  findBy,
   getConsumptionPerUtility,
   getSavingTips,
   findFuelBy,
   getFuelSources,
-  setUtilityEmissions,
+  addUtilityEmissions,
 };
