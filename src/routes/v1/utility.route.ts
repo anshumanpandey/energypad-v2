@@ -25,11 +25,11 @@ authRoutes.post(
 );
 
 authRoutes.post(
-  '/addConsumption/:utilityId',
+  '/addConsumption/:fuelSourceId',
   AddUtilityConsumptionPath,
   AuthMiddleware,
   RequestValidatorMiddleware({
-    body: 'AddUtilityConsumption',
+    body: 'AddFuelSourceConsumption',
   }),
   ExpressAsync(UtilityController.addConsumption),
 );

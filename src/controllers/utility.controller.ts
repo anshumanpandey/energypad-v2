@@ -3,16 +3,19 @@ import { UtilityService } from '@services';
 import { ApiError, ExcelClient } from '@lib';
 import { AddConsumptionToUtilityParam } from '../services/utility.service';
 
-export const addConsumption: AuthAppController<'AddUtilityConsumption', 'AddUtilityConsumption'> = async (req) => {
-  const utilityId = req.params.utilityId;
-  const found = await UtilityService.findFuelBy({ fuelSourceId: parseInt(utilityId, 10) });
+export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddFuelSourceConsumption'> = async (
+  req,
+) => {
+  const fuelSourceId = parseInt(req.params.fuelSourceId, 10);
+  const found = await UtilityService.findFuelBy({ fuelSourceId });
   if (found.length === 0) {
     return new ApiError('Utility to add not found');
   }
 
   const params = {
     ...req.body,
-    utilityId: parseInt(utilityId, 10),
+    businessId: req.user.id,
+    fuelSourceId,
   };
 
   await UtilityService.addConsumptionToUtility(params);
@@ -42,9 +45,9 @@ export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSou
 
 export const importFile: AuthAppController<'UtilityFileImport', 'UtilityFileImport'> = async (req) => {
   const excelFile = req.file;
-  const id = (req.body as unknown as Record<string, string>).utilityId;
-  const utilityId = parseInt(id, 10);
-  if (!utilityId) return new ApiError('Missing utilityId');
+  const id = (req.body as unknown as Record<string, string>).fuelSource;
+  const fuelSourceId = parseInt(id, 10);
+  if (!fuelSourceId) return new ApiError('Missing fuelSourceId');
   if (!excelFile) return new ApiError('Missing file');
 
   const data = await ExcelClient.getUtilityData(excelFile.buffer);
@@ -59,12 +62,11 @@ export const importFile: AuthAppController<'UtilityFileImport', 'UtilityFileImpo
       for (let m = 0, len = yearEntry.months.length; m < len; m++) {
         const currentMonth = yearEntry.months[m];
         dataToInsert.push({
-          utilityId: utilityId,
+          fuelSourceId: fuelSourceId,
+          businessId: req.user.id,
           date: `${yearEntry.year}-${currentMonth.month}-01`,
           consumption: parseInt(currentMonth.consumption, 10),
           cost: currentMonth.cost,
-          siteId: currentMonth.siteId,
-          usedInId: currentMonth.usedInId,
         });
       }
     }

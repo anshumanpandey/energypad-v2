@@ -69,19 +69,19 @@ export interface paths {
       requestBody: components["requestBodies"]["AddFuelSourceEmission"];
     };
   };
-  "/api/utility/addConsumption/{utilityId}": {
+  "/api/utility/addConsumption/{fuelSourceId}": {
     /** Add emision to utility. */
     post: {
       parameters: {
         path: {
-          utilityId: string;
+          fuelSourceId: string;
         };
       };
       responses: {
-        200: components["responses"]["AddUtilityConsumption"];
+        200: components["responses"]["AddFuelSourceConsumption"];
         400: components["responses"]["GenericError"];
       };
-      requestBody: components["requestBodies"]["AddUtilityConsumption"];
+      requestBody: components["requestBodies"]["AddFuelSourceConsumption"];
     };
   };
   "/api/utility/importUtility": {
@@ -327,14 +327,12 @@ export interface components {
       }[];
       patterns?: components["schemas"]["BusinessPattern"][];
     };
-    AddUtilityConsumptionBody: {
+    AddFuelSourceConsumptionBody: {
       date: string;
       consumption: number;
       cost: number;
-      siteId: number;
-      usedInId: number;
     };
-    UtilityConsumption: components["schemas"]["AddUtilityConsumptionBody"] & {
+    UtilityConsumption: components["schemas"]["AddFuelSourceConsumptionBody"] & {
       id: number;
     };
     AddFuelSourceEmissionBody: {
@@ -372,7 +370,7 @@ export interface components {
       };
     };
     /** Success message */
-    AddUtilityConsumption: {
+    AddFuelSourceConsumption: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
       };
@@ -484,7 +482,7 @@ export interface components {
     };
   };
   parameters: {
-    AddUtilityConsumption: number;
+    AddFuelSourceConsumption: number;
     AddFuelSourceEmission: number;
   };
   requestBodies: {
@@ -506,9 +504,9 @@ export interface components {
         "application/json": components["schemas"]["Site"];
       };
     };
-    AddUtilityConsumption: {
+    AddFuelSourceConsumption: {
       content: {
-        "application/json": components["schemas"]["AddUtilityConsumptionBody"];
+        "application/json": components["schemas"]["AddFuelSourceConsumptionBody"];
       };
     };
     UtilityFileImport: {

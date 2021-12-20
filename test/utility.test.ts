@@ -10,19 +10,17 @@ describe('/Utility ', () => {
     const body = await loginUser('mail198@mail.com');
 
     const response = await supertest(app)
-      .post('/api/utility/addConsumption/498')
+      .post('/api/utility/addConsumption/1')
       .set('Authorization', `Bearer ${body.jwt}`)
       .send({
         date: '2020-01-01',
         consumption: 100,
         cost: 100,
-        siteId: 441,
-        usedInId: 2,
       });
-    expect(response.body).toMatchSchema(
-      schema.components.responses.AddUtilityConsumption.content['application/json'].schema,
-    );
     expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(
+      schema.components.responses.AddFuelSourceConsumption.content['application/json'].schema,
+    );
   });
 
   test('It should respond with success message when importing from file', async () => {
@@ -35,7 +33,7 @@ describe('/Utility ', () => {
     const response = await supertest(app)
       .post('/api/utility/importUtility')
       .set('Authorization', `Bearer ${body.jwt}`)
-      .field('utilityId', '124')
+      .field('fuelSource', '1')
       .attach('excel', 'test/fixtures/sample_good.xlsx');
     expect(response.body).toMatchSchema(
       schema.components.responses.UtilityFileImport.content['application/json'].schema,

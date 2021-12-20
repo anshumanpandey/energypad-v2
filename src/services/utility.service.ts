@@ -1,7 +1,10 @@
 import { DB } from '@lib';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 
-export type AddConsumptionToUtilityParam = { utilityId: number } & RequestBodyParams<'AddUtilityConsumption'>;
+export type AddConsumptionToUtilityParam = {
+  businessId: number;
+  fuelSourceId: number;
+} & RequestBodyParams<'AddFuelSourceConsumption'>;
 const addConsumptionToUtility = async (
   params: AddConsumptionToUtilityParam | AddConsumptionToUtilityParam[],
   opt?: Transactionable,
@@ -14,13 +17,20 @@ const addConsumptionToUtility = async (
   return query;
 };
 
-const getConsumptionPerUtility = (p: { utilityId: number | number[] }): Promise<AppModels['UtilityConsumption'][]> => {
+const getConsumptionBy = (p: {
+  businessId?: number;
+  fuelSourceId?: number | number[];
+}): Promise<AppModels['UtilityConsumption'][]> => {
   const query = DB('UtilityConsumptions');
 
-  if (Array.isArray(p.utilityId)) {
-    query.whereIn('utilityId', p.utilityId);
-  } else {
-    query.where('utilityId', p.utilityId);
+  if (p.fuelSourceId && Array.isArray(p.fuelSourceId)) {
+    query.whereIn('fuelSourceId', p.fuelSourceId);
+  } else if (p.fuelSourceId && Array.isArray(p.fuelSourceId) === false) {
+    query.where('fuelSourceId', p.fuelSourceId);
+  }
+
+  if (p.businessId) {
+    query.where('businessId', p.businessId);
   }
   return query;
 };
@@ -99,7 +109,7 @@ const addUtilityEmissions = (p: AddUtilityEmissionsParams[]) => {
 
 export default {
   addConsumptionToUtility,
-  getConsumptionPerUtility,
+  getConsumptionBy,
   getSavingTips,
   findFuelBy,
   getFuelSources,

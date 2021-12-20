@@ -10,25 +10,23 @@ import {
 } from '../OpenApiDefinition';
 
 const bodySchema: CreateSchemaParams = {
-  name: 'AddUtilityConsumptionBody',
+  name: 'AddFuelSourceConsumptionBody',
   schema: {
-    required: ['date', 'consumption', 'cost', 'usedInId', 'siteId'],
+    required: ['date', 'consumption', 'cost'],
     properties: {
       date: { type: 'string', format: 'date' },
       consumption: { type: 'number', format: 'int32' },
       cost: { type: 'number', format: 'int32' },
-      siteId: { type: 'number', format: 'int32' },
-      usedInId: { type: 'number', format: 'int32' },
     },
   },
 };
 createSchema(bodySchema);
 
-addRequestComponentFor('AddUtilityConsumption', {
+addRequestComponentFor('AddFuelSourceConsumption', {
   required: true,
   content: {
     'application/json': {
-      schema: getReferenceFor({ for: 'schemas', name: 'AddUtilityConsumptionBody' }),
+      schema: getReferenceFor({ for: 'schemas', name: 'AddFuelSourceConsumptionBody' }),
     },
   },
 });
@@ -37,7 +35,7 @@ const schema: CreateSchemaParams = {
   name: 'UtilityConsumption',
   schema: {
     allOf: [
-      getReferenceFor({ for: 'schemas', name: 'AddUtilityConsumptionBody' }),
+      getReferenceFor({ for: 'schemas', name: 'AddFuelSourceConsumptionBody' }),
       {
         required: ['id'],
         properties: {
@@ -49,7 +47,7 @@ const schema: CreateSchemaParams = {
 };
 createSchema(schema);
 
-addResponseComponentFor('AddUtilityConsumption', {
+addResponseComponentFor('AddFuelSourceConsumption', {
   description: 'Success message',
   content: {
     'application/json': {
@@ -58,7 +56,7 @@ addResponseComponentFor('AddUtilityConsumption', {
   },
 });
 
-addParameterComponentFor('AddUtilityConsumption', {
+addParameterComponentFor('AddFuelSourceConsumption', {
   name: 'utilityId',
   in: 'path',
   required: true,
@@ -69,9 +67,9 @@ addParameterComponentFor('AddUtilityConsumption', {
 
 const AddUtilityConsumption: OpenAPIV3.OperationObject = {
   description: 'Add emision to utility.',
-  requestBody: getReferenceFor({ for: 'requestBodies', name: 'AddUtilityConsumption' }),
+  requestBody: getReferenceFor({ for: 'requestBodies', name: 'AddFuelSourceConsumption' }),
   responses: {
-    '200': getReferenceFor({ for: 'responses', name: 'AddUtilityConsumption' }),
+    '200': getReferenceFor({ for: 'responses', name: 'AddFuelSourceConsumption' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),
   },
 };

@@ -7,16 +7,13 @@ expect.extend(matcher);
 
 describe('/Dashboard ', () => {
   test('It should respond with success message when create an utility', async () => {
-    const body = await loginUser('userdashboard1@mail.com');
-    await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
-      name: 'Heat',
-    });
-
+    const body = await loginUser('userdashboard302@mail.com');
     const response = await supertest(app).get('/api/dashboard').set('Authorization', `Bearer ${body.jwt}`);
 
     expect(response.body).toMatchSchema(
       schema.components.responses.GetDashboardData.content['application/json'].schema,
     );
+
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(2);
     expect(response.body[0].date).toBe('2021-01-01');
