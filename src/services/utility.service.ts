@@ -41,6 +41,28 @@ const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   return query;
 };
 
+type GetEmissionsParams = { businessId: number };
+const getEmissions = (params: GetEmissionsParams): Promise<AppModels['UtilityEmission'][]> => {
+  const query = DB('UtilityEmissions')
+    .select(['UtilityEmissions.*', { fuelSourceId: 'FuelSources.id' }])
+    .innerJoin('FuelSources', 'UtilityEmissions.fuelSourceId', 'FuelSources.id')
+    .innerJoin({ B: 'Businesses' }, 'UtilityEmissions.businessId', 'B.id')
+    .where('B.id', params.businessId);
+
+  return query;
+};
+
+type GetConsumptionsParams = { businessId: number };
+const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['UtilityConsumption'][]> => {
+  const query = DB('UtilityConsumptions')
+    .select(['UtilityConsumptions.*', { fuelSourceId: 'FuelSources.id' }])
+    .innerJoin('FuelSources', 'UtilityConsumptions.fuelSourceId', 'FuelSources.id')
+    .innerJoin({ B: 'Businesses' }, 'UtilityConsumptions.businessId', 'B.id')
+    .where('B.id', params.businessId);
+
+  return query;
+};
+
 type FuelSourceRecord = Omit<AppModels['FuelSource'], 'usedIn'> & { id: number; use: string };
 type FuelSource = AppModels['FuelSource'] & { id: number };
 const getFuelSources = async (): Promise<FuelSource[]> => {
@@ -114,4 +136,6 @@ export default {
   findFuelBy,
   getFuelSources,
   addUtilityEmissions,
+  getEmissions,
+  getConsumptions,
 };

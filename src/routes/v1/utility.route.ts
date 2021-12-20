@@ -4,6 +4,8 @@ import { UtilityController } from '@controllers';
 import {
   AddUtilityConsumptionPath,
   AddUtilityEmissionPath,
+  GetConsumptionsPath,
+  GetEmissionsPath,
   GetFuelSourcesPath,
   GetSavingTipsPath,
   UtilityFileImportPath,
@@ -13,6 +15,8 @@ const authRoutes = express.Router();
 
 authRoutes.get('/savingTips', GetSavingTipsPath, AuthMiddleware, ExpressAsync(UtilityController.getSavingTips));
 authRoutes.get('/fuelSources', GetFuelSourcesPath, AuthMiddleware, ExpressAsync(UtilityController.getFuelSources));
+authRoutes.get('/emissions', GetEmissionsPath, AuthMiddleware, ExpressAsync(UtilityController.getEmissions));
+authRoutes.get('/consumptions', GetConsumptionsPath, AuthMiddleware, ExpressAsync(UtilityController.getEmissions));
 
 authRoutes.post(
   '/addEmission/:fuelSourceId',

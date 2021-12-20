@@ -54,6 +54,26 @@ export interface paths {
       };
     };
   };
+  "/api/utility/emissions": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {};
+      responses: {
+        200: components["responses"]["GetEmissions"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
+  "/api/utility/consumptions": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {};
+      responses: {
+        200: components["responses"]["GetConsumptions"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/utility/addEmission/{fuelSourceId}": {
     /** Add emision to utility. */
     post: {
@@ -478,6 +498,18 @@ export interface components {
     GetFloors: {
       content: {
         "application/json": components["schemas"]["BusinessFloor"][];
+      };
+    };
+    /** Success message */
+    GetEmissions: {
+      content: {
+        "application/json": components["schemas"]["UtilityEmission"][];
+      };
+    };
+    /** Success message */
+    GetConsumptions: {
+      content: {
+        "application/json": components["schemas"]["UtilityConsumption"][];
       };
     };
   };

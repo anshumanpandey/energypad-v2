@@ -90,3 +90,8 @@ export const getFuelSources: AuthGetAppController<'GetFuelSources'> = async () =
   const tips = await UtilityService.getFuelSources();
   return tips;
 };
+
+export const getEmissions: AuthGetAppController<'GetConsumptions'> = async (req) => {
+  const consumptions = await UtilityService.getConsumptions({ businessId: req.user.id });
+  return consumptions;
+};
