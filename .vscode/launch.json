@@ -36,6 +36,7 @@
                 "${workspaceFolder}/dist/**/*.js"
             ],
             "sourceMaps": true,
+            "outputCapture": "std"
         }
     ]
 }

@@ -63,11 +63,11 @@ const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['Util
   return query;
 };
 
-type FuelSourceRecord = Omit<AppModels['FuelSource'], 'usedIn'> & { id: number; use: string };
+type FuelSourceRecord = Omit<AppModels['FuelSource'], 'usedIn'> & { id: number; use: string; fuelUseId: number };
 type FuelSource = AppModels['FuelSource'] & { id: number };
 const getFuelSources = async (): Promise<FuelSource[]> => {
   const query = DB('FuelSources')
-    .select(['FuelSources.*', 'FuelUses.use'])
+    .select(['FuelSources.*', 'FuelUses.use', { fuelUseId: 'FuelUses.id' }])
     .innerJoin('FuelUses', 'FuelSources.id', 'FuelUses.fuelSourceId');
 
   const records = await query;
@@ -78,13 +78,13 @@ const getFuelSources = async (): Promise<FuelSource[]> => {
       const el = r[i];
       const current = map.get(el.id);
       if (current) {
-        current.usedIn.push(el.use);
+        current.usedIn.push({ use: el.use, id: el.fuelUseId });
         map.set(el.id, current);
       } else {
-        const { use, ...fuel } = el;
+        const { use, fuelUseId, ...fuel } = el;
         map.set(el.id, {
           ...fuel,
-          usedIn: [use],
+          usedIn: [{ use, id: fuelUseId }],
         });
       }
     }
