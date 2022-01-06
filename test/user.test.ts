@@ -37,46 +37,52 @@ describe('/Business ', () => {
   test('It should respond with success message when saving energy', async () => {
     const body = await loginUser('mail482@mail.com');
     const newData = {
-      usedInId: 105,
       siteId: 101,
-      brands: [
+      records: [
         {
-          name: 'All Time',
-          startTime: '00:00:00',
-          endTime: '00:20:00',
-          days: ['Mon', 'Tue'],
-          rate: 200,
-        },
-        {
-          name: 'Rate 1',
-          startTime: '00:00:00',
-          endTime: '00:12:00',
-          days: ['Mon', 'Tue'],
-          rate: 300,
+          fuelSourceId: 1,
+          brands: [
+            {
+              name: 'All Time',
+              startTime: '00:00:00',
+              endTime: '00:20:00',
+              days: ['Mon', 'Tue'],
+              rate: 200,
+            },
+            {
+              name: 'Rate 1',
+              startTime: '00:00:00',
+              endTime: '00:12:00',
+              days: ['Mon', 'Tue'],
+              rate: 300,
+            },
+          ],
+          meternumbers: [
+            {
+              meters: '54984315135',
+            },
+            {
+              meters: '445ads654sd',
+            },
+          ],
+          cost: {
+            currencyCode: 'GBP',
+            vat: 200,
+          },
         },
       ],
-      distance: [
-        {
-          meters: '54984315135',
-        },
-        {
-          meters: '445ads654sd',
-        },
-      ],
-      cost: {
-        currencyCode: 'GBP',
-        vat: 200,
-      },
     };
     const response = await supertest(app)
       .post('/api/business/saveEnergy')
       .set('Authorization', `Bearer ${body.jwt}`)
       .send(newData);
+    expect(response.body).toMatchSchema(
+      schema.components.responses.SaveBusinessEnergy.content['application/json'].schema,
+    );
     expect(response.statusCode).toBe(200);
-    expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
 
     const newData2 = newData;
-    newData2.brands[0].days.push('Wed');
+    newData2.records[0].brands[0].days.push('Wed');
     const response2 = await supertest(app)
       .post('/api/business/saveEnergy')
       .set('Authorization', `Bearer ${body.jwt}`)

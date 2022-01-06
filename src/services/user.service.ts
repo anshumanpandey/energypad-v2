@@ -107,44 +107,44 @@ const setBrands = async (params: AddBrandParams[], opt?: Transactionable) => {
   return trx('BusinessBrands').insert(data.brands);
 };
 
-type SaveEnergyParams = {
-  fuelSourceId: number;
-  usedInId: number;
-};
-const saveEnergy = async (p: SaveEnergyParams & RequestBodies['SaveBusinessEnergy']['content']['application/json']) => {
+const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['application/json']) => {
   const txr = await DB.transaction();
 
   try {
-    const brands = p.brands;
-    if (brands && brands.length !== 0) {
-      const mapBrand = (b: typeof brands[0]) => {
-        return {
-          ...b,
-          fuelSourceId: p.fuelSourceId,
-          siteId: p.siteId,
+    for (let i = 0, len = p.records.length; i < len; i++) {
+      const el = p.records[i];
+
+      const brands = el.brands;
+      if (brands && brands.length !== 0) {
+        const mapBrand = (b: typeof brands[0]) => {
+          return {
+            ...b,
+            fuelSourceId: el.fuelSourceId,
+            siteId: p.siteId,
+          };
         };
-      };
-      await setBrands(brands.map(mapBrand), { txr });
-    }
+        await setBrands(brands.map(mapBrand), { txr });
+      }
 
-    if (p.cost) {
-      await DB('BusinessFuelsPricing')
-        .insert({
-          currencyCode: p.cost.currencyCode,
-          vat: p.cost.vat,
-          fuelSourceId: p.fuelSourceId,
+      if (el.cost) {
+        await DB('BusinessFuelsPricing')
+          .insert({
+            currencyCode: el.cost.currencyCode,
+            vat: el.cost.vat,
+            fuelSourceId: el.fuelSourceId,
+            siteId: p.siteId,
+          })
+          .transacting(txr);
+      }
+
+      if (el.meternumbers) {
+        const mapDistance = (b: typeof el.meternumbers[0]) => ({
+          fuelSourceId: el.fuelSourceId,
           siteId: p.siteId,
-        })
-        .transacting(txr);
-    }
-
-    if (p.distance) {
-      const mapDistance = (b: typeof p.distance[0]) => ({
-        fuelSourceId: p.fuelSourceId,
-        siteId: p.siteId,
-        meters: b.meters,
-      });
-      await DB('BusinessFuelsSize').insert(p.distance.map(mapDistance)).transacting(txr);
+          meters: b.meters,
+        });
+        await DB('BusinessFuelsSize').insert(el.meternumbers.map(mapDistance)).transacting(txr);
+      }
     }
 
     return txr.commit();
@@ -188,8 +188,11 @@ const getBusinessEnergies = async (p: GetBusinessEnergiesParams) => {
 
   const reduceRecords = (r: typeof records): AppModels['BusinessEnergy'][] => {
     const energyData = new Map<string, AppModels['BusinessEnergy']>();
-    let brandData = new Map<string, Map<number, Map<string, AppModels['BusinessEnergy']['brands'][0]>>>();
-    let distanceData = new Map<string, Map<number, Map<string, AppModels['BusinessEnergy']['distance'][0]>>>();
+    let brandData = new Map<string, Map<number, Map<string, AppModels['BusinessEnergy']['records'][0]['brands'][0]>>>();
+    let distanceData = new Map<
+      string,
+      Map<number, Map<string, AppModels['BusinessEnergy']['records'][0]['meternumbers'][0]>>
+    >();
 
     const reduceInnerRecord = <T>(p: {
       mapToReturn: Map<string, Map<number, Map<string, T>>>;
@@ -223,14 +226,18 @@ const getBusinessEnergies = async (p: GetBusinessEnergiesParams) => {
 
       const mapKey = el.fuelSourceId;
       energyData.set(mapKey, {
-        usedInId: el.fuelUseId,
         siteId: el.siteId,
-        brands: [],
-        cost: {
-          currencyCode: el.costCurrency,
-          vat: el.costVat,
-        },
-        distance: [],
+        records: [
+          {
+            fuelSourceId: el.fuelSourceId,
+            brands: [],
+            cost: {
+              currencyCode: el.costCurrency,
+              vat: el.costVat,
+            },
+            meternumbers: [],
+          },
+        ],
       });
 
       brandData = reduceInnerRecord({

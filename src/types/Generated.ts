@@ -301,11 +301,13 @@ export interface components {
       imageUrl?: string | null;
     };
     BusinessEnergy: {
-      usedInId: number;
       siteId: number;
-      brands: components["schemas"]["BusinessBrand"][];
-      distance: components["schemas"]["BusinessDistance"][];
-      cost: components["schemas"]["BusinessCost"];
+      records: {
+        fuelSourceId: number;
+        brands: components["schemas"]["BusinessBrand"][];
+        meternumbers: components["schemas"]["BusinessDistance"][];
+        cost: components["schemas"]["BusinessCost"];
+      }[];
     };
     Tenant: {
       siteId: number;

@@ -23,14 +23,15 @@ export const saveEnergy: AuthAppController<'SaveBusinessEnergy', 'SaveBusinessEn
   if (!siteFound) {
     return new ApiError('Site not found');
   }
-  const [fuelFound] = await UtilityService.findFuelBy({ usedInId: req.body.usedInId });
-  if (!fuelFound) {
+  const records = req.body.records;
+  const getIds = (i: { fuelSourceId: number }) => i.fuelSourceId;
+  const ids = Array.from(new Set(records.map(getIds)).values());
+  const fuels = await UtilityService.findFuelBy({ fuelSourceId: ids });
+  if (fuels.length !== ids.length) {
     return new ApiError('Fuel not found');
   }
-  await UserService.saveEnergy({
-    fuelSourceId: fuelFound.id,
-    ...req.body,
-  });
+
+  await UserService.saveEnergy(req.body);
 
   return { success: true };
 };

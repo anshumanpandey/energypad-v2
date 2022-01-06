@@ -97,19 +97,21 @@ const getFuelSources = async (): Promise<FuelSource[]> => {
 
 type FindFuelByParams = {
   usedInId?: number;
-  fuelSourceId?: number;
+  fuelSourceId?: number | number[];
 };
 const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]> => {
-  const query = DB('FuelSources')
-    .select('FuelSources.*')
-    .innerJoin('FuelUses', 'FuelSources.id', 'FuelUses.fuelSourceId');
+  const query = DB('FuelSources').select('FuelSources.*');
 
   if (p.usedInId) {
     query.where('FuelUses.id', p.usedInId);
   }
 
   if (p.fuelSourceId) {
-    query.where('FuelSources.id', p.fuelSourceId);
+    if (Array.isArray(p.fuelSourceId)) {
+      query.whereIn('FuelSources.id', p.fuelSourceId);
+    } else {
+      query.where('FuelSources.id', p.fuelSourceId);
+    }
   }
 
   return query;

@@ -3,23 +3,34 @@ import { createSchema, getReferenceFor } from '../OpenApiDefinition';
 createSchema({
   name: 'BusinessEnergy',
   schema: {
-    required: ['usedInId', 'siteId', 'brands', 'distance', 'cost'],
+    required: ['siteId', 'records'],
     properties: {
-      usedInId: {
-        type: 'number',
-      },
       siteId: {
         type: 'number',
       },
-      brands: {
+      records: {
+        additionalProperties: false,
         type: 'array',
-        items: getReferenceFor({ for: 'schemas', name: 'BusinessBrand' }),
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['fuelSourceId', 'brands', 'meternumbers', 'cost'],
+          properties: {
+            fuelSourceId: {
+              type: 'number',
+            },
+            brands: {
+              type: 'array',
+              items: getReferenceFor({ for: 'schemas', name: 'BusinessBrand' }),
+            },
+            meternumbers: {
+              type: 'array',
+              items: getReferenceFor({ for: 'schemas', name: 'BusinessDistance' }),
+            },
+            cost: getReferenceFor({ for: 'schemas', name: 'BusinessCost' }),
+          },
+        },
       },
-      distance: {
-        type: 'array',
-        items: getReferenceFor({ for: 'schemas', name: 'BusinessDistance' }),
-      },
-      cost: getReferenceFor({ for: 'schemas', name: 'BusinessCost' }),
     },
   },
 });
