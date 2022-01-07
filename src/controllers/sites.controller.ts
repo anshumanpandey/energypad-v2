@@ -6,6 +6,6 @@ export const createSite: AuthAppController<'Site', 'Site'> = async (req) => {
     ...req.body,
     businessId: req.user.id,
   };
-  await SitesService.createSite(params);
-  return { success: true };
+  const [id] = await SitesService.createSite(params);
+  return { id };
 };

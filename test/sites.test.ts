@@ -1,9 +1,9 @@
 import supertest from 'supertest';
-import { matchers } from 'jest-json-schema';
-expect.extend(matchers);
 import { app } from '../src/app';
-import { NO_EXTRA_PROPERTY_ERROR_MESSAGE, loginUser } from './testhelp';
+import { NO_EXTRA_PROPERTY_ERROR_MESSAGE, loginUser, matcher } from './testhelp';
 import schema from '../src/types/Schema.json';
+
+expect.extend(matcher);
 
 describe('/Site ', () => {
   test('It should respond with success message when create a site', async () => {
@@ -16,7 +16,6 @@ describe('/Site ', () => {
       population: 17391920.135333613,
       size: 45786843.40282458,
     });
-    console.log(response.body);
     expect(response.body).toMatchSchema(schema.components.responses.Site.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
   });

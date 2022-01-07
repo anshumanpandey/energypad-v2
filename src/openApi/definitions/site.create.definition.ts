@@ -19,7 +19,13 @@ addResponseComponentFor('Site', {
   description: 'Success message',
   content: {
     'application/json': {
-      schema: getReferenceFor({ for: 'schemas', name: 'SuccessMessage' }),
+      schema: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'number', format: 'int32' },
+        },
+      },
     },
   },
 });

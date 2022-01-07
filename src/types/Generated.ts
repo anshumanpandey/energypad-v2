@@ -386,7 +386,9 @@ export interface components {
     /** Success message */
     Site: {
       content: {
-        "application/json": components["schemas"]["SuccessMessage"];
+        "application/json": {
+          id: number;
+        };
       };
     };
     /** Success message */
