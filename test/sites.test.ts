@@ -15,9 +15,8 @@ describe('/Site ', () => {
       town: 'somwehre',
       population: 17391920.135333613,
       size: 45786843.40282458,
-      fuel: 'sed sint incididunt',
-      uses: 'anim consectetur eu',
     });
+    console.log(response.body);
     expect(response.body).toMatchSchema(schema.components.responses.Site.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
   });
@@ -31,8 +30,6 @@ describe('/Site ', () => {
       town: 35779417.474086836,
       population: 'some',
       size: 45786843.40282458,
-      fuel: 'sed sint incididunt',
-      uses: 'anim consectetur eu',
     });
     expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response.body.message).toBe('should be string');

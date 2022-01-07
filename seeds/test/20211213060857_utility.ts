@@ -120,8 +120,6 @@ export async function seed(knex: Knex): Promise<void> {
       town: 'some town',
       population: 15000,
       size: 15,
-      fuel: 'a fuel',
-      uses: 'a lot',
       businessId: 198,
     },
     {
@@ -132,8 +130,6 @@ export async function seed(knex: Knex): Promise<void> {
       town: 'some town',
       population: 15000,
       size: 15,
-      fuel: 'a fuel',
-      uses: 'a lot',
       businessId: 212,
     },
     {
@@ -144,8 +140,6 @@ export async function seed(knex: Knex): Promise<void> {
       town: 'some town',
       population: 15000,
       size: 15,
-      fuel: 'a fuel',
-      uses: 'a lot',
       businessId: 222,
     },
   ]);

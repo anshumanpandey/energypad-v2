@@ -14,14 +14,15 @@ describe('/Dashboard ', () => {
       schema.components.responses.GetDashboardData.content['application/json'].schema,
     );
 
+    const currentYear = new Date().getFullYear();
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(2);
-    expect(response.body[0].date).toBe('2021-01-01');
+    expect(response.body[0].date).toBe(currentYear + '-01-01');
     expect(response.body[0].averageCost).toBe(150);
     expect(response.body[0].averageConsumption).toBe(125);
     expect(response.body[0].consumption).toBe(150);
 
-    expect(response.body[1].date).toBe('2021-02-01');
+    expect(response.body[1].date).toBe(currentYear + '-02-01');
     expect(response.body[1].averageCost).toBe(200);
     expect(response.body[1].averageConsumption).toBe(150);
     expect(response.body[1].consumption).toBe(150);

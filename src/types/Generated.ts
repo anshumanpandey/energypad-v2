@@ -250,8 +250,6 @@ export interface components {
       town: string;
       population: number;
       size: number;
-      fuel: string;
-      uses: string;
     };
     JWTToken: {
       jwt: string;
