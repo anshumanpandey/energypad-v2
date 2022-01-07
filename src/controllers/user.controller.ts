@@ -19,7 +19,7 @@ export const getMet: AuthGetAppController<'GetUser'> = async (req) => {
 };
 
 export const saveEnergy: AuthAppController<'SaveBusinessEnergy', 'SaveBusinessEnergy'> = async (req) => {
-  const [siteFound] = await SitesService.findBy({ id: req.body.siteId, businessId: req.user.id });
+  const [siteFound] = await SitesService.findBy({ id: req.body.siteId });
   if (!siteFound) {
     return new ApiError('Site not found');
   }
