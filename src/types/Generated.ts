@@ -33,6 +33,14 @@ export interface paths {
       };
       requestBody: components["requestBodies"]["Site"];
     };
+    /** Create a new site for a business. */
+    delete: {
+      responses: {
+        200: components["responses"]["DeleteSite"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["DeleteSite"];
+    };
   };
   "/api/utility/savingTips": {
     /** Get dashboard data per date. */
@@ -514,6 +522,12 @@ export interface components {
         "application/json": components["schemas"]["UtilityConsumption"][];
       };
     };
+    /** Success message */
+    DeleteSite: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddFuelSourceConsumption: number;
@@ -596,6 +610,13 @@ export interface components {
     SetFloors: {
       content: {
         "application/json": components["schemas"]["BusinessFloor"][];
+      };
+    };
+    DeleteSite: {
+      content: {
+        "application/json": {
+          id: number;
+        };
       };
     };
   };

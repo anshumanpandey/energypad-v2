@@ -21,7 +21,12 @@ const findBy = async (params?: FindByParams): Promise<(AppModels['Site'] & { id:
   return query;
 };
 
+const deleteById = async (params: { id: number }) => {
+  return DB('Sites').where('id', params.id).del();
+};
+
 export default {
   findBy,
   createSite,
+  deleteById,
 };

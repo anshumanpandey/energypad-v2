@@ -50,6 +50,7 @@ type PathNames =
   | 'CreateUser'
   | 'Register'
   | 'Site'
+  | 'DeleteSite'
   | 'Login'
   | 'GetDashboardData'
   | 'AddFuelSourceConsumption'

@@ -49,4 +49,22 @@ describe('/Site ', () => {
     expect(response2.body.message).toBe(NO_EXTRA_PROPERTY_ERROR_MESSAGE);
     expect(response2.statusCode).toBe(400);
   });
+
+  test('It should respond with success when deleting site', async () => {
+    const body = await loginUser('mail312@mail.com');
+    const response = await supertest(app).delete('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
+      id: 474,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.DeleteSite.content['application/json'].schema);
+  });
+
+  test('It should respond with error when site does not exist on db', async () => {
+    const body = await loginUser('mail312@mail.com');
+    const response = await supertest(app).delete('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
+      id: 999,
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
+  });
 });
