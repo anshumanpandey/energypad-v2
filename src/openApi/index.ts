@@ -13,6 +13,7 @@ import './definitions/savingTip.definition';
 import './definitions/businessEnergy.definition';
 import './definitions/tenant.definition';
 import './definitions/fuelSource.definition';
+import './definitions/energyLog.definition';
 import { RegisterPath } from './definitions/auth.register.definition';
 import './definitions/user.definition';
 
@@ -39,6 +40,7 @@ import { GetBusinessFloorsPath } from './definitions/user.get.floors.definition'
 import { GetEmissionsPath } from './definitions/utility.getEmissions.get.definition';
 import { GetConsumptionsPath } from './definitions/utility.getConsumption.get.definition';
 import { DeleteSitePath } from './definitions/site.delete.definition';
+import { GetSiteDetailsPath } from './definitions/siteDetails.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -65,4 +67,5 @@ export {
   GetEmissionsPath,
   GetConsumptionsPath,
   DeleteSitePath,
+  GetSiteDetailsPath,
 };

@@ -154,26 +154,34 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
 };
 
 type GetBusinessEnergiesParams = {
-  businessId: number;
+  businessId?: number;
+  siteId?: number;
 };
-const getBusinessEnergies = async (p: GetBusinessEnergiesParams) => {
-  const query = DB('Sites')
-    .select([
-      { siteId: 'Sites.id' },
-      { fuelSourceId: 'FS.id' },
-      { fuelUseId: 'FU.id' },
-      { costCurrency: 'BP.currencyCode' },
-      { costVat: 'BP.vat' },
-      { costFuelSource: 'BP.fuelSourceId' },
-      { sizeMeters: 'BF.meters' },
-      { brandId: 'BB.id' },
-      { brandName: 'BB.name' },
-      { brandStartTime: 'BB.startTime' },
-      { brandEndTime: 'BB.endTime' },
-      { brandRate: 'BB.rate' },
-      { brandDays: 'BB.days' },
-    ])
-    .where('Sites.businessId', p.businessId)
+const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { includeSiteId: boolean }) => {
+  const query = DB('Sites').select([
+    { siteId: 'Sites.id' },
+    { fuelSourceId: 'FS.id' },
+    { fuelUseId: 'FU.id' },
+    { costCurrency: 'BP.currencyCode' },
+    { costVat: 'BP.vat' },
+    { costFuelSource: 'BP.fuelSourceId' },
+    { sizeMeters: 'BF.meters' },
+    { brandId: 'BB.id' },
+    { brandName: 'BB.name' },
+    { brandStartTime: 'BB.startTime' },
+    { brandEndTime: 'BB.endTime' },
+    { brandRate: 'BB.rate' },
+    { brandDays: 'BB.days' },
+  ]);
+
+  if (p.businessId) {
+    query.where('Sites.businessId', p.businessId);
+  }
+  if (p.siteId) {
+    query.where('Sites.id', p.siteId);
+  }
+
+  query
     .innerJoin({ BP: 'BusinessFuelsPricing' }, 'Sites.id', 'BP.siteId')
     .innerJoin({ BF: 'BusinessFuelsSize' }, 'Sites.id', 'BF.siteId')
     .innerJoin({ BB: 'BusinessBrands' }, 'Sites.id', 'BB.siteId')
@@ -186,13 +194,10 @@ const getBusinessEnergies = async (p: GetBusinessEnergiesParams) => {
 
   const records = await query;
 
-  const reduceRecords = (r: typeof records): AppModels['BusinessEnergy'][] => {
-    const energyData = new Map<string, AppModels['BusinessEnergy']>();
-    let brandData = new Map<string, Map<number, Map<string, AppModels['BusinessEnergy']['records'][0]['brands'][0]>>>();
-    let distanceData = new Map<
-      string,
-      Map<number, Map<string, AppModels['BusinessEnergy']['records'][0]['meternumbers'][0]>>
-    >();
+  const reduceRecords = (r: typeof records): T[] => {
+    const energyData = new Map<string, { siteId: number } & AppModels['BusinessEnergy']>();
+    let brandData = new Map<string, Map<number, Map<string, AppModels['BusinessEnergy']['brands'][0]>>>();
+    let distanceData = new Map<string, Map<number, Map<string, AppModels['BusinessEnergy']['meternumbers'][0]>>>();
 
     const reduceInnerRecord = <T>(p: {
       mapToReturn: Map<string, Map<number, Map<string, T>>>;
@@ -227,17 +232,13 @@ const getBusinessEnergies = async (p: GetBusinessEnergiesParams) => {
       const mapKey = el.fuelSourceId;
       energyData.set(mapKey, {
         siteId: el.siteId,
-        records: [
-          {
-            fuelSourceId: el.fuelSourceId,
-            brands: [],
-            cost: {
-              currencyCode: el.costCurrency,
-              vat: el.costVat,
-            },
-            meternumbers: [],
-          },
-        ],
+        fuelSourceId: el.fuelSourceId,
+        brands: [],
+        cost: {
+          currencyCode: el.costCurrency,
+          vat: el.costVat,
+        },
+        meternumbers: [],
       });
 
       brandData = reduceInnerRecord({
@@ -266,11 +267,17 @@ const getBusinessEnergies = async (p: GetBusinessEnergiesParams) => {
     }
 
     const mapEntries = ([fuelSourceId, record]: [fuelSourceId: string, record: any]) => {
-      return {
+      const val = {
         ...record,
         brands: Array.from(brandData.get(fuelSourceId)?.get(record.siteId)?.values() || []) || [],
-        distance: Array.from(distanceData.get(fuelSourceId)?.get(record.siteId)?.values() || []) || [],
+        meternumbers: Array.from(distanceData.get(fuelSourceId)?.get(record.siteId)?.values() || []) || [],
       };
+
+      if (opt?.includeSiteId !== true) {
+        delete val.siteId;
+      }
+
+      return val;
     };
     return Array.from(energyData.entries()).map(mapEntries);
   };

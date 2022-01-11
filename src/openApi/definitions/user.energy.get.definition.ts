@@ -7,7 +7,20 @@ addResponseComponentFor('GetBusinessEnergy', {
     'application/json': {
       schema: {
         type: 'array',
-        items: getReferenceFor({ for: 'schemas', name: 'BusinessEnergy' }),
+        items: {
+          allOf: [
+            {
+              type: 'object',
+              required: ['siteId'],
+              properties: {
+                siteId: {
+                  type: 'number',
+                },
+              },
+            },
+            getReferenceFor({ for: 'schemas', name: 'BusinessEnergy' }),
+          ],
+        },
       },
     },
   },

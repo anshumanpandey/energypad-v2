@@ -24,6 +24,20 @@ export interface paths {
       requestBody: components["requestBodies"]["Login"];
     };
   };
+  "/api/site/details/{siteId}": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {
+        path: {
+          siteId: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["GetSiteDetails"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/site/": {
     /** Create a new site for a business. */
     post: {
@@ -307,13 +321,10 @@ export interface components {
       imageUrl?: string | null;
     };
     BusinessEnergy: {
-      siteId: number;
-      records: {
-        fuelSourceId: number;
-        brands: components["schemas"]["BusinessBrand"][];
-        meternumbers: components["schemas"]["BusinessDistance"][];
-        cost: components["schemas"]["BusinessCost"];
-      }[];
+      fuelSourceId: number;
+      brands: components["schemas"]["BusinessBrand"][];
+      meternumbers: components["schemas"]["BusinessDistance"][];
+      cost: components["schemas"]["BusinessCost"];
     };
     Tenant: {
       siteId: number;
@@ -325,6 +336,14 @@ export interface components {
     FuelSource: {
       source: string;
       usedIn: string[];
+    };
+    EnergyLog: {
+      siteId: number;
+      usedInId: number;
+      operation: string;
+      comments: string;
+      startDate: string;
+      endDate: string;
     };
     RegisterBody: {
       businessName: string;
@@ -449,7 +468,9 @@ export interface components {
     /** Success message */
     GetBusinessEnergy: {
       content: {
-        "application/json": components["schemas"]["BusinessEnergy"][];
+        "application/json": ({
+          siteId: number;
+        } & components["schemas"]["BusinessEnergy"])[];
       };
     };
     /** Success message */
@@ -528,10 +549,23 @@ export interface components {
         "application/json": components["schemas"]["SuccessMessage"];
       };
     };
+    /** Success message */
+    GetSiteDetails: {
+      content: {
+        "application/json": {
+          programmes: components["schemas"]["Programme"][];
+          reviews: components["schemas"]["Review"][];
+          tenants: components["schemas"]["Tenant"][];
+          logs: components["schemas"]["EnergyLog"][];
+          energies: components["schemas"]["BusinessEnergy"][];
+        };
+      };
+    };
   };
   parameters: {
     AddFuelSourceConsumption: number;
     AddFuelSourceEmission: number;
+    GetSiteDetails: number;
   };
   requestBodies: {
     Register: {
@@ -572,7 +606,10 @@ export interface components {
     };
     SaveBusinessEnergy: {
       content: {
-        "application/json": components["schemas"]["BusinessEnergy"];
+        "application/json": {
+          siteId: number;
+          records: components["schemas"]["BusinessEnergy"][];
+        };
       };
     };
     AddFuelSourceEmission: {
@@ -582,14 +619,7 @@ export interface components {
     };
     AddLog: {
       content: {
-        "application/json": {
-          siteId: number;
-          usedInId: number;
-          operation: string;
-          comments: string;
-          startDate: string;
-          endDate: string;
-        };
+        "application/json": components["schemas"]["EnergyLog"];
       };
     };
     SetTenants: {

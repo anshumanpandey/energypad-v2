@@ -67,4 +67,11 @@ describe('/Site ', () => {
     expect(response.statusCode).toBe(400);
     expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
   });
+
+  test('It should respond with success when getting sites details', async () => {
+    const body = await loginUser('mail312@mail.com');
+    const response = await supertest(app).get('/api/site/details/476').set('Authorization', `Bearer ${body.jwt}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.GetSiteDetails.content['application/json'].schema);
+  });
 });

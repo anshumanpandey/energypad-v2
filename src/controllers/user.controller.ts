@@ -1,4 +1,4 @@
-import { AuthAppController, AuthGetAppController } from '@types';
+import { AppModels, AuthAppController, AuthGetAppController } from '@types';
 import { UserService, SitesService, UtilityService } from '@services';
 import { ApiError } from '@lib';
 import { getSinglePropArr } from '@utils';
@@ -37,7 +37,12 @@ export const saveEnergy: AuthAppController<'SaveBusinessEnergy', 'SaveBusinessEn
 };
 
 export const getBusinessEnergy: AuthGetAppController<'GetBusinessEnergy'> = async (req) => {
-  const energies = await UserService.getBusinessEnergies({ businessId: req.user.id });
+  const energies = await UserService.getBusinessEnergies<{ siteId: number } & AppModels['BusinessEnergy']>(
+    {
+      businessId: req.user.id,
+    },
+    { includeSiteId: true },
+  );
   return energies;
 };
 

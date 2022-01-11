@@ -1,6 +1,12 @@
-import { AuthAppController } from '@types';
+import { AuthAppController, AuthGetAppController } from '@types';
 import { SitesService } from '@services';
 import { ApiError } from '@lib';
+
+export const getSiteDetails: AuthGetAppController<'GetSiteDetails'> = async (req) => {
+  const siteId = parseInt(req.params.siteId, 10);
+  const details = await SitesService.getSiteDetails({ id: siteId });
+  return details;
+};
 
 export const createSite: AuthAppController<'Site', 'Site'> = async (req) => {
   const params = {

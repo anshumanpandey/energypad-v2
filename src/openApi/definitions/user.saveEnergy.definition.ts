@@ -9,7 +9,20 @@ import {
 addRequestComponentFor('SaveBusinessEnergy', {
   content: {
     'application/json': {
-      schema: getReferenceFor({ for: 'schemas', name: 'BusinessEnergy' }),
+      schema: {
+        type: 'object',
+        required: ['siteId', 'records'],
+        properties: {
+          siteId: {
+            type: 'number',
+            format: 'int32',
+          },
+          records: {
+            type: 'array',
+            items: getReferenceFor({ for: 'schemas', name: 'BusinessEnergy' }),
+          },
+        },
+      },
     },
   },
 });

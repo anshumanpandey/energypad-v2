@@ -9,18 +9,7 @@ import {
 addRequestComponentFor('AddLog', {
   content: {
     'application/json': {
-      schema: {
-        required: ['siteId', 'usedInId', 'operation', 'comments', 'startDate', 'endDate'],
-        properties: {
-          siteId: { type: 'number', format: 'int32' },
-          usedInId: { type: 'number', format: 'int32' },
-          operation: { type: 'string' },
-          comments: { type: 'string' },
-          startDate: { type: 'string', format: 'date' },
-          endDate: { type: 'string', format: 'date' },
-        },
-        additionalProperties: false,
-      },
+      schema: getReferenceFor({ for: 'schemas', name: 'EnergyLog' }),
     },
   },
 });

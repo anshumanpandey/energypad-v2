@@ -1,9 +1,11 @@
 import express from 'express';
 import { AuthMiddleware, ExpressAsync, RequestValidatorMiddleware } from '@middleware';
 import { SitesController } from '@controllers';
-import { CreateSitePath, DeleteSitePath } from '@openApi';
+import { CreateSitePath, DeleteSitePath, GetSiteDetailsPath } from '@openApi';
 
 const authRoutes = express.Router();
+
+authRoutes.get('/details/:siteId', GetSiteDetailsPath, AuthMiddleware, ExpressAsync(SitesController.getSiteDetails));
 
 authRoutes.post(
   '/',

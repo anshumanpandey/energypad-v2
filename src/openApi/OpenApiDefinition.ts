@@ -44,6 +44,7 @@ type SchemaNames =
   | 'SavingTip'
   | 'Tenant'
   | 'Review'
+  | 'EnergyLog'
   | 'FuelSource'
   | 'BusinessPattern';
 type PathNames =
@@ -57,6 +58,7 @@ type PathNames =
   | 'AddFuelSourceEmission'
   | 'GetUtilities'
   | 'GetSites'
+  | 'GetSiteDetails'
   | 'GetFloors'
   | 'GetUser'
   | 'GetFuelSources'
