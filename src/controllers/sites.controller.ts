@@ -4,6 +4,10 @@ import { ApiError } from '@lib';
 
 export const getSiteDetails: AuthGetAppController<'GetSiteDetails'> = async (req) => {
   const siteId = parseInt(req.params.siteId, 10);
+  const [site] = await SitesService.findBy({ id: siteId });
+  if (!site) {
+    return new ApiError('Site not found');
+  }
   const details = await SitesService.getSiteDetails({ id: siteId });
   return details;
 };
