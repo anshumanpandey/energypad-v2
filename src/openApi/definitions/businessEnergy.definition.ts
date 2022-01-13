@@ -3,9 +3,12 @@ import { createSchema, getReferenceFor } from '../OpenApiDefinition';
 createSchema({
   name: 'BusinessEnergy',
   schema: {
-    required: ['fuelSourceId', 'brands', 'meternumbers', 'cost'],
+    required: ['fuelSourceId', 'usedInId', 'brands', 'meternumbers', 'cost'],
     properties: {
       fuelSourceId: {
+        type: 'number',
+      },
+      usedInId: {
         type: 'number',
       },
       brands: {

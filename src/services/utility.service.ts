@@ -96,21 +96,33 @@ const getFuelSources = async (): Promise<FuelSource[]> => {
 };
 
 type FindFuelByParams = {
-  usedInId?: number;
   fuelSourceId?: number | number[];
 };
 const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]> => {
   const query = DB('FuelSources').select('FuelSources.*');
-
-  if (p.usedInId) {
-    query.where('FuelUses.id', p.usedInId);
-  }
 
   if (p.fuelSourceId) {
     if (Array.isArray(p.fuelSourceId)) {
       query.whereIn('FuelSources.id', p.fuelSourceId);
     } else {
       query.where('FuelSources.id', p.fuelSourceId);
+    }
+  }
+
+  return query;
+};
+
+type FindFuelUseByParams = {
+  id?: number | number[];
+};
+const findFuelUseBy = (p: FindFuelUseByParams): Promise<{ id: number; use: string }[]> => {
+  const query = DB('FuelUses').select('FuelUses.*');
+
+  if (p.id) {
+    if (Array.isArray(p.id)) {
+      query.whereIn('id', p.id);
+    } else {
+      query.where('id', p.id);
     }
   }
 
@@ -140,4 +152,5 @@ export default {
   addUtilityEmissions,
   getEmissions,
   getConsumptions,
+  findFuelUseBy,
 };

@@ -24,13 +24,20 @@ export const saveEnergy: AuthAppController<'SaveBusinessEnergy', 'SaveBusinessEn
     return new ApiError('Site not found');
   }
   const records = req.body.records;
-  const getIds = (i: { fuelSourceId: number }) => i.fuelSourceId;
-  const ids = Array.from(new Set(records.map(getIds)).values());
-  const fuels = await UtilityService.findFuelBy({ fuelSourceId: ids });
-  if (fuels.length !== ids.length) {
+
+  const getFuelSourceIds = (i: { fuelSourceId: number }) => i.fuelSourceId;
+  const fuelIds = Array.from(new Set(records.map(getFuelSourceIds)).values());
+  const fuels = await UtilityService.findFuelBy({ fuelSourceId: fuelIds });
+  if (fuels.length !== fuelIds.length) {
     return new ApiError('Fuel not found');
   }
 
+  const getFuelUseIds = (i: { usedInId: number }) => i.usedInId;
+  const usesIds = Array.from(new Set(records.map(getFuelUseIds)).values());
+  const uses = await UtilityService.findFuelUseBy({ id: usesIds });
+  if (uses.length !== usesIds.length) {
+    return new ApiError('Fuel Use not found');
+  }
   await UserService.saveEnergy(req.body);
 
   return { success: true };

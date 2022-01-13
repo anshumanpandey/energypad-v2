@@ -137,6 +137,7 @@ export async function seed(knex: Knex): Promise<void> {
       currencyCode: 'GBP',
       vat: 200,
       fuelSourceId: 1,
+      usedInId: 2,
       siteId: 476,
     },
   ]);
@@ -147,6 +148,7 @@ export async function seed(knex: Knex): Promise<void> {
       meters: 5498,
       fuelSourceId: 1,
       siteId: 476,
+      usedInId: 2,
     },
   ]);
 
@@ -158,6 +160,7 @@ export async function seed(knex: Knex): Promise<void> {
       endTime: '00:20:00',
       rate: 200,
       days: 'Mon,Tue',
+      usedInId: 2,
       fuelSourceId: 1,
       siteId: 476,
     },
@@ -169,6 +172,7 @@ export async function seed(knex: Knex): Promise<void> {
       rate: 200,
       days: 'Mon,Tue,Wed',
       fuelSourceId: 1,
+      usedInId: 2,
       siteId: 476,
     },
   ]);

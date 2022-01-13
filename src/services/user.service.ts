@@ -121,6 +121,7 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
             ...b,
             fuelSourceId: el.fuelSourceId,
             siteId: p.siteId,
+            usedInId: el.usedInId,
           };
         };
         await setBrands(brands.map(mapBrand), { txr });
@@ -132,6 +133,7 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
             currencyCode: el.cost.currencyCode,
             vat: el.cost.vat,
             fuelSourceId: el.fuelSourceId,
+            usedInId: el.usedInId,
             siteId: p.siteId,
           })
           .transacting(txr);
@@ -140,6 +142,7 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
       if (el.meternumbers) {
         const mapDistance = (b: typeof el.meternumbers[0]) => ({
           fuelSourceId: el.fuelSourceId,
+          usedInId: el.usedInId,
           siteId: p.siteId,
           meters: b.meters,
         });
@@ -149,7 +152,8 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
 
     return txr.commit();
   } catch (err) {
-    return txr.rollback();
+    await txr.rollback();
+    throw err;
   }
 };
 
@@ -232,6 +236,7 @@ const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { incl
       const mapKey = el.fuelSourceId;
       energyData.set(mapKey, {
         siteId: el.siteId,
+        usedInId: el.fuelUseId,
         fuelSourceId: el.fuelSourceId,
         brands: [],
         cost: {

@@ -41,6 +41,7 @@ describe('/Business ', () => {
       records: [
         {
           fuelSourceId: 1,
+          usedInId: 2,
           brands: [
             {
               name: 'All Time',
@@ -93,6 +94,7 @@ describe('/Business ', () => {
 
     const meData = await supertest(app).get('/api/business/energies').set('Authorization', `Bearer ${body.jwt}`);
     expect(meData.statusCode).toBe(200);
+    expect(meData.body.length).toBe(1);
     expect(meData.body[0].brands.length).toBe(2);
     expect(meData.body[0].meternumbers.length).toBe(2);
     expect(meData.body[0].brands[0].days.length).toBe(3);
