@@ -20,6 +20,20 @@ describe('/Site ', () => {
     expect(response.statusCode).toBe(200);
   });
 
+  test('It should respond with success message when updating a site', async () => {
+    const body = await loginUser('mail316@mail.com');
+    const response = await supertest(app).put('/api/site/update/478').set('Authorization', `Bearer ${body.jwt}`).send({
+      type: 'some_new',
+      address: 'anywhere_new',
+      postCode: '484 sd8_new',
+      town: 'some town_new',
+      population: 222222,
+      size: 8888,
+    });
+    expect(response.body).toMatchSchema(schema.components.responses.SiteUpdate.content['application/json'].schema);
+    expect(response.statusCode).toBe(200);
+  });
+
   test('It should respond with fail message when create a site when passing wrong town', async () => {
     const body = await loginUser('mail238@mail.com');
     const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({

@@ -2,8 +2,13 @@ import { DB } from '@lib';
 import { AppModels, RequestBodyParams, RequestResponses } from '@types';
 import userService from './user.service';
 
-const createSite = async (params: RequestBodyParams<'Site'>) => {
-  return DB('Sites').insert(params);
+const createSite = async (params: { id?: number } & RequestBodyParams<'Site'>) => {
+  const { id, ...vals } = params;
+  if (id) {
+    return DB('Sites').update(vals).where('id', id);
+  } else {
+    return DB('Sites').insert(vals);
+  }
 };
 
 const getSiteDetails = async (params: { id: number }): Promise<RequestResponses<'GetSiteDetails'>> => {

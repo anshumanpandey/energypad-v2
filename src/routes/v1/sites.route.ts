@@ -1,7 +1,7 @@
 import express from 'express';
 import { AuthMiddleware, ExpressAsync, RequestValidatorMiddleware } from '@middleware';
 import { SitesController } from '@controllers';
-import { CreateSitePath, DeleteSitePath, GetSiteDetailsPath } from '@openApi';
+import { CreateSitePath, DeleteSitePath, GetSiteDetailsPath, UpdateSitePath } from '@openApi';
 
 const authRoutes = express.Router();
 
@@ -15,6 +15,16 @@ authRoutes.post(
     body: 'Site',
   }),
   ExpressAsync(SitesController.createSite),
+);
+
+authRoutes.put(
+  '/update/:siteId',
+  UpdateSitePath,
+  AuthMiddleware,
+  RequestValidatorMiddleware({
+    body: 'SiteUpdate',
+  }),
+  ExpressAsync(SitesController.updateSite),
 );
 
 authRoutes.delete(

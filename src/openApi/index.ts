@@ -41,6 +41,7 @@ import { GetEmissionsPath } from './definitions/utility.getEmissions.get.definit
 import { GetConsumptionsPath } from './definitions/utility.getConsumption.get.definition';
 import { DeleteSitePath } from './definitions/site.delete.definition';
 import { GetSiteDetailsPath } from './definitions/siteDetails.get.definition';
+import { UpdateSitePath } from './definitions/site.update.definition';
 
 export default OpenApiDefinition;
 export {
@@ -68,4 +69,5 @@ export {
   GetConsumptionsPath,
   DeleteSitePath,
   GetSiteDetailsPath,
+  UpdateSitePath,
 };

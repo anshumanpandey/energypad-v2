@@ -51,6 +51,7 @@ type PathNames =
   | 'CreateUser'
   | 'Register'
   | 'Site'
+  | 'SiteUpdate'
   | 'DeleteSite'
   | 'Login'
   | 'GetDashboardData'

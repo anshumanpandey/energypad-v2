@@ -56,6 +56,21 @@ export interface paths {
       requestBody: components["requestBodies"]["DeleteSite"];
     };
   };
+  "/api/site/update/{id}": {
+    /** Create a new site for a business. */
+    put: {
+      parameters: {
+        path: {
+          id: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["SiteUpdate"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["SiteUpdate"];
+    };
+  };
   "/api/utility/savingTips": {
     /** Get dashboard data per date. */
     get: {
@@ -562,6 +577,12 @@ export interface components {
         };
       };
     };
+    /** Success message */
+    SiteUpdate: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddFuelSourceConsumption: number;
@@ -648,6 +669,11 @@ export interface components {
         "application/json": {
           id: number;
         };
+      };
+    };
+    SiteUpdate: {
+      content: {
+        "application/json": components["schemas"]["Site"];
       };
     };
   };
