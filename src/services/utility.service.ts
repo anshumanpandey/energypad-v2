@@ -68,7 +68,8 @@ type FuelSource = AppModels['FuelSource'] & { id: number };
 const getFuelSources = async (): Promise<FuelSource[]> => {
   const query = DB('FuelSources')
     .select(['FuelSources.*', 'FuelUses.use', { fuelUseId: 'FuelUses.id' }])
-    .innerJoin('FuelUses', 'FuelSources.id', 'FuelUses.fuelSourceId');
+    .innerJoin({ FUTOFS: 'UsedInToFuelSource' }, 'FuelSources.id', 'FUTOFS.fuelSourceId')
+    .innerJoin('FuelUses', 'FUTOFS.usedInId', 'FuelUses.id');
 
   const records = await query;
 

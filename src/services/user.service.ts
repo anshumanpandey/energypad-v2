@@ -194,7 +194,8 @@ const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { incl
         .andOn('FS.id', '=', 'BF.fuelSourceId')
         .andOn('FS.id', '=', 'BB.fuelSourceId');
     })
-    .innerJoin({ FU: 'FuelUses' }, 'FS.id', 'FU.fuelSourceId');
+    .innerJoin({ FUTOFS: 'UsedInToFuelSource' }, 'FS.id', 'FUTOFS.fuelSourceId')
+    .innerJoin({ FU: 'FuelUses' }, 'FUTOFS.usedInId', 'FU.id');
 
   const records = await query;
 

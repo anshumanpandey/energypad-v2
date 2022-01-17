@@ -56,12 +56,12 @@ export interface paths {
       requestBody: components["requestBodies"]["DeleteSite"];
     };
   };
-  "/api/site/update/{id}": {
+  "/api/site/update/{siteId}": {
     /** Create a new site for a business. */
     put: {
       parameters: {
         path: {
-          id: string;
+          siteId: string;
         };
       };
       responses: {
