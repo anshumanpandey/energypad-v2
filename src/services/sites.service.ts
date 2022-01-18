@@ -11,7 +11,7 @@ const createSite = async (params: { id?: number } & RequestBodyParams<'Site'>) =
   }
 };
 
-const getSiteDetails = async (params: { id: number }): Promise<RequestResponses<'GetSiteDetails'>> => {
+const getSiteDetails = async (params: { id: number }): Promise<RequestResponses<'GetSiteDetails'> | null> => {
   const query = DB('Sites')
     .select([
       { 'S-id': 'Sites.id' },
@@ -63,6 +63,9 @@ const getSiteDetails = async (params: { id: number }): Promise<RequestResponses<
     userService.getBusinessEnergies<AppModels['BusinessEnergy']>({ siteId: params.id }),
   ]);
 
+  if (records.length === 0) {
+    return null;
+  }
   const record: {
     programmes: AppModels['Programme'][];
     reviews: AppModels['Review'][];

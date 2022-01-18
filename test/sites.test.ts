@@ -87,5 +87,6 @@ describe('/Site ', () => {
     const response = await supertest(app).get('/api/site/details/476').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.GetSiteDetails.content['application/json'].schema);
+    expect(response.body.energies[0].usedInId.length).toBe(2);
   });
 });

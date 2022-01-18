@@ -32,8 +32,8 @@ export const saveEnergy: AuthAppController<'SaveBusinessEnergy', 'SaveBusinessEn
     return new ApiError('Fuel not found');
   }
 
-  const getFuelUseIds = (i: { usedInId: number }) => i.usedInId;
-  const usesIds = Array.from(new Set(records.map(getFuelUseIds)).values());
+  const getFuelUseIds = (i: { usedInId: number[] }) => i.usedInId;
+  const usesIds = Array.from(new Set(records.map(getFuelUseIds)).values()).flat();
   const uses = await UtilityService.findFuelUseBy({ id: usesIds });
   if (uses.length !== usesIds.length) {
     return new ApiError('Fuel Use not found');

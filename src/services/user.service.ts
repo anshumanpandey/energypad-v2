@@ -112,41 +112,45 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
 
   try {
     for (let i = 0, len = p.records.length; i < len; i++) {
-      const el = p.records[i];
+      const root = p.records[i];
 
-      const brands = el.brands;
-      if (brands && brands.length !== 0) {
-        const mapBrand = (b: typeof brands[0]) => {
-          return {
-            ...b,
-            fuelSourceId: el.fuelSourceId,
-            siteId: p.siteId,
-            usedInId: el.usedInId,
+      for (let a = 0, innerLen = root.usedInId.length; a < innerLen; a++) {
+        const usedInId = root.usedInId[a];
+
+        const brands = root.brands;
+        if (brands && brands.length !== 0) {
+          const mapBrand = (b: typeof brands[0]) => {
+            return {
+              ...b,
+              fuelSourceId: root.fuelSourceId,
+              siteId: p.siteId,
+              usedInId: usedInId,
+            };
           };
-        };
-        await setBrands(brands.map(mapBrand), { txr });
-      }
+          await setBrands(brands.map(mapBrand), { txr });
+        }
 
-      if (el.cost) {
-        await DB('BusinessFuelsPricing')
-          .insert({
-            currencyCode: el.cost.currencyCode,
-            vat: el.cost.vat,
-            fuelSourceId: el.fuelSourceId,
-            usedInId: el.usedInId,
+        if (root.cost) {
+          await DB('BusinessFuelsPricing')
+            .insert({
+              currencyCode: root.cost.currencyCode,
+              vat: root.cost.vat,
+              fuelSourceId: root.fuelSourceId,
+              usedInId: usedInId,
+              siteId: p.siteId,
+            })
+            .transacting(txr);
+        }
+
+        if (root.meternumbers) {
+          const mapDistance = (b: typeof root.meternumbers[0]) => ({
+            fuelSourceId: root.fuelSourceId,
+            usedInId: usedInId,
             siteId: p.siteId,
-          })
-          .transacting(txr);
-      }
-
-      if (el.meternumbers) {
-        const mapDistance = (b: typeof el.meternumbers[0]) => ({
-          fuelSourceId: el.fuelSourceId,
-          usedInId: el.usedInId,
-          siteId: p.siteId,
-          meters: b.meters,
-        });
-        await DB('BusinessFuelsSize').insert(el.meternumbers.map(mapDistance)).transacting(txr);
+            meters: b.meters,
+          });
+          await DB('BusinessFuelsSize').insert(root.meternumbers.map(mapDistance)).transacting(txr);
+        }
       }
     }
 
@@ -165,7 +169,7 @@ const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { incl
   const query = DB('Sites').select([
     { siteId: 'Sites.id' },
     { fuelSourceId: 'FS.id' },
-    { fuelUseId: 'FU.id' },
+    { fuelUseId: 'BP.usedInId' },
     { costCurrency: 'BP.currencyCode' },
     { costVat: 'BP.vat' },
     { costFuelSource: 'BP.fuelSourceId' },
@@ -190,12 +194,17 @@ const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { incl
     .innerJoin({ BF: 'BusinessFuelsSize' }, 'Sites.id', 'BF.siteId')
     .innerJoin({ BB: 'BusinessBrands' }, 'Sites.id', 'BB.siteId')
     .innerJoin({ FS: 'FuelSources' }, (q) => {
-      q.on('FS.id', '=', 'BP.fuelSourceId')
+      return q
+        .on('FS.id', '=', 'BP.fuelSourceId')
         .andOn('FS.id', '=', 'BF.fuelSourceId')
         .andOn('FS.id', '=', 'BB.fuelSourceId');
     })
-    .innerJoin({ FUTOFS: 'UsedInToFuelSource' }, 'FS.id', 'FUTOFS.fuelSourceId')
-    .innerJoin({ FU: 'FuelUses' }, 'FUTOFS.usedInId', 'FU.id');
+    .innerJoin({ FUTOFS: 'UsedInToFuelSource' }, (q) => {
+      return q.on('FS.id', 'FUTOFS.fuelSourceId').andOn('FU.id', 'FUTOFS.usedInId');
+    })
+    .innerJoin({ FU: 'FuelUses' }, (q) => {
+      return q.on('FS.id', 'FUTOFS.fuelSourceId').andOn('FU.id', 'FUTOFS.usedInId');
+    });
 
   const records = await query;
 
@@ -235,17 +244,24 @@ const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { incl
       const el = r[i];
 
       const mapKey = el.fuelSourceId;
-      energyData.set(mapKey, {
-        siteId: el.siteId,
-        usedInId: el.fuelUseId,
-        fuelSourceId: el.fuelSourceId,
-        brands: [],
-        cost: {
-          currencyCode: el.costCurrency,
-          vat: el.costVat,
-        },
-        meternumbers: [],
-      });
+      const found = energyData.get(mapKey);
+      if (!found) {
+        energyData.set(mapKey, {
+          siteId: el.siteId,
+          usedInId: [el.fuelUseId],
+          fuelSourceId: el.fuelSourceId,
+          brands: [],
+          cost: {
+            currencyCode: el.costCurrency,
+            vat: el.costVat,
+          },
+          meternumbers: [],
+        });
+      } else {
+        found.usedInId.push(el.fuelUseId);
+        found.usedInId = Array.from(new Set(found.usedInId).values());
+        energyData.set(mapKey, found);
+      }
 
       brandData = reduceInnerRecord({
         mapToReturn: brandData,
@@ -273,6 +289,7 @@ const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { incl
     }
 
     const mapEntries = ([fuelSourceId, record]: [fuelSourceId: string, record: any]) => {
+      console.log(record);
       const val = {
         ...record,
         brands: Array.from(brandData.get(fuelSourceId)?.get(record.siteId)?.values() || []) || [],

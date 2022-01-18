@@ -9,7 +9,10 @@ createSchema({
         type: 'number',
       },
       usedInId: {
-        type: 'number',
+        type: 'array',
+        items: {
+          type: 'number',
+        },
       },
       brands: {
         type: 'array',

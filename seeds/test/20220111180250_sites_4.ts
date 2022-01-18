@@ -140,6 +140,15 @@ export async function seed(knex: Knex): Promise<void> {
       usedInId: 2,
       siteId: 476,
     },
+
+    {
+      id: 102,
+      currencyCode: 'GBP',
+      vat: 200,
+      fuelSourceId: 1,
+      usedInId: 3,
+      siteId: 476,
+    },
   ]);
 
   await knex('BusinessFuelsSize').insert([
@@ -149,6 +158,14 @@ export async function seed(knex: Knex): Promise<void> {
       fuelSourceId: 1,
       siteId: 476,
       usedInId: 2,
+    },
+
+    {
+      id: 102,
+      meters: 5498,
+      fuelSourceId: 1,
+      siteId: 476,
+      usedInId: 3,
     },
   ]);
 
@@ -173,6 +190,29 @@ export async function seed(knex: Knex): Promise<void> {
       days: 'Mon,Tue,Wed',
       fuelSourceId: 1,
       usedInId: 2,
+      siteId: 476,
+    },
+
+    {
+      id: 104,
+      name: 'All Time',
+      startTime: '00:00:00',
+      endTime: '00:20:00',
+      rate: 200,
+      days: 'Mon,Tue',
+      usedInId: 3,
+      fuelSourceId: 1,
+      siteId: 476,
+    },
+    {
+      id: 106,
+      name: 'Rate 1',
+      startTime: '00:00:00',
+      endTime: '00:12:00',
+      rate: 200,
+      days: 'Mon,Tue,Wed',
+      fuelSourceId: 1,
+      usedInId: 3,
       siteId: 476,
     },
   ]);

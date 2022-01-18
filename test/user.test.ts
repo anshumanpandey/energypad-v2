@@ -41,7 +41,7 @@ describe('/Business ', () => {
       records: [
         {
           fuelSourceId: 1,
-          usedInId: 2,
+          usedInId: [2, 3],
           brands: [
             {
               name: 'All Time',

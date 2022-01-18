@@ -337,7 +337,7 @@ export interface components {
     };
     BusinessEnergy: {
       fuelSourceId: number;
-      usedInId: number;
+      usedInId: number[];
       brands: components["schemas"]["BusinessBrand"][];
       meternumbers: components["schemas"]["BusinessDistance"][];
       cost: components["schemas"]["BusinessCost"];
