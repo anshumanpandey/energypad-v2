@@ -1,5 +1,5 @@
 import { AuthAppController, AuthGetAppController } from '@types';
-import { UtilityService } from '@services';
+import { UtilityService, SitesService } from '@services';
 import { ApiError, ExcelClient } from '@lib';
 import { AddConsumptionToUtilityParam } from '../services/utility.service';
 
@@ -7,14 +7,19 @@ export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddF
   req,
 ) => {
   const fuelSourceId = parseInt(req.params.fuelSourceId, 10);
-  const found = await UtilityService.findFuelBy({ fuelSourceId });
-  if (found.length === 0) {
+  const [fuelFound, siteFound] = await Promise.all([
+    UtilityService.findFuelBy({ fuelSourceId }),
+    SitesService.findBy({ id: req.body.siteId }),
+  ]);
+  if (fuelFound.length === 0) {
     return new ApiError('Utility to add not found');
+  }
+  if (siteFound.length === 0) {
+    return new ApiError('Site not found');
   }
 
   const params = {
     ...req.body,
-    businessId: req.user.id,
     fuelSourceId,
   };
 
@@ -25,16 +30,23 @@ export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddF
 
 export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSourceEmission'> = async (req) => {
   const fuelSourceId = parseInt(req.params.fuelSourceId, 10);
-  const found = await UtilityService.findFuelBy({ fuelSourceId: fuelSourceId });
-  if (found.length === 0) {
-    return new ApiError('Foul Source to add not found');
+
+  const siteToFind = Array.from(new Set(req.body.map((i) => i.siteId)));
+  const [fuelFound, sitesFound] = await Promise.all([
+    UtilityService.findFuelBy({ fuelSourceId }),
+    SitesService.findBy({ id: siteToFind }),
+  ]);
+  if (fuelFound.length === 0) {
+    return new ApiError('Utility to add not found');
+  }
+  if (sitesFound.length !== siteToFind.length) {
+    return new ApiError('Site not found');
   }
 
   const mapEmission = (r: typeof req.body[0]) => {
     return {
       ...r,
       fuelSourceId,
-      businessId: req.user.id,
     };
   };
 
@@ -63,10 +75,10 @@ export const importFile: AuthAppController<'UtilityFileImport', 'UtilityFileImpo
         const currentMonth = yearEntry.months[m];
         dataToInsert.push({
           fuelSourceId: fuelSourceId,
-          businessId: req.user.id,
           date: `${yearEntry.year}-${currentMonth.month}-01`,
           consumption: parseInt(currentMonth.consumption, 10),
           cost: currentMonth.cost,
+          siteId: currentMonth.siteId,
         });
       }
     }

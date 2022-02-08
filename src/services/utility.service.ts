@@ -2,7 +2,6 @@ import { DB } from '@lib';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 
 export type AddConsumptionToUtilityParam = {
-  businessId: number;
   fuelSourceId: number;
 } & RequestBodyParams<'AddFuelSourceConsumption'>;
 const addConsumptionToUtility = async (
@@ -57,7 +56,8 @@ const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['Util
   const query = DB('UtilityConsumptions')
     .select(['UtilityConsumptions.*', { fuelSourceId: 'FuelSources.id' }])
     .innerJoin('FuelSources', 'UtilityConsumptions.fuelSourceId', 'FuelSources.id')
-    .innerJoin({ B: 'Businesses' }, 'UtilityConsumptions.businessId', 'B.id')
+    .innerJoin({ S: 'Sites' }, 'UtilityConsumptions.siteId', 'S.id')
+    .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
     .where('B.id', params.businessId);
 
   return query;
@@ -135,7 +135,7 @@ type AddUtilityEmissionsParams = {
   emissionFactor: string;
   value: number;
   fuelSourceId: number;
-  businessId: number;
+  siteId: number;
 };
 const addUtilityEmissions = (p: AddUtilityEmissionsParams[]) => {
   return DB.transaction((trx) => {

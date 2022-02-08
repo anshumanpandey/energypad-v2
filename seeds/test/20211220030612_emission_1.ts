@@ -25,6 +25,19 @@ export async function seed(knex: Knex): Promise<void> {
     },
   ]);
 
+  await knex('Sites').insert([
+    {
+      id: 640,
+      type: 'some',
+      address: 'anywhere',
+      postCode: '484 sd8',
+      town: 'some town',
+      population: 15000,
+      size: 15,
+      businessId: 310,
+    },
+  ]);
+
   await knex('UtilityEmissions').insert([
     {
       id: 10,
@@ -32,7 +45,7 @@ export async function seed(knex: Knex): Promise<void> {
       emissionFactor: 'special',
       value: 200,
       fuelSourceId: 1,
-      businessId: 310,
+      siteId: 640,
     },
     {
       id: 12,
@@ -40,7 +53,7 @@ export async function seed(knex: Knex): Promise<void> {
       emissionFactor: 'special',
       value: 200,
       fuelSourceId: 1,
-      businessId: 310,
+      siteId: 640,
     },
   ]);
 
@@ -51,7 +64,7 @@ export async function seed(knex: Knex): Promise<void> {
       consumption: 100,
       cost: 100,
       fuelSourceId: 1,
-      businessId: 310,
+      siteId: 640,
     },
     {
       id: 12,
@@ -59,7 +72,7 @@ export async function seed(knex: Knex): Promise<void> {
       consumption: 100,
       cost: 100,
       fuelSourceId: 1,
-      businessId: 310,
+      siteId: 640,
     },
   ]);
 }

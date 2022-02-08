@@ -16,6 +16,7 @@ describe('/Utility ', () => {
         date: '2020-01-01',
         consumption: 100,
         cost: 100,
+        siteId: 451,
       });
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(
@@ -61,6 +62,7 @@ describe('/Utility ', () => {
           emissionFactor: 'special',
           value: 600,
           year: 2001,
+          siteId: 452,
         },
       ])
       .set('Authorization', `Bearer ${body.jwt}`);
@@ -73,11 +75,13 @@ describe('/Utility ', () => {
           emissionFactor: 'special',
           value: 600,
           year: 2003,
+          siteId: 452,
         },
         {
           emissionFactor: 'special',
           value: 600,
           year: 2002,
+          siteId: 452,
         },
       ])
       .set('Authorization', `Bearer ${body.jwt}`);

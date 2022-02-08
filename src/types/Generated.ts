@@ -394,6 +394,7 @@ export interface components {
       date: string;
       consumption: number;
       cost: number;
+      siteId: number;
     };
     UtilityConsumption: components["schemas"]["AddFuelSourceConsumptionBody"] & {
       id: number;
@@ -402,6 +403,7 @@ export interface components {
       emissionFactor: string;
       value: number;
       year: number;
+      siteId: number;
     };
     UtilityEmission: components["schemas"]["AddFuelSourceEmissionBody"] & {
       id: number;

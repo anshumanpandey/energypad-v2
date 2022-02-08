@@ -142,6 +142,16 @@ export async function seed(knex: Knex): Promise<void> {
       size: 15,
       businessId: 222,
     },
+    {
+      id: 451,
+      type: 'some',
+      address: 'anywhere',
+      postCode: '484 sd8',
+      town: 'some town',
+      population: 15000,
+      size: 15,
+      businessId: 302,
+    },
   ]);
 
   await knex('Utilities').insert([
@@ -174,7 +184,7 @@ export async function seed(knex: Knex): Promise<void> {
       consumption: 100,
       cost: 100,
       fuelSourceId: 1,
-      businessId: 302,
+      siteId: 451,
     },
     {
       id: 23,
@@ -182,7 +192,7 @@ export async function seed(knex: Knex): Promise<void> {
       consumption: 150,
       cost: 200,
       fuelSourceId: 1,
-      businessId: 302,
+      siteId: 451,
     },
     {
       id: 24,
@@ -190,7 +200,7 @@ export async function seed(knex: Knex): Promise<void> {
       consumption: 150,
       cost: 200,
       fuelSourceId: 1,
-      businessId: 302,
+      siteId: 451,
     },
   ]);
 }
