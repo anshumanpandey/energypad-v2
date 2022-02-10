@@ -29,7 +29,10 @@ const getConsumptionBy = (p: {
   }
 
   if (p.businessId) {
-    query.where('businessId', p.businessId);
+    query
+      .innerJoin({ S: 'Sites' }, 'UtilityConsumptions.siteId', 'S.id')
+      .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
+      .where('B.id', p.businessId);
   }
   return query;
 };
