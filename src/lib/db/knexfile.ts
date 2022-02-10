@@ -25,7 +25,7 @@ export const config = {
   test: {
     client: 'sqlite3',
     connection: {
-      filename: path.resolve('testdb.sqlite3'),
+      filename: path.resolve('testdb.db'),
     },
     useNullAsDefault: true,
     migrations: {
