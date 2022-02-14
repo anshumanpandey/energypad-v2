@@ -73,6 +73,7 @@ type PathNames =
   | 'GetBusinessEnergy'
   | 'GetSavingTips'
   | 'GetEmissions'
+  | 'SaveBusinessPattern'
   | 'GetConsumptions'
   | 'UtilityFileImport';
 

@@ -258,4 +258,22 @@ describe('/Business ', () => {
     expect(response.body[0].id).toBe(10);
     expect(response.body[1].id).toBe(12);
   });
+
+  test('It should save patterns successfully', async () => {
+    const body = await loginUser('mail434@mail.com');
+    const response = await supertest(app)
+      .post('/api/business/savePattern')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send([
+        {
+          startDate: '2020-08-01',
+          endDate: '2020-09-01',
+          consumption: 20,
+          daysOnYear: 20,
+          siteId: 353,
+          usedInId: 2,
+        },
+      ]);
+    expect(response.statusCode).toBe(200);
+  });
 });

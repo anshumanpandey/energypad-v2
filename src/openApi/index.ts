@@ -42,6 +42,7 @@ import { GetConsumptionsPath } from './definitions/utility.getConsumption.get.de
 import { DeleteSitePath } from './definitions/site.delete.definition';
 import { GetSiteDetailsPath } from './definitions/siteDetails.get.definition';
 import { UpdateSitePath } from './definitions/site.update.definition';
+import { SetBusinessPatternsPath } from './definitions/user.savePattern.definition';
 
 export default OpenApiDefinition;
 export {
@@ -70,4 +71,5 @@ export {
   DeleteSitePath,
   GetSiteDetailsPath,
   UpdateSitePath,
+  SetBusinessPatternsPath,
 };

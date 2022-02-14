@@ -140,3 +140,12 @@ export const getBusinessFloors: AuthGetAppController<'GetFloors'> = async (req) 
 
   return floors;
 };
+
+export const savePattenrs: AuthAppController<'SaveBusinessPattern', 'SaveBusinessPattern'> = async (req) => {
+  await UserService.savePattern({
+    businessId: req.user.id,
+    patterns: req.body,
+  });
+
+  return { success: true };
+};

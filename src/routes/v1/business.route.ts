@@ -12,6 +12,7 @@ import {
   SetBusinessSetProgrammesPath,
   GetBusinessSitesPath,
   SetBusinessSetFloorsPath,
+  SetBusinessPatternsPath,
   GetBusinessFloorsPath,
 } from '@openApi';
 
@@ -40,6 +41,16 @@ businessRoutes.post(
     body: 'SaveBusinessEnergy',
   }),
   ExpressAsync(UserController.saveEnergy),
+);
+
+businessRoutes.post(
+  '/savePattern',
+  SetBusinessPatternsPath,
+  AuthMiddleware,
+  RequestValidatorMiddleware({
+    body: 'SaveBusinessPattern',
+  }),
+  ExpressAsync(UserController.savePattenrs),
 );
 
 businessRoutes.post(

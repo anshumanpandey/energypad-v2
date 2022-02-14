@@ -219,6 +219,16 @@ export interface paths {
       requestBody: components["requestBodies"]["SaveBusinessEnergy"];
     };
   };
+  "/api/business/savePattern": {
+    /** Create a new user. */
+    post: {
+      responses: {
+        200: components["responses"]["SaveBusinessPattern"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["SaveBusinessPattern"];
+    };
+  };
   "/api/business/addLog": {
     /** Create a new user. */
     post: {
@@ -585,6 +595,12 @@ export interface components {
         "application/json": components["schemas"]["SuccessMessage"];
       };
     };
+    /** Success message */
+    SaveBusinessPattern: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddFuelSourceConsumption: number;
@@ -676,6 +692,11 @@ export interface components {
     SiteUpdate: {
       content: {
         "application/json": components["schemas"]["Site"];
+      };
+    };
+    SaveBusinessPattern: {
+      content: {
+        "application/json": components["schemas"]["BusinessPattern"][];
       };
     };
   };
