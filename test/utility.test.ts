@@ -24,7 +24,7 @@ describe('/Utility ', () => {
     );
   });
 
-  test('It should respond with success message when importing from file', async () => {
+  test('It should respond with success message when importing utilities from file', async () => {
     const body = await loginUser('mail212@mail.com');
 
     await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
@@ -35,7 +35,20 @@ describe('/Utility ', () => {
       .post('/api/utility/importUtility')
       .set('Authorization', `Bearer ${body.jwt}`)
       .field('fuelSource', '1')
-      .attach('excel', 'test/fixtures/sample_good.xlsx');
+      .attach('excel', 'test/fixtures/utility_sample_good.xlsx');
+    expect(response.body).toMatchSchema(
+      schema.components.responses.UtilityFileImport.content['application/json'].schema,
+    );
+    expect(response.statusCode).toBe(200);
+  });
+
+  test('It should respond with success message when importing logs from file', async () => {
+    const body = await loginUser('mail212@mail.com');
+
+    const response = await supertest(app)
+      .post('/api/utility/importLogs')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .attach('excel', 'test/fixtures/log_sample_good.xlsx');
     expect(response.body).toMatchSchema(
       schema.components.responses.UtilityFileImport.content['application/json'].schema,
     );

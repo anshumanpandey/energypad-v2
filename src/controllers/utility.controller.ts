@@ -1,5 +1,5 @@
 import { AuthAppController, AuthGetAppController } from '@types';
-import { UtilityService, SitesService } from '@services';
+import { UtilityService, SitesService, UserService } from '@services';
 import { ApiError, ExcelClient } from '@lib';
 import { AddConsumptionToUtilityParam } from '../services/utility.service';
 
@@ -55,7 +55,22 @@ export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSou
   return { success: true };
 };
 
-export const importFile: AuthAppController<'UtilityFileImport', 'UtilityFileImport'> = async (req) => {
+export const importLog: AuthAppController<'UtilityFileImport', 'UtilityFileImport'> = async (req) => {
+  const excelFile = req.file;
+  if (!excelFile) return new ApiError('Missing file');
+
+  const data = await ExcelClient.getLogData(excelFile.buffer);
+
+  if (data.length === 0) {
+    return new ApiError('No data was imported');
+  }
+
+  await UserService.saveLog(data);
+
+  return { success: true };
+};
+
+export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = async (req) => {
   const excelFile = req.file;
   const id = (req.body as unknown as Record<string, string>).fuelSource;
   const fuelSourceId = parseInt(id, 10);

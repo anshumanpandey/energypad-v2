@@ -43,6 +43,7 @@ import { DeleteSitePath } from './definitions/site.delete.definition';
 import { GetSiteDetailsPath } from './definitions/siteDetails.get.definition';
 import { UpdateSitePath } from './definitions/site.update.definition';
 import { SetBusinessPatternsPath } from './definitions/user.savePattern.definition';
+import { LogFileImportPath } from './definitions/logFile.import.definition';
 
 export default OpenApiDefinition;
 export {
@@ -72,4 +73,5 @@ export {
   GetSiteDetailsPath,
   UpdateSitePath,
   SetBusinessPatternsPath,
+  LogFileImportPath,
 };

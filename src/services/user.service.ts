@@ -308,7 +308,7 @@ const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { incl
   return reduceRecords(records);
 };
 
-type SaveLogParams = {
+export type SaveLogParams = {
   siteId: number;
   usedInId: number;
   startDate: string;
@@ -316,7 +316,9 @@ type SaveLogParams = {
   comments: string;
   operation: string;
 };
-const saveLog = (p: SaveLogParams) => {
+const saveLog = (p: SaveLogParams[]) => {
+  console.log({ p });
+  console.log(p.length);
   const query = DB('BusinessLog').insert(p);
   return query;
 };

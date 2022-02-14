@@ -75,6 +75,7 @@ type PathNames =
   | 'GetEmissions'
   | 'SaveBusinessPattern'
   | 'GetConsumptions'
+  | 'LogFileImport'
   | 'UtilityFileImport';
 
 type ResponsesName = 'GenericError' | 'UpdateUser' | PathNames;

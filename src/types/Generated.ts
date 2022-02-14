@@ -151,6 +151,16 @@ export interface paths {
       requestBody: components["requestBodies"]["UtilityFileImport"];
     };
   };
+  "/api/utility/importLogs": {
+    /** Import excel file. */
+    post: {
+      responses: {
+        200: components["responses"]["LogFileImport"];
+        400: components["schemas"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["LogFileImport"];
+    };
+  };
   "/api/dashboard/": {
     /** Get dashboard data per date. */
     get: {
@@ -601,6 +611,12 @@ export interface components {
         "application/json": components["schemas"]["SuccessMessage"];
       };
     };
+    /** Success message */
+    LogFileImport: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     AddFuelSourceConsumption: number;
@@ -697,6 +713,14 @@ export interface components {
     SaveBusinessPattern: {
       content: {
         "application/json": components["schemas"]["BusinessPattern"][];
+      };
+    };
+    LogFileImport: {
+      content: {
+        "multipart/form-data": {
+          excel?: string;
+        };
+        "application/json": string;
       };
     };
   };

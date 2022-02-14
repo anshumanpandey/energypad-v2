@@ -58,7 +58,7 @@ export const addLog: AuthAppController<'AddLog', 'AddLog'> = async (req) => {
   if (!siteFound) {
     return new ApiError('Site not found');
   }
-  await UserService.saveLog(req.body);
+  await UserService.saveLog([req.body]);
   return { success: true };
 };
 

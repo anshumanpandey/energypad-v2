@@ -8,6 +8,7 @@ import {
   GetEmissionsPath,
   GetFuelSourcesPath,
   GetSavingTipsPath,
+  LogFileImportPath,
   UtilityFileImportPath,
 } from '@openApi';
 
@@ -44,6 +45,14 @@ authRoutes.post(
   AuthMiddleware,
   FileUpload.single('excel'),
   ExpressAsync(UtilityController.importFile),
+);
+
+authRoutes.post(
+  '/importLogs',
+  LogFileImportPath,
+  AuthMiddleware,
+  FileUpload.single('excel'),
+  ExpressAsync(UtilityController.importLog),
 );
 
 export default authRoutes;
