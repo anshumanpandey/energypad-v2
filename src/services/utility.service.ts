@@ -24,6 +24,28 @@ const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   return query;
 };
 
+type DeleteByParams = {
+  month?: Date;
+  fuelSourceId?: number;
+  siteId?: number;
+};
+const deleteBy = (p: DeleteByParams) => {
+  const query = DB('UtilityConsumptions').delete();
+
+  if (p.month) {
+    const [year, month] = formatISO(p.month).split('T')[0].split('-');
+    query.where('date', 'like', `${year}-${month}%`);
+  }
+
+  if (p.fuelSourceId) {
+    query.where('fuelSourceId', p.fuelSourceId);
+  }
+  if (p.siteId) {
+    query.where('siteId', p.siteId);
+  }
+  return query.del();
+};
+
 type GetEmissionsParams = { businessId: number };
 const getEmissions = (params: GetEmissionsParams): Promise<AppModels['UtilityEmission'][]> => {
   const query = DB('UtilityEmissions')
@@ -224,4 +246,5 @@ export default {
   getConsumptions,
   findFuelUseBy,
   consumingProjection,
+  deleteBy,
 };

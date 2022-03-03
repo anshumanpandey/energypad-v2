@@ -2,6 +2,7 @@ import { AuthAppController, AuthGetAppController } from '@types';
 import { UtilityService, SitesService, UserService } from '@services';
 import { ApiError, ExcelClient } from '@lib';
 import { AddConsumptionToUtilityParam } from '../services/utility.service';
+import { DbUtils, MathUtils } from '@utils';
 
 export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddFuelSourceConsumption'> = async (
   req,
@@ -23,6 +24,11 @@ export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddF
     fuelSourceId,
   };
 
+  await UtilityService.deleteBy({
+    fuelSourceId,
+    siteId: params.siteId,
+    month: DbUtils.stringDateToDate(params.date),
+  });
   await UtilityService.addConsumptionToUtility(params);
 
   return { success: true };
