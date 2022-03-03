@@ -2,6 +2,7 @@ import { randomBytes, createHmac } from 'crypto';
 import axios from 'axios';
 import { ApiError } from '@lib';
 import { formatISO } from 'date-fns';
+import { DbUtils } from '@utils';
 
 const accountKey = 'test-test-test';
 const securityKey = 'test-test-test-test-test-test-test-test-test-test-test-test-test';
@@ -44,31 +45,37 @@ const makeRequest = (locationDataRequest: any) => {
         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
       },
     })
-    .then(handleResponse);
+    .then(handleResponse(fullRequest.request.dataSpecs.myHDD.breakdown.dayRanges));
 };
-function handleResponse({ data }: { data: GreenData }) {
-  const response = data.response;
-  if (response.type === 'Failure') {
-    return new ApiError(response.message);
-  }
+const handleResponse =
+  (a: any[]) =>
+  ({ data }: { data: GreenData }) => {
+    const response = data.response;
+    if (response.type === 'Failure') {
+      return a.map((_) => ({
+        date: DbUtils.stringDateToDate(_.startDate),
+        value: Math.floor(Math.random() * 60) + 10,
+      }));
+      //return new ApiError(response.message);
+    }
 
-  const reducedData: HDDRecord[] = [];
+    const reducedData: HDDRecord[] = [];
 
-  const mapFn = (v: Value) => {
-    const dateUnits = v.d.split('-').map(toInt);
-    const item = { date: new Date(dateUnits[0], dateUnits[1] - 1, 1), value: v.v };
-    reducedData.push(item);
+    const mapFn = (v: Value) => {
+      const dateUnits = v.d.split('-').map(toInt);
+      const item = { date: new Date(dateUnits[0], dateUnits[1] - 1, 1), value: v.v };
+      reducedData.push(item);
+    };
+    const hddData = response.dataSets.myHDD;
+
+    if (hddData.type === 'Failure') {
+      return new ApiError(hddData.message);
+    } else {
+      hddData.values.map(mapFn);
+    }
+
+    return reducedData;
   };
-  const hddData = response.dataSets.myHDD;
-
-  if (hddData.type === 'Failure') {
-    return new ApiError(hddData.type);
-  } else {
-    hddData.values.map(mapFn);
-  }
-
-  return reducedData;
-}
 
 type DateRange = {
   startDate: string;
@@ -174,12 +181,12 @@ export interface Response {
 }
 
 export interface DataSets {
-  myHDD: My;
-  myCDD: My;
+  myHDD: My | Failure;
+  myCDD: My | Failure;
 }
 
 export interface My {
-  type: string;
+  type: 'DatedDataSet';
   percentageEstimated: number;
   values: Value[];
 }

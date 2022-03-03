@@ -365,5 +365,55 @@ export async function seed(knex: Knex): Promise<void> {
       fuelSourceId: 1,
       siteId: site.id,
     },
+
+    {
+      id: 176,
+      date: '2016-01-01',
+      consumption: 11,
+      cost: 11 * 2,
+      fuelSourceId: 2,
+      siteId: site.id,
+    },
+    {
+      id: 178,
+      date: '2016-02-01',
+      consumption: 34,
+      cost: 34 * 2,
+      fuelSourceId: 2,
+      siteId: site.id,
+    },
+    {
+      id: 179,
+      date: '2016-04-01',
+      consumption: 44,
+      cost: 44 * 2,
+      fuelSourceId: 2,
+      siteId: site.id,
+    },
+
+    {
+      id: 180,
+      date: '2015-01-01',
+      consumption: 11,
+      cost: 11 * 2,
+      fuelSourceId: 2,
+      siteId: site.id,
+    },
+    {
+      id: 182,
+      date: '2015-02-01',
+      consumption: 34,
+      cost: 34 * 2,
+      fuelSourceId: 2,
+      siteId: site.id,
+    },
+    {
+      id: 184,
+      date: '2015-05-01',
+      consumption: 34,
+      cost: 34 * 2,
+      fuelSourceId: 2,
+      siteId: site.id,
+    },
   ]);
 }

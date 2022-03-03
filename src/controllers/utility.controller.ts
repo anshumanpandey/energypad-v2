@@ -2,7 +2,7 @@ import { AuthAppController, AuthGetAppController } from '@types';
 import { UtilityService, SitesService, UserService } from '@services';
 import { ApiError, ExcelClient } from '@lib';
 import { AddConsumptionToUtilityParam } from '../services/utility.service';
-import { DbUtils, MathUtils } from '@utils';
+import { DbUtils } from '@utils';
 
 export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddFuelSourceConsumption'> = async (
   req,

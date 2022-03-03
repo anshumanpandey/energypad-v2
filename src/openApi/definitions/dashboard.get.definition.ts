@@ -42,11 +42,12 @@ addResponseComponentFor('GetDashboardData', {
             type: 'array',
             items: {
               additionalProperties: false,
-              required: ['date', 'fuelSourceName', 'incesedPercentage'],
+              required: ['date', 'fuelSourceName', 'incesedPercentage', 'consumption'],
               properties: {
                 date: { type: 'string', format: 'date' },
                 fuelSourceName: { type: 'string' },
                 incesedPercentage: { type: 'number' },
+                consumption: { type: 'number', format: 'int32' },
               },
             },
           },

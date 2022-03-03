@@ -15,20 +15,23 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
   const lastDayOfCurrentMonth = endOfMonth(setMonth(selectedYear, new Date().getMonth()));
 
   const [oldConsumptions, currentConsumptionRecords, currentYearAllSourcesConsumption] = await Promise.all([
-    UtilityService.getConsumptions({
+    DashboardService.produceYearConsumptions({
       businessId: req.user.id,
       startDate: yearToFilterBy,
       endDate: endOfYear(yearToFilterBy),
       fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
       siteId: parseInt(req.query.siteId),
     }),
-    UtilityService.getConsumptions({
-      businessId: req.user.id,
-      startDate: lastMonthOfPassYear,
-      endDate: endOfYear(selectedYear),
-      fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
-      siteId: parseInt(req.query.siteId),
-    }),
+    DashboardService.produceYearConsumptions(
+      {
+        businessId: req.user.id,
+        startDate: lastMonthOfPassYear,
+        endDate: endOfYear(selectedYear),
+        fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
+        siteId: parseInt(req.query.siteId),
+      },
+      { fillStartOnly: true },
+    ),
     UtilityService.getConsumptions({
       businessId: req.user.id,
       startDate: lastMonthOfPassYear,
@@ -37,55 +40,67 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
     }),
   ]);
 
-  const toInt = (i: string) => parseInt(i, 10);
-  const mapRecords = (r: typeof oldConsumptions[0]) => {
-    const startDate = r.date;
+  let statistics: {
+    date: string;
+    consumption: number;
+    projectedEnergy: number;
+  }[] = [];
 
-    const dateUnits = r.date.split('-').map(toInt);
-    const endOfMonthDate = endOfMonth(new Date(dateUnits[0], dateUnits[1] - 1, 1));
-    const endDate = formatISO(endOfMonthDate, { representation: 'date' }).split('T')[0];
-    return { startDate, endDate };
-  };
+  const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
+  if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
+    const mapRecords = (r: typeof oldConsumptions[0]) => {
+      const startDate = r.date;
 
-  const promises: Promise<ApiError | HDDRecord[]>[] = [];
-  if (oldConsumptions.length !== 0) {
-    const params = {
-      postalCode: business.postCode,
-      breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(mapRecords),
-      valuesToGet: ['HDD' as const],
+      const date = DbUtils.stringDateToDate(r.date);
+      const endOfMonthDate = endOfMonth(date);
+      const endDate = formatISO(endOfMonthDate, { representation: 'date' }).split('T')[0];
+      return { startDate, endDate };
     };
 
-    promises.push(GreenDaysServices.getHdds(params));
-  }
-  if (currentConsumptionRecords.length !== 0) {
-    const params = {
-      postalCode: business.postCode,
-      breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(mapRecords),
-      valuesToGet: ['HDD' as const],
+    const promises: Promise<ApiError | HDDRecord[]>[] = [];
+    if (oldConsumptions.length !== 0) {
+      const params = {
+        postalCode: business.postCode,
+        breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(mapRecords),
+        valuesToGet: ['HDD' as const],
+      };
+
+      promises.push(GreenDaysServices.getHdds(params));
+    }
+    if (currentConsumptionRecords.length !== 0) {
+      const params = {
+        postalCode: business.postCode,
+        breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(mapRecords),
+        valuesToGet: ['HDD' as const],
+      };
+      promises.push(GreenDaysServices.getHdds(params));
+    }
+
+    const [pastHdds, currentHdd] = await Promise.all(promises);
+    if (pastHdds instanceof ApiError) return pastHdds;
+    if (currentHdd instanceof ApiError) return currentHdd;
+
+    const energyParams = {
+      pastConsumptionRecords: oldConsumptions,
+      pastHdds,
+      currentConsumptionRecords,
+      currentHdd,
     };
-    promises.push(GreenDaysServices.getHdds(params));
+
+    statistics = await UtilityService.consumingProjection(energyParams);
+    if (statistics instanceof ApiError) return statistics;
   }
-
-  const [pastHdds, currentHdd] = await Promise.all(promises);
-  if (pastHdds instanceof ApiError) return pastHdds;
-  if (currentHdd instanceof ApiError) return currentHdd;
-
-  const energyParams = {
-    pastConsumptionRecords: oldConsumptions,
-    pastHdds,
-    currentConsumptionRecords,
-    currentHdd,
-  };
-  const statistics = oldConsumptions.length === 0 ? [] : await UtilityService.consumingProjection(energyParams);
-  if (statistics instanceof ApiError) return statistics;
 
   const consumptionsDetails = DashboardService.getConsumptionDetails({
     consumptions: currentYearAllSourcesConsumption.sort(DbUtils.sortByStringDate),
   });
 
-  const consumptions = DashboardService.getConsumptionStatistics({
-    consumptions: currentConsumptionRecords.sort(DbUtils.sortByStringDate),
-  });
+  const consumptions =
+    allConsumptionAreProduced === true
+      ? []
+      : DashboardService.getConsumptionStatistics({
+          consumptions: currentConsumptionRecords.sort(DbUtils.sortByStringDate),
+        });
 
   return {
     consumptions: consumptions,

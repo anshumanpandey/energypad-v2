@@ -223,7 +223,7 @@ const consumingProjection = async (p: ConsummingStaticsticsParams) => {
     const projectedEnergy = new Decimal(intercept).plus(s).toNumber();
     reducedData.push({
       date: formatISO(item.date).split('T')[0],
-      consumption: patterns[idx].consumption,
+      consumption: p.currentConsumptionRecords[idx].consumption,
       //hdd: i.value,
       //slope: s,
       projectedEnergy: projectedEnergy,
