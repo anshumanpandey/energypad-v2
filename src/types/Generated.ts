@@ -497,7 +497,7 @@ export interface components {
             date: string;
             fuelSourceName: string;
             incesedPercentage: number;
-            consumption?: number;
+            consumption: number;
           }[];
         };
       };

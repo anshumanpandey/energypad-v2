@@ -2,10 +2,8 @@ import { Knex } from 'knex';
 
 export async function seed(knex: Knex): Promise<void> {
   // Inserts seed entries
-  const record = await knex('FuelSources').insert([
-    { id: 1, source: 'Electricity' },
-    { id: 2, source: 'Gas' },
-  ]);
+  const fuel1 = { id: 1, source: 'Electricity' };
+  const record = await knex('FuelSources').insert([fuel1, { id: 2, source: 'Gas' }]);
   await knex('FuelUses').insert([
     { id: 105, use: 'Cooling' },
     { id: 2, use: 'Heating' },
@@ -14,10 +12,10 @@ export async function seed(knex: Knex): Promise<void> {
   ]);
 
   await knex('UsedInToFuelSource').insert([
-    { id: 11, usedInId: 105, fuelSourceId: record[0] },
-    { id: 22, usedInId: 2, fuelSourceId: record[0] },
-    { id: 33, usedInId: 3, fuelSourceId: record[0] },
-    { id: 44, usedInId: 4, fuelSourceId: record[0] },
+    { id: 11, usedInId: 105, fuelSourceId: fuel1.id },
+    { id: 22, usedInId: 2, fuelSourceId: fuel1.id },
+    { id: 33, usedInId: 3, fuelSourceId: fuel1.id },
+    { id: 44, usedInId: 4, fuelSourceId: fuel1.id },
   ]);
 
   await knex('Businesses').insert([
