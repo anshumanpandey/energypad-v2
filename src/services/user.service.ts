@@ -1,6 +1,7 @@
 import { DB } from '@lib';
 import { getSinglePropArr } from '@utils';
 import { AppModels, RequestBodies, Transactionable } from '@types';
+import { formatISO } from 'date-fns';
 
 const getUserBy = async (params: { id?: number; email?: string }) => {
   const query = DB('Businesses')
@@ -62,6 +63,27 @@ const savePattern = async (params: AddServiceParams, opt?: Transactionable) => {
   const query = DB('BusinessPatterns').insert(data);
   if (opt?.txr) {
     query.transacting(opt.txr);
+  }
+
+  return query;
+};
+
+type GetPatternsParams = {
+  startDate?: Date;
+  endDate?: Date;
+  businessId: number;
+};
+export const getPatterns = (p: GetPatternsParams) => {
+  const query = DB('BusinessPatterns')
+    .select('BusinessPatterns.*')
+    .innerJoin({ S: 'Sites' }, 'BusinessPatterns.siteId', 'S.id')
+    .where('S.businessId', p.businessId);
+
+  if (p.startDate) {
+    query.where('startDate', '<=', formatISO(p.startDate).split('T')[0]);
+  }
+  if (p.endDate) {
+    query.where('endDate', '>=', formatISO(p.endDate).split('T')[0]);
   }
 
   return query;
@@ -317,8 +339,6 @@ export type SaveLogParams = {
   operation: string;
 };
 const saveLog = (p: SaveLogParams[]) => {
-  console.log({ p });
-  console.log(p.length);
   const query = DB('BusinessLog').insert(p);
   return query;
 };
@@ -510,4 +530,5 @@ export default {
   setProgrammes,
   setFloors,
   getFloorsBy,
+  getPatterns,
 };

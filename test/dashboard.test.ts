@@ -7,24 +7,39 @@ expect.extend(matcher);
 
 describe('/Dashboard ', () => {
   test('It should respond with success message when create an utility', async () => {
-    const body = await loginUser('userdashboard302@mail.com');
-    const response = await supertest(app).get('/api/dashboard').set('Authorization', `Bearer ${body.jwt}`);
+    const body = await loginUser('mail322@mail.com');
+    const response = await supertest(app).get('/api/dashboard?year=2020').set('Authorization', `Bearer ${body.jwt}`);
 
     expect(response.body).toMatchSchema(
       schema.components.responses.GetDashboardData.content['application/json'].schema,
     );
 
-    const currentYear = new Date().getFullYear();
     expect(response.statusCode).toBe(200);
-    expect(response.body.length).toBe(2);
-    expect(response.body[0].date).toBe(currentYear + '-01-01');
-    expect(response.body[0].averageCost).toBe(150);
-    expect(response.body[0].averageConsumption).toBe(125);
-    expect(response.body[0].consumption).toBe(150);
+    expect(response.body.consumptions.length).toBe(3);
+    expect(response.body.energyTargets.length).toBe(3);
 
-    expect(response.body[1].date).toBe(currentYear + '-02-01');
-    expect(response.body[1].averageCost).toBe(200);
-    expect(response.body[1].averageConsumption).toBe(150);
-    expect(response.body[1].consumption).toBe(150);
+    expect(response.body.consumptions[0].increasedConsumptionPercentage).toBe(9800);
+    expect(response.body.consumptions[1].increasedConsumptionPercentage).toBe(-59.6);
+    expect(response.body.consumptions[2].increasedConsumptionPercentage).toBe(75);
+
+    expect(response.body.consumptions[0].increasedCostPercentage).toBe(19700);
+    expect(response.body.consumptions[1].increasedCostPercentage).toBe(-59.6);
+    expect(response.body.consumptions[2].increasedCostPercentage).toBe(75);
+
+    expect(response.body.energyTargets[0].projectedEnergy).toBe(70.53472124);
+    expect(response.body.energyTargets[1].projectedEnergy).toBe(72.84607112);
+    expect(response.body.energyTargets[2].projectedEnergy).toBe(74.77219602);
+
+    expect(response.body.consumptionsDetails[0].date).toBe('2020-01-01');
+    expect(response.body.consumptionsDetails[0].fuelSourceName).toBe('Electricity');
+    expect(response.body.consumptionsDetails[0].incesedPercentage).toBe(9800);
+
+    expect(response.body.consumptionsDetails[1].date).toBe('2020-02-01');
+    expect(response.body.consumptionsDetails[1].fuelSourceName).toBe('Electricity');
+    expect(response.body.consumptionsDetails[1].incesedPercentage).toBe(-59.6);
+
+    expect(response.body.consumptionsDetails[2].date).toBe('2020-03-01');
+    expect(response.body.consumptionsDetails[2].fuelSourceName).toBe('Electricity');
+    expect(response.body.consumptionsDetails[2].incesedPercentage).toBe(75);
   });
 });

@@ -6,15 +6,49 @@ addResponseComponentFor('GetDashboardData', {
   content: {
     'application/json': {
       schema: {
-        type: 'array',
-        items: {
-          additionalProperties: false,
-          required: ['date', 'averageConsumption', 'averageCost', 'consumption'],
-          properties: {
-            date: { type: 'string', format: 'date' },
-            averageConsumption: { type: 'number', format: 'int32' },
-            averageCost: { type: 'number', format: 'int32' },
-            consumption: { type: 'number', format: 'int32' },
+        type: 'object',
+        required: ['consumptions', 'energyTargets'],
+        additionalProperties: false,
+        properties: {
+          consumptions: {
+            type: 'array',
+            items: {
+              additionalProperties: false,
+              required: ['date', 'averageConsumption', 'averageCost', 'consumption', 'increasedConsumptionPercentage'],
+              properties: {
+                date: { type: 'string', format: 'date' },
+                averageConsumption: { type: 'number', format: 'int32' },
+                averageCost: { type: 'number', format: 'int32' },
+                consumption: { type: 'number', format: 'int32' },
+                cost: { type: 'number', format: 'int32' },
+                increasedConsumptionPercentage: { type: 'number' },
+                increasedCostPercentage: { type: 'number' },
+              },
+            },
+          },
+          energyTargets: {
+            type: 'array',
+            items: {
+              additionalProperties: false,
+              required: ['date', 'projectedEnergy', 'consumption'],
+              properties: {
+                date: { type: 'string', format: 'date' },
+                projectedEnergy: { type: 'number', format: 'int32' },
+                consumption: { type: 'number', format: 'int32' },
+              },
+            },
+          },
+          consumptionsDetails: {
+            type: 'array',
+            items: {
+              additionalProperties: false,
+              required: ['date', 'fuelSourceName', 'incesedPercentage'],
+              properties: {
+                date: { type: 'string', format: 'date' },
+                fuelSourceName: { type: 'string' },
+                incesedPercentage: { type: 'number' },
+              },
+            },
           },
         },
       },
@@ -24,7 +58,11 @@ addResponseComponentFor('GetDashboardData', {
 
 const GetDashboardData: OpenAPIV3.OperationObject = {
   description: 'Get dashboard data per date.',
-  parameters: [],
+  parameters: [
+    { in: 'query', name: 'year', schema: { type: 'string' }, required: true },
+    { in: 'query', name: 'fuelSourceId', schema: { type: 'string' }, required: true },
+    { in: 'query', name: 'siteId', schema: { type: 'string' }, required: true },
+  ],
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'GetDashboardData' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),

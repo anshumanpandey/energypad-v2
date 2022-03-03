@@ -1,4 +1,6 @@
 import { DB } from '@lib';
+import Decimal from 'decimal.js';
+import { formatISO } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 
 export type AddConsumptionToUtilityParam = {
@@ -12,27 +14,6 @@ const addConsumptionToUtility = async (
 
   if (opt?.txr) {
     query.transacting(opt.txr);
-  }
-  return query;
-};
-
-const getConsumptionBy = (p: {
-  businessId?: number;
-  fuelSourceId?: number | number[];
-}): Promise<AppModels['UtilityConsumption'][]> => {
-  const query = DB('UtilityConsumptions');
-
-  if (p.fuelSourceId && Array.isArray(p.fuelSourceId)) {
-    query.whereIn('fuelSourceId', p.fuelSourceId);
-  } else if (p.fuelSourceId && Array.isArray(p.fuelSourceId) === false) {
-    query.where('fuelSourceId', p.fuelSourceId);
-  }
-
-  if (p.businessId) {
-    query
-      .innerJoin({ S: 'Sites' }, 'UtilityConsumptions.siteId', 'S.id')
-      .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
-      .where('B.id', p.businessId);
   }
   return query;
 };
@@ -54,14 +35,38 @@ const getEmissions = (params: GetEmissionsParams): Promise<AppModels['UtilityEmi
   return query;
 };
 
-type GetConsumptionsParams = { businessId: number };
+type GetConsumptionsParams = {
+  businessId: number;
+  startDate?: Date;
+  endDate?: Date;
+  fuelSourceId?: number;
+  siteId?: number;
+};
 const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['UtilityConsumption'][]> => {
   const query = DB('UtilityConsumptions')
-    .select(['UtilityConsumptions.*', { fuelSourceId: 'FuelSources.id' }])
+    .select(['UtilityConsumptions.*', { fuelSourceId: 'FuelSources.id' }, { fuelSourceName: 'FuelSources.source' }])
     .innerJoin('FuelSources', 'UtilityConsumptions.fuelSourceId', 'FuelSources.id')
     .innerJoin({ S: 'Sites' }, 'UtilityConsumptions.siteId', 'S.id')
     .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
     .where('B.id', params.businessId);
+
+  if (params.startDate) {
+    const dateParam: string = formatISO(params.startDate).split('T')[0];
+    query.where('UtilityConsumptions.date', '>=', dateParam);
+  }
+
+  if (params.endDate) {
+    const dateParam: string = formatISO(params.endDate).split('T')[0];
+    query.where('UtilityConsumptions.date', '<=', dateParam);
+  }
+
+  if (params.fuelSourceId) {
+    query.where('FuelSources.id', params.fuelSourceId);
+  }
+
+  if (params.siteId) {
+    query.where('UtilityConsumptions.siteId', params.siteId);
+  }
 
   return query;
 };
@@ -147,9 +152,70 @@ const addUtilityEmissions = (p: AddUtilityEmissionsParams[]) => {
   });
 };
 
+type ConsumptionRecord = { consumption: number; date: string };
+type Hdd = { date: Date; value: number };
+type ConsummingStaticsticsParams = {
+  pastConsumptionRecords: ConsumptionRecord[];
+  currentConsumptionRecords: ConsumptionRecord[];
+  pastHdds: Hdd[];
+  currentHdd: Hdd[];
+};
+
+const NX = 6;
+
+const consumingProjection = async (p: ConsummingStaticsticsParams) => {
+  const patterns = p.pastConsumptionRecords;
+
+  const totalOfHdd = p.pastHdds.reduce((total, next) => new Decimal(total).plus(next.value).toNumber(), 0);
+  const totalOfConsumption = patterns.reduce((total, next) => new Decimal(total).plus(next.consumption).toNumber(), 0);
+  const totalOfHddPower = p.pastHdds.reduce(
+    (total, next) => new Decimal(next.value).times(next.value).plus(total).toNumber(),
+    0,
+  );
+
+  const hddPerEnergy = patterns.map((item, idx) =>
+    new Decimal(p.pastHdds[idx] ? p.pastHdds[idx].value : 0).times(item.consumption).toNumber(),
+  );
+
+  const totalOfHddPerEnergy = hddPerEnergy.reduce((total, next) => new Decimal(total).plus(next).toNumber(), 0);
+
+  const a9Top = new Decimal(new Decimal(totalOfConsumption).times(totalOfHddPower))
+    .minus(new Decimal(totalOfHdd).times(totalOfHddPerEnergy))
+    .toNumber();
+
+  const b9Top = new Decimal(new Decimal(NX).times(totalOfHddPerEnergy))
+    .minus(new Decimal(totalOfHdd).times(totalOfConsumption))
+    .toNumber();
+  const belowVal = new Decimal(new Decimal(NX).times(totalOfHddPower))
+    .minus(new Decimal(totalOfHdd).times(totalOfHdd))
+    .toNumber();
+
+  const intercept = new Decimal(a9Top).dividedBy(belowVal).toDecimalPlaces(8).toNumber();
+  const slope = new Decimal(b9Top).dividedBy(belowVal).toDecimalPlaces(8).toNumber();
+
+  const reducedData = [];
+
+  for (let idx = 1, len = p.currentHdd.length; idx < len; idx++) {
+    const item = p.currentHdd[idx];
+    const s = new Decimal(item.value).times(slope).toNumber();
+    const projectedEnergy = new Decimal(intercept).plus(s).toNumber();
+    reducedData.push({
+      date: formatISO(item.date).split('T')[0],
+      consumption: patterns[idx].consumption,
+      //hdd: i.value,
+      //slope: s,
+      projectedEnergy: projectedEnergy,
+      /*saving: new Decimal(projectedEnergy)
+        .minus(p.currentConsumptionRecords[idx] ? p.currentConsumptionRecords[idx].consumption : 0)
+        .toNumber(),*/
+    });
+  }
+
+  return reducedData;
+};
+
 export default {
   addConsumptionToUtility,
-  getConsumptionBy,
   getSavingTips,
   findFuelBy,
   getFuelSources,
@@ -157,4 +223,5 @@ export default {
   getEmissions,
   getConsumptions,
   findFuelUseBy,
+  consumingProjection,
 };

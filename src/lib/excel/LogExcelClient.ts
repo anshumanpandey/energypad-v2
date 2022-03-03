@@ -1,3 +1,4 @@
+import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
 import { SaveLogParams } from '../../services/user.service';
 
@@ -50,8 +51,8 @@ const getRows = (Worksheet: Worksheet) => {
       const r = {
         siteId: parseInt(siteIdCell.toString(), 10),
         usedInId: parseInt(usedInIdCell.toString(), 10),
-        startDate: (startDateCell as Date).toISOString().split('T')[0],
-        endDate: (endDateCell as Date).toISOString().split('T')[0],
+        startDate: formatISO(startDateCell as Date).split('T')[0],
+        endDate: formatISO(endDateCell as Date).split('T')[0],
         comments: commentCell.toString(),
         operation: operationCell.toString(),
       };

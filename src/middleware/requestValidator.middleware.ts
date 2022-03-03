@@ -2,14 +2,17 @@ import { List, ValidateFunction, Validator } from 'express-json-validator-middle
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { OpenAPIV3 } from 'openapi-types';
-import { RequestBodieKeys } from '../types/types';
-let CurrentSchema: Pick<OpenAPIV3.Document, 'components'> = {
+import { QueryParamsKeys, RequestBodieKeys } from '../types/types';
+
+type ParsedSchema = Pick<OpenAPIV3.Document, 'components' | 'paths'>;
+let CurrentSchema: ParsedSchema = {
   components: {
     requestBodies: {},
   },
+  paths: {},
 };
 
-const getJsonSchema: () => boolean | Pick<OpenAPIV3.Document, 'components'> = () => {
+const getJsonSchema: () => boolean | ParsedSchema = () => {
   const path = join('src', 'types', 'Schema.json');
   let schema = true;
   if (existsSync(path)) {
@@ -126,7 +129,7 @@ export const dateFormat = {
 };
 ajv.addFormat('date', dateFormat);
 
-const requestValidator = (p: List<RequestBodieKeys>) => {
+const requestValidator = (p: { body?: RequestBodieKeys; query?: keyof QueryParamsKeys }) => {
   const result = getJsonSchema();
   let schema = CurrentSchema;
   if (typeof result !== 'boolean') {
@@ -143,6 +146,17 @@ const requestValidator = (p: List<RequestBodieKeys>) => {
       }
     }
   }
+
+  /*if (p.query) {
+    const queryParameters = schema.paths[p.query]?.get?.parameters.query as any;
+    if (queryParameters) {
+      if ('content' in requestBody) {
+        list = {
+          body: requestBody.content['application/json'].schema,
+        };
+      }
+    }
+  }*/
   return validate(list);
 };
 

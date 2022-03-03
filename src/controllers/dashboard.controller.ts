@@ -1,51 +1,95 @@
-import Decimal from 'decimal.js';
-import { UtilityService } from '@services';
+import { ApiError } from '@lib';
+import { UtilityService, DashboardService, UserService, GreenDaysServices } from '@services';
 import { AuthGetAppController } from '@types';
+import { DbUtils, MathUtils } from '@utils';
+import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth } from 'date-fns';
+import { HDDRecord } from '../services/greenDays.service';
 
 export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashboard/'> = async (req) => {
-  const consumptions = await UtilityService.getConsumptionBy({ businessId: req.user.id });
+  const business = await UserService.getUserBy({ id: req.user.id });
 
-  const filterByMonth = (monthToSearch: number) => (c: typeof consumptions[0]) => {
-    const [, month] = c.date.split('-');
-    return new Decimal(month).equals(monthToSearch);
+  const previousYear = (MathUtils.toInt(req.query.year) || new Date().getFullYear()) - 1;
+  const yearToFilterBy = new Date(previousYear, 0, 1);
+  const selectedYear = addYears(yearToFilterBy, 1);
+  const lastMonthOfPassYear = subMonths(selectedYear, 1);
+  const lastDayOfCurrentMonth = endOfMonth(setMonth(selectedYear, new Date().getMonth()));
+
+  const [oldConsumptions, currentConsumptionRecords, currentYearAllSourcesConsumption] = await Promise.all([
+    UtilityService.getConsumptions({
+      businessId: req.user.id,
+      startDate: yearToFilterBy,
+      endDate: endOfYear(yearToFilterBy),
+      fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
+      siteId: parseInt(req.query.siteId),
+    }),
+    UtilityService.getConsumptions({
+      businessId: req.user.id,
+      startDate: lastMonthOfPassYear,
+      endDate: endOfYear(selectedYear),
+      fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
+      siteId: parseInt(req.query.siteId),
+    }),
+    UtilityService.getConsumptions({
+      businessId: req.user.id,
+      startDate: lastMonthOfPassYear,
+      endDate: lastDayOfCurrentMonth,
+      siteId: parseInt(req.query.siteId),
+    }),
+  ]);
+
+  const toInt = (i: string) => parseInt(i, 10);
+  const mapRecords = (r: typeof oldConsumptions[0]) => {
+    const startDate = r.date;
+
+    const dateUnits = r.date.split('-').map(toInt);
+    const endOfMonthDate = endOfMonth(new Date(dateUnits[0], dateUnits[1] - 1, 1));
+    const endDate = formatISO(endOfMonthDate, { representation: 'date' }).split('T')[0];
+    return { startDate, endDate };
   };
 
-  const getAverage = (records: typeof consumptions, of: 'consumption' | 'cost') => {
-    const amountOfRecords = records.length;
-    const sumOfAll = records.reduce((prev, next) => new Decimal(next[of]).plus(prev).toNumber(), 0);
-    return new Decimal(sumOfAll).dividedBy(amountOfRecords).toNumber();
-  };
+  const promises: Promise<ApiError | HDDRecord[]>[] = [];
+  if (oldConsumptions.length !== 0) {
+    const params = {
+      postalCode: business.postCode,
+      breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(mapRecords),
+      valuesToGet: ['HDD' as const],
+    };
 
-  const sortByDate = (a: typeof consumptions[0], b: typeof consumptions[0]) => {
-    const startDate = a.date.split('-');
-    const endDate = b.date.split('-');
-    return (
-      new Date(
-        new Decimal(startDate[0]).toNumber(),
-        new Decimal(startDate[1]).minus(1).toNumber(),
-        new Decimal(startDate[2]).toNumber(),
-      ).valueOf() -
-      new Date(
-        new Decimal(endDate[0]).toNumber(),
-        new Decimal(endDate[1]).minus(1).toNumber(),
-        new Decimal(endDate[2]).toNumber(),
-      ).valueOf()
-    );
-  };
-
-  const avaragePerMonth = [];
-  for (let idx = 0; idx < 12; idx++) {
-    const consumptionFilter = filterByMonth(idx);
-    const consumptionOfMonth = consumptions.filter(consumptionFilter).sort(sortByDate);
-    if (consumptionOfMonth.length !== 0) {
-      const mostRecentRecord = consumptionOfMonth[consumptionOfMonth.length - 1];
-      avaragePerMonth.push({
-        date: `${new Date().getFullYear()}-${('0' + idx).slice(-2)}-01`,
-        averageConsumption: getAverage(consumptionOfMonth, 'consumption'),
-        averageCost: getAverage(consumptionOfMonth, 'cost'),
-        consumption: mostRecentRecord ? mostRecentRecord.consumption : 0,
-      });
-    }
+    promises.push(GreenDaysServices.getHdds(params));
   }
-  return avaragePerMonth;
+  if (currentConsumptionRecords.length !== 0) {
+    const params = {
+      postalCode: business.postCode,
+      breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(mapRecords),
+      valuesToGet: ['HDD' as const],
+    };
+    promises.push(GreenDaysServices.getHdds(params));
+  }
+
+  const [pastHdds, currentHdd] = await Promise.all(promises);
+  if (pastHdds instanceof ApiError) return pastHdds;
+  if (currentHdd instanceof ApiError) return currentHdd;
+
+  const energyParams = {
+    pastConsumptionRecords: oldConsumptions,
+    pastHdds,
+    currentConsumptionRecords,
+    currentHdd,
+  };
+  const statistics = oldConsumptions.length === 0 ? [] : await UtilityService.consumingProjection(energyParams);
+  if (statistics instanceof ApiError) return statistics;
+
+  const consumptionsDetails = DashboardService.getConsumptionDetails({
+    consumptions: currentYearAllSourcesConsumption.sort(DbUtils.sortByStringDate),
+  });
+
+  const consumptions = DashboardService.getConsumptionStatistics({
+    consumptions: currentConsumptionRecords.sort(DbUtils.sortByStringDate),
+  });
+
+  return {
+    consumptions: consumptions,
+    energyTargets: statistics,
+    consumptionsDetails: consumptionsDetails,
+  };
 };

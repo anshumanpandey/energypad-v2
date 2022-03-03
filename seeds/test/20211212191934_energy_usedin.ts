@@ -2,7 +2,10 @@ import { Knex } from 'knex';
 
 export async function seed(knex: Knex): Promise<void> {
   // Inserts seed entries
-  const record = await knex('FuelSources').insert([{ id: 1, source: 'Electricity' }]);
+  const record = await knex('FuelSources').insert([
+    { id: 1, source: 'Electricity' },
+    { id: 2, source: 'Gas' },
+  ]);
   await knex('FuelUses').insert([
     { id: 105, use: 'Cooling' },
     { id: 2, use: 'Heating' },

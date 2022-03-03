@@ -72,10 +72,12 @@ type PathNames =
   | 'SaveBusinessEnergy'
   | 'GetBusinessEnergy'
   | 'GetSavingTips'
+  | 'GetSites'
   | 'GetEmissions'
   | 'SaveBusinessPattern'
   | 'GetConsumptions'
   | 'LogFileImport'
+  | 'GetHeatingEnergy'
   | 'UtilityFileImport';
 
 type ResponsesName = 'GenericError' | 'UpdateUser' | PathNames;

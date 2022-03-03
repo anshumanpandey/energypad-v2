@@ -164,7 +164,13 @@ export interface paths {
   "/api/dashboard/": {
     /** Get dashboard data per date. */
     get: {
-      parameters: {};
+      parameters: {
+        query: {
+          year: string;
+          fuelSourceId: string;
+          siteId: string;
+        };
+      };
       responses: {
         200: components["responses"]["GetDashboardData"];
         400: components["responses"]["GenericError"];
@@ -416,9 +422,6 @@ export interface components {
       cost: number;
       siteId: number;
     };
-    UtilityConsumption: components["schemas"]["AddFuelSourceConsumptionBody"] & {
-      id: number;
-    };
     AddFuelSourceEmissionBody: {
       emissionFactor: string;
       value: number;
@@ -427,6 +430,10 @@ export interface components {
     };
     UtilityEmission: components["schemas"]["AddFuelSourceEmissionBody"] & {
       id: number;
+    };
+    UtilityConsumption: components["schemas"]["AddFuelSourceConsumptionBody"] & {
+      id: number;
+      fuelSourceName: string;
     };
   };
   responses: {
@@ -472,11 +479,26 @@ export interface components {
     GetDashboardData: {
       content: {
         "application/json": {
-          date: string;
-          averageConsumption: number;
-          averageCost: number;
-          consumption: number;
-        }[];
+          consumptions: {
+            date: string;
+            averageConsumption: number;
+            averageCost: number;
+            consumption: number;
+            cost?: number;
+            increasedConsumptionPercentage: number;
+            increasedCostPercentage?: number;
+          }[];
+          energyTargets: {
+            date: string;
+            projectedEnergy: number;
+            consumption: number;
+          }[];
+          consumptionsDetails?: {
+            date: string;
+            fuelSourceName: string;
+            incesedPercentage: number;
+          }[];
+        };
       };
     };
     /** Success message */

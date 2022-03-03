@@ -32,22 +32,6 @@ addRequestComponentFor('AddFuelSourceConsumption', {
   },
 });
 
-const schema: CreateSchemaParams = {
-  name: 'UtilityConsumption',
-  schema: {
-    allOf: [
-      getReferenceFor({ for: 'schemas', name: 'AddFuelSourceConsumptionBody' }),
-      {
-        required: ['id'],
-        properties: {
-          id: { type: 'number', format: 'int32', readOnly: true },
-        },
-      },
-    ],
-  },
-};
-createSchema(schema);
-
 addResponseComponentFor('AddFuelSourceConsumption', {
   description: 'Success message',
   content: {

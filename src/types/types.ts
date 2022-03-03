@@ -1,7 +1,7 @@
 import express from 'express';
 import { Knex } from 'knex';
 import { ApiError } from '@lib';
-import { components } from './Generated';
+import { components, paths } from './Generated';
 
 export type AppModels = components['schemas'];
 
@@ -30,21 +30,17 @@ export type AuthAppController<T extends ResponseKeys, A extends RequestBodyKeys>
   req: AuthAppRequest<RequestBodyParams<A>, ControllerReturnType<T>>,
 ) => Promise<ControllerReturnType<T>>;
 
-export type QueryParamsKeys = '/api/dashboard/' | '/api/utility/';
-//export type QueryParams<T extends QueryParamsKeys> = paths[T]['get']['parameters']['query'];
-export type QueryParams<T extends QueryParamsKeys> = never;
+export type QueryParamsKeys = Pick<paths, '/api/dashboard/'>;
+export type QueryParams<T extends keyof QueryParamsKeys> = QueryParamsKeys[T]['get']['parameters']['query'];
 
-type AuthGetAppRequest<ReqBody, ResBody> = { user: { id: number } } & express.Request<
-  { [key: string]: string },
-  ResBody,
-  never,
-  ReqBody
->;
-export type AuthGetAppController<T extends ResponseKeys, A extends QueryParamsKeys = never> = (
-  req: AuthGetAppRequest<QueryParams<A>, ControllerReturnType<T>>,
+type AuthGetAppRequest<ResBody, QueryBody = never, PathParameters = { [key: string]: string }> = {
+  user: { id: number };
+} & express.Request<PathParameters, ResBody, never, QueryBody>;
+export type AuthGetAppController<T extends ResponseKeys, A extends keyof QueryParamsKeys = never> = (
+  req: AuthGetAppRequest<ControllerReturnType<T>, QueryParams<A>>,
 ) => Promise<ControllerReturnType<T>>;
 
-export type MixAppController<T extends ResponseKeys, A extends RequestBodyKeys, F extends QueryParamsKeys> =
+export type MixAppController<T extends ResponseKeys, A extends RequestBodyKeys, F extends keyof QueryParamsKeys> =
   | AppController<T, A>
   | AuthAppController<T, A>
   | AuthGetAppController<T, F>;

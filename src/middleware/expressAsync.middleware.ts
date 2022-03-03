@@ -3,7 +3,7 @@ import { MixAppController, QueryParamsKeys, RequestBodyKeys, ResponseKeys } from
 import { ApiError } from '@lib';
 
 const expressAsync =
-  <T extends ResponseKeys, A extends RequestBodyKeys, F extends QueryParamsKeys>(fn: MixAppController<T, A, F>) =>
+  <T extends ResponseKeys, A extends RequestBodyKeys, F extends keyof QueryParamsKeys>(fn: MixAppController<T, A, F>) =>
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
     //@ts-expect-error TODO: fix this type
     fn(req)
