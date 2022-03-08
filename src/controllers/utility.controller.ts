@@ -85,6 +85,8 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
 
   const data = await ExcelClient.getUtilityData(excelFile.buffer);
 
+  if (data instanceof ApiError) return data;
+
   const dataToInsert: AddConsumptionToUtilityParam[] = [];
   for (let i = 0, len = data.length; i < len; i++) {
     const entry = data[i];

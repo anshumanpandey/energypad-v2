@@ -37,14 +37,10 @@ const deleteBy = (p: DeleteByParams) => {
   if (p.month) {
     if (Array.isArray(p.month)) {
       const dates = Array.from(new Set(p.month.sort(DbUtils.sortByDate)).values());
-      const lastDate = dates.pop();
-      if (lastDate) {
-        const dateRange: [string, string] = [
-          DbUtils.dateToStringDate(dates[0]),
-          DbUtils.dateToStringDate(endOfMonth(lastDate)),
-        ];
-        query.whereBetween('date', dateRange);
-      }
+      query.where((q) => {
+        const asignDate = (i: string) => q.orWhere('date', i);
+        dates.map(DbUtils.dateToStringDate).map(asignDate);
+      });
     } else {
       const [year, month] = formatISO(p.month).split('T')[0].split('-');
       query.where('date', 'like', `${year}-${month}%`);

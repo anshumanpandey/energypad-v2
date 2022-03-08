@@ -1,3 +1,4 @@
+import { ApiError } from '@lib';
 import { Workbook, Worksheet } from 'exceljs';
 
 export const getUtilityData = async (file: string | Buffer) => {
@@ -7,6 +8,8 @@ export const getUtilityData = async (file: string | Buffer) => {
   for (let i = 0, len = workbook.worksheets.length; i < len; i++) {
     const worksheet = workbook.worksheets[i];
     const rows = getRows(worksheet);
+    if (rows instanceof ApiError) return rows;
+
     const year = worksheet.name;
     utilityConsumption.push({
       rows,
@@ -29,6 +32,11 @@ const getRows = (Worksheet: Worksheet) => {
   if (!costCol) return [];
   if (!siteCol) return [];
   if (!usedInCol) return [];
+
+  if (consumptionCol[1]?.toString() !== 'consumption') return new ApiError('Wrong format');
+  if (costCol[1]?.toString() !== 'cost') return new ApiError('Wrong format');
+  if (siteCol[1]?.toString() !== 'siteId') return new ApiError('Wrong format');
+  if (usedInCol[1]?.toString() !== 'usedInId') return new ApiError('Wrong format');
 
   const year = Worksheet.name;
 
