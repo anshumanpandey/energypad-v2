@@ -109,6 +109,11 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
     return new ApiError('No data was imported');
   }
 
+  await UtilityService.deleteBy({
+    siteId: dataToInsert.map((i) => i.siteId),
+    fuelSourceId: dataToInsert.map((i) => i.fuelSourceId),
+    month: dataToInsert.map((i) => DbUtils.stringDateToDate(i.date)),
+  });
   await UtilityService.addConsumptionToUtility(dataToInsert);
 
   return { success: true };

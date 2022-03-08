@@ -2,6 +2,8 @@ import { DB } from '@lib';
 import Decimal from 'decimal.js';
 import { formatISO } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
+import { DbUtils } from '@utils';
+import endOfMonth from 'date-fns/endOfMonth';
 
 export type AddConsumptionToUtilityParam = {
   fuelSourceId: number;
@@ -25,23 +27,43 @@ const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
 };
 
 type DeleteByParams = {
-  month?: Date;
-  fuelSourceId?: number;
-  siteId?: number;
+  month?: Date | Date[];
+  fuelSourceId?: number | number[];
+  siteId?: number | number[];
 };
 const deleteBy = (p: DeleteByParams) => {
   const query = DB('UtilityConsumptions').delete();
 
   if (p.month) {
-    const [year, month] = formatISO(p.month).split('T')[0].split('-');
-    query.where('date', 'like', `${year}-${month}%`);
+    if (Array.isArray(p.month)) {
+      const dates = Array.from(new Set(p.month.sort(DbUtils.sortByDate)).values());
+      const lastDate = dates.pop();
+      if (lastDate) {
+        const dateRange: [string, string] = [
+          DbUtils.dateToStringDate(dates[0]),
+          DbUtils.dateToStringDate(endOfMonth(lastDate)),
+        ];
+        query.whereBetween('date', dateRange);
+      }
+    } else {
+      const [year, month] = formatISO(p.month).split('T')[0].split('-');
+      query.where('date', 'like', `${year}-${month}%`);
+    }
   }
 
   if (p.fuelSourceId) {
-    query.where('fuelSourceId', p.fuelSourceId);
+    if (Array.isArray(p.fuelSourceId)) {
+      query.whereIn('fuelSourceId', Array.from(new Set(p.fuelSourceId).values()));
+    } else {
+      query.where('fuelSourceId', p.fuelSourceId);
+    }
   }
   if (p.siteId) {
-    query.where('siteId', p.siteId);
+    if (Array.isArray(p.siteId)) {
+      query.whereIn('siteId', Array.from(new Set(p.siteId).values()));
+    } else {
+      query.where('siteId', p.siteId);
+    }
   }
   return query.del();
 };
@@ -98,8 +120,8 @@ type FuelSource = AppModels['FuelSource'] & { id: number };
 const getFuelSources = async (): Promise<FuelSource[]> => {
   const query = DB('FuelSources')
     .select(['FuelSources.*', 'FuelUses.use', { fuelUseId: 'FuelUses.id' }])
-    .innerJoin({ FUTOFS: 'UsedInToFuelSource' }, 'FuelSources.id', 'FUTOFS.fuelSourceId')
-    .innerJoin('FuelUses', 'FUTOFS.usedInId', 'FuelUses.id');
+    .leftJoin({ FUTOFS: 'UsedInToFuelSource' }, 'FuelSources.id', 'FUTOFS.fuelSourceId')
+    .leftJoin('FuelUses', 'FUTOFS.usedInId', 'FuelUses.id');
 
   const records = await query;
 

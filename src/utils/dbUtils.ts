@@ -1,3 +1,5 @@
+import formatISO from 'date-fns/formatISO';
+
 const toInt = (i: string) => parseInt(i, 10);
 
 /**
@@ -8,6 +10,10 @@ const toInt = (i: string) => parseInt(i, 10);
 export const stringDateToDate = (stringDate: string) => {
   const dateUnits = stringDate.split('-').map(toInt);
   return new Date(dateUnits[0], dateUnits[1] - 1, dateUnits[2]);
+};
+
+export const dateToStringDate = (date: Date) => {
+  return formatISO(date).split('T')[0];
 };
 
 /**
@@ -22,4 +28,8 @@ export const sortByStringDate = (a: { date: string }, b: { date: string }) => {
   const startDate = stringDateToDate(a.date);
   const endDate = stringDateToDate(b.date);
   return startDate.valueOf() - endDate.valueOf();
+};
+
+export const sortByDate = (a: Date, b: Date) => {
+  return a.valueOf() - b.valueOf();
 };
