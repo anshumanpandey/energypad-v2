@@ -150,17 +150,30 @@ const getSiteDetails = async (params: { id: number }): Promise<RequestResponses<
   return record;
 };
 
-type FindByParams = {
+export type FindByParams = {
   id?: number | number[];
   businessId?: number;
+  fuelSourceIdUsedInConsumption?: number;
 };
 const findBy = async (params?: FindByParams): Promise<(AppModels['Site'] & { id: number })[]> => {
-  const query = DB('Sites').select();
+  const query = DB('Sites').select('Sites.*');
   if (params?.id) {
     Array.isArray(params.id) ? query.whereIn('id', params.id) : query.where('id', params.id);
   }
   if (params?.businessId) {
     query.where('businessId', params.businessId);
+  }
+
+  if (params?.fuelSourceIdUsedInConsumption) {
+    const fsi = params.fuelSourceIdUsedInConsumption;
+    query
+      .innerJoin({ BP: 'BusinessFuelsPricing' }, 'Sites.id', 'BP.siteId')
+      .innerJoin({ BF: 'BusinessFuelsSize' }, 'Sites.id', 'BF.siteId')
+      .innerJoin({ BB: 'BusinessBrands' }, 'Sites.id', 'BB.siteId')
+      .where((builder) => {
+        builder.where('BP.fuelSourceId', fsi).orWhere('BF.fuelSourceId', fsi).orWhere('BB.fuelSourceId', fsi);
+      })
+      .groupBy('Sites.id');
   }
 
   return query;

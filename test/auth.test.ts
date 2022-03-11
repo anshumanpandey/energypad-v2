@@ -3,12 +3,7 @@ import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
 import schema from '../src/types/Schema.json';
-import {
-  NO_EXTRA_PROPERTY_ERROR_MESSAGE,
-  SHOULD_BE_STRING_ERROR,
-  WRONG_DATE_ERROR_MESSAGE,
-  WRONG_NUMBER_ERROR_MESSAGE,
-} from './testhelp';
+import { NO_EXTRA_PROPERTY_ERROR_MESSAGE, SHOULD_BE_STRING_ERROR, WRONG_DATE_ERROR_MESSAGE } from './testhelp';
 
 describe('/auth', () => {
   test('It should respond with success message when register', async () => {
@@ -98,7 +93,7 @@ describe('/auth', () => {
         town: 111,
       });
     expect(response2.body).toMatchSchema(schema.components.schemas.GenericError);
-    expect(response2.body.message).toBe(SHOULD_BE_STRING_ERROR);
+    expect(response2.body.message).toBe('town: ' + SHOULD_BE_STRING_ERROR);
     expect(response2.statusCode).toBe(400);
     const response3 = await supertest(app)
       .post('/api/auth')
@@ -107,7 +102,7 @@ describe('/auth', () => {
         holydayDate: '1942-04-48',
       });
     expect(response3.body).toMatchSchema(schema.components.schemas.GenericError);
-    expect(response3.body.message).toBe(WRONG_DATE_ERROR_MESSAGE);
+    expect(response3.body.message).toBe('holydayDate: ' + WRONG_DATE_ERROR_MESSAGE);
     expect(response3.statusCode).toBe(400);
   });
 

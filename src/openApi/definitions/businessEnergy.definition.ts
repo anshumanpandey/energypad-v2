@@ -13,6 +13,7 @@ createSchema({
         items: {
           type: 'number',
         },
+        minItems: 1,
       },
       brands: {
         type: 'array',

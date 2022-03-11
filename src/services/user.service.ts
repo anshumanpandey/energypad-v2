@@ -133,11 +133,20 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
   const txr = await DB.transaction();
 
   try {
+    const brandParams: AddBrandParams[] = [];
+    const fuelPriceParams = [];
+    const fuelSizeParams = [];
+    const siteFuelUsedInMap = [];
     for (let i = 0, len = p.records.length; i < len; i++) {
       const root = p.records[i];
 
       for (let a = 0, innerLen = root.usedInId.length; a < innerLen; a++) {
         const usedInId = root.usedInId[a];
+        siteFuelUsedInMap.push({
+          siteId: p.siteId,
+          fuelSourceId: root.fuelSourceId,
+          usedInId,
+        });
 
         const brands = root.brands;
         if (brands && brands.length !== 0) {
@@ -149,19 +158,17 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
               usedInId: usedInId,
             };
           };
-          await setBrands(brands.map(mapBrand), { txr });
+          brandParams.push(...brands.map(mapBrand));
         }
 
         if (root.cost) {
-          await DB('BusinessFuelsPricing')
-            .insert({
-              currencyCode: root.cost.currencyCode,
-              vat: root.cost.vat,
-              fuelSourceId: root.fuelSourceId,
-              usedInId: usedInId,
-              siteId: p.siteId,
-            })
-            .transacting(txr);
+          fuelPriceParams.push({
+            currencyCode: root.cost.currencyCode,
+            vat: root.cost.vat,
+            fuelSourceId: root.fuelSourceId,
+            usedInId: usedInId,
+            siteId: p.siteId,
+          });
         }
 
         if (root.meternumbers) {
@@ -171,10 +178,17 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
             siteId: p.siteId,
             meters: b.meters,
           });
-          await DB('BusinessFuelsSize').insert(root.meternumbers.map(mapDistance)).transacting(txr);
+          fuelSizeParams.push(...root.meternumbers.map(mapDistance));
         }
       }
     }
+
+    await Promise.all([
+      setBrands(brandParams, { txr }),
+      DB('BusinessFuelsPricing').insert(fuelPriceParams).transacting(txr),
+      DB('BusinessFuelsSize').insert(fuelSizeParams).transacting(txr),
+      DB('UsedInToFuelSourceToSite').insert(siteFuelUsedInMap).transacting(txr),
+    ]);
 
     return txr.commit();
   } catch (err) {
@@ -221,8 +235,8 @@ const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { incl
         .andOn('FS.id', '=', 'BF.fuelSourceId')
         .andOn('FS.id', '=', 'BB.fuelSourceId');
     })
-    .innerJoin({ FUTOFS: 'UsedInToFuelSource' }, (q) => {
-      return q.on('FS.id', 'FUTOFS.fuelSourceId').andOn('FU.id', 'FUTOFS.usedInId');
+    .innerJoin({ FUTOFS: 'UsedInToFuelSourceToSite' }, (q) => {
+      return q.on('FS.id', 'FUTOFS.fuelSourceId').andOn('FU.id', 'FUTOFS.usedInId').andOn('Sites.id', 'FUTOFS.siteId');
     })
     .innerJoin({ FU: 'FuelUses' }, (q) => {
       return q.on('FS.id', 'FUTOFS.fuelSourceId').andOn('FU.id', 'FUTOFS.usedInId');
@@ -311,7 +325,6 @@ const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { incl
     }
 
     const mapEntries = ([fuelSourceId, record]: [fuelSourceId: string, record: any]) => {
-      console.log(record);
       const val = {
         ...record,
         brands: Array.from(brandData.get(fuelSourceId)?.get(record.siteId)?.values() || []) || [],

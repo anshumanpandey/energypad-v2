@@ -1,7 +1,8 @@
 import { AppModels, AuthAppController, AuthGetAppController } from '@types';
 import { UserService, SitesService, UtilityService } from '@services';
 import { ApiError } from '@lib';
-import { getSinglePropArr } from '@utils';
+import { getSinglePropArr, MathUtils } from '@utils';
+import { FindByParams } from '../services/sites.service';
 
 export const updateUser: AuthAppController<'UpdateUser', 'UpdateUser'> = async (req) => {
   const { ...registerData } = req.body;
@@ -116,10 +117,17 @@ export const setProgrammes: AuthAppController<'SetProgrammes', 'SetProgrammes'> 
   return { success: true };
 };
 
-export const getSites: AuthGetAppController<'GetSites'> = async (req) => {
-  const sites = await SitesService.findBy({
+export const getSites: AuthGetAppController<'GetSites', '/api/business/sites'> = async (req) => {
+  const { fsi } = req.query;
+
+  const params: FindByParams = {
     businessId: req.user.id,
-  });
+  };
+
+  if (fsi) {
+    params.fuelSourceIdUsedInConsumption = MathUtils.toInt(fsi);
+  }
+  const sites = await SitesService.findBy(params);
 
   return sites;
 };

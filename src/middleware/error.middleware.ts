@@ -22,9 +22,9 @@ const ErrorMiddleware = (
     let message = 'Invalid Body';
     AppLogger.error({ err, 'id-req': req.id, message: err.message });
     if (err.validationErrors.body) {
-      const error = err.validationErrors.body.pop()?.message;
+      const error = err.validationErrors.body.pop();
       if (error) {
-        message = error;
+        message = `${error.dataPath ? error.dataPath.slice(1) + ': ' : ''}${error.message || 'invallid'}`;
       }
     }
     errResponse = {

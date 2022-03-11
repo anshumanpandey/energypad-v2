@@ -3,19 +3,12 @@ import { Knex } from 'knex';
 export async function seed(knex: Knex): Promise<void> {
   // Inserts seed entries
   const fuel1 = { id: 1, source: 'Electricity' };
-  const record = await knex('FuelSources').insert([fuel1, { id: 2, source: 'Gas' }]);
+  await knex('FuelSources').insert([fuel1, { id: 2, source: 'Gas' }]);
   await knex('FuelUses').insert([
     { id: 105, use: 'Cooling' },
     { id: 2, use: 'Heating' },
     { id: 3, use: 'Lighting' },
     { id: 4, use: 'Powering' },
-  ]);
-
-  await knex('UsedInToFuelSource').insert([
-    { id: 11, usedInId: 105, fuelSourceId: fuel1.id },
-    { id: 22, usedInId: 2, fuelSourceId: fuel1.id },
-    { id: 33, usedInId: 3, fuelSourceId: fuel1.id },
-    { id: 44, usedInId: 4, fuelSourceId: fuel1.id },
   ]);
 
   await knex('Businesses').insert([

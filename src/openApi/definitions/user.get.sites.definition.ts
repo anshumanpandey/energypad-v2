@@ -25,7 +25,7 @@ addResponseComponentFor('GetSites', {
 
 const GetBusinessSites: OpenAPIV3.OperationObject = {
   description: 'Get dashboard data per date.',
-  parameters: [],
+  parameters: [{ in: 'query', name: 'fsi', schema: { type: 'string' }, required: false }],
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'GetSites' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),

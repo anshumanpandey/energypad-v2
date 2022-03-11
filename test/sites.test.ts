@@ -45,7 +45,7 @@ describe('/Site ', () => {
       size: 45786843.40282458,
     });
     expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
-    expect(response.body.message).toBe('should be string');
+    expect(response.body.message).toBe('town: should be string');
     expect(response.statusCode).toBe(400);
 
     const response2 = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({

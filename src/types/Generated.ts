@@ -208,7 +208,11 @@ export interface paths {
   "/api/business/sites": {
     /** Get dashboard data per date. */
     get: {
-      parameters: {};
+      parameters: {
+        query: {
+          fsi?: string;
+        };
+      };
       responses: {
         200: components["responses"]["GetSites"];
         400: components["responses"]["GenericError"];

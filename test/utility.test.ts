@@ -105,8 +105,7 @@ describe('/Utility ', () => {
     const body = await registerUser();
     const response = await supertest(app).get('/api/utility/fuelSources').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
-    expect(response.body.length).toBe(1);
-    expect(response.body[0].usedIn.length).toBe(4);
+    expect(response.body.length).toBe(2);
   });
 
   test('It should respond with business emissions', async () => {

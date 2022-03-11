@@ -3,7 +3,6 @@ import Decimal from 'decimal.js';
 import { formatISO } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 import { DbUtils } from '@utils';
-import endOfMonth from 'date-fns/endOfMonth';
 
 export type AddConsumptionToUtilityParam = {
   fuelSourceId: number;
@@ -111,37 +110,13 @@ const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['Util
   return query;
 };
 
-type FuelSourceRecord = Omit<AppModels['FuelSource'], 'usedIn'> & { id: number; use: string; fuelUseId: number };
 type FuelSource = AppModels['FuelSource'] & { id: number };
 const getFuelSources = async (): Promise<FuelSource[]> => {
-  const query = DB('FuelSources')
-    .select(['FuelSources.*', 'FuelUses.use', { fuelUseId: 'FuelUses.id' }])
-    .leftJoin({ FUTOFS: 'UsedInToFuelSource' }, 'FuelSources.id', 'FUTOFS.fuelSourceId')
-    .leftJoin('FuelUses', 'FUTOFS.usedInId', 'FuelUses.id');
+  const query = DB('FuelSources').select('FuelSources.*');
 
   const records = await query;
 
-  const reduceRecords = (r: FuelSourceRecord[]) => {
-    const map = new Map();
-    for (let i = 0, len = r.length; i < len; i++) {
-      const el = r[i];
-      const current = map.get(el.id);
-      if (current) {
-        current.usedIn.push({ use: el.use, id: el.fuelUseId });
-        map.set(el.id, current);
-      } else {
-        const { use, fuelUseId, ...fuel } = el;
-        map.set(el.id, {
-          ...fuel,
-          usedIn: [{ use, id: fuelUseId }],
-        });
-      }
-    }
-
-    return Array.from(map.values());
-  };
-
-  return reduceRecords(records);
+  return records;
 };
 
 type FindFuelByParams = {
