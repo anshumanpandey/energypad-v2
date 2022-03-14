@@ -91,6 +91,16 @@ export interface paths {
       };
     };
   };
+  "/api/utility/fuelUse": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {};
+      responses: {
+        200: components["responses"]["GetUsedIn"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/utility/emissions": {
     /** Get dashboard data per date. */
     get: {
@@ -391,6 +401,9 @@ export interface components {
       startDate: string;
       endDate: string;
     };
+    FuelUse: {
+      use: string;
+    };
     RegisterBody: {
       businessName: string;
       businessType: string;
@@ -642,6 +655,12 @@ export interface components {
     LogFileImport: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
+    /** Success message */
+    GetUsedIn: {
+      content: {
+        "application/json": components["schemas"]["FuelUse"][];
       };
     };
   };

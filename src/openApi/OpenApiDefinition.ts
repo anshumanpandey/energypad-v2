@@ -46,6 +46,7 @@ type SchemaNames =
   | 'Review'
   | 'EnergyLog'
   | 'FuelSource'
+  | 'FuelUse'
   | 'BusinessPattern';
 type PathNames =
   | 'CreateUser'
@@ -63,6 +64,7 @@ type PathNames =
   | 'GetFloors'
   | 'GetUser'
   | 'GetFuelSources'
+  | 'GetUsedIn'
   | 'UpdateUser'
   | 'AddLog'
   | 'SetProgrammes'

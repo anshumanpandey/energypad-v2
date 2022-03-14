@@ -100,6 +100,7 @@ const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
 type AddBrandParams = {
   siteId: number;
   fuelSourceId: number;
+  usedInId: number;
   name: string;
   startTime: string;
   endTime: string;
@@ -122,11 +123,14 @@ const setBrands = async (params: AddBrandParams[], opt?: Transactionable) => {
     });
   }
 
-  await trx('BusinessBrands')
+  await DB('BusinessBrands')
     .delete()
-    .where('fuelSourceId', data.brands[0].fuelSourceId)
-    .andWhere('siteId', data.brands[0].siteId);
-  return trx('BusinessBrands').insert(data.brands);
+    .whereIn(
+      'siteId',
+      data.brands.map((i) => i.siteId),
+    )
+    .transacting(trx);
+  return DB('BusinessBrands').insert(data.brands).transacting(trx);
 };
 
 const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['application/json']) => {
@@ -137,11 +141,21 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
     const fuelPriceParams = [];
     const fuelSizeParams = [];
     const siteFuelUsedInMap = [];
+    const deleteQueryParams: { fuelSourceId: number[]; siteId: number[]; usedInId: number[] } = {
+      fuelSourceId: [],
+      siteId: [],
+      usedInId: [],
+    };
+
     for (let i = 0, len = p.records.length; i < len; i++) {
       const root = p.records[i];
 
       for (let a = 0, innerLen = root.usedInId.length; a < innerLen; a++) {
         const usedInId = root.usedInId[a];
+        deleteQueryParams.usedInId.push(usedInId);
+        deleteQueryParams.siteId.push(p.siteId);
+        deleteQueryParams.fuelSourceId.push(root.fuelSourceId);
+
         siteFuelUsedInMap.push({
           siteId: p.siteId,
           fuelSourceId: root.fuelSourceId,
@@ -183,6 +197,10 @@ const saveEnergy = async (p: RequestBodies['SaveBusinessEnergy']['content']['app
       }
     }
 
+    const delQueries = ['BusinessFuelsPricing', 'BusinessFuelsSize', 'UsedInToFuelSourceToSite'].map((table) => {
+      return DB(table).del<number[]>().whereIn('siteId', deleteQueryParams.siteId).transacting(txr);
+    });
+    await Promise.all(delQueries);
     await Promise.all([
       setBrands(brandParams, { txr }),
       DB('BusinessFuelsPricing').insert(fuelPriceParams).transacting(txr),

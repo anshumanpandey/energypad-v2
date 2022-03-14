@@ -41,7 +41,7 @@ describe('/Business ', () => {
       records: [
         {
           fuelSourceId: 1,
-          usedInId: [2, 3],
+          usedInId: [2, 3, 4],
           brands: [
             {
               name: 'All Time',
@@ -84,6 +84,7 @@ describe('/Business ', () => {
 
     const newData2 = newData;
     newData2.records[0].brands[0].days.push('Wed');
+    newData2.records[0].usedInId.pop();
     const response2 = await supertest(app)
       .post('/api/business/saveEnergy')
       .set('Authorization', `Bearer ${body.jwt}`)
@@ -98,6 +99,7 @@ describe('/Business ', () => {
     expect(meData.body[0].brands.length).toBe(2);
     expect(meData.body[0].meternumbers.length).toBe(2);
     expect(meData.body[0].brands[0].days.length).toBe(3);
+    expect(meData.body[0].usedInId.length).toBe(2);
   });
 
   test('It should respond with success message when saving a log', async () => {

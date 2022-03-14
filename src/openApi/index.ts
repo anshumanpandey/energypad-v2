@@ -14,6 +14,7 @@ import './definitions/businessEnergy.definition';
 import './definitions/tenant.definition';
 import './definitions/fuelSource.definition';
 import './definitions/energyLog.definition';
+import './definitions/fuelUse.definition';
 import { RegisterPath } from './definitions/auth.register.definition';
 import './definitions/user.definition';
 
@@ -45,6 +46,7 @@ import { GetSiteDetailsPath } from './definitions/siteDetails.get.definition';
 import { UpdateSitePath } from './definitions/site.update.definition';
 import { SetBusinessPatternsPath } from './definitions/user.savePattern.definition';
 import { LogFileImportPath } from './definitions/logFile.import.definition';
+import { GetUsedInPath } from './definitions/utility.usedIn.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -75,4 +77,5 @@ export {
   UpdateSitePath,
   SetBusinessPatternsPath,
   LogFileImportPath,
+  GetUsedInPath,
 };

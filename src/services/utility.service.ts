@@ -139,10 +139,10 @@ const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]>
 type FindFuelUseByParams = {
   id?: number | number[];
 };
-const findFuelUseBy = (p: FindFuelUseByParams): Promise<{ id: number; use: string }[]> => {
+const findFuelUseBy = (p?: FindFuelUseByParams): Promise<{ id: number; use: string }[]> => {
   const query = DB('FuelUses').select('FuelUses.*');
 
-  if (p.id) {
+  if (p?.id) {
     if (Array.isArray(p.id)) {
       query.whereIn('id', p.id);
     } else {

@@ -8,6 +8,7 @@ import {
   GetEmissionsPath,
   GetFuelSourcesPath,
   GetSavingTipsPath,
+  GetUsedInPath,
   LogFileImportPath,
   UtilityFileImportPath,
 } from '@openApi';
@@ -16,6 +17,7 @@ const authRoutes = express.Router();
 
 authRoutes.get('/savingTips', GetSavingTipsPath, AuthMiddleware, ExpressAsync(UtilityController.getSavingTips));
 authRoutes.get('/fuelSources', GetFuelSourcesPath, AuthMiddleware, ExpressAsync(UtilityController.getFuelSources));
+authRoutes.get('/fuelUse', GetUsedInPath, AuthMiddleware, ExpressAsync(UtilityController.getUses));
 authRoutes.get('/emissions', GetEmissionsPath, AuthMiddleware, ExpressAsync(UtilityController.getEmissions));
 authRoutes.get('/consumptions', GetConsumptionsPath, AuthMiddleware, ExpressAsync(UtilityController.getEmissions));
 

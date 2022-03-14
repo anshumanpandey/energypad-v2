@@ -131,6 +131,11 @@ export const getFuelSources: AuthGetAppController<'GetFuelSources'> = async () =
   return tips;
 };
 
+export const getUses: AuthGetAppController<'GetUsedIn'> = async () => {
+  const tips = await UtilityService.findFuelUseBy();
+  return tips;
+};
+
 export const getEmissions: AuthGetAppController<'GetConsumptions'> = async (req) => {
   const consumptions = await UtilityService.getConsumptions({ businessId: req.user.id });
   return consumptions;
