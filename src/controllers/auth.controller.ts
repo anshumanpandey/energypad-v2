@@ -1,7 +1,7 @@
 import { AppController } from '@types';
 import { AuthService, UserService } from '@services';
 import { ApiError } from '@lib';
-import { validPassword } from '@utils';
+import { DbUtils, validPassword } from '@utils';
 
 export const registerUser: AppController<'Register', 'Register'> = async (req) => {
   const user = await UserService.getUserBy({ email: req.body.email });
@@ -9,8 +9,23 @@ export const registerUser: AppController<'Register', 'Register'> = async (req) =
 
   const { ...registerData } = req.body;
 
-  await AuthService.registerUser(registerData);
-  return { success: true };
+  const txr = await DbUtils.createTransaction();
+  try {
+    const { floors, ...register } = registerData;
+    const newUser = await AuthService.registerUser(register, { txr });
+    if (floors && floors.length > 0) {
+      await UserService.setFloors({ floors: floors, businessId: newUser }, { txr });
+    }
+    await txr.commit();
+    return { success: true };
+  } catch (err) {
+    await txr.rollback();
+    if (err instanceof ApiError) {
+      return err;
+    } else {
+      return new ApiError();
+    }
+  }
 };
 
 export const loginUser: AppController<'Login', 'Login'> = async (req) => {

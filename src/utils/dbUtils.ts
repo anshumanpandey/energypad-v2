@@ -1,3 +1,4 @@
+import { DB } from '@lib';
 import formatISO from 'date-fns/formatISO';
 
 const toInt = (i: string) => parseInt(i, 10);
@@ -32,4 +33,8 @@ export const sortByStringDate = (a: { date: string }, b: { date: string }) => {
 
 export const sortByDate = (a: Date, b: Date) => {
   return a.valueOf() - b.valueOf();
+};
+
+export const createTransaction = () => {
+  return DB.transaction();
 };

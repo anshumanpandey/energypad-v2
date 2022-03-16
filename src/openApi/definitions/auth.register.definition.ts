@@ -14,7 +14,6 @@ createSchema({
       'businessName',
       'businessType',
       'businessService',
-      'password',
       'siteName',
       'buildingName',
       'contactName',
@@ -22,11 +21,10 @@ createSchema({
       'phoneNumber',
       'email',
       'countryId',
-      'state',
+      'stateId',
       'town',
       'postCode',
       'subscriptionDate',
-      'holydayDate',
       'totalArea',
       'totalPopulation',
     ],
@@ -34,7 +32,6 @@ createSchema({
       businessName: { type: 'string' },
       businessType: { type: 'string' },
       businessService: { type: 'string' },
-      password: { type: 'string', transform: ['trim'], writeOnly: true },
       siteName: { type: 'string' },
       buildingName: { type: 'string' },
       contactName: { type: 'string' },
@@ -42,13 +39,17 @@ createSchema({
       phoneNumber: { type: 'string' },
       email: { type: 'string', transform: ['trim'] },
       countryId: { type: 'number', format: 'int32' },
-      state: { type: 'string' },
+      stateId: { type: 'number', format: 'int32' },
       town: { type: 'string' },
       postCode: { type: 'string' },
       subscriptionDate: { type: 'string', format: 'date' },
-      holydayDate: { type: 'string', format: 'date' },
+      holydayDate: { type: 'string' },
       totalArea: { type: 'number', format: 'int32' },
       totalPopulation: { type: 'number', format: 'int32' },
+      floors: {
+        type: 'array',
+        items: getReferenceFor({ for: 'schemas', name: 'BusinessFloor' }),
+      },
     },
   },
 });
@@ -56,7 +57,18 @@ createSchema({
 addRequestComponentFor('Register', {
   content: {
     'application/json': {
-      schema: getReferenceFor({ for: 'schemas', name: 'RegisterBody' }),
+      schema: {
+        allOf: [
+          getReferenceFor({ for: 'schemas', name: 'RegisterBody' }),
+          {
+            required: ['password'],
+            properties: {
+              //@ts-expect-error transport is not part of the native property obj
+              password: { type: 'string', transform: ['trim'], writeOnly: true },
+            },
+          },
+        ],
+      },
     },
   },
 });

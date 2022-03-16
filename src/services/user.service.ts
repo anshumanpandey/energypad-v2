@@ -5,12 +5,22 @@ import { formatISO } from 'date-fns';
 
 const getUserBy = async (params: { id?: number; email?: string }) => {
   const query = DB('Businesses')
-    .select(['Businesses.*', 'Programmes.id as ProgrammeId', 'Programmes.question', 'ProgrammeAnswers.answer'])
+    .select([
+      'Businesses.*',
+      'Programmes.id as ProgrammeId',
+      'Programmes.question',
+      'ProgrammeAnswers.answer',
+      { FloorId: 'Floors.id' },
+      { FloorSize: 'Floors.size' },
+      { FloorArea: 'Floors.area' },
+      { FloorPopulation: 'Floors.population' },
+    ])
     .leftJoin('Utilities', 'Businesses.id', 'Utilities.businessId')
     .leftJoin({ B: 'Businesses' }, 'Utilities.businessId', 'B.id')
     .leftJoin('Sites', 'B.id', 'Sites.businessId')
     .leftJoin('Programmes', 'Sites.id', 'Programmes.siteId')
-    .leftJoin('ProgrammeAnswers', 'Programmes.id', 'ProgrammeAnswers.programmeId');
+    .leftJoin('ProgrammeAnswers', 'Programmes.id', 'ProgrammeAnswers.programmeId')
+    .leftJoin('Floors', 'Businesses.id', 'Floors.businessId');
 
   if (params.id) {
     query.where({ 'Businesses.id': params.id });
@@ -22,21 +32,36 @@ const getUserBy = async (params: { id?: number; email?: string }) => {
   const records = await query;
   const reduceRecords = (r: any[]) => {
     const programmes = new Map();
+    const floors = new Map();
 
     for (let i = 0, len = r.length; i < len; i++) {
       const el = r[i];
-      const { question, answer, ProgrammeId } = el;
-      if (ProgrammeId && programmes.has(ProgrammeId) === false) {
-        programmes.set(ProgrammeId, { id: ProgrammeId, question, answers: [answer] });
-      } else if (ProgrammeId && programmes.has(ProgrammeId) === true) {
-        const programme = programmes.get(ProgrammeId);
-        programme.answers.push(answer);
-        programmes.set(ProgrammeId, programme);
+
+      if (el.ProgrammeId && programmes.has(el.ProgrammeId) === false) {
+        programmes.set(el.ProgrammeId, { id: el.ProgrammeId, question: el.question, answers: [el.answer] });
+      } else if (el.ProgrammeId && programmes.has(el.ProgrammeId) === true) {
+        const programme = programmes.get(el.ProgrammeId);
+        programme.answers.push(el.answer);
+        programmes.set(el.ProgrammeId, programme);
+      }
+
+      if (el.FloorId && floors.has(el.FloorId) === false) {
+        floors.set(el.FloorId, {
+          size: el.FloorSize,
+          area: el.FloorArea,
+          population: el.FloorPopulation,
+        });
+      } else if (el.FloorId && floors.has(el.FloorId) === true) {
+        const programme = floors.get(el.FloorId);
+        floors.set(el.FloorId, programme);
       }
     }
-    const first = r[0];
+    if (!r[0]) return undefined;
+
+    const { question, ProgrammeId, FloorSize, FloorPopulation, FloorId, FloorArea, answer, ...first } = r[0];
     if (first) {
       first.programmes = Array.from(programmes.values()) || [];
+      first.floors = Array.from(floors.values()) || [];
     }
     return first;
   };
@@ -94,7 +119,7 @@ const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
 
   const trx = opt?.txr || (await DB.transaction());
 
-  return trx('Businesses').where('id', businessId).update(vals).then(trx.commit).catch(trx.rollback);
+  return DB('Businesses').where('id', businessId).update(vals).transacting(trx);
 };
 
 type AddBrandParams = {
@@ -517,19 +542,28 @@ type SetFloorsParams = {
   businessId: number;
   floors: AppModels['BusinessFloor'][];
 };
-const setFloors = (p: SetFloorsParams) => {
+const setFloors = async (p: SetFloorsParams, opt?: Transactionable) => {
+  const trx = opt?.txr || (await DB.transaction());
   const mapFloor = (f: typeof p.floors[0]) => {
     return {
       ...f,
       businessId: p.businessId,
     };
   };
-  return DB.transaction((trx) => {
-    const delQuery = trx('Floors').del().where('businessId', p.businessId);
+  try {
+    await DB('Floors').del().where('businessId', p.businessId).transacting(trx);
+    const query = DB('Floors').insert(p.floors.map(mapFloor)).transacting(trx);
 
-    const query = delQuery.then(() => trx('Floors').insert(p.floors.map(mapFloor)));
-    return query;
-  });
+    if (opt?.txr === undefined) {
+      await query;
+      return trx.commit();
+    } else {
+      return query;
+    }
+  } catch (err) {
+    await trx.rollback();
+    throw err;
+  }
 };
 
 type GetSitesByParams = {

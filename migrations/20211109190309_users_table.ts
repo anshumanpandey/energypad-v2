@@ -14,15 +14,16 @@ export async function up(knex: Knex): Promise<void> {
       table.string('position', 255).notNullable();
       table.string('phoneNumber', 255).notNullable();
       table.string('email', 255).notNullable();
-      table.string('state', 255).notNullable();
       table.string('town', 255).notNullable();
       table.string('postCode', 255).notNullable();
       table.string('subscriptionDate', 255).notNullable();
-      table.string('holydayDate', 255).notNullable();
+      table.string('holydayDate', 255).nullable();
       table.integer('totalArea').notNullable();
       table.integer('totalPopulation').notNullable();
       table.integer('countryId', 255).notNullable();
       table.foreign('countryId').references('Countries.id').deferrable('deferred');
+      table.integer('stateId', 255).notNullable();
+      table.foreign('stateId').references('States.id').deferrable('deferred');
     })
     .createTable('Floors', function (table) {
       table.increments('id');

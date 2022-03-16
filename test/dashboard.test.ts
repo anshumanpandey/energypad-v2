@@ -50,6 +50,6 @@ describe('/Dashboard ', () => {
 
       expect(response2.body.consumptionsDetails.length).toBe(2);
     },
-    10 * 1000,
+    15 * 1000,
   );
 });

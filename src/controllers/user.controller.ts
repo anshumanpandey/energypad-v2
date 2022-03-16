@@ -1,15 +1,31 @@
 import { AppModels, AuthAppController, AuthGetAppController } from '@types';
 import { UserService, SitesService, UtilityService } from '@services';
 import { ApiError } from '@lib';
-import { getSinglePropArr, MathUtils } from '@utils';
+import { getSinglePropArr, MathUtils, DbUtils } from '@utils';
 import { FindByParams } from '../services/sites.service';
 
 export const updateUser: AuthAppController<'UpdateUser', 'UpdateUser'> = async (req) => {
-  const { ...registerData } = req.body;
+  const registerData = req.body;
+  const txr = await DbUtils.createTransaction();
 
-  await UserService.updateUser({ ...registerData, id: req.user.id });
+  try {
+    const { floors, ...data } = registerData;
+    await UserService.updateUser({ ...data, id: req.user.id }, { txr });
 
-  return { success: true };
+    if (floors && floors.length > 0) {
+      await UserService.setFloors({ floors: floors, businessId: req.user.id }, { txr });
+    }
+
+    await txr.commit();
+    return { success: true };
+  } catch (err) {
+    await txr.rollback();
+    if (err instanceof ApiError) {
+      return err;
+    } else {
+      throw err;
+    }
+  }
 };
 
 export const getMet: AuthGetAppController<'GetUser'> = async (req) => {

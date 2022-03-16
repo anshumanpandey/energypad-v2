@@ -432,7 +432,6 @@ export interface components {
       businessName: string;
       businessType: string;
       businessService: string;
-      password: string;
       siteName: string;
       buildingName: string;
       contactName: string;
@@ -440,13 +439,14 @@ export interface components {
       phoneNumber: string;
       email: string;
       countryId: number;
-      state: string;
+      stateId: number;
       town: string;
       postCode: string;
       subscriptionDate: string;
-      holydayDate: string;
+      holydayDate?: string;
       totalArea: number;
       totalPopulation: number;
+      floors?: components["schemas"]["BusinessFloor"][];
     };
     User: components["schemas"]["RegisterBody"] & {
       id: number;
@@ -714,7 +714,9 @@ export interface components {
   requestBodies: {
     Register: {
       content: {
-        "application/json": components["schemas"]["RegisterBody"];
+        "application/json": components["schemas"]["RegisterBody"] & {
+          password: string;
+        };
       };
     };
     Login: {

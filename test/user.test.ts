@@ -20,7 +20,7 @@ describe('/Business ', () => {
       phoneNumber: 'new_phoneNumber',
       email: 'new_email',
       countryId: 5,
-      state: 'new_state',
+      stateId: 46,
       town: 'new_town',
       postCode: 'new_postCode',
       subscriptionDate: '2021-01-01',
@@ -276,6 +276,12 @@ describe('/Business ', () => {
           usedInId: 2,
         },
       ]);
+    expect(response.statusCode).toBe(200);
+  });
+
+  test('It should get user data successfully', async () => {
+    const body = await registerUser();
+    const response = await supertest(app).get('/api/business').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
   });
 });
