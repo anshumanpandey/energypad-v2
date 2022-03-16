@@ -7,27 +7,29 @@ import {
   addResponseComponentFor,
 } from '../OpenApiDefinition';
 
+const registerBodyRequiredProperties = [
+  'businessName',
+  'businessType',
+  'businessService',
+  'siteName',
+  'buildingName',
+  'contactName',
+  'position',
+  'phoneNumber',
+  'email',
+  'countryId',
+  'stateId',
+  'town',
+  'postCode',
+  'subscriptionDate',
+  'totalArea',
+  'totalPopulation',
+];
 createSchema({
   name: 'RegisterBody',
   schema: {
-    required: [
-      'businessName',
-      'businessType',
-      'businessService',
-      'siteName',
-      'buildingName',
-      'contactName',
-      'position',
-      'phoneNumber',
-      'email',
-      'countryId',
-      'stateId',
-      'town',
-      'postCode',
-      'subscriptionDate',
-      'totalArea',
-      'totalPopulation',
-    ],
+    additionalProperties: true,
+    required: registerBodyRequiredProperties,
     properties: {
       businessName: { type: 'string' },
       businessType: { type: 'string' },
@@ -58,16 +60,13 @@ addRequestComponentFor('Register', {
   content: {
     'application/json': {
       schema: {
-        allOf: [
-          getReferenceFor({ for: 'schemas', name: 'RegisterBody' }),
-          {
-            required: ['password'],
-            properties: {
-              //@ts-expect-error transport is not part of the native property obj
-              password: { type: 'string', transform: ['trim'], writeOnly: true },
-            },
-          },
-        ],
+        //TODO: dont allow additionalProperties
+        additionalProperties: true,
+        allOf: [getReferenceFor({ for: 'schemas', name: 'RegisterBody' })],
+        required: registerBodyRequiredProperties.concat(['password']),
+        properties: {
+          password: { type: 'string', transform: ['trim'], writeOnly: true },
+        },
       },
     },
   },

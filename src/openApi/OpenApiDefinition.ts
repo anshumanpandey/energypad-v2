@@ -88,7 +88,7 @@ type ResponsesName = 'GenericError' | 'UpdateUser' | PathNames;
 
 export type CreateSchemaParams = {
   name: SchemaNames;
-  schema: Omit<OpenAPIV3.SchemaObject, 'type' | 'additionalProperties'> & {
+  schema: Omit<OpenAPIV3.SchemaObject, 'type'> & {
     properties?: {
       [name: string]:
         | OpenAPIV3.ReferenceObject
