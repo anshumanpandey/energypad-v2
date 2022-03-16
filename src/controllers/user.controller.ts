@@ -13,8 +13,10 @@ export const updateUser: AuthAppController<'UpdateUser', 'UpdateUser'> = async (
 };
 
 export const getMet: AuthGetAppController<'GetUser'> = async (req) => {
-  const user = await UserService.getUserBy({ id: req.user.id });
-  if (!user) return new ApiError('User not found');
+  const data = await UserService.getUserBy({ id: req.user.id });
+  if (!data) return new ApiError('User not found');
+
+  const { password, ...user } = data;
 
   return user;
 };

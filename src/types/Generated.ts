@@ -38,6 +38,30 @@ export interface paths {
       };
     };
   };
+  "/api/site/countries": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {};
+      responses: {
+        200: components["responses"]["GetCountries"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
+  "/api/site/states": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {
+        query: {
+          countryId?: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["GetStates"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/site/": {
     /** Create a new site for a business. */
     post: {
@@ -415,7 +439,7 @@ export interface components {
       position: string;
       phoneNumber: string;
       email: string;
-      country: string;
+      countryId: number;
       state: string;
       town: string;
       postCode: string;
@@ -661,6 +685,24 @@ export interface components {
     GetUsedIn: {
       content: {
         "application/json": components["schemas"]["FuelUse"][];
+      };
+    };
+    /** Success message */
+    GetCountries: {
+      content: {
+        "application/json": {
+          id: number;
+          name: string;
+        }[];
+      };
+    };
+    /** Success message */
+    GetStates: {
+      content: {
+        "application/json": {
+          id: number;
+          name: string;
+        }[];
       };
     };
   };

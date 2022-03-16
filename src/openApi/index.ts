@@ -47,6 +47,8 @@ import { UpdateSitePath } from './definitions/site.update.definition';
 import { SetBusinessPatternsPath } from './definitions/user.savePattern.definition';
 import { LogFileImportPath } from './definitions/logFile.import.definition';
 import { GetUsedInPath } from './definitions/utility.usedIn.get.definition';
+import { GetCountriesPath } from './definitions/countries.get.definition';
+import { GetStatesPath } from './definitions/states.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -78,4 +80,6 @@ export {
   SetBusinessPatternsPath,
   LogFileImportPath,
   GetUsedInPath,
+  GetCountriesPath,
+  GetStatesPath,
 };

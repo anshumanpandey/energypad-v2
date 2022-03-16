@@ -21,7 +21,7 @@ export const registerUser = async (email?: string, password?: string) => {
     position: 'ullamco tempor exercitation laboris consectetur',
     phoneNumber: 'velit',
     email: email ? email : `mail${new Date().valueOf().toString()}@mail.com`,
-    country: 'velit irure dolor',
+    countryId: 2,
     state: 'consequat',
     town: 'magna dolore dolor in',
     postCode: 'velit id',

@@ -1,6 +1,7 @@
 import { AuthAppController, AuthGetAppController } from '@types';
 import { SitesService } from '@services';
 import { ApiError } from '@lib';
+import { MathUtils } from '@utils';
 
 export const getSiteDetails: AuthGetAppController<'GetSiteDetails'> = async (req) => {
   const siteId = parseInt(req.params.siteId, 10);
@@ -48,4 +49,22 @@ export const deleteSite: AuthAppController<'DeleteSite', 'DeleteSite'> = async (
   await SitesService.deleteById(params);
 
   return { success: true };
+};
+
+export const getCountries: AuthGetAppController<'GetCountries'> = async (req) => {
+  const countries = await SitesService.getCountries();
+
+  return countries;
+};
+
+export const getStates: AuthGetAppController<'GetStates', '/api/site/states'> = async (req) => {
+  const params = { countryId: undefined as undefined | number };
+
+  if (req.query.countryId) {
+    params.countryId = MathUtils.toInt(req.query.countryId);
+  }
+
+  const countries = await SitesService.getStates(params);
+
+  return countries;
 };

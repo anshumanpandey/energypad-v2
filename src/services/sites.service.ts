@@ -183,9 +183,27 @@ const deleteById = async (params: { id: number }) => {
   return DB('Sites').where('id', params.id).del();
 };
 
+const getCountries = async () => {
+  return DB('Countries').select();
+};
+
+type GetStatesParams = {
+  countryId?: number;
+};
+const getStates = async (p?: GetStatesParams) => {
+  const query = DB('States').select();
+
+  if (p?.countryId) {
+    query.where('countryId', p.countryId);
+  }
+  return query;
+};
+
 export default {
   findBy,
   createSite,
   deleteById,
   getSiteDetails,
+  getCountries,
+  getStates,
 };

@@ -19,7 +19,7 @@ describe('/Business ', () => {
       position: 'new_position',
       phoneNumber: 'new_phoneNumber',
       email: 'new_email',
-      country: 'new_country',
+      countryId: 5,
       state: 'new_state',
       town: 'new_town',
       postCode: 'new_postCode',

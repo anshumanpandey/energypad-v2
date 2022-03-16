@@ -65,6 +65,8 @@ type PathNames =
   | 'GetUser'
   | 'GetFuelSources'
   | 'GetUsedIn'
+  | 'GetCountries'
+  | 'GetStates'
   | 'UpdateUser'
   | 'AddLog'
   | 'SetProgrammes'

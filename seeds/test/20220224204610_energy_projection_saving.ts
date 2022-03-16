@@ -14,7 +14,7 @@ export async function seed(knex: Knex): Promise<void> {
       position: 'a position',
       phoneNumber: '+55 122334444',
       email: 'mail322@mail.com',
-      country: 'UK',
+      countryId: 2,
       state: 'a state',
       town: 'a town',
       postCode: '02532',
