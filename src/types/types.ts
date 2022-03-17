@@ -30,7 +30,10 @@ export type AuthAppController<T extends ResponseKeys, A extends RequestBodyKeys>
   req: AuthAppRequest<RequestBodyParams<A>, ControllerReturnType<T>>,
 ) => Promise<ControllerReturnType<T>>;
 
-export type QueryParamsKeys = Pick<paths, '/api/dashboard/' | '/api/business/sites' | '/api/site/states'>;
+export type QueryParamsKeys = Pick<
+  paths,
+  '/api/dashboard/' | '/api/business/sites' | '/api/site/states' | '/api/business/patterns'
+>;
 export type QueryParams<T extends keyof QueryParamsKeys> = QueryParamsKeys[T]['get']['parameters']['query'];
 
 type AuthGetAppRequest<ResBody, QueryBody = never, PathParameters = { [key: string]: string }> = {

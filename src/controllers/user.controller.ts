@@ -168,10 +168,29 @@ export const getBusinessFloors: AuthGetAppController<'GetFloors'> = async (req) 
 };
 
 export const savePattenrs: AuthAppController<'SaveBusinessPattern', 'SaveBusinessPattern'> = async (req) => {
+  await UserService.deletePatters({
+    businessId: req.user.id,
+    siteId: req.body.map((i) => i.siteId),
+  });
   await UserService.savePattern({
     businessId: req.user.id,
     patterns: req.body,
   });
 
   return { success: true };
+};
+
+export const getPatterns: AuthGetAppController<'GetPatterns', '/api/business/patterns'> = async (req) => {
+  const params = {
+    businessId: req.user.id,
+    siteId: undefined as undefined | number,
+  };
+
+  if (req.query?.siteId) {
+    params.siteId = MathUtils.toInt(req.query.siteId);
+  }
+
+  const patterns = await UserService.getPatterns(params);
+
+  return patterns;
 };

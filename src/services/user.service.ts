@@ -97,6 +97,7 @@ type GetPatternsParams = {
   startDate?: Date;
   endDate?: Date;
   businessId: number;
+  siteId?: number;
 };
 export const getPatterns = (p: GetPatternsParams) => {
   const query = DB('BusinessPatterns')
@@ -110,8 +111,23 @@ export const getPatterns = (p: GetPatternsParams) => {
   if (p.endDate) {
     query.where('endDate', '>=', formatISO(p.endDate).split('T')[0]);
   }
+  if (p?.siteId) {
+    query.where('S.id', p.siteId);
+  }
 
   return query;
+};
+
+type DeletePattersParams = {
+  siteId: number[];
+  businessId: number;
+};
+const deletePatters = (p: DeletePattersParams) => {
+  return DB('BusinessPatterns')
+    .whereIn('BusinessPatterns.siteId', function () {
+      this.select('id').from('Sites').whereIn('id', p.siteId).where('businessId', p.businessId);
+    })
+    .del();
 };
 
 const updateUser = async (p: AppModels['User'], opt?: Transactionable) => {
@@ -596,4 +612,5 @@ export default {
   setFloors,
   getFloorsBy,
   getPatterns,
+  deletePatters,
 };

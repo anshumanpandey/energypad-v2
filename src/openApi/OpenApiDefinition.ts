@@ -76,6 +76,7 @@ type PathNames =
   | 'SaveBusinessEnergy'
   | 'GetBusinessEnergy'
   | 'GetSavingTips'
+  | 'GetPatterns'
   | 'GetSites'
   | 'GetEmissions'
   | 'SaveBusinessPattern'

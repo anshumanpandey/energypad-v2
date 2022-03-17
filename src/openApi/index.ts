@@ -49,6 +49,7 @@ import { LogFileImportPath } from './definitions/logFile.import.definition';
 import { GetUsedInPath } from './definitions/utility.usedIn.get.definition';
 import { GetCountriesPath } from './definitions/countries.get.definition';
 import { GetStatesPath } from './definitions/states.get.definition';
+import { GetPatternsPath } from './definitions/user.patterns.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -82,4 +83,5 @@ export {
   GetUsedInPath,
   GetCountriesPath,
   GetStatesPath,
+  GetPatternsPath,
 };

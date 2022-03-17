@@ -263,6 +263,20 @@ export interface paths {
       };
     };
   };
+  "/api/business/patterns": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {
+        query: {
+          siteId?: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["GetPatterns"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/business/saveEnergy": {
     /** Create a new user. */
     post: {
@@ -703,6 +717,12 @@ export interface components {
           id: number;
           name: string;
         }[];
+      };
+    };
+    /** Success message */
+    GetPatterns: {
+      content: {
+        "application/json": components["schemas"]["BusinessPattern"][];
       };
     };
   };

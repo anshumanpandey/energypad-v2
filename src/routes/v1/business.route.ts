@@ -14,6 +14,7 @@ import {
   SetBusinessSetFloorsPath,
   SetBusinessPatternsPath,
   GetBusinessFloorsPath,
+  GetPatternsPath,
 } from '@openApi';
 
 const businessRoutes = express.Router();
@@ -22,6 +23,7 @@ businessRoutes.get('/', GetUserPath, AuthMiddleware, ExpressAsync(UserController
 businessRoutes.get('/energies', GetBusinessEnergyPath, AuthMiddleware, ExpressAsync(UserController.getBusinessEnergy));
 businessRoutes.get('/sites', GetBusinessSitesPath, AuthMiddleware, ExpressAsync(UserController.getSites));
 businessRoutes.get('/foors', GetBusinessFloorsPath, AuthMiddleware, ExpressAsync(UserController.getBusinessFloors));
+businessRoutes.get('/patterns', GetPatternsPath, AuthMiddleware, ExpressAsync(UserController.getPatterns));
 
 businessRoutes.put(
   '/',
