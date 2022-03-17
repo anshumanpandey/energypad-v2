@@ -10,14 +10,24 @@ describe('/Utility ', () => {
     const body = await loginUser('mail198@mail.com');
 
     const response = await supertest(app)
-      .post('/api/utility/addConsumption/1')
+      .post('/api/utility/addConsumption')
       .set('Authorization', `Bearer ${body.jwt}`)
-      .send({
-        date: '2020-01-01',
-        consumption: 100,
-        cost: 100,
-        siteId: 451,
-      });
+      .send([
+        {
+          date: '2010-01-01',
+          consumption: 100,
+          cost: 100,
+          siteId: 451,
+          fuelSourceId: 1,
+        },
+        {
+          date: '2010-02-01',
+          consumption: 100,
+          cost: 100,
+          siteId: 451,
+          fuelSourceId: 1,
+        },
+      ]);
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(
       schema.components.responses.AddFuelSourceConsumption.content['application/json'].schema,
@@ -69,32 +79,35 @@ describe('/Utility ', () => {
   test('It should respond with success when saving energy emission', async () => {
     const body = await loginUser('mail224@mail.com');
     const response = await supertest(app)
-      .post('/api/utility/addEmission/1')
+      .post('/api/utility/addEmission')
       .send([
         {
           emissionFactor: 'special',
           value: 600,
           year: 2001,
           siteId: 452,
+          fuelSourceId: 1,
         },
       ])
       .set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
 
     const response2 = await supertest(app)
-      .post('/api/utility/addEmission/1')
+      .post('/api/utility/addEmission')
       .send([
         {
           emissionFactor: 'special',
           value: 600,
           year: 2003,
           siteId: 452,
+          fuelSourceId: 1,
         },
         {
           emissionFactor: 'special',
           value: 600,
           year: 2002,
           siteId: 452,
+          fuelSourceId: 1,
         },
       ])
       .set('Authorization', `Bearer ${body.jwt}`);

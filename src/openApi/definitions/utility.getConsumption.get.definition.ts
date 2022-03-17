@@ -15,7 +15,11 @@ addResponseComponentFor('GetConsumptions', {
 
 const GetConsumptions: OpenAPIV3.OperationObject = {
   description: 'Get dashboard data per date.',
-  parameters: [],
+  parameters: [
+    { in: 'query', name: 'siteId', schema: { type: 'string' }, required: false },
+    { in: 'query', name: 'year', schema: { type: 'string' }, required: false },
+    { in: 'query', name: 'month', schema: { type: 'string' }, required: false },
+  ],
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'GetConsumptions' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),

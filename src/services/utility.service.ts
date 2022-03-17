@@ -4,13 +4,8 @@ import { formatISO } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 import { DbUtils } from '@utils';
 
-export type AddConsumptionToUtilityParam = {
-  fuelSourceId: number;
-} & RequestBodyParams<'AddFuelSourceConsumption'>;
-const addConsumptionToUtility = async (
-  params: AddConsumptionToUtilityParam | AddConsumptionToUtilityParam[],
-  opt?: Transactionable,
-) => {
+export type AddConsumptionToUtilityParam = RequestBodyParams<'AddFuelSourceConsumption'>;
+export const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam, opt?: Transactionable) => {
   const query = DB('UtilityConsumptions').insert(params);
 
   if (opt?.txr) {
@@ -19,7 +14,7 @@ const addConsumptionToUtility = async (
   return query;
 };
 
-const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
+export const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   const query = DB('EnergySavingTips').select();
 
   return query;
@@ -30,7 +25,7 @@ type DeleteByParams = {
   fuelSourceId?: number | number[];
   siteId?: number | number[];
 };
-const deleteBy = (p: DeleteByParams) => {
+export const deleteBy = (p: DeleteByParams) => {
   const query = DB('UtilityConsumptions').delete();
 
   if (p.month) {
@@ -63,25 +58,35 @@ const deleteBy = (p: DeleteByParams) => {
   return query.del();
 };
 
-type GetEmissionsParams = { businessId: number };
-const getEmissions = (params: GetEmissionsParams): Promise<AppModels['UtilityEmission'][]> => {
+export type GetEmissionsParams = { businessId: number; forYear?: Date; siteId?: number };
+export const getEmissions = (params: GetEmissionsParams): Promise<AppModels['UtilityEmission'][]> => {
   const query = DB('UtilityEmissions')
     .select(['UtilityEmissions.*', { fuelSourceId: 'FuelSources.id' }])
     .innerJoin('FuelSources', 'UtilityEmissions.fuelSourceId', 'FuelSources.id')
-    .innerJoin({ B: 'Businesses' }, 'UtilityEmissions.businessId', 'B.id')
+    .innerJoin({ S: 'Sites' }, 'UtilityEmissions.siteId', 'S.id')
+    .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
     .where('B.id', params.businessId);
+
+  if (params.siteId) {
+    query.where('UtilityEmissions.siteId', params.siteId);
+  }
+
+  if (params.forYear) {
+    query.where('UtilityEmissions.year', params.forYear.getFullYear());
+  }
 
   return query;
 };
 
-type GetConsumptionsParams = {
+export type GetConsumptionsParams = {
   businessId: number;
+  forMonth?: Date;
   startDate?: Date;
   endDate?: Date;
   fuelSourceId?: number;
   siteId?: number;
 };
-const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['UtilityConsumption'][]> => {
+export const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['UtilityConsumption'][]> => {
   const query = DB('UtilityConsumptions')
     .select(['UtilityConsumptions.*', { fuelSourceId: 'FuelSources.id' }, { fuelSourceName: 'FuelSources.source' }])
     .innerJoin('FuelSources', 'UtilityConsumptions.fuelSourceId', 'FuelSources.id')
@@ -99,6 +104,11 @@ const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['Util
     query.where('UtilityConsumptions.date', '<=', dateParam);
   }
 
+  if (params.forMonth) {
+    const dateParam: string = formatISO(params.forMonth).split('T')[0];
+    query.where('UtilityConsumptions.date', 'like', dateParam.slice(0, 7) + '-%');
+  }
+
   if (params.fuelSourceId) {
     query.where('FuelSources.id', params.fuelSourceId);
   }
@@ -111,7 +121,7 @@ const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['Util
 };
 
 type FuelSource = AppModels['FuelSource'] & { id: number };
-const getFuelSources = async (): Promise<FuelSource[]> => {
+export const getFuelSources = async (): Promise<FuelSource[]> => {
   const query = DB('FuelSources').select('FuelSources.*');
 
   const records = await query;
@@ -122,7 +132,7 @@ const getFuelSources = async (): Promise<FuelSource[]> => {
 type FindFuelByParams = {
   fuelSourceId?: number | number[];
 };
-const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]> => {
+export const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]> => {
   const query = DB('FuelSources').select('FuelSources.*');
 
   if (p.fuelSourceId) {
@@ -139,7 +149,7 @@ const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]>
 type FindFuelUseByParams = {
   id?: number | number[];
 };
-const findFuelUseBy = (p?: FindFuelUseByParams): Promise<{ id: number; use: string }[]> => {
+export const findFuelUseBy = (p?: FindFuelUseByParams): Promise<{ id: number; use: string }[]> => {
   const query = DB('FuelUses').select('FuelUses.*');
 
   if (p?.id) {
@@ -160,7 +170,7 @@ type AddUtilityEmissionsParams = {
   fuelSourceId: number;
   siteId: number;
 };
-const addUtilityEmissions = (p: AddUtilityEmissionsParams[]) => {
+export const addUtilityEmissions = (p: AddUtilityEmissionsParams[]) => {
   return DB.transaction((trx) => {
     const query = trx('UtilityEmissions').insert(p);
     return query;
@@ -178,7 +188,7 @@ type ConsummingStaticsticsParams = {
 
 const NX = 6;
 
-const consumingProjection = async (p: ConsummingStaticsticsParams) => {
+export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
   const patterns = p.pastConsumptionRecords;
 
   const totalOfHdd = p.pastHdds.reduce((total, next) => new Decimal(total).plus(next.value).toNumber(), 0);
@@ -227,17 +237,4 @@ const consumingProjection = async (p: ConsummingStaticsticsParams) => {
   }
 
   return reducedData;
-};
-
-export default {
-  addConsumptionToUtility,
-  getSavingTips,
-  findFuelBy,
-  getFuelSources,
-  addUtilityEmissions,
-  getEmissions,
-  getConsumptions,
-  findFuelUseBy,
-  consumingProjection,
-  deleteBy,
 };

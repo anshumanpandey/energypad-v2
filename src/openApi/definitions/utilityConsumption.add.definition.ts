@@ -4,7 +4,6 @@ import {
   addRequestComponentFor,
   getReferenceFor,
   addResponseComponentFor,
-  addParameterComponentFor,
   CreateSchemaParams,
   createSchema,
 } from '../OpenApiDefinition';
@@ -12,12 +11,13 @@ import {
 const bodySchema: CreateSchemaParams = {
   name: 'AddFuelSourceConsumptionBody',
   schema: {
-    required: ['date', 'consumption', 'cost', 'siteId'],
+    required: ['date', 'consumption', 'cost', 'siteId', 'fuelSourceId'],
     properties: {
       date: { type: 'string', format: 'date' },
       consumption: { type: 'number', format: 'int32' },
       cost: { type: 'number', format: 'int32' },
       siteId: { type: 'number', format: 'int32' },
+      fuelSourceId: { type: 'number', format: 'int32' },
     },
   },
 };
@@ -27,7 +27,10 @@ addRequestComponentFor('AddFuelSourceConsumption', {
   required: true,
   content: {
     'application/json': {
-      schema: getReferenceFor({ for: 'schemas', name: 'AddFuelSourceConsumptionBody' }),
+      schema: {
+        type: 'array',
+        items: getReferenceFor({ for: 'schemas', name: 'AddFuelSourceConsumptionBody' }),
+      },
     },
   },
 });
@@ -38,15 +41,6 @@ addResponseComponentFor('AddFuelSourceConsumption', {
     'application/json': {
       schema: getReferenceFor({ for: 'schemas', name: 'SuccessMessage' }),
     },
-  },
-});
-
-addParameterComponentFor('AddFuelSourceConsumption', {
-  name: 'utilityId',
-  in: 'path',
-  required: true,
-  schema: {
-    type: 'number',
   },
 });
 

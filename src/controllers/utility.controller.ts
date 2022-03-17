@@ -1,16 +1,16 @@
 import { AuthAppController, AuthGetAppController } from '@types';
 import { UtilityService, SitesService, UserService } from '@services';
 import { ApiError, ExcelClient } from '@lib';
-import { AddConsumptionToUtilityParam } from '../services/utility.service';
-import { DbUtils } from '@utils';
+import { DbUtils, MathUtils } from '@utils';
 
 export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddFuelSourceConsumption'> = async (
   req,
 ) => {
-  const fuelSourceId = parseInt(req.params.fuelSourceId, 10);
+  const fuelSourcesToFind = req.body.map((i) => i.fuelSourceId);
+  const sitesToFind = req.body.map((i) => i.siteId);
   const [fuelFound, siteFound] = await Promise.all([
-    UtilityService.findFuelBy({ fuelSourceId }),
-    SitesService.findBy({ id: req.body.siteId }),
+    UtilityService.findFuelBy({ fuelSourceId: fuelSourcesToFind }),
+    SitesService.findBy({ id: sitesToFind }),
   ]);
   if (fuelFound.length === 0) {
     return new ApiError('Utility to add not found');
@@ -19,27 +19,21 @@ export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddF
     return new ApiError('Site not found');
   }
 
-  const params = {
-    ...req.body,
-    fuelSourceId,
-  };
-
   await UtilityService.deleteBy({
-    fuelSourceId,
-    siteId: params.siteId,
-    month: DbUtils.stringDateToDate(params.date),
+    fuelSourceId: fuelSourcesToFind,
+    siteId: sitesToFind,
+    month: req.body.map((i) => DbUtils.stringDateToDate(i.date)),
   });
-  await UtilityService.addConsumptionToUtility(params);
+  await UtilityService.addConsumptionToUtility(req.body);
 
   return { success: true };
 };
 
 export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSourceEmission'> = async (req) => {
-  const fuelSourceId = parseInt(req.params.fuelSourceId, 10);
-
   const siteToFind = Array.from(new Set(req.body.map((i) => i.siteId)));
+  const fuelSourceToFind = Array.from(new Set(req.body.map((i) => i.fuelSourceId)));
   const [fuelFound, sitesFound] = await Promise.all([
-    UtilityService.findFuelBy({ fuelSourceId }),
+    UtilityService.findFuelBy({ fuelSourceId: fuelSourceToFind }),
     SitesService.findBy({ id: siteToFind }),
   ]);
   if (fuelFound.length === 0) {
@@ -49,14 +43,7 @@ export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSou
     return new ApiError('Site not found');
   }
 
-  const mapEmission = (r: typeof req.body[0]) => {
-    return {
-      ...r,
-      fuelSourceId,
-    };
-  };
-
-  await UtilityService.addUtilityEmissions(req.body.map(mapEmission));
+  await UtilityService.addUtilityEmissions(req.body);
 
   return { success: true };
 };
@@ -87,7 +74,7 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
 
   if (data instanceof ApiError) return data;
 
-  const dataToInsert: AddConsumptionToUtilityParam[] = [];
+  const dataToInsert: UtilityService.AddConsumptionToUtilityParam = [];
   for (let i = 0, len = data.length; i < len; i++) {
     const entry = data[i];
 
@@ -136,8 +123,33 @@ export const getUses: AuthGetAppController<'GetUsedIn'> = async () => {
   return tips;
 };
 
-export const getEmissions: AuthGetAppController<'GetConsumptions'> = async (req) => {
-  const consumptions = await UtilityService.getConsumptions({ businessId: req.user.id });
+export const getConsumptions: AuthGetAppController<'GetConsumptions', '/api/utility/consumptions'> = async (req) => {
+  let forMonth = undefined;
+
+  if (req.query.year && req.query.month) {
+    forMonth = new Date(MathUtils.toInt(req.query.year), MathUtils.toInt(req.query.month), 1);
+  }
+  const params: UtilityService.GetConsumptionsParams = {
+    forMonth,
+    siteId: req.query.siteId ? parseInt(req.query.siteId) : undefined,
+    businessId: req.user.id,
+  };
+  const consumptions = await UtilityService.getConsumptions(params);
+  return consumptions;
+};
+
+export const getEmissions: AuthGetAppController<'GetEmissions', '/api/utility/emissions'> = async (req) => {
+  let forYear = undefined;
+
+  if (req.query.year) {
+    forYear = new Date(MathUtils.toInt(req.query.year), 0, 1);
+  }
+  const params: UtilityService.GetEmissionsParams = {
+    forYear,
+    siteId: req.query.siteId ? parseInt(req.query.siteId) : undefined,
+    businessId: req.user.id,
+  };
+  const consumptions = await UtilityService.getEmissions(params);
   return consumptions;
 };
 

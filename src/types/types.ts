@@ -32,7 +32,12 @@ export type AuthAppController<T extends ResponseKeys, A extends RequestBodyKeys>
 
 export type QueryParamsKeys = Pick<
   paths,
-  '/api/dashboard/' | '/api/business/sites' | '/api/site/states' | '/api/business/patterns'
+  | '/api/dashboard/'
+  | '/api/business/sites'
+  | '/api/site/states'
+  | '/api/business/patterns'
+  | '/api/utility/consumptions'
+  | '/api/utility/emissions'
 >;
 export type QueryParams<T extends keyof QueryParamsKeys> = QueryParamsKeys[T]['get']['parameters']['query'];
 

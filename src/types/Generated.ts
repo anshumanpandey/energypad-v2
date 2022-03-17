@@ -128,7 +128,12 @@ export interface paths {
   "/api/utility/emissions": {
     /** Get dashboard data per date. */
     get: {
-      parameters: {};
+      parameters: {
+        query: {
+          siteId?: string;
+          year?: string;
+        };
+      };
       responses: {
         200: components["responses"]["GetEmissions"];
         400: components["responses"]["GenericError"];
@@ -138,21 +143,22 @@ export interface paths {
   "/api/utility/consumptions": {
     /** Get dashboard data per date. */
     get: {
-      parameters: {};
+      parameters: {
+        query: {
+          siteId?: string;
+          year?: string;
+          month?: string;
+        };
+      };
       responses: {
         200: components["responses"]["GetConsumptions"];
         400: components["responses"]["GenericError"];
       };
     };
   };
-  "/api/utility/addEmission/{fuelSourceId}": {
+  "/api/utility/addEmission": {
     /** Add emision to utility. */
     post: {
-      parameters: {
-        path: {
-          fuelSourceId: string;
-        };
-      };
       responses: {
         200: components["responses"]["AddFuelSourceEmission"];
         400: components["responses"]["GenericError"];
@@ -160,14 +166,9 @@ export interface paths {
       requestBody: components["requestBodies"]["AddFuelSourceEmission"];
     };
   };
-  "/api/utility/addConsumption/{fuelSourceId}": {
+  "/api/utility/addConsumption": {
     /** Add emision to utility. */
     post: {
-      parameters: {
-        path: {
-          fuelSourceId: string;
-        };
-      };
       responses: {
         200: components["responses"]["AddFuelSourceConsumption"];
         400: components["responses"]["GenericError"];
@@ -476,12 +477,14 @@ export interface components {
       consumption: number;
       cost: number;
       siteId: number;
+      fuelSourceId: number;
     };
     AddFuelSourceEmissionBody: {
       emissionFactor: string;
       value: number;
       year: number;
       siteId: number;
+      fuelSourceId: number;
     };
     UtilityEmission: components["schemas"]["AddFuelSourceEmissionBody"] & {
       id: number;
@@ -727,8 +730,6 @@ export interface components {
     };
   };
   parameters: {
-    AddFuelSourceConsumption: number;
-    AddFuelSourceEmission: number;
     GetSiteDetails: number;
   };
   requestBodies: {
@@ -771,7 +772,7 @@ export interface components {
     };
     AddFuelSourceConsumption: {
       content: {
-        "application/json": components["schemas"]["AddFuelSourceConsumptionBody"];
+        "application/json": components["schemas"]["AddFuelSourceConsumptionBody"][];
       };
     };
     UtilityFileImport: {

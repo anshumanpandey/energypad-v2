@@ -19,10 +19,10 @@ authRoutes.get('/savingTips', GetSavingTipsPath, AuthMiddleware, ExpressAsync(Ut
 authRoutes.get('/fuelSources', GetFuelSourcesPath, AuthMiddleware, ExpressAsync(UtilityController.getFuelSources));
 authRoutes.get('/fuelUse', GetUsedInPath, AuthMiddleware, ExpressAsync(UtilityController.getUses));
 authRoutes.get('/emissions', GetEmissionsPath, AuthMiddleware, ExpressAsync(UtilityController.getEmissions));
-authRoutes.get('/consumptions', GetConsumptionsPath, AuthMiddleware, ExpressAsync(UtilityController.getEmissions));
+authRoutes.get('/consumptions', GetConsumptionsPath, AuthMiddleware, ExpressAsync(UtilityController.getConsumptions));
 
 authRoutes.post(
-  '/addEmission/:fuelSourceId',
+  '/addEmission',
   AddUtilityEmissionPath,
   AuthMiddleware,
   RequestValidatorMiddleware({
@@ -32,7 +32,7 @@ authRoutes.post(
 );
 
 authRoutes.post(
-  '/addConsumption/:fuelSourceId',
+  '/addConsumption',
   AddUtilityConsumptionPath,
   AuthMiddleware,
   RequestValidatorMiddleware({

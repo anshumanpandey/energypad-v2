@@ -121,6 +121,7 @@ const generateMockConsumption = (p: { date: string }) => {
     siteId: 0,
     id: 0,
     fuelSourceName: '',
+    fuelSourceId: 0,
     produced: true,
   };
 };
