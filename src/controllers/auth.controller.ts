@@ -23,7 +23,7 @@ export const registerUser: AppController<'Register', 'Register'> = async (req) =
     if (err instanceof ApiError) {
       return err;
     } else {
-      return new ApiError();
+      throw err;
     }
   }
 };
