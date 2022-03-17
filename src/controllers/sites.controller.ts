@@ -51,7 +51,7 @@ export const deleteSite: AuthAppController<'DeleteSite', 'DeleteSite'> = async (
   return { success: true };
 };
 
-export const getCountries: AuthGetAppController<'GetCountries'> = async (req) => {
+export const getCountries: AuthGetAppController<'GetCountries'> = async () => {
   const countries = await SitesService.getCountries();
 
   return countries;
