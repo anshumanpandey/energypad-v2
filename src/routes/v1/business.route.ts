@@ -1,5 +1,5 @@
 import express from 'express';
-import { AuthMiddleware, ExpressAsync, RequestValidatorMiddleware } from '@middleware';
+import { AuthMiddleware, ExpressAsync, RequestValidatorMiddleware, FileUpload } from '@middleware';
 import { UserController } from '@controllers';
 import {
   GetUserPath,
@@ -15,6 +15,7 @@ import {
   SetBusinessPatternsPath,
   GetBusinessFloorsPath,
   GetPatternsPath,
+  FileImportBusinessPath,
 } from '@openApi';
 
 const businessRoutes = express.Router();
@@ -103,6 +104,14 @@ businessRoutes.post(
     body: 'SetProgrammes',
   }),
   ExpressAsync(UserController.setProgrammes),
+);
+
+businessRoutes.post(
+  '/importBusiness',
+  FileImportBusinessPath,
+  AuthMiddleware,
+  FileUpload.single('excel'),
+  ExpressAsync(UserController.importFile),
 );
 
 export default businessRoutes;

@@ -1,6 +1,6 @@
-import { AppModels, AuthAppController, AuthGetAppController } from '@types';
+import { AppModels, AuthAppController, AuthGetAppController, RequestBodyParams } from '@types';
 import { UserService, SitesService, UtilityService } from '@services';
-import { ApiError } from '@lib';
+import { ApiError, DB, ExcelClient } from '@lib';
 import { getSinglePropArr, MathUtils, DbUtils } from '@utils';
 import { FindByParams } from '../services/sites.service';
 
@@ -193,4 +193,17 @@ export const getPatterns: AuthGetAppController<'GetPatterns', '/api/business/pat
   const patterns = await UserService.getPatterns(params);
 
   return patterns;
+};
+
+export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusiness'> = async (req) => {
+  const excelFile = req.file;
+  if (!excelFile) return new ApiError('Missing file');
+
+  const data = await ExcelClient.getBusinessData(excelFile.buffer);
+
+  if (data instanceof ApiError) return data;
+
+  await DB('Businesses').insert(data);
+
+  return { success: true };
 };

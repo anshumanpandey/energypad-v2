@@ -348,6 +348,16 @@ export interface paths {
       requestBody: components["requestBodies"]["SaveBusinessEnergy"];
     };
   };
+  "/api/business/importBusiness": {
+    /** Import excel file. */
+    post: {
+      responses: {
+        200: components["responses"]["FileImportBusiness"];
+        400: components["schemas"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["FileImportBusiness"];
+    };
+  };
 }
 
 export interface components {
@@ -728,6 +738,12 @@ export interface components {
         "application/json": components["schemas"]["BusinessPattern"][];
       };
     };
+    /** Success message */
+    FileImportBusiness: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     GetSiteDetails: number;
@@ -844,6 +860,14 @@ export interface components {
       };
     };
     LogFileImport: {
+      content: {
+        "multipart/form-data": {
+          excel?: string;
+        };
+        "application/json": string;
+      };
+    };
+    FileImportBusiness: {
       content: {
         "multipart/form-data": {
           excel?: string;
