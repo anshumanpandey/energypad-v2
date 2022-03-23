@@ -207,3 +207,69 @@ export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusi
 
   return { success: true };
 };
+
+export const importTenants: AuthAppController<'FileImportBusinessTenants', 'FileImportBusinessTenants'> = async (
+  req,
+) => {
+  const excelFile = req.file;
+  if (!excelFile) return new ApiError('Missing file');
+
+  const data = await ExcelClient.getTenantData(excelFile.buffer);
+  if (data instanceof ApiError) return data;
+
+  const isString = (str: string | undefined): str is string => {
+    return typeof str === 'string';
+  };
+
+  const sitesId = Array.from(new Set(data.map((i) => i.siteId)).values())
+    .filter(isString)
+    .map(MathUtils.toInt);
+  const sites = await SitesService.findBy({ id: sitesId });
+
+  if (sitesId.length !== sites.length) {
+    return new ApiError('Site not found');
+  }
+
+  await DB('BusinessTenant').insert(data);
+
+  return { success: true };
+};
+
+export const importPatterns: AuthAppController<'FileImportBusinessPatterns', 'FileImportBusinessPatterns'> = async (
+  req,
+) => {
+  const excelFile = req.file;
+  if (!excelFile) return new ApiError('Missing file');
+
+  const data = await ExcelClient.getPatternsData(excelFile.buffer);
+  if (data instanceof ApiError) return data;
+
+  const isString = (str: string | undefined): str is string => {
+    return typeof str === 'string';
+  };
+
+  const sitesId = Array.from(new Set(data.map((i) => i.siteId)).values())
+    .filter(isString)
+    .map(MathUtils.toInt);
+
+  const usedInIds = Array.from(new Set(data.map((i) => i.usedInId)).values())
+    .filter(isString)
+    .map(MathUtils.toInt);
+
+  const [usedIn, sites] = await Promise.all([
+    UtilityService.findFuelUseBy({ id: usedInIds }),
+    SitesService.findBy({ id: sitesId }),
+  ]);
+
+  if (sitesId.length !== sites.length) {
+    return new ApiError('Site not found');
+  }
+
+  if (usedInIds.length !== usedIn.length) {
+    return new ApiError('Site not found');
+  }
+
+  await DB('BusinessPatterns').insert(data);
+
+  return { success: true };
+};

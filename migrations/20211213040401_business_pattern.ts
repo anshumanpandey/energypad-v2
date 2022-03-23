@@ -7,7 +7,7 @@ export async function up(knex: Knex): Promise<void> {
     table.foreign('siteId').references('Sites.id').deferrable('deferred').onDelete('CASCADE');
     table.integer('usedInId', 255).notNullable();
     table.foreign('usedInId').references('FuelUses.id').deferrable('deferred').onDelete('CASCADE');
-    table.unique(['usedInId', 'siteId']);
+    table.unique(['usedInId', 'siteId', 'startDate', 'endDate']);
   });
 }
 

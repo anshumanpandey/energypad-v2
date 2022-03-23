@@ -358,6 +358,26 @@ export interface paths {
       requestBody: components["requestBodies"]["FileImportBusiness"];
     };
   };
+  "/api/business/importTenants": {
+    /** Import excel file. */
+    post: {
+      responses: {
+        200: components["responses"]["FileImportBusiness"];
+        400: components["schemas"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["FileImportBusiness"];
+    };
+  };
+  "/api/business/importPatterns": {
+    /** Import excel file. */
+    post: {
+      responses: {
+        200: components["responses"]["FileImportBusinessPatterns"];
+        400: components["schemas"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["FileImportBusinessPatterns"];
+    };
+  };
 }
 
 export interface components {
@@ -744,6 +764,18 @@ export interface components {
         "application/json": components["schemas"]["SuccessMessage"];
       };
     };
+    /** Success message */
+    FileImportBusinessTenants: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
+    /** Success message */
+    FileImportBusinessPatterns: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     GetSiteDetails: number;
@@ -868,6 +900,22 @@ export interface components {
       };
     };
     FileImportBusiness: {
+      content: {
+        "multipart/form-data": {
+          excel?: string;
+        };
+        "application/json": string;
+      };
+    };
+    FileImportBusinessTenants: {
+      content: {
+        "multipart/form-data": {
+          excel?: string;
+        };
+        "application/json": string;
+      };
+    };
+    FileImportBusinessPatterns: {
       content: {
         "multipart/form-data": {
           excel?: string;

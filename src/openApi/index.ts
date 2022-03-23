@@ -51,6 +51,8 @@ import { GetCountriesPath } from './definitions/countries.get.definition';
 import { GetStatesPath } from './definitions/states.get.definition';
 import { GetPatternsPath } from './definitions/user.patterns.get.definition';
 import { FileImportBusinessPath } from './definitions/user.import.definition';
+import { FileImportBusinessTenantsPath } from './definitions/user.tenant.import.definition';
+import { FileImportBusinessPatternPath } from './definitions/user.operation.import.definition';
 
 export default OpenApiDefinition;
 export {
@@ -86,4 +88,6 @@ export {
   GetStatesPath,
   GetPatternsPath,
   FileImportBusinessPath,
+  FileImportBusinessTenantsPath,
+  FileImportBusinessPatternPath,
 };

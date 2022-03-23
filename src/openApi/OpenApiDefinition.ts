@@ -84,6 +84,8 @@ type PathNames =
   | 'LogFileImport'
   | 'GetHeatingEnergy'
   | 'FileImportBusiness'
+  | 'FileImportBusinessTenants'
+  | 'FileImportBusinessPatterns'
   | 'UtilityFileImport';
 
 type ResponsesName = 'GenericError' | 'UpdateUser' | PathNames;

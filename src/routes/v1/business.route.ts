@@ -16,6 +16,7 @@ import {
   GetBusinessFloorsPath,
   GetPatternsPath,
   FileImportBusinessPath,
+  FileImportBusinessPatternPath,
 } from '@openApi';
 
 const businessRoutes = express.Router();
@@ -112,6 +113,22 @@ businessRoutes.post(
   AuthMiddleware,
   FileUpload.single('excel'),
   ExpressAsync(UserController.importFile),
+);
+
+businessRoutes.post(
+  '/importTenants',
+  FileImportBusinessPath,
+  AuthMiddleware,
+  FileUpload.single('excel'),
+  ExpressAsync(UserController.importTenants),
+);
+
+businessRoutes.post(
+  '/importPatterns',
+  FileImportBusinessPatternPath,
+  AuthMiddleware,
+  FileUpload.single('excel'),
+  ExpressAsync(UserController.importPatterns),
 );
 
 export default businessRoutes;
