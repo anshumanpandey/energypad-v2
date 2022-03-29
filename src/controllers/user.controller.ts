@@ -200,10 +200,13 @@ export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusi
   if (!excelFile) return new ApiError('Missing file');
 
   const data = await ExcelClient.getBusinessData(excelFile.buffer);
+  const sites = await ExcelClient.getSitesData(excelFile.buffer);
 
   if (data instanceof ApiError) return data;
 
-  await DB('Businesses').insert(data);
+  await DB.transaction(async (trx) => {
+    await Promise.all([DB('Businesses').insert(data).transacting(trx), DB('Sites').insert(sites).transacting(trx)]);
+  });
 
   return { success: true };
 };
