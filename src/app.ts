@@ -12,6 +12,7 @@ app.use(cors());
 app.use(addRequestId());
 app.use(OpenApiDefinition);
 app.use(express.json());
+app.use('/assets', express.static(__dirname + '/../assets'));
 app.use('/api', v1);
 app.use(ErrorMiddleware);
 app.use('/swaggerui', OpenApiDefinition.swaggerui);
