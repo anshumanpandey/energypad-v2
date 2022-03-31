@@ -1,4 +1,4 @@
-import { ApiError } from '@lib';
+import { ApiError, DB } from '@lib';
 import { encryptPassword } from '@utils';
 import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
@@ -50,6 +50,78 @@ export const getBusinessData = async (file: string | Buffer) => {
   if (rows instanceof ApiError) return rows;
 
   return rows;
+};
+
+export const getSitesData = async (file: string | Buffer) => {
+  const workbook = await readExcelFile(file);
+
+  const siteWorksheet = workbook.worksheets[1];
+  const sites = getSitesRecords(siteWorksheet);
+
+  const getEmails = (record: any) => record.businessEmail;
+  const query = DB('Businesses').select(['id', 'email']).whereIn('email', sites.map(getEmails));
+  const users = await query;
+  const findUser = (businessEmail: string) => (item: any) => item.email === businessEmail;
+
+  const reduceSites = (records: any, users: any[]) => {
+    const rows = [];
+
+    for (let i = 0; i < records.length; i++) {
+      const { businessEmail, ...el } = records[i];
+
+      const foundUser = users.find(findUser(businessEmail));
+
+      if (foundUser) {
+        rows.push({
+          ...el,
+          businessId: foundUser.id,
+        });
+      }
+    }
+    return rows;
+  };
+
+  return reduceSites(sites, users);
+};
+
+const isValidSiteRow = (recordToInsert: Record<string, string>) => {
+  return (
+    recordToInsert.type &&
+    recordToInsert.address &&
+    recordToInsert.postCode &&
+    recordToInsert.town &&
+    recordToInsert.population &&
+    recordToInsert.size &&
+    recordToInsert.businessEmail
+  );
+};
+
+const getSitesRecords = (Worksheet: Worksheet) => {
+  const rows = [];
+
+  const rowCount = Worksheet.actualRowCount;
+
+  const typeCol = Worksheet.columns[0];
+  const addressCol = Worksheet.columns[1];
+  const postCodeCol = Worksheet.columns[2];
+  const townCol = Worksheet.columns[3];
+  const populationCol = Worksheet.columns[4];
+  const sizeCol = Worksheet.columns[5];
+  const businessEmailCol = Worksheet.columns[6];
+
+  for (let a = 2; a <= rowCount; a++) {
+    const row: any = {
+      [`${typeCol?.values?.[1]}`]: typeCol.values?.[a],
+      [`${addressCol?.values?.[1]}`]: addressCol.values?.[a],
+      [`${postCodeCol?.values?.[1]}`]: postCodeCol.values?.[a],
+      [`${townCol?.values?.[1]}`]: townCol.values?.[a],
+      [`${populationCol?.values?.[1]}`]: populationCol.values?.[a],
+      [`${sizeCol?.values?.[1]}`]: sizeCol.values?.[a],
+      [`${businessEmailCol?.values?.[1]}`]: businessEmailCol.values?.[a],
+    };
+    rows.push(row);
+  }
+  return rows.filter(isValidSiteRow);
 };
 
 const getRows = async (Worksheet: Worksheet) => {
