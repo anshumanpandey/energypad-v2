@@ -1,6 +1,6 @@
 import { AuthAppController, AuthGetAppController } from '@types';
 import { UtilityService, SitesService, UserService } from '@services';
-import { ApiError, ExcelClient } from '@lib';
+import { ApiError, ExcelClient, DB } from '@lib';
 import { DbUtils, MathUtils } from '@utils';
 
 export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddFuelSourceConsumption'> = async (
@@ -19,7 +19,7 @@ export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddF
     return new ApiError('Site not found');
   }
 
-  await UtilityService.deleteBy({
+  await UtilityService.deleteConsumptionBy({
     fuelSourceId: fuelSourcesToFind,
     siteId: sitesToFind,
     month: req.body.map((i) => DbUtils.stringDateToDate(i.date)),
@@ -32,6 +32,8 @@ export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddF
 export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSourceEmission'> = async (req) => {
   const siteToFind = Array.from(new Set(req.body.map((i) => i.siteId)));
   const fuelSourceToFind = Array.from(new Set(req.body.map((i) => i.fuelSourceId)));
+  const years = Array.from(new Set(req.body.map((i) => i.year)));
+
   const [fuelFound, sitesFound] = await Promise.all([
     UtilityService.findFuelBy({ fuelSourceId: fuelSourceToFind }),
     SitesService.findBy({ id: siteToFind }),
@@ -43,9 +45,19 @@ export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSou
     return new ApiError('Site not found');
   }
 
-  await UtilityService.addUtilityEmissions(req.body);
+  return DB.transaction(async (txr) => {
+    await UtilityService.deleteEmissionsBy(
+      {
+        siteId: siteToFind,
+        fuelSourceId: fuelSourceToFind,
+        year: years,
+      },
+      { txr },
+    );
+    await UtilityService.addUtilityEmissions(req.body, { txr });
 
-  return { success: true };
+    return { success: true };
+  });
 };
 
 export const importLog: AuthAppController<'UtilityFileImport', 'UtilityFileImport'> = async (req) => {
@@ -98,7 +110,7 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
     return new ApiError('No data was imported');
   }
 
-  await UtilityService.deleteBy({
+  await UtilityService.deleteConsumptionBy({
     siteId: dataToInsert.map((i) => i.siteId),
     fuelSourceId: dataToInsert.map((i) => i.fuelSourceId),
     month: dataToInsert.map((i) => DbUtils.stringDateToDate(i.date)),

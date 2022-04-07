@@ -212,6 +212,23 @@ export interface paths {
       };
     };
   };
+  "/api/dashboard/reports": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {
+        query: {
+          year: string;
+          siteId: string;
+          fuelSourceId?: string;
+          month?: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["GetDashboardReports"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/business/": {
     /** Get dashboard data per date. */
     get: {
@@ -274,6 +291,22 @@ export interface paths {
       };
       responses: {
         200: components["responses"]["GetPatterns"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
+  "/api/business/logs": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {
+        query: {
+          siteId: string;
+          year: string;
+          month: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["GetLogs"];
         400: components["responses"]["GenericError"];
       };
     };
@@ -510,7 +543,6 @@ export interface components {
       fuelSourceId: number;
     };
     AddFuelSourceEmissionBody: {
-      emissionFactor: string;
       value: number;
       year: number;
       siteId: number;
@@ -580,6 +612,7 @@ export interface components {
             date: string;
             projectedEnergy: number;
             consumption: number;
+            saving: number;
           }[];
           consumptionsDetails?: {
             date: string;
@@ -774,6 +807,32 @@ export interface components {
     FileImportBusinessPatterns: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
+    /** Success message */
+    GetLogs: {
+      content: {
+        "application/json": components["schemas"]["EnergyLog"][];
+      };
+    };
+    /** Success message */
+    GetDashboardReports: {
+      content: {
+        "application/json": {
+          energyTargets: {
+            date: string;
+            projectedEnergy: number;
+            consumption: number;
+          }[];
+          carbonEmissions: {
+            date: string;
+            carbonEmission: number;
+            carbonTarget: number;
+          }[];
+          reports: {
+            id: number;
+          }[];
+        };
       };
     };
   };

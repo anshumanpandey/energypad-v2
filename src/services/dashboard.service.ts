@@ -4,6 +4,7 @@ import { addMonths, differenceInMonths, getDaysInMonth } from 'date-fns';
 import { DbUtils, MathUtils } from '@utils';
 import { UtilityService } from '@services';
 import formatISO from 'date-fns/formatISO';
+import { Emission, GetConsumptionsParams } from './utility.service';
 
 const getConsumptionStatistics = ({
   consumptions,
@@ -129,7 +130,7 @@ type ProduceYearConsumptionsParams = {
   startDate: Date;
   endDate: Date;
   businessId: number;
-  fuelSourceId: number;
+  fuelSourceId?: GetConsumptionsParams['fuelSourceId'];
   siteId: number;
 };
 
@@ -181,9 +182,69 @@ const consumptionIsProduced = (i: any) => {
   return i.produced && i.produced === true;
 };
 
+const calculateEmission = (a: number, b: number) => {
+  return a * b;
+};
+
+export type CarbonEmission = { date: string; carbonEmission: number; carbonTarget: number };
+const findCarbonEmissions = (params: {
+  forYear: Date;
+  allConsumptions: AppModels['UtilityConsumption'][];
+  emissions: Emission[];
+}) => {
+  const filterResultForParamDate = (c: CarbonEmission) => {
+    const stringYearDate = formatISO(params.forYear).split('T')[0];
+    const year = stringYearDate.slice(0, 4);
+    const dateToFilterBy = `${year}`;
+    return c.date.slice(0, 4) === dateToFilterBy;
+  };
+  const findEmissionForConsumption = (c: AppModels['UtilityConsumption']) => (e: Emission) =>
+    c.date.slice(0, 4) === e.year.toString() && c.fuelSourceId === e.fuelSourceId;
+
+  const filterCarbonEmissionsForDate = (c: CarbonEmission) => (e: CarbonEmission) => {
+    return c.date.slice(5, 7) === e.date.slice(5, 7);
+  };
+
+  const getCarbonEmissionsAverage = (carbonEmissions: CarbonEmission[]) => {
+    let total = 0;
+    for (let i = 0, len = carbonEmissions.length; i < len; i++) {
+      const el = carbonEmissions[i];
+      total = total + el.carbonEmission;
+    }
+
+    return new Decimal(total).dividedBy(carbonEmissions.length).toNumber();
+  };
+
+  const mapCarbonTarget = (c: CarbonEmission) => {
+    const emissionsForThisItem = carbonEmissions.filter(filterCarbonEmissionsForDate(c));
+    c.carbonTarget = getCarbonEmissionsAverage(emissionsForThisItem);
+    return c;
+  };
+
+  const allCarbonEmissions = params.allConsumptions.map<CarbonEmission | null>((p) => {
+    const currentEmission = params.emissions.find(findEmissionForConsumption(p));
+    if (!currentEmission) return null;
+
+    return {
+      date: p.date,
+      fuelSourceId: p.fuelSourceId,
+      carbonEmission: calculateEmission(p.consumption, currentEmission.value),
+      carbonTarget: 0,
+    };
+  });
+
+  const filterNull = (i: CarbonEmission | null) => i !== null;
+  const carbonEmissions = allCarbonEmissions.filter(filterNull) as CarbonEmission[];
+
+  const result = carbonEmissions.filter(filterResultForParamDate).map(mapCarbonTarget);
+
+  return result;
+};
+
 export default {
   getConsumptionStatistics,
   getConsumptionDetails,
   produceYearConsumptions,
   consumptionIsProduced,
+  findCarbonEmissions,
 };

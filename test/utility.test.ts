@@ -82,9 +82,14 @@ describe('/Utility ', () => {
       .post('/api/utility/addEmission')
       .send([
         {
-          emissionFactor: 'special',
           value: 600,
           year: 2001,
+          siteId: 452,
+          fuelSourceId: 1,
+        },
+        {
+          value: 200,
+          year: 2003,
           siteId: 452,
           fuelSourceId: 1,
         },
@@ -96,14 +101,12 @@ describe('/Utility ', () => {
       .post('/api/utility/addEmission')
       .send([
         {
-          emissionFactor: 'special',
           value: 600,
           year: 2003,
           siteId: 452,
           fuelSourceId: 1,
         },
         {
-          emissionFactor: 'special',
           value: 600,
           year: 2002,
           siteId: 452,
@@ -118,7 +121,7 @@ describe('/Utility ', () => {
     const body = await registerUser();
     const response = await supertest(app).get('/api/utility/fuelSources').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
-    expect(response.body.length).toBe(2);
+    expect(response.body.length).toBe(6);
   });
 
   test('It should respond with business emissions', async () => {

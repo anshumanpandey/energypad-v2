@@ -30,11 +30,12 @@ addResponseComponentFor('GetDashboardData', {
             type: 'array',
             items: {
               additionalProperties: false,
-              required: ['date', 'projectedEnergy', 'consumption'],
+              required: ['date', 'projectedEnergy', 'consumption', 'saving'],
               properties: {
                 date: { type: 'string', format: 'date' },
                 projectedEnergy: { type: 'number', format: 'int32' },
                 consumption: { type: 'number', format: 'int32' },
+                saving: { type: 'number' },
               },
             },
           },

@@ -10,6 +10,7 @@ export async function up(knex: Knex): Promise<void> {
     table.dropColumn('businessId');
     table.integer('siteId', 255).notNullable();
     table.foreign('siteId').references('Sites.id').deferrable('deferred').onDelete('CASCADE');
+    table.unique(['siteId', 'fuelSourceId', 'year']);
   });
 }
 

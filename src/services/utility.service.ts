@@ -20,12 +20,49 @@ export const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   return query;
 };
 
-type DeleteByParams = {
+type DeleteEmissionByParams = {
+  siteId?: number | number[];
+  year?: number | number[];
+  fuelSourceId?: number | number[];
+};
+export const deleteEmissionsBy = (p: DeleteEmissionByParams, opt?: Transactionable) => {
+  const query = DB('UtilityEmissions').delete();
+
+  if (p.year) {
+    if (Array.isArray(p.year)) {
+      const years = Array.from(new Set(p.year).values());
+      query.whereIn('year', years);
+    } else {
+      query.where('year', p.year);
+    }
+  }
+
+  if (p.fuelSourceId) {
+    if (Array.isArray(p.fuelSourceId)) {
+      query.whereIn('fuelSourceId', Array.from(new Set(p.fuelSourceId).values()));
+    } else {
+      query.where('fuelSourceId', p.fuelSourceId);
+    }
+  }
+  if (p.siteId) {
+    if (Array.isArray(p.siteId)) {
+      query.whereIn('siteId', Array.from(new Set(p.siteId).values()));
+    } else {
+      query.where('siteId', p.siteId);
+    }
+  }
+  if (opt?.txr) {
+    query.transacting(opt.txr);
+  }
+  return query.del();
+};
+
+type DeleteConsumptionByParams = {
   month?: Date | Date[];
   fuelSourceId?: number | number[];
   siteId?: number | number[];
 };
-export const deleteBy = (p: DeleteByParams) => {
+export const deleteConsumptionBy = (p: DeleteConsumptionByParams) => {
   const query = DB('UtilityConsumptions').delete();
 
   if (p.month) {
@@ -58,7 +95,12 @@ export const deleteBy = (p: DeleteByParams) => {
   return query.del();
 };
 
-export type GetEmissionsParams = { businessId: number; forYear?: Date; siteId?: number };
+export type GetEmissionsParams = {
+  businessId: number;
+  forYear?: Date;
+  siteId?: number;
+  fuelSourceId?: number | number[];
+};
 export const getEmissions = (params: GetEmissionsParams): Promise<AppModels['UtilityEmission'][]> => {
   const query = DB('UtilityEmissions')
     .select(['UtilityEmissions.*', { fuelSourceId: 'FuelSources.id' }])
@@ -75,15 +117,26 @@ export const getEmissions = (params: GetEmissionsParams): Promise<AppModels['Uti
     query.where('UtilityEmissions.year', params.forYear.getFullYear());
   }
 
+  if (params.fuelSourceId) {
+    if (Array.isArray(params.fuelSourceId)) {
+      query.whereIn('UtilityEmissions.fuelSourceId', params.fuelSourceId);
+    } else {
+      query.where('UtilityEmissions.fuelSourceId', params.fuelSourceId);
+    }
+  }
+
   return query;
 };
+
+export type Emission = Awaited<ReturnType<typeof getEmissions>>[0];
 
 export type GetConsumptionsParams = {
   businessId: number;
   forMonth?: Date;
+  forYear?: Date;
   startDate?: Date;
   endDate?: Date;
-  fuelSourceId?: number;
+  fuelSourceId?: number | number[];
   siteId?: number;
 };
 export const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['UtilityConsumption'][]> => {
@@ -106,11 +159,20 @@ export const getConsumptions = (params: GetConsumptionsParams): Promise<AppModel
 
   if (params.forMonth) {
     const dateParam: string = formatISO(params.forMonth).split('T')[0];
-    query.where('UtilityConsumptions.date', 'like', dateParam.slice(0, 7) + '-%');
+    query.where('UtilityConsumptions.date', 'like', `%-${dateParam.slice(5, 7)}-%`);
+  }
+
+  if (params.forYear) {
+    const dateParam: string = formatISO(params.forYear).split('T')[0];
+    query.where('UtilityConsumptions.date', 'like', dateParam.slice(0, 4) + '-%');
   }
 
   if (params.fuelSourceId) {
-    query.where('FuelSources.id', params.fuelSourceId);
+    if (Array.isArray(params.fuelSourceId)) {
+      query.whereIn('FuelSources.id', params.fuelSourceId);
+    } else {
+      query.where('FuelSources.id', params.fuelSourceId);
+    }
   }
 
   if (params.siteId) {
@@ -165,16 +227,16 @@ export const findFuelUseBy = (p?: FindFuelUseByParams): Promise<{ id: number; us
 
 type AddUtilityEmissionsParams = {
   year: number;
-  emissionFactor: string;
   value: number;
   fuelSourceId: number;
   siteId: number;
 };
-export const addUtilityEmissions = (p: AddUtilityEmissionsParams[]) => {
-  return DB.transaction((trx) => {
-    const query = trx('UtilityEmissions').insert(p);
-    return query;
-  });
+export const addUtilityEmissions = (p: AddUtilityEmissionsParams[], opt?: Transactionable) => {
+  const query = DB('UtilityEmissions').insert(p);
+  if (opt?.txr) {
+    query.transacting(opt.txr);
+  }
+  return query;
 };
 
 type ConsumptionRecord = { consumption: number; date: string };
@@ -230,11 +292,13 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
       //hdd: i.value,
       //slope: s,
       projectedEnergy: projectedEnergy,
-      /*saving: new Decimal(projectedEnergy)
+      saving: new Decimal(projectedEnergy)
         .minus(p.currentConsumptionRecords[idx] ? p.currentConsumptionRecords[idx].consumption : 0)
-        .toNumber(),*/
+        .toNumber(),
     });
   }
 
   return reducedData;
 };
+
+export type Projection = Awaited<ReturnType<typeof consumingProjection>>;

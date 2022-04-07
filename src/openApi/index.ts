@@ -53,6 +53,7 @@ import { GetPatternsPath } from './definitions/user.patterns.get.definition';
 import { FileImportBusinessPath } from './definitions/user.import.definition';
 import { FileImportBusinessTenantsPath } from './definitions/user.tenant.import.definition';
 import { FileImportBusinessPatternPath } from './definitions/user.operation.import.definition';
+import { GetDashboardReportsPath } from './definitions/dashboard.report.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -90,4 +91,5 @@ export {
   FileImportBusinessPath,
   FileImportBusinessTenantsPath,
   FileImportBusinessPatternPath,
+  GetDashboardReportsPath,
 };

@@ -4,7 +4,6 @@ export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable('UtilityEmissions', function (table) {
     table.increments('id');
     table.string('year').notNullable();
-    table.string('emissionFactor').notNullable();
     table.integer('value').notNullable();
     table.integer('siteId', 255).notNullable();
     table.foreign('siteId').references('Sites.id').deferrable('deferred').onDelete('CASCADE');

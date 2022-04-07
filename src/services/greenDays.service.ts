@@ -53,9 +53,10 @@ const handleResponse =
     const response = data.response;
     if (response.type === 'Failure') {
       return a.map((_) => ({
-        date: DbUtils.stringDateToDate(_.startDate),
+        date: DbUtils.stringDateToDate(_.first),
         value: Math.floor(Math.random() * 60) + 10,
       }));
+      //TODO: remove line below when deploy
       //return new ApiError(response.message);
     }
 

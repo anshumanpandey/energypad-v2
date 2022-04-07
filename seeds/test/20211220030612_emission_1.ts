@@ -42,15 +42,13 @@ export async function seed(knex: Knex): Promise<void> {
     {
       id: 10,
       year: 2010,
-      emissionFactor: 'special',
       value: 200,
       fuelSourceId: 1,
       siteId: 640,
     },
     {
       id: 12,
-      year: 2010,
-      emissionFactor: 'special',
+      year: 2011,
       value: 200,
       fuelSourceId: 1,
       siteId: 640,

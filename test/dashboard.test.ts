@@ -33,15 +33,15 @@ describe('/Dashboard ', () => {
       expect(response.body.energyTargets.length).toBe(3);
 
       expect(response.body.consumptionsDetails[0].date).toBe('2020-01-01');
-      expect(response.body.consumptionsDetails[0].fuelSourceName).toBe('Electricity');
+      expect(response.body.consumptionsDetails[0].fuelSourceName).toBe('Grid Electricity');
       expect(response.body.consumptionsDetails[0].incesedPercentage).toBe(9800);
 
       expect(response.body.consumptionsDetails[1].date).toBe('2020-02-01');
-      expect(response.body.consumptionsDetails[1].fuelSourceName).toBe('Electricity');
+      expect(response.body.consumptionsDetails[1].fuelSourceName).toBe('Grid Electricity');
       expect(response.body.consumptionsDetails[1].incesedPercentage).toBe(-59.6);
 
       expect(response.body.consumptionsDetails[2].date).toBe('2020-03-01');
-      expect(response.body.consumptionsDetails[2].fuelSourceName).toBe('Electricity');
+      expect(response.body.consumptionsDetails[2].fuelSourceName).toBe('Grid Electricity');
       expect(response.body.consumptionsDetails[2].incesedPercentage).toBe(75);
 
       const response2 = await supertest(app)

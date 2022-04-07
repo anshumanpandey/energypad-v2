@@ -42,67 +42,67 @@ export async function seed(knex: Knex): Promise<void> {
 
     {
       text: 'Raise energy awareness more often to users. This can be via e-mail, face-to-face, webinars or workshops. ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 1.jpg',
     },
     {
       text: 'Turn off unused radiators ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 2.jpg',
     },
     {
       text: 'Set the time for your heating to come on a little late than normally to ensure your building reduces heating energy whilst not sacrificing thermal comfort ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 3.jpg',
     },
     {
       text: 'Service your heating systems regularly to increase its operational efficiency to save heating  ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 4.jpg',
     },
     {
       text: 'Close all windows during heating to prevent air infiltration ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 5.jpg',
     },
     {
       text: 'Shut doors during heating properly to prevent air infiltration ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 6.jpg',
     },
     {
       text: 'Draft proof doors ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 7.jpg',
     },
     {
       text: 'Check that insulation on building fabrics are in good condition ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 8.jpg',
     },
     {
       text: 'Check that there are no hot water leaks  ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 9.jpg',
     },
     {
       text: 'Use water efficiently and cut back on hot water use ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 10.jpg',
     },
     {
       text: ' Check that radiator are free of obstructions at all time ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 11.jpg',
     },
     {
       text: 'Reduce heating setpoint by 1 degree if possible ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 12.jpg',
     },
     {
       text: 'Match heating supply to the building with operating times ',
-      category: 'Heating ',
+      category: 'Heating',
       imageUrl: '/assets/energyTipsImages/heating/Heating Energy_Artboard 13.jpg',
     },
     {
