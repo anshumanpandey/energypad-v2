@@ -38,7 +38,6 @@ export type QueryParamsKeys = Pick<
   | '/api/business/patterns'
   | '/api/utility/consumptions'
   | '/api/utility/emissions'
-  | '/api/business/logs'
   | '/api/dashboard/reports'
 >;
 export type QueryParams<T extends keyof QueryParamsKeys> = QueryParamsKeys[T]['get']['parameters']['query'];
