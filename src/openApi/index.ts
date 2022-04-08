@@ -54,6 +54,7 @@ import { FileImportBusinessPath } from './definitions/user.import.definition';
 import { FileImportBusinessTenantsPath } from './definitions/user.tenant.import.definition';
 import { FileImportBusinessPatternPath } from './definitions/user.operation.import.definition';
 import { GetDashboardReportsPath } from './definitions/dashboard.report.get.definition';
+import { GetDashboardCarbonFootprintPath } from './definitions/dashboard.carbonfootprint.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -92,4 +93,5 @@ export {
   FileImportBusinessTenantsPath,
   FileImportBusinessPatternPath,
   GetDashboardReportsPath,
+  GetDashboardCarbonFootprintPath,
 };

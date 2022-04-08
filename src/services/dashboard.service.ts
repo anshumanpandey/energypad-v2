@@ -4,7 +4,7 @@ import { addMonths, differenceInMonths, getDaysInMonth } from 'date-fns';
 import { DbUtils, MathUtils } from '@utils';
 import { UtilityService } from '@services';
 import formatISO from 'date-fns/formatISO';
-import { Emission, GetConsumptionsParams } from './utility.service';
+import { FuelSource, GetConsumptionsParams } from './utility.service';
 
 const getConsumptionStatistics = ({
   consumptions,
@@ -186,19 +186,30 @@ const calculateEmission = (a: number, b: number) => {
   return a * b;
 };
 
-export type CarbonEmission = { date: string; carbonEmission: number; carbonTarget: number };
+export type CarbonEmission = {
+  date: string;
+  carbonEmission: number;
+  carbonTarget: number;
+  increasedConsumptionPercentage: number;
+  averageEmissionPerDay: number;
+};
 const findCarbonEmissions = (params: {
-  forYear: Date;
+  forYear?: Date;
   allConsumptions: AppModels['UtilityConsumption'][];
-  emissions: Emission[];
+  emissions: AppModels['UtilityEmission'][];
+  fuels?: FuelSource[];
 }) => {
   const filterResultForParamDate = (c: CarbonEmission) => {
-    const stringYearDate = formatISO(params.forYear).split('T')[0];
+    const yearParam = params.forYear;
+
+    if (!yearParam) return true;
+
+    const stringYearDate = formatISO(yearParam).split('T')[0];
     const year = stringYearDate.slice(0, 4);
     const dateToFilterBy = `${year}`;
     return c.date.slice(0, 4) === dateToFilterBy;
   };
-  const findEmissionForConsumption = (c: AppModels['UtilityConsumption']) => (e: Emission) =>
+  const findEmissionForConsumption = (c: AppModels['UtilityConsumption']) => (e: AppModels['UtilityEmission']) =>
     c.date.slice(0, 4) === e.year.toString() && c.fuelSourceId === e.fuelSourceId;
 
   const filterCarbonEmissionsForDate = (c: CarbonEmission) => (e: CarbonEmission) => {
@@ -215,9 +226,19 @@ const findCarbonEmissions = (params: {
     return new Decimal(total).dividedBy(carbonEmissions.length).toNumber();
   };
 
-  const mapCarbonTarget = (c: CarbonEmission) => {
+  const mapCarbonTarget = (c: CarbonEmission, idx: number, arr: CarbonEmission[]) => {
+    const previouseRecord = arr[idx - 1];
     const emissionsForThisItem = carbonEmissions.filter(filterCarbonEmissionsForDate(c));
     c.carbonTarget = getCarbonEmissionsAverage(emissionsForThisItem);
+    c.increasedConsumptionPercentage = MathUtils.calculateIncreasePercentage({
+      currentValue: c.carbonEmission,
+      passValue: previouseRecord ? previouseRecord.carbonEmission : 0,
+    });
+    const monthAverage = new Decimal(c.carbonEmission)
+      .dividedBy(getDaysInMonth(DbUtils.stringDateToDate(c.date)))
+      .toDecimalPlaces(2)
+      .toNumber();
+    c.averageEmissionPerDay = monthAverage;
     return c;
   };
 
@@ -228,15 +249,20 @@ const findCarbonEmissions = (params: {
     return {
       date: p.date,
       fuelSourceId: p.fuelSourceId,
+      fuelSourceName: p.fuelSourceName,
+      fuelSourceColorCode: params.fuels?.find((i) => i.id === p.fuelSourceId)?.colorCode || '#4989C6',
       carbonEmission: calculateEmission(p.consumption, currentEmission.value),
+      cost: p.cost,
       carbonTarget: 0,
+      increasedConsumptionPercentage: 0,
+      averageEmissionPerDay: 0,
     };
   });
 
   const filterNull = (i: CarbonEmission | null) => i !== null;
   const carbonEmissions = allCarbonEmissions.filter(filterNull) as CarbonEmission[];
 
-  const result = carbonEmissions.filter(filterResultForParamDate).map(mapCarbonTarget);
+  const result = carbonEmissions.map(mapCarbonTarget).filter(filterResultForParamDate);
 
   return result;
 };

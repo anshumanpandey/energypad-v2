@@ -147,6 +147,7 @@ const requestValidator = (p: { body?: RequestBodieKeys; query?: keyof QueryParam
     }
   }
 
+  //TODO: validate query parameters
   /*if (p.query) {
     const queryParameters = schema.paths[p.query]?.get?.parameters.query as any;
     if (queryParameters) {

@@ -242,3 +242,54 @@ export const getReporData: AuthGetAppController<'GetDashboardReports', '/api/das
     totalYearReports,
   };
 };
+
+export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootprint', '/api/dashboard/carbonFootprint'> =
+  async (req) => {
+    const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
+    const selectedYear = new Date(year, 0, 1);
+
+    const siteId = MathUtils.toInt(req.query.siteId);
+    const fuelSourceId = MathUtils.toInt(req.query.fuelSourceId || '1');
+
+    const [consumptionsForSelectedMonth, fuelSources] = await Promise.all([
+      UtilityService.getConsumptions({
+        businessId: req.user.id,
+        siteId,
+        startDate: subMonths(selectedYear, 1),
+        endDate: endOfYear(selectedYear),
+      }),
+      UtilityService.getFuelSources(),
+    ]);
+
+    let carbonEmissions: CarbonEmission[] = [];
+    let allCarbonEmissions: CarbonEmission[] = [];
+
+    const filteredConsumptions = consumptionsForSelectedMonth.filter(UtilityService.filterByFuelSource(fuelSourceId));
+    if (filteredConsumptions.length > 0) {
+      const emissions = await UtilityService.getEmissions({
+        businessId: req.user.id,
+        siteId,
+      });
+
+      const [result1, result2] = await Promise.all([
+        DashboardService.findCarbonEmissions({
+          forYear: selectedYear,
+          emissions,
+          allConsumptions: filteredConsumptions,
+          fuels: fuelSources,
+        }),
+        DashboardService.findCarbonEmissions({
+          emissions,
+          allConsumptions: consumptionsForSelectedMonth,
+          fuels: fuelSources,
+        }),
+      ]);
+
+      carbonEmissions = result1 ? result1 : [];
+      allCarbonEmissions = result2 ? result2.filter(DbUtils.filterByYear(selectedYear.getFullYear())) : [];
+    }
+    return {
+      carbonEmissions,
+      allCarbonEmissions,
+    };
+  };

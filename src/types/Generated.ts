@@ -219,12 +219,27 @@ export interface paths {
         query: {
           year: string;
           siteId: string;
-          fuelSourceId?: string;
-          month?: string;
+          fuelSourceId: string;
         };
       };
       responses: {
         200: components["responses"]["GetDashboardReports"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
+  "/api/dashboard/carbonFootprint": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {
+        query: {
+          year: string;
+          siteId: string;
+          fuelSourceId: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["GetDashboardCarbonFootprint"];
         400: components["responses"]["GenericError"];
       };
     };
@@ -493,6 +508,7 @@ export interface components {
     };
     FuelSource: {
       source: string;
+      colorCode: string;
       usedIn: string[];
     };
     EnergyLog: {
@@ -831,6 +847,18 @@ export interface components {
           }[];
           reports: {
             id: number;
+          }[];
+        };
+      };
+    };
+    /** Success message */
+    GetDashboardCarbonFootprint: {
+      content: {
+        "application/json": {
+          carbonEmissions: {
+            date: string;
+            carbonEmission: number;
+            carbonTarget: number;
           }[];
         };
       };

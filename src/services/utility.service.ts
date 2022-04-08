@@ -128,8 +128,6 @@ export const getEmissions = (params: GetEmissionsParams): Promise<AppModels['Uti
   return query;
 };
 
-export type Emission = Awaited<ReturnType<typeof getEmissions>>[0];
-
 export type GetConsumptionsParams = {
   businessId: number;
   forMonth?: Date;
@@ -182,7 +180,7 @@ export const getConsumptions = (params: GetConsumptionsParams): Promise<AppModel
   return query;
 };
 
-type FuelSource = AppModels['FuelSource'] & { id: number };
+export type FuelSource = AppModels['FuelSource'] & { id: number };
 export const getFuelSources = async (): Promise<FuelSource[]> => {
   const query = DB('FuelSources').select('FuelSources.*');
 
@@ -302,3 +300,7 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
 };
 
 export type Projection = Awaited<ReturnType<typeof consumingProjection>>;
+
+export const filterByFuelSource = (i: number) => (r: { fuelSourceId: number }) => {
+  return i === r.fuelSourceId;
+};

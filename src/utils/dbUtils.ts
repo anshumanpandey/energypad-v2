@@ -17,6 +17,10 @@ export const dateToStringDate = (date: Date) => {
   return formatISO(date).split('T')[0];
 };
 
+export const filterByYear = (year: number) => (r: { date: string }) => {
+  return year === stringDateToDate(r.date).getFullYear();
+};
+
 /**
  * Sort array of objects with a date property
  * where the date property is the default DB date string

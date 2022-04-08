@@ -5,6 +5,7 @@ export async function up(knex: Knex): Promise<void> {
     .createTable('FuelSources', function (table) {
       table.increments('id');
       table.string('source').notNullable();
+      table.string('colorCode').notNullable();
     })
     .createTable('FuelUses', function (table) {
       table.increments('id');

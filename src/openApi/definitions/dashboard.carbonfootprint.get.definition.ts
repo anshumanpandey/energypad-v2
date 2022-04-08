@@ -1,27 +1,15 @@
 import { OpenAPIV3 } from 'openapi-types';
 import { OpenApiDefinition, getReferenceFor, addResponseComponentFor } from '../OpenApiDefinition';
 
-addResponseComponentFor('GetDashboardReports', {
+addResponseComponentFor('GetDashboardCarbonFootprint', {
   description: 'Success message',
   content: {
     'application/json': {
       schema: {
         type: 'object',
-        required: ['energyTargets', 'reports', 'carbonEmissions'],
+        required: ['carbonEmissions'],
         additionalProperties: false,
         properties: {
-          energyTargets: {
-            type: 'array',
-            items: {
-              additionalProperties: false,
-              required: ['date', 'projectedEnergy', 'consumption'],
-              properties: {
-                date: { type: 'string', format: 'date' },
-                projectedEnergy: { type: 'number', format: 'int32' },
-                consumption: { type: 'number', format: 'int32' },
-              },
-            },
-          },
           carbonEmissions: {
             type: 'array',
             items: {
@@ -34,23 +22,13 @@ addResponseComponentFor('GetDashboardReports', {
               },
             },
           },
-          reports: {
-            type: 'array',
-            items: {
-              additionalProperties: false,
-              required: ['id'],
-              properties: {
-                id: { type: 'number', format: 'int32' },
-              },
-            },
-          },
         },
       },
     },
   },
 });
 
-const GetDashboardReports: OpenAPIV3.OperationObject = {
+const GetDashboardCarbonFootprint: OpenAPIV3.OperationObject = {
   description: 'Get dashboard data per date.',
   parameters: [
     { in: 'query', name: 'year', schema: { type: 'string' }, required: true },
@@ -58,9 +36,9 @@ const GetDashboardReports: OpenAPIV3.OperationObject = {
     { in: 'query', name: 'fuelSourceId', schema: { type: 'string' }, required: true, explode: true },
   ],
   responses: {
-    '200': getReferenceFor({ for: 'responses', name: 'GetDashboardReports' }),
+    '200': getReferenceFor({ for: 'responses', name: 'GetDashboardCarbonFootprint' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),
   },
 };
 
-export const GetDashboardReportsPath = OpenApiDefinition.path(GetDashboardReports);
+export const GetDashboardCarbonFootprintPath = OpenApiDefinition.path(GetDashboardCarbonFootprint);
