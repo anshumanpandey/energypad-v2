@@ -828,7 +828,10 @@ export interface components {
     /** Success message */
     GetLogs: {
       content: {
-        "application/json": components["schemas"]["EnergyLog"][];
+        "application/json": {
+          logs: components["schemas"]["EnergyLog"][];
+          tenants: components["schemas"]["Tenant"][];
+        };
       };
     };
     /** Success message */

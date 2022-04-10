@@ -391,4 +391,34 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
   ]);
+  await knex('BusinessLog').insert([
+    {
+      id: 102,
+      startDate: '2020-10-01',
+      endDate: '2020-10-08',
+      comments: 'some long comment',
+      operation: 'some operation',
+      siteId: site.id,
+      usedInId: 2,
+    },
+  ]);
+
+  await knex('BusinessTenant').insert([
+    {
+      id: 104,
+      date: '2021-10-09',
+      regularTenantAmount: 25,
+      irregularTenantAmount: 25,
+      siteId: site.id,
+      usedInId: 2,
+    },
+    {
+      id: 106,
+      date: '2020-10-01',
+      regularTenantAmount: 25,
+      irregularTenantAmount: 55,
+      siteId: site.id,
+      usedInId: 3,
+    },
+  ]);
 }

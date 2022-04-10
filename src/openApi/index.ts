@@ -53,6 +53,7 @@ import { GetPatternsPath } from './definitions/user.patterns.get.definition';
 import { FileImportBusinessPath } from './definitions/user.import.definition';
 import { FileImportBusinessTenantsPath } from './definitions/user.tenant.import.definition';
 import { FileImportBusinessPatternPath } from './definitions/user.operation.import.definition';
+import { GetLogsPath } from './definitions/user.log.get.definition';
 import { GetDashboardReportsPath } from './definitions/dashboard.report.get.definition';
 import { GetDashboardCarbonFootprintPath } from './definitions/dashboard.carbonfootprint.get.definition';
 
@@ -92,6 +93,7 @@ export {
   FileImportBusinessPath,
   FileImportBusinessTenantsPath,
   FileImportBusinessPatternPath,
+  GetLogsPath,
   GetDashboardReportsPath,
   GetDashboardCarbonFootprintPath,
 };

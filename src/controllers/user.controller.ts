@@ -195,6 +195,25 @@ export const getPatterns: AuthGetAppController<'GetPatterns', '/api/business/pat
   return patterns;
 };
 
+export const getLogs: AuthGetAppController<'GetLogs', '/api/business/logs'> = async (req) => {
+  const monthDate = new Date(MathUtils.toInt(req.query.year), MathUtils.toInt(req.query.month), 1);
+  const params = {
+    businessId: req.user.id,
+    siteId: MathUtils.toInt(req.query.siteId),
+    forMonth: monthDate,
+  };
+
+  const tenantsParams = {
+    siteId: MathUtils.toInt(req.query.siteId),
+    year: monthDate.getFullYear(),
+    month: monthDate.getMonth(),
+  };
+
+  const [logs, tenants] = await Promise.all([UserService.getLogs(params), UserService.getTenantsBy(tenantsParams)]);
+
+  return { logs, tenants };
+};
+
 export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusiness'> = async (req) => {
   const excelFile = req.file;
   if (!excelFile) return new ApiError('Missing file');

@@ -415,6 +415,30 @@ const saveLog = (p: SaveLogParams[]) => {
   return query;
 };
 
+type GetLogs = {
+  businessId: number;
+  siteId: number;
+  forMonth: Date;
+};
+const getLogs = (p: GetLogs) => {
+  const query = DB('BusinessLog')
+    .select(['BusinessLog.*', 'FS.use'])
+    .innerJoin({ S: 'Sites' }, 'BusinessLog.siteId', 'S.id')
+    .innerJoin({ FS: 'FuelUses' }, 'BusinessLog.usedInId', 'FS.id')
+    .where('S.businessId', p.businessId);
+  if (p.siteId) {
+    query.where('S.id', p.siteId);
+  }
+
+  if (p.forMonth) {
+    const monthAndYear = formatISO(p.forMonth).split('T')[0].slice(0, 7);
+    query
+      .where('BusinessLog.startDate', 'like', monthAndYear + '%')
+      .andWhere('BusinessLog.endDate', 'like', monthAndYear + '%');
+  }
+  return query;
+};
+
 type SetTenantsParams = {
   businessId: number;
   tenants: AppModels['Tenant'][];
@@ -598,6 +622,22 @@ const getFloorsBy = async (params?: GetSitesByParams): Promise<(AppModels['Busin
   return query;
 };
 
+type GetTenantsByParams = {
+  siteId: number;
+  year: number;
+  month: number;
+};
+const getTenantsBy = (p: GetTenantsByParams) => {
+  const query = DB('BusinessTenant').select();
+
+  query.where('siteId', p.siteId);
+
+  const defaultDate = new Date(p.year, p.month, 1);
+  query.where('date', 'like', formatISO(defaultDate).split('T')[0].slice(0, 7) + '%');
+
+  return query;
+};
+
 export default {
   saveEnergy,
   setBrands,
@@ -613,4 +653,6 @@ export default {
   getFloorsBy,
   getPatterns,
   deletePatters,
+  getLogs,
+  getTenantsBy,
 };
