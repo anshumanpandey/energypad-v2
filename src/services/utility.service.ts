@@ -3,6 +3,7 @@ import Decimal from 'decimal.js';
 import { formatISO } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 import { DbUtils } from '@utils';
+import SiteService from './sites.service';
 
 export type AddConsumptionToUtilityParam = RequestBodyParams<'AddFuelSourceConsumption'>;
 export const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam, opt?: Transactionable) => {
@@ -98,7 +99,7 @@ export const deleteConsumptionBy = (p: DeleteConsumptionByParams) => {
 export type GetEmissionsParams = {
   businessId: number;
   forYear?: Date;
-  siteId?: number;
+  siteId?: number | number[];
   fuelSourceId?: number | number[];
 };
 export const getEmissions = (params: GetEmissionsParams): Promise<AppModels['UtilityEmission'][]> => {
@@ -110,7 +111,11 @@ export const getEmissions = (params: GetEmissionsParams): Promise<AppModels['Uti
     .where('B.id', params.businessId);
 
   if (params.siteId) {
-    query.where('UtilityEmissions.siteId', params.siteId);
+    if (Array.isArray(params.siteId)) {
+      query.whereIn('UtilityEmissions.siteId', params.siteId);
+    } else {
+      query.where('UtilityEmissions.siteId', params.siteId);
+    }
   }
 
   if (params.forYear) {
@@ -135,11 +140,17 @@ export type GetConsumptionsParams = {
   startDate?: Date;
   endDate?: Date;
   fuelSourceId?: number | number[];
-  siteId?: number;
+  siteId?: number | number[];
 };
 export const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['UtilityConsumption'][]> => {
+  const fields = [
+    'UtilityConsumptions.*',
+    { fuelSourceId: 'FuelSources.id' },
+    { fuelSourceName: 'FuelSources.source' },
+  ];
+
   const query = DB('UtilityConsumptions')
-    .select(['UtilityConsumptions.*', { fuelSourceId: 'FuelSources.id' }, { fuelSourceName: 'FuelSources.source' }])
+    .select(fields)
     .innerJoin('FuelSources', 'UtilityConsumptions.fuelSourceId', 'FuelSources.id')
     .innerJoin({ S: 'Sites' }, 'UtilityConsumptions.siteId', 'S.id')
     .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
@@ -174,7 +185,11 @@ export const getConsumptions = (params: GetConsumptionsParams): Promise<AppModel
   }
 
   if (params.siteId) {
-    query.where('UtilityConsumptions.siteId', params.siteId);
+    if (Array.isArray(params.siteId)) {
+      query.whereIn('UtilityConsumptions.siteId', params.siteId);
+    } else {
+      query.where('UtilityConsumptions.siteId', params.siteId);
+    }
   }
 
   return query;
@@ -237,7 +252,7 @@ export const addUtilityEmissions = (p: AddUtilityEmissionsParams[], opt?: Transa
   return query;
 };
 
-type ConsumptionRecord = { consumption: number; date: string };
+type ConsumptionRecord = { consumption: number; date: string; siteId: number };
 type Hdd = { date: Date; value: number };
 type ConsummingStaticsticsParams = {
   pastConsumptionRecords: ConsumptionRecord[];
@@ -280,20 +295,29 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
 
   const reducedData = [];
 
-  for (let idx = 1, len = p.currentHdd.length; idx < len; idx++) {
-    const item = p.currentHdd[idx];
-    const s = new Decimal(item.value).times(slope).toNumber();
-    const projectedEnergy = new Decimal(intercept).plus(s).toNumber();
-    reducedData.push({
-      date: formatISO(item.date).split('T')[0],
-      consumption: p.currentConsumptionRecords[idx].consumption,
-      //hdd: i.value,
-      //slope: s,
-      projectedEnergy: projectedEnergy,
-      saving: new Decimal(projectedEnergy)
-        .minus(p.currentConsumptionRecords[idx] ? p.currentConsumptionRecords[idx].consumption : 0)
-        .toNumber(),
-    });
+  const sitesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.siteId)).values());
+
+  for (let s = 0; s < sitesId.length; s++) {
+    const siteId = sitesId[s];
+
+    const currentSiteConsumptions = p.currentConsumptionRecords.filter(SiteService.filterBySiteId(siteId));
+
+    for (let idx = 1, len = currentSiteConsumptions.length; idx < len; idx++) {
+      const item = p.currentHdd[idx];
+      const s = new Decimal(item.value).times(slope).toNumber();
+      const projectedEnergy = new Decimal(intercept).plus(s).toNumber();
+      reducedData.push({
+        siteId: currentSiteConsumptions[idx].siteId,
+        date: formatISO(item.date).split('T')[0],
+        consumption: currentSiteConsumptions[idx].consumption,
+        //hdd: i.value,
+        //slope: s,
+        projectedEnergy: projectedEnergy,
+        saving: new Decimal(projectedEnergy)
+          .minus(currentSiteConsumptions[idx] ? currentSiteConsumptions[idx].consumption : 0)
+          .toNumber(),
+      });
+    }
   }
 
   return reducedData;

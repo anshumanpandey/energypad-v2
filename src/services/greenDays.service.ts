@@ -2,7 +2,7 @@ import { randomBytes, createHmac } from 'crypto';
 import axios from 'axios';
 import { ApiError } from '@lib';
 import { formatISO } from 'date-fns';
-import { DbUtils } from '@utils';
+import { DbUtils, ErrorUtils } from '@utils';
 
 const accountKey = 'test-test-test';
 const securityKey = 'test-test-test-test-test-test-test-test-test-test-test-test-test';
@@ -13,7 +13,7 @@ const endpoint = 'http://apiv1.degreedays.net/json';
 
 const toInt = (i: string) => parseInt(i, 10);
 
-const makeRequest = (locationDataRequest: any) => {
+const makeRequest = (locationDataRequest: any, siteId: number) => {
   const fullRequest = {
     securityInfo: {
       endpoint: endpoint,
@@ -45,16 +45,17 @@ const makeRequest = (locationDataRequest: any) => {
         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
       },
     })
-    .then(handleResponse(fullRequest.request.dataSpecs.myHDD.breakdown.dayRanges));
+    .then(handleResponse(fullRequest.request.dataSpecs.myHDD.breakdown.dayRanges, siteId));
 };
 const handleResponse =
-  (a: any[]) =>
-  ({ data }: { data: GreenData }) => {
+  (a: any[], siteId: number) =>
+  ({ data }: { data: GreenData }): HDDRecord[] | ApiError => {
     const response = data.response;
     if (response.type === 'Failure') {
       return a.map((_) => ({
         date: DbUtils.stringDateToDate(_.first),
         value: Math.floor(Math.random() * 60) + 10,
+        siteId,
       }));
       //TODO: remove line below when deploy
       //return new ApiError(response.message);
@@ -64,7 +65,7 @@ const handleResponse =
 
     const mapFn = (v: Value) => {
       const dateUnits = v.d.split('-').map(toInt);
-      const item = { date: new Date(dateUnits[0], dateUnits[1] - 1, 1), value: v.v };
+      const item = { date: new Date(dateUnits[0], dateUnits[1] - 1, 1), value: v.v, siteId };
       reducedData.push(item);
     };
     const hddData = response.dataSets.myHDD;
@@ -81,6 +82,7 @@ const handleResponse =
 type DateRange = {
   startDate: string;
   endDate: string;
+  siteId: number;
 };
 
 type GetHddsParams = {
@@ -101,26 +103,47 @@ const getHdds = (p: GetHddsParams) => {
     countryCode: 'US',
   };
 
-  const mapDateReanges = (i: DateRange) => {
-    return {
-      first: i.startDate,
-      last: i.endDate,
+  const sitesId = Array.from(new Set(p.breakDowns.map((i) => i.siteId)).values());
+
+  const groupBySite = (ranges: DateRange[]) => {
+    const table = [];
+    for (let i = 0; i < sitesId.length; i++) {
+      const el = sitesId[i];
+      const rowElements = {
+        siteId: el,
+        breakDowns: ranges.filter((i) => i.siteId === el),
+      };
+      table.push(rowElements);
+    }
+    return table;
+  };
+
+  const toIterate = groupBySite(p.breakDowns);
+
+  const promises = [];
+
+  for (let i = 0; i < toIterate.length; i++) {
+    const el = toIterate[i];
+
+    const mapDateReanges = (i: DateRange) => {
+      return {
+        first: i.startDate,
+        last: i.endDate,
+      };
     };
-  };
 
-  const breakdown = {
-    type: 'CustomBreakdown',
-    dayRanges: p.breakDowns.map(mapDateReanges),
-  };
+    const breakdown = {
+      type: 'CustomBreakdown',
+      dayRanges: el.breakDowns.map(mapDateReanges),
+    };
 
-  const locationDataRequest = {
-    type: 'LocationDataRequest',
-    location: location,
-    dataSpecs: {},
-  };
-  if (p.valuesToGet.includes('HDD')) {
-    locationDataRequest.dataSpecs = {
-      myHDD: {
+    const locationDataRequest = {
+      type: 'LocationDataRequest',
+      location: location,
+      dataSpecs: {} as Record<string, any>,
+    };
+    if (p.valuesToGet.includes('HDD')) {
+      locationDataRequest.dataSpecs.myHDD = {
         type: 'DatedDataSpec',
         calculation: {
           type: 'HeatingDegreeDaysCalculation',
@@ -130,12 +153,10 @@ const getHdds = (p: GetHddsParams) => {
           },
         },
         breakdown: breakdown,
-      },
-    };
-  }
-  if (p.valuesToGet.includes('CDD')) {
-    locationDataRequest.dataSpecs = {
-      myCDD: {
+      };
+    }
+    if (p.valuesToGet.includes('CDD')) {
+      locationDataRequest.dataSpecs.myCDD = {
         type: 'DatedDataSpec',
         calculation: {
           type: 'CoolingDegreeDaysCalculation',
@@ -145,11 +166,19 @@ const getHdds = (p: GetHddsParams) => {
           },
         },
         breakdown: breakdown,
-      },
-    };
+      };
+    }
+
+    promises.push(makeRequest(locationDataRequest, el.siteId));
   }
 
-  return makeRequest(locationDataRequest);
+  return Promise.all(promises).then((results) => {
+    const errorFound = results.find(ErrorUtils.isErrorInstance);
+    if (errorFound) {
+      return errorFound;
+    }
+    return results.flatMap((f) => (ErrorUtils.isErrorInstance(f) ? [] : f));
+  });
 };
 
 export default { getHdds };

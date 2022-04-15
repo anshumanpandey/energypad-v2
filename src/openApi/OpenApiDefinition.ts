@@ -58,6 +58,7 @@ type PathNames =
   | 'GetDashboardData'
   | 'GetDashboardReports'
   | 'GetDashboardCarbonFootprint'
+  | 'GetDashboardPortfolio'
   | 'AddFuelSourceConsumption'
   | 'AddFuelSourceEmission'
   | 'GetUtilities'

@@ -244,6 +244,22 @@ export interface paths {
       };
     };
   };
+  "/api/dashboard/portfolio": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {
+        query: {
+          year: string;
+          month: string;
+          fuelSourceId: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["GetDashboardPortfolio"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/business/": {
     /** Get dashboard data per date. */
     get: {
@@ -629,6 +645,7 @@ export interface components {
             projectedEnergy: number;
             consumption: number;
             saving: number;
+            siteId: number;
           }[];
           consumptionsDetails?: {
             date: string;
@@ -856,6 +873,18 @@ export interface components {
     };
     /** Success message */
     GetDashboardCarbonFootprint: {
+      content: {
+        "application/json": {
+          carbonEmissions: {
+            date: string;
+            carbonEmission: number;
+            carbonTarget: number;
+          }[];
+        };
+      };
+    };
+    /** Success message */
+    GetDashboardPortfolio: {
       content: {
         "application/json": {
           carbonEmissions: {

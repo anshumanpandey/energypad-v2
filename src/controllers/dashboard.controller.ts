@@ -1,8 +1,8 @@
 import { ApiError } from '@lib';
-import { UtilityService, DashboardService, UserService, GreenDaysServices } from '@services';
+import { UtilityService, DashboardService, UserService, GreenDaysServices, SitesService } from '@services';
 import { AuthGetAppController } from '@types';
-import { DbUtils, MathUtils } from '@utils';
-import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth } from 'date-fns';
+import { DbUtils, MathUtils, ErrorUtils } from '@utils';
+import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYears } from 'date-fns';
 import { CarbonEmission } from '../services/dashboard.service';
 import { HDDRecord } from '../services/greenDays.service';
 import { GetConsumptionsParams } from '../services/utility.service';
@@ -47,6 +47,7 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
     consumption: number;
     projectedEnergy: number;
     saving: number;
+    siteId: number;
   }[] = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
@@ -57,7 +58,7 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
       const date = DbUtils.stringDateToDate(r.date);
       const endOfMonthDate = endOfMonth(date);
       const endDate = formatISO(endOfMonthDate, { representation: 'date' }).split('T')[0];
-      return { startDate, endDate };
+      return { startDate, endDate, siteId: r.siteId };
     };
 
     const promises: Promise<ApiError | HDDRecord[]>[] = [];
@@ -163,7 +164,7 @@ export const getReporData: AuthGetAppController<'GetDashboardReports', '/api/das
       const date = DbUtils.stringDateToDate(r.date);
       const endOfMonthDate = endOfMonth(date);
       const endDate = formatISO(endOfMonthDate, { representation: 'date' }).split('T')[0];
-      return { startDate, endDate };
+      return { startDate, endDate, siteId: r.siteId };
     };
 
     const promises: Promise<ApiError | HDDRecord[]>[] = [];
@@ -293,3 +294,129 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
       allCarbonEmissions,
     };
   };
+
+export const getReportData: AuthGetAppController<'GetDashboardPortfolio', '/api/dashboard/portfolio'> = async (req) => {
+  const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
+  const month = req.query.month !== undefined ? MathUtils.toInt(req.query.month) : new Date().getMonth();
+  const fuelSourceId = MathUtils.toInt(req.query.fuelSourceId);
+  const selectedYear = new Date(year, month, 1);
+
+  const [sites, business] = await Promise.all([
+    SitesService.findBy({ businessId: req.user.id }),
+    UserService.getUserBy({ id: req.user.id }),
+  ]);
+  const sitesId = sites.map((i) => i.id);
+
+  const [consumptions, fuelSources] = await Promise.all([
+    UtilityService.getConsumptions({
+      businessId: req.user.id,
+      siteId: sitesId,
+      startDate: subMonths(selectedYear, 1),
+      endDate: selectedYear,
+      fuelSourceId,
+    }),
+    UtilityService.getFuelSources(),
+  ]);
+
+  const emissions = await UtilityService.getEmissions({
+    businessId: req.user.id,
+    siteId: sitesId,
+    fuelSourceId,
+  });
+
+  const carbonEmissions = await DashboardService.findCarbonEmissions({
+    forYear: selectedYear,
+    emissions,
+    allConsumptions: consumptions,
+    fuels: fuelSources,
+  });
+
+  const [oldConsumptions, currentConsumptionRecords] = await Promise.all([
+    DashboardService.produceYearConsumptions({
+      businessId: req.user.id,
+      startDate: subMonths(subYears(selectedYear, 1), 1),
+      endDate: subYears(selectedYear, 1),
+      fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
+      siteId: sitesId,
+    }),
+    DashboardService.produceYearConsumptions({
+      businessId: req.user.id,
+      startDate: subMonths(selectedYear, 1),
+      endDate: endOfMonth(selectedYear),
+      fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
+      siteId: sitesId,
+    }),
+  ]);
+
+  let statistics: {
+    date: string;
+    consumption: number;
+    projectedEnergy: number;
+    saving: number;
+  }[] = [];
+
+  const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
+  if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
+    const mapRecords = (r: typeof oldConsumptions[0]) => {
+      const startDate = r.date;
+
+      const date = DbUtils.stringDateToDate(r.date);
+      const endOfMonthDate = endOfMonth(date);
+      const endDate = formatISO(endOfMonthDate, { representation: 'date' }).split('T')[0];
+      return { startDate, endDate, siteId: r.siteId };
+    };
+
+    const promises: Promise<ApiError | HDDRecord[]>[] = [];
+    if (oldConsumptions.length !== 0) {
+      const params = {
+        postalCode: business.postCode,
+        breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(mapRecords),
+        valuesToGet: ['HDD' as const],
+      };
+
+      promises.push(GreenDaysServices.getHdds(params));
+    }
+    if (currentConsumptionRecords.length !== 0) {
+      const params = {
+        postalCode: business.postCode,
+        breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(mapRecords),
+        valuesToGet: ['HDD' as const],
+      };
+      promises.push(GreenDaysServices.getHdds(params));
+    }
+
+    const [pastHdds, currentHdd] = await Promise.all(promises);
+    if (pastHdds instanceof ApiError) return pastHdds;
+    if (currentHdd instanceof ApiError) return currentHdd;
+
+    const energyParams = {
+      pastConsumptionRecords: oldConsumptions,
+      pastHdds,
+      currentConsumptionRecords,
+      currentHdd,
+    };
+
+    statistics = await UtilityService.consumingProjection(energyParams);
+    if (ErrorUtils.isErrorInstance(statistics)) return statistics;
+  }
+
+  const filterByParamMonth = (i: typeof carbonEmissions[0]) => {
+    return DbUtils.stringDateToDate(i.date).getMonth() === month;
+  };
+
+  const findSiteById = (i: number) => (s: typeof sites[0]) => {
+    return s.id === i;
+  };
+
+  const addSitesData = (i: any) => {
+    return {
+      ...i,
+      siteAddress: sites.find(findSiteById(i.siteId))?.address,
+    };
+  };
+
+  return {
+    carbonEmissions: carbonEmissions.filter(filterByParamMonth).map(addSitesData),
+    energyTargets: statistics.map(addSitesData),
+  };
+};

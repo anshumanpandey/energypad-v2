@@ -199,6 +199,10 @@ const getStates = async (p?: GetStatesParams) => {
   return query;
 };
 
+const filterBySiteId = (id: number) => (s: { siteId: number }) => {
+  return id === s.siteId;
+};
+
 export default {
   findBy,
   createSite,
@@ -206,4 +210,5 @@ export default {
   getSiteDetails,
   getCountries,
   getStates,
+  filterBySiteId,
 };

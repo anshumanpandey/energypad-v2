@@ -1,7 +1,12 @@
 import express from 'express';
 import { AuthMiddleware, ExpressAsync } from '@middleware';
 import { DashboardController } from '@controllers';
-import { GetDashboardCarbonFootprintPath, GetDashboardDataPath, GetDashboardReportsPath } from '@openApi';
+import {
+  GetDashboardCarbonFootprintPath,
+  GetDashboardDataPath,
+  GetDashboardPortfolioPath,
+  GetDashboardReportsPath,
+} from '@openApi';
 
 const authRoutes = express.Router();
 
@@ -12,6 +17,13 @@ authRoutes.get(
   GetDashboardCarbonFootprintPath,
   AuthMiddleware,
   ExpressAsync(DashboardController.getcarbonFootprint),
+);
+
+authRoutes.get(
+  '/portfolio',
+  GetDashboardPortfolioPath,
+  AuthMiddleware,
+  ExpressAsync(DashboardController.getReportData),
 );
 
 export default authRoutes;

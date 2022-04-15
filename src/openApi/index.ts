@@ -56,6 +56,7 @@ import { FileImportBusinessPatternPath } from './definitions/user.operation.impo
 import { GetLogsPath } from './definitions/user.log.get.definition';
 import { GetDashboardReportsPath } from './definitions/dashboard.report.get.definition';
 import { GetDashboardCarbonFootprintPath } from './definitions/dashboard.carbonfootprint.get.definition';
+import { GetDashboardPortfolioPath } from './definitions/dashboard.portfolio.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -96,4 +97,5 @@ export {
   GetLogsPath,
   GetDashboardReportsPath,
   GetDashboardCarbonFootprintPath,
+  GetDashboardPortfolioPath,
 };

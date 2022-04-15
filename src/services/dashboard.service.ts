@@ -114,12 +114,12 @@ const getConsumptionDetails = ({
   return consumptionDetails.flat();
 };
 
-const generateMockConsumption = (p: { date: string }) => {
+const generateMockConsumption = (p: { date: string; siteId: number }) => {
   return {
     date: p.date,
     consumption: 0,
     cost: 0,
-    siteId: 0,
+    siteId: p.siteId,
     id: 0,
     fuelSourceName: '',
     fuelSourceId: 0,
@@ -131,7 +131,7 @@ type ProduceYearConsumptionsParams = {
   endDate: Date;
   businessId: number;
   fuelSourceId?: GetConsumptionsParams['fuelSourceId'];
-  siteId: number;
+  siteId: GetConsumptionsParams['siteId'];
 };
 
 type ProduceYearConsumptionsOptions = {
@@ -153,24 +153,48 @@ const produceYearConsumptions = async (p: ProduceYearConsumptionsParams, opt?: P
   const consumptionMap = new Map<string, typeof consumption[0]>();
 
   const fillMap = (i: typeof consumption[0]) => {
-    consumptionMap.set(i.date, i);
+    consumptionMap.set(`${i.date}-${i.siteId}`, i);
   };
   consumption.forEach(fillMap);
 
   let amountElementsFounds = 0;
 
-  for (let idx = 0; idx <= monthsBetweenDates; idx++) {
-    const dateToFind = formatISO(addMonths(p.startDate, idx), { representation: 'date' });
-    const found = consumptionMap.get(dateToFind);
+  let rootIteration = 1;
+  if (p.siteId) {
+    if (Array.isArray(p.siteId)) {
+      rootIteration = p.siteId.length;
+    }
+  }
+  for (let r = 0; r < rootIteration; r++) {
+    let rootSite = undefined;
+    if (p.siteId) {
+      if (Array.isArray(p.siteId)) {
+        rootSite = p.siteId[r];
+      } else {
+        rootSite = p.siteId;
+      }
+    }
+    for (let idx = 0; idx <= monthsBetweenDates; idx++) {
+      const dateToFind = formatISO(addMonths(p.startDate, idx), { representation: 'date' });
+      let mapKey = dateToFind;
+      if (rootSite) {
+        mapKey = `${dateToFind}-${rootSite}`;
+      }
+      const found = consumptionMap.get(mapKey);
 
-    if (!found) {
-      const date = addMonths(p.startDate, idx);
-      const formattedDate = formatISO(date, { representation: 'date' });
-      consumptionMap.set(formattedDate, generateMockConsumption({ date: formattedDate }));
-    } else {
-      amountElementsFounds = amountElementsFounds + 1;
-      if (opt?.fillStartOnly === true && amountElementsFounds === consumption.length) {
-        break;
+      if (!found) {
+        const date = addMonths(p.startDate, idx);
+        const formattedDate = formatISO(date, { representation: 'date' });
+        let key = formattedDate;
+        if (rootSite) {
+          key = `${formattedDate}-${rootSite}`;
+        }
+        consumptionMap.set(key, generateMockConsumption({ date: formattedDate, siteId: rootSite || 0 }));
+      } else {
+        amountElementsFounds = amountElementsFounds + 1;
+        if (opt?.fillStartOnly === true && amountElementsFounds === consumption.length) {
+          break;
+        }
       }
     }
   }
@@ -192,6 +216,7 @@ export type CarbonEmission = {
   carbonTarget: number;
   increasedConsumptionPercentage: number;
   averageEmissionPerDay: number;
+  siteId: number;
 };
 const findCarbonEmissions = (params: {
   forYear?: Date;
@@ -210,7 +235,7 @@ const findCarbonEmissions = (params: {
     return c.date.slice(0, 4) === dateToFilterBy;
   };
   const findEmissionForConsumption = (c: AppModels['UtilityConsumption']) => (e: AppModels['UtilityEmission']) =>
-    c.date.slice(0, 4) === e.year.toString() && c.fuelSourceId === e.fuelSourceId;
+    c.date.slice(0, 4) === e.year.toString() && c.fuelSourceId === e.fuelSourceId && c.siteId === e.siteId;
 
   const filterCarbonEmissionsForDate = (c: CarbonEmission) => (e: CarbonEmission) => {
     return c.date.slice(5, 7) === e.date.slice(5, 7);
@@ -247,6 +272,7 @@ const findCarbonEmissions = (params: {
     if (!currentEmission) return null;
 
     return {
+      siteId: p.siteId,
       date: p.date,
       fuelSourceId: p.fuelSourceId,
       fuelSourceName: p.fuelSourceName,

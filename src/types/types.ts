@@ -41,6 +41,7 @@ export type QueryParamsKeys = Pick<
   | '/api/business/logs'
   | '/api/dashboard/reports'
   | '/api/dashboard/carbonFootprint'
+  | '/api/dashboard/portfolio'
 >;
 export type QueryParams<T extends keyof QueryParamsKeys> = QueryParamsKeys[T]['get']['parameters']['query'];
 
