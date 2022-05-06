@@ -136,13 +136,14 @@ export const getUses: AuthGetAppController<'GetUsedIn'> = async () => {
 };
 
 export const getConsumptions: AuthGetAppController<'GetConsumptions', '/api/utility/consumptions'> = async (req) => {
-  let forMonth = undefined;
+  let date = undefined;
 
   if (req.query.year && req.query.month) {
-    forMonth = new Date(MathUtils.toInt(req.query.year), MathUtils.toInt(req.query.month), 1);
+    date = new Date(MathUtils.toInt(req.query.year), MathUtils.toInt(req.query.month), 1);
   }
   const params: UtilityService.GetConsumptionsParams = {
-    forMonth,
+    forMonth: date,
+    forYear: date,
     siteId: req.query.siteId ? parseInt(req.query.siteId) : undefined,
     businessId: req.user.id,
   };

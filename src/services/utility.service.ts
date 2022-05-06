@@ -1,9 +1,10 @@
 import { DB } from '@lib';
 import Decimal from 'decimal.js';
-import { formatISO } from 'date-fns';
+import { formatISO, setDay, setMonth } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 import { DbUtils } from '@utils';
 import SiteService from './sites.service';
+import { ProducedConsumption } from './dashboard.service';
 
 export type AddConsumptionToUtilityParam = RequestBodyParams<'AddFuelSourceConsumption'>;
 export const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam, opt?: Transactionable) => {
@@ -252,11 +253,10 @@ export const addUtilityEmissions = (p: AddUtilityEmissionsParams[], opt?: Transa
   return query;
 };
 
-type ConsumptionRecord = { consumption: number; date: string; siteId: number };
 type Hdd = { date: Date; value: number };
 type ConsummingStaticsticsParams = {
-  pastConsumptionRecords: ConsumptionRecord[];
-  currentConsumptionRecords: ConsumptionRecord[];
+  pastConsumptionRecords: ProducedConsumption[];
+  currentConsumptionRecords: ProducedConsumption[];
   pastHdds: Hdd[];
   currentHdd: Hdd[];
 };
@@ -303,19 +303,24 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
     const currentSiteConsumptions = p.currentConsumptionRecords.filter(SiteService.filterBySiteId(siteId));
 
     for (let idx = 1, len = currentSiteConsumptions.length; idx < len; idx++) {
+      const thisConsumption = currentSiteConsumptions[idx];
       const item = p.currentHdd[idx];
-      const s = new Decimal(item.value).times(slope).toNumber();
-      const projectedEnergy = new Decimal(intercept).plus(s).toNumber();
+      let projectedEnergy = 0;
+      if (!thisConsumption?.produced) {
+        const s = new Decimal(item.value).times(slope).toNumber();
+        projectedEnergy = new Decimal(intercept).plus(s).toNumber();
+      }
+
       reducedData.push({
-        siteId: currentSiteConsumptions[idx].siteId,
-        date: formatISO(item.date).split('T')[0],
-        consumption: currentSiteConsumptions[idx].consumption,
+        fuelSourceName: thisConsumption.fuelSourceName,
+        fuelSourceId: thisConsumption.fuelSourceId,
+        siteId: thisConsumption.siteId,
+        date: DbUtils.dateToStringDate(item?.date || setDay(setMonth(new Date(), idx), 1)),
+        consumption: thisConsumption.consumption,
         //hdd: i.value,
         //slope: s,
         projectedEnergy: projectedEnergy,
-        saving: new Decimal(projectedEnergy)
-          .minus(currentSiteConsumptions[idx] ? currentSiteConsumptions[idx].consumption : 0)
-          .toNumber(),
+        saving: new Decimal(projectedEnergy).minus(thisConsumption ? thisConsumption.consumption : 0).toNumber(),
       });
     }
   }

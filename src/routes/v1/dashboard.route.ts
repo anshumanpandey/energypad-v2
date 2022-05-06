@@ -4,6 +4,7 @@ import { DashboardController } from '@controllers';
 import {
   GetDashboardCarbonFootprintPath,
   GetDashboardDataPath,
+  GetDashboardEnergyWastePath,
   GetDashboardPortfolioPath,
   GetDashboardReportsPath,
 } from '@openApi';
@@ -24,6 +25,13 @@ authRoutes.get(
   GetDashboardPortfolioPath,
   AuthMiddleware,
   ExpressAsync(DashboardController.getReportData),
+);
+
+authRoutes.get(
+  '/energyWaste',
+  GetDashboardEnergyWastePath,
+  AuthMiddleware,
+  ExpressAsync(DashboardController.getEnergyWaste),
 );
 
 export default authRoutes;

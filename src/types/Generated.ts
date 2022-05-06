@@ -260,6 +260,23 @@ export interface paths {
       };
     };
   };
+  "/api/dashboard/energyWaste": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {
+        query: {
+          year: string;
+          month: string;
+          fuelSourceId: string;
+          siteId: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["GetDashboardEnergyWaste"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/business/": {
     /** Get dashboard data per date. */
     get: {
@@ -891,6 +908,20 @@ export interface components {
             date: string;
             carbonEmission: number;
             carbonTarget: number;
+          }[];
+        };
+      };
+    };
+    /** Success message */
+    GetDashboardEnergyWaste: {
+      content: {
+        "application/json": {
+          energyTargets: {
+            date: string;
+            projectedEnergy: number;
+            consumption: number;
+            saving: number;
+            siteId: number;
           }[];
         };
       };

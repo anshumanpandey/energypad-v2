@@ -1,7 +1,7 @@
 import { ApiError } from '@lib';
 import { UtilityService, DashboardService, UserService, GreenDaysServices, SitesService } from '@services';
 import { AuthGetAppController } from '@types';
-import { DbUtils, MathUtils, ErrorUtils } from '@utils';
+import { DbUtils, MathUtils, ErrorUtils, AppUtils } from '@utils';
 import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYears } from 'date-fns';
 import { CarbonEmission } from '../services/dashboard.service';
 import { HDDRecord } from '../services/greenDays.service';
@@ -57,7 +57,7 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
 
       const date = DbUtils.stringDateToDate(r.date);
       const endOfMonthDate = endOfMonth(date);
-      const endDate = formatISO(endOfMonthDate, { representation: 'date' }).split('T')[0];
+      const endDate = DbUtils.dateToStringDate(endOfMonthDate);
       return { startDate, endDate, siteId: r.siteId };
     };
 
@@ -418,5 +418,92 @@ export const getReportData: AuthGetAppController<'GetDashboardPortfolio', '/api/
   return {
     carbonEmissions: carbonEmissions.filter(filterByParamMonth).map(addSitesData),
     energyTargets: statistics.map(addSitesData),
+  };
+};
+
+export const getEnergyWaste: AuthGetAppController<'GetDashboardEnergyWaste', '/api/dashboard/energyWaste'> = async (
+  req,
+) => {
+  const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
+  const siteId = MathUtils.toInt(req.query.siteId) || new Date().getFullYear();
+  const selectedYear = new Date(year, 0, 1);
+
+  const [business, fuelSources] = await Promise.all([
+    UserService.getUserBy({ id: req.user.id }),
+    UtilityService.getFuelSources(),
+  ]);
+
+  const [oldConsumptions, currentConsumptionRecords] = await Promise.all([
+    DashboardService.produceYearConsumptions({
+      businessId: req.user.id,
+      startDate: subYears(selectedYear, 1),
+      endDate: endOfYear(subYears(selectedYear, 1)),
+      fuelSourceId: fuelSources.map(AppUtils.getRecordId),
+      siteId: siteId,
+    }),
+    DashboardService.produceYearConsumptions({
+      businessId: req.user.id,
+      startDate: subMonths(selectedYear, 1),
+      endDate: endOfYear(selectedYear),
+      fuelSourceId: fuelSources.map(AppUtils.getRecordId),
+      siteId: siteId,
+    }),
+  ]);
+
+  let statistics: {
+    date: string;
+    consumption: number;
+    projectedEnergy: number;
+    saving: number;
+    siteId: number;
+  }[] = [];
+
+  const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
+  if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
+    const mapRecords = (r: typeof oldConsumptions[0]) => {
+      const startDate = r.date;
+
+      const date = DbUtils.stringDateToDate(r.date);
+      const endOfMonthDate = endOfMonth(date);
+      const endDate = formatISO(endOfMonthDate, { representation: 'date' }).split('T')[0];
+      return { startDate, endDate, siteId: r.siteId };
+    };
+
+    const promises: Promise<ApiError | HDDRecord[]>[] = [];
+    if (oldConsumptions.length !== 0) {
+      const params = {
+        postalCode: business.postCode,
+        breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(mapRecords),
+        valuesToGet: ['HDD' as const],
+      };
+
+      promises.push(GreenDaysServices.getHdds(params));
+    }
+    if (currentConsumptionRecords.length !== 0) {
+      const params = {
+        postalCode: business.postCode,
+        breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(mapRecords),
+        valuesToGet: ['HDD' as const],
+      };
+      promises.push(GreenDaysServices.getHdds(params));
+    }
+
+    const [pastHdds, currentHdd] = await Promise.all(promises);
+    if (pastHdds instanceof ApiError) return pastHdds;
+    if (currentHdd instanceof ApiError) return currentHdd;
+
+    const energyParams = {
+      pastConsumptionRecords: oldConsumptions,
+      pastHdds,
+      currentConsumptionRecords,
+      currentHdd,
+    };
+
+    statistics = await UtilityService.consumingProjection(energyParams);
+    if (ErrorUtils.isErrorInstance(statistics)) return statistics;
+  }
+
+  return {
+    energyTargets: statistics,
   };
 };

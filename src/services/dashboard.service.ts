@@ -137,7 +137,12 @@ type ProduceYearConsumptionsParams = {
 type ProduceYearConsumptionsOptions = {
   fillStartOnly: boolean;
 };
-const produceYearConsumptions = async (p: ProduceYearConsumptionsParams, opt?: ProduceYearConsumptionsOptions) => {
+
+export type ProducedConsumption = AppModels['UtilityConsumption'] & { produced?: boolean };
+const produceYearConsumptions = async (
+  p: ProduceYearConsumptionsParams,
+  opt?: ProduceYearConsumptionsOptions,
+): Promise<Array<ProducedConsumption>> => {
   const consumptionParams = {
     businessId: p.businessId,
     startDate: p.startDate,
