@@ -22,6 +22,8 @@ export async function seed(knex: Knex): Promise<void> {
       holydayDate: new Date().toISOString().split('T')[0],
       totalArea: 200,
       totalPopulation: 5122,
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
     },
     {
       id: 212,
@@ -43,6 +45,8 @@ export async function seed(knex: Knex): Promise<void> {
       holydayDate: new Date().toISOString().split('T')[0],
       totalArea: 200,
       totalPopulation: 5122,
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
     },
     {
       id: 218,
@@ -64,6 +68,8 @@ export async function seed(knex: Knex): Promise<void> {
       holydayDate: new Date().toISOString().split('T')[0],
       totalArea: 200,
       totalPopulation: 5122,
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
     },
 
     {
@@ -86,6 +92,8 @@ export async function seed(knex: Knex): Promise<void> {
       holydayDate: new Date().toISOString().split('T')[0],
       totalArea: 200,
       totalPopulation: 5122,
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
     },
 
     {
@@ -108,6 +116,8 @@ export async function seed(knex: Knex): Promise<void> {
       holydayDate: new Date().toISOString().split('T')[0],
       totalArea: 200,
       totalPopulation: 5122,
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
     },
   ]);
 

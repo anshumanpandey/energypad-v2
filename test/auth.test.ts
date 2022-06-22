@@ -26,6 +26,8 @@ describe('/auth', () => {
       holydayDate: '1942-04-26',
       totalArea: 76421184.56177847,
       totalPopulation: 78438954.75821584,
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
     });
     expect(response.body).toMatchSchema(schema.components.responses.Register.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
@@ -51,6 +53,8 @@ describe('/auth', () => {
       holydayDate: '1942-04-26',
       totalArea: 76421184.56177847,
       totalPopulation: 78438954.75821584,
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
     });
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.Register.content['application/json'].schema);
@@ -155,6 +159,8 @@ describe('/auth', () => {
       holydayDate: '1942-04-26',
       totalArea: 76421184.56177847,
       totalPopulation: 78438954.75821584,
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
     };
     await supertest(app).post('/api/auth').send(body);
 
@@ -186,6 +192,8 @@ describe('/auth', () => {
       holydayDate: '1942-04-26',
       totalArea: 76421184.56177847,
       totalPopulation: 78438954.75821584,
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
     };
     await supertest(app).post('/api/auth').send(body);
 
@@ -226,6 +234,8 @@ describe('/auth', () => {
       holydayDate: '1942-04-26',
       totalArea: 76421184.56177847,
       totalPopulation: 78438954.75821584,
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
     };
     await supertest(app).post('/api/auth').send(body);
     const response = await supertest(app)
