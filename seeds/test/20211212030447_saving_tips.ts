@@ -7,34 +7,62 @@ export async function seed(knex: Knex): Promise<void> {
   // Inserts seed entries
   await knex('EnergySavingTips').insert([
     {
-      imageUrl: null,
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 1.jpg',
       category: 'Cooling',
       text: 'Raise energy awareness more often to users. This can be via e-mail, face-to-face, webinars or workshops. ',
     },
-    { imageUrl: null, category: 'Cooling', text: 'Turn off unused Air Conditioning Systems ' },
     {
-      imageUrl: null,
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 2.jpg',
+      category: 'Cooling',
+      text: 'Turn off unused Air Conditioning Systems ',
+    },
+    {
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 3.jpg',
       category: 'Cooling',
       text: 'Match air conditioning operating times with building operating times ',
     },
     {
-      imageUrl: null,
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 4.jpg',
       category: 'Cooling',
       text: ' Set the time for your cooling systems to come on a little late than normally to ensure your building reduces power whilst not sacrificing thermal comfort ',
     },
-    { imageUrl: null, category: 'Cooling', text: 'Clean Vents regularly to reduce colling energy ' },
-    { imageUrl: null, category: 'Cooling', text: 'Unplug unused servers to reduce colling needs ' },
-    { imageUrl: null, category: 'Cooling', text: 'Check that the HVAC housing unit is not leaking ' },
-    { imageUrl: null, category: 'Cooling', text: 'Lower the speed of fans to reduce cooling energy ' },
-    { imageUrl: null, category: 'Cooling', text: 'Close all windows during cooling to prevent air infiltration ' },
-    { imageUrl: null, category: 'Cooling', text: 'Shut doors properly to prevent heat infiltration ' },
     {
-      imageUrl: null,
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 5.jpg',
+      category: 'Cooling',
+      text: 'Clean Vents regularly to reduce colling energy ',
+    },
+    {
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 6.jpg',
+      category: 'Cooling',
+      text: 'Unplug unused servers to reduce colling needs ',
+    },
+    {
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 7.jpg',
+      category: 'Cooling',
+      text: 'Check that the HVAC housing unit is not leaking ',
+    },
+    {
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 8.jpg',
+      category: 'Cooling',
+      text: 'Lower the speed of fans to reduce cooling energy ',
+    },
+    {
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 9.jpg',
+      category: 'Cooling',
+      text: 'Close all windows during cooling to prevent air infiltration ',
+    },
+    {
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 10.jpg',
+      category: 'Cooling',
+      text: 'Shut doors properly to prevent heat infiltration ',
+    },
+    {
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 11.jpg',
       category: 'Cooling',
       text: 'Wherever possible, open windows when air conditioning system is off to access free cooling ',
     },
     {
-      imageUrl: null,
+      imageUrl: '/assets/energyTipsImages/cooling/Cooling Energy_Artboard 12.jpg',
       category: 'Cooling',
       text: 'Ensure your air conditioning system is not on while windows are left open  ',
     },
