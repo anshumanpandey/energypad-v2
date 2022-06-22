@@ -118,7 +118,11 @@ export interface paths {
   "/api/utility/fuelUse": {
     /** Get dashboard data per date. */
     get: {
-      parameters: {};
+      parameters: {
+        query: {
+          names?: string;
+        };
+      };
       responses: {
         200: components["responses"]["GetUsedIn"];
         400: components["responses"]["GenericError"];

@@ -15,7 +15,7 @@ addResponseComponentFor('GetUsedIn', {
 
 const GetUsedIn: OpenAPIV3.OperationObject = {
   description: 'Get dashboard data per date.',
-  parameters: [],
+  parameters: [{ in: 'query', name: 'names', schema: { type: 'string' }, required: false }],
   responses: {
     '200': getReferenceFor({ for: 'responses', name: 'GetUsedIn' }),
     '400': getReferenceFor({ for: 'responses', name: 'GenericError' }),

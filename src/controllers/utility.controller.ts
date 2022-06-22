@@ -130,8 +130,8 @@ export const getFuelSources: AuthGetAppController<'GetFuelSources'> = async () =
   return tips;
 };
 
-export const getUses: AuthGetAppController<'GetUsedIn'> = async () => {
-  const tips = await UtilityService.findFuelUseBy();
+export const getUses: AuthGetAppController<'GetUsedIn', '/api/utility/fuelUse'> = async (req) => {
+  const tips = await UtilityService.findFuelUseBy({ names: req.query.names?.split(',') });
   return tips;
 };
 

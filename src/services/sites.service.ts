@@ -167,9 +167,9 @@ const findBy = async (params?: FindByParams): Promise<(AppModels['Site'] & { id:
   if (params?.fuelSourceIdUsedInConsumption) {
     const fsi = params.fuelSourceIdUsedInConsumption;
     query
-      .innerJoin({ BP: 'BusinessFuelsPricing' }, 'Sites.id', 'BP.siteId')
-      .innerJoin({ BF: 'BusinessFuelsSize' }, 'Sites.id', 'BF.siteId')
-      .innerJoin({ BB: 'BusinessBrands' }, 'Sites.id', 'BB.siteId')
+      .leftJoin({ BP: 'BusinessFuelsPricing' }, 'Sites.id', 'BP.siteId')
+      .leftJoin({ BF: 'BusinessFuelsSize' }, 'Sites.id', 'BF.siteId')
+      .leftJoin({ BB: 'BusinessBrands' }, 'Sites.id', 'BB.siteId')
       .where((builder) => {
         builder.where('BP.fuelSourceId', fsi).orWhere('BF.fuelSourceId', fsi).orWhere('BB.fuelSourceId', fsi);
       })

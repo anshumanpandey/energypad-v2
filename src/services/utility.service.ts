@@ -5,6 +5,7 @@ import { AppModels, RequestBodyParams, Transactionable } from '@types';
 import { DbUtils } from '@utils';
 import SiteService from './sites.service';
 import { ProducedConsumption } from './dashboard.service';
+import { capitalizeFirstLetter } from '../utils/appUtils';
 
 export type AddConsumptionToUtilityParam = RequestBodyParams<'AddFuelSourceConsumption'>;
 export const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam, opt?: Transactionable) => {
@@ -224,6 +225,7 @@ export const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: stri
 
 type FindFuelUseByParams = {
   id?: number | number[];
+  names?: string | string[];
 };
 export const findFuelUseBy = (p?: FindFuelUseByParams): Promise<{ id: number; use: string }[]> => {
   const query = DB('FuelUses').select('FuelUses.*');
@@ -233,6 +235,14 @@ export const findFuelUseBy = (p?: FindFuelUseByParams): Promise<{ id: number; us
       query.whereIn('id', p.id);
     } else {
       query.where('id', p.id);
+    }
+  }
+
+  if (p?.names) {
+    if (Array.isArray(p.names)) {
+      query.whereIn('use', p.names.map(capitalizeFirstLetter));
+    } else {
+      query.where('use', capitalizeFirstLetter(p.names));
     }
   }
 

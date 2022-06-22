@@ -89,4 +89,11 @@ describe('/Site ', () => {
     expect(response.body).toMatchSchema(schema.components.responses.GetSiteDetails.content['application/json'].schema);
     expect(response.body.energies[0].usedInId.length).toBe(2);
   });
+
+  test('It should filter sites by fuel source', async () => {
+    const body = await loginUser('mail312@mail.com');
+    const response = await supertest(app).get('/api/business/sites?fsi=1').set('Authorization', `Bearer ${body.jwt}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.length).toBe(1);
+  });
 });

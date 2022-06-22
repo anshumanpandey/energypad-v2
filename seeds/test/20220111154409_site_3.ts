@@ -67,5 +67,33 @@ export async function seed(knex: Knex): Promise<void> {
       size: 15,
       businessId: 316,
     },
+    {
+      id: 480,
+      type: 'some',
+      address: 'anywhere',
+      postCode: '484 sd8',
+      town: 'some town',
+      population: 15000,
+      size: 15,
+      businessId: 312,
+    },
+  ]);
+
+  await knex('BusinessFuelsSize').insert([
+    {
+      id: 200,
+      meters: 5498,
+      fuelSourceId: 1,
+      siteId: 480,
+      usedInId: 2,
+    },
+
+    {
+      id: 202,
+      meters: 5498,
+      fuelSourceId: 1,
+      siteId: 480,
+      usedInId: 3,
+    },
   ]);
 }
