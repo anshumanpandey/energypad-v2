@@ -72,7 +72,6 @@ describe('/Utility ', () => {
     expect(response.body[0].id).toBe(1);
     expect(typeof response.body[0].category).toBe('string');
     expect(typeof response.body[0].text).toBe('string');
-    expect(response.body[0].imageUrl).toBe(null);
     expect(response.statusCode).toBe(200);
   });
 
