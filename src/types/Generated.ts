@@ -481,6 +481,7 @@ export interface components {
       town: string;
       population: number;
       size: number;
+      workinghours: number;
     };
     JWTToken: {
       jwt: string;

@@ -15,6 +15,7 @@ describe('/Site ', () => {
       town: 'somwehre',
       population: 17391920.135333613,
       size: 45786843.40282458,
+      workinghours: 10,
     });
     expect(response.body).toMatchSchema(schema.components.responses.Site.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
@@ -29,12 +30,13 @@ describe('/Site ', () => {
       town: 'some town_new',
       population: 222222,
       size: 8888,
+      workinghours: 25,
     });
     expect(response.body).toMatchSchema(schema.components.responses.SiteUpdate.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
   });
 
-  test('It should respond with fail message when create a site when passing wrong town', async () => {
+  test('It should respond with fail message when create a site when passing wrong data', async () => {
     const body = await loginUser('mail238@mail.com');
     const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       type: 'in amet enim',
@@ -52,7 +54,7 @@ describe('/Site ', () => {
       type: 'in amet enim',
       address: 'irure aliquip cillum esse magna',
       postCode: 'dolor enim',
-      town: 35779417.474086836,
+      town: 'a town',
       population: 'some',
       size: 45786843.40282458,
       fuel: 'sed sint incididunt',
@@ -62,6 +64,19 @@ describe('/Site ', () => {
     expect(response2.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response2.body.message).toBe(NO_EXTRA_PROPERTY_ERROR_MESSAGE);
     expect(response2.statusCode).toBe(400);
+
+    const response3 = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
+      type: 'some_new',
+      address: 'anywhere_new',
+      postCode: '484 sd8_new',
+      town: 'some town_new',
+      population: 222222,
+      size: 8888,
+      workinghours: 'a',
+    });
+    expect(response3.body).toMatchSchema(schema.components.schemas.GenericError);
+    expect(response3.body.message).toBe('workinghours: should be number');
+    expect(response3.statusCode).toBe(400);
   });
 
   test('It should respond with success when deleting site', async () => {

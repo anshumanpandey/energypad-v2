@@ -34,6 +34,7 @@ export async function seed(knex: Knex): Promise<void> {
     postCode: '484 sd8',
     town: 'some town',
     population: 15000,
+    workinghours: 2,
     size: 15,
     businessId: 322,
   };
@@ -46,6 +47,7 @@ export async function seed(knex: Knex): Promise<void> {
       postCode: '486 sd8',
       town: 'some town',
       population: 15000,
+      workinghours: 2,
       size: 15,
       businessId: 322,
     },
