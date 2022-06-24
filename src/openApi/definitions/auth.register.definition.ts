@@ -22,8 +22,6 @@ const registerBodyRequiredProperties = [
   'town',
   'postCode',
   'subscriptionDate',
-  'totalArea',
-  'totalPopulation',
 ];
 createSchema({
   name: 'RegisterBody',

@@ -34,6 +34,32 @@ describe('/Business ', () => {
     expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
   });
 
+  test('It should respond with success message when updating an user without optional values', async () => {
+    const body = await registerUser();
+    const newData = {
+      businessName: 'new_businessName',
+      businessType: 'new_businessType',
+      businessService: 'new_businessService',
+      password: 'new_password',
+      siteName: 'new_siteName',
+      buildingName: 'new_buildingName',
+      contactName: 'new_contactName',
+      position: 'new_position',
+      phoneNumber: 'new_phoneNumber',
+      email: 'new_email',
+      countryId: 5,
+      stateId: 46,
+      town: 'new_town',
+      postCode: 'new_postCode',
+      subscriptionDate: '2021-01-01',
+      holydayDate: '2020-01-01',
+    };
+
+    const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
+  });
+
   test('It should respond with success message when saving energy', async () => {
     const body = await loginUser('mail482@mail.com');
     const newData = {

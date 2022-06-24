@@ -575,8 +575,8 @@ export interface components {
       postCode: string;
       subscriptionDate: string;
       holydayDate?: string;
-      totalArea: number;
-      totalPopulation: number;
+      totalArea?: number;
+      totalPopulation?: number;
       floors?: components["schemas"]["BusinessFloor"][];
     } & { [key: string]: unknown };
     User: components["schemas"]["RegisterBody"] & {
@@ -954,8 +954,6 @@ export interface components {
           town: unknown;
           postCode: unknown;
           subscriptionDate: unknown;
-          totalArea: unknown;
-          totalPopulation: unknown;
         } & { [key: string]: unknown };
       };
     };

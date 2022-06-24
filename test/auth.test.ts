@@ -3,7 +3,6 @@ import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
 import schema from '../src/types/Schema.json';
-import { NO_EXTRA_PROPERTY_ERROR_MESSAGE, SHOULD_BE_STRING_ERROR, WRONG_DATE_ERROR_MESSAGE } from './testhelp';
 
 describe('/auth', () => {
   test('It should respond with success message when register', async () => {
@@ -58,6 +57,31 @@ describe('/auth', () => {
     });
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.Register.content['application/json'].schema);
+  });
+
+  test('It should respond with success message when register without passing optional values', async () => {
+    const response = await supertest(app).post('/api/auth').send({
+      businessName: 'proident nulla dolor',
+      businessType: 'dolor',
+      businessService: 'sit nisi',
+      password: 'irure in eiusmod sint nostrud',
+      siteName: 'nulla esse id voluptate eiusmod',
+      buildingName: 'sint consequat',
+      contactName: 'labore exercitation id',
+      position: 'ullamco tempor exercitation laboris consectetur',
+      phoneNumber: 'velit',
+      email: 'mail1x@mail.com',
+      countryId: 2,
+      stateId: 42,
+      town: 'magna dolore dolor in',
+      postCode: 'velit id',
+      subscriptionDate: '1989-07-20',
+      holydayDate: '1942-04-26',
+      workingHoursStart: 1,
+      workingHoursEnd: 1,
+    });
+    expect(response.body).toMatchSchema(schema.components.responses.Register.content['application/json'].schema);
+    expect(response.statusCode).toBe(200);
   });
 
   /*
@@ -172,7 +196,7 @@ describe('/auth', () => {
     expect(response.statusCode).toBe(200);
   });
 
-  test('It should respond with error message when login with wron credentials', async () => {
+  test('It should respond with error message when login with wrong credentials', async () => {
     const body = {
       businessName: 'proident nulla dolor',
       businessType: 'dolor',
