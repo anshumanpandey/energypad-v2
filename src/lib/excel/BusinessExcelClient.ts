@@ -40,6 +40,8 @@ const validColums = [
       return encryptPassword(val);
     },
   },
+  { name: 'workingHoursStart', validate: { required: true } },
+  { name: 'workingHoursEnd', validate: { required: true } },
 ];
 
 export const getBusinessData = async (file: string | Buffer) => {
@@ -108,6 +110,7 @@ const getSitesRecords = (Worksheet: Worksheet) => {
   const populationCol = Worksheet.columns[4];
   const sizeCol = Worksheet.columns[5];
   const businessEmailCol = Worksheet.columns[6];
+  const workinghours = Worksheet.columns[7];
 
   for (let a = 2; a <= rowCount; a++) {
     const row: any = {
@@ -118,6 +121,7 @@ const getSitesRecords = (Worksheet: Worksheet) => {
       [`${populationCol?.values?.[1]}`]: populationCol.values?.[a],
       [`${sizeCol?.values?.[1]}`]: sizeCol.values?.[a],
       [`${businessEmailCol?.values?.[1]}`]: businessEmailCol.values?.[a],
+      [`${workinghours?.values?.[1]}`]: workinghours.values?.[a],
     };
     rows.push(row);
   }

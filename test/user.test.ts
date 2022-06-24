@@ -310,4 +310,13 @@ describe('/Business ', () => {
     const response = await supertest(app).get('/api/business').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
   });
+
+  test('It should data from excel file successfully', async () => {
+    const body = await registerUser();
+    const response = await supertest(app)
+      .post('/api/business/importBusiness')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .attach('excel', 'test/fixtures/business_example_v2.xlsx');
+    expect(response.statusCode).toBe(200);
+  });
 });
