@@ -24,9 +24,6 @@ describe('/Business ', () => {
       town: 'new_town',
       postCode: 'new_postCode',
       subscriptionDate: '2021-01-01',
-      holydayDate: '2020-01-01',
-      totalArea: 9,
-      totalPopulation: 10,
     };
 
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
@@ -52,7 +49,6 @@ describe('/Business ', () => {
       town: 'new_town',
       postCode: 'new_postCode',
       subscriptionDate: '2021-01-01',
-      holydayDate: '2020-01-01',
     };
 
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);

@@ -10,6 +10,7 @@ import {
 const registerBodyRequiredProperties = [
   'businessName',
   'businessType',
+  'password',
   'businessService',
   'siteName',
   'buildingName',
@@ -26,7 +27,7 @@ const registerBodyRequiredProperties = [
 createSchema({
   name: 'RegisterBody',
   schema: {
-    additionalProperties: true,
+    additionalProperties: false,
     required: registerBodyRequiredProperties,
     properties: {
       businessName: { type: 'string' },
@@ -39,13 +40,12 @@ createSchema({
       phoneNumber: { type: 'string' },
       email: { type: 'string', transform: ['trim'] },
       countryId: { type: 'number', format: 'int32' },
+      password: { type: 'string', transform: ['trim'], writeOnly: true },
       stateId: { type: 'number', format: 'int32' },
       town: { type: 'string' },
       postCode: { type: 'string' },
+      currencyCode: { type: 'string' },
       subscriptionDate: { type: 'string', format: 'date' },
-      holydayDate: { type: 'string' },
-      totalArea: { type: 'number', format: 'int32' },
-      totalPopulation: { type: 'number', format: 'int32' },
       floors: {
         type: 'array',
         items: getReferenceFor({ for: 'schemas', name: 'BusinessFloor' }),
@@ -57,15 +57,7 @@ createSchema({
 addRequestComponentFor('Register', {
   content: {
     'application/json': {
-      schema: {
-        //TODO: dont allow additionalProperties
-        additionalProperties: true,
-        allOf: [getReferenceFor({ for: 'schemas', name: 'RegisterBody' })],
-        required: registerBodyRequiredProperties.concat(['password']),
-        properties: {
-          password: { type: 'string', transform: ['trim'], writeOnly: true },
-        },
-      },
+      schema: getReferenceFor({ for: 'schemas', name: 'RegisterBody' }),
     },
   },
 });

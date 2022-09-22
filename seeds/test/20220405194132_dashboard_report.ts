@@ -19,11 +19,6 @@ export async function seed(knex: Knex): Promise<void> {
       town: 'a town',
       postCode: '02532',
       subscriptionDate: new Date().toISOString().split('T')[0],
-      holydayDate: new Date().toISOString().split('T')[0],
-      totalArea: 200,
-      totalPopulation: 5122,
-      workingHoursStart: 1,
-      workingHoursEnd: 1,
     },
   ]);
 

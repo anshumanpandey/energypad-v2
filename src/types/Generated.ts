@@ -571,15 +571,14 @@ export interface components {
       phoneNumber: string;
       email: string;
       countryId: number;
+      password: string;
       stateId: number;
       town: string;
       postCode: string;
+      currencyCode?: string;
       subscriptionDate: string;
-      holydayDate?: string;
-      totalArea?: number;
-      totalPopulation?: number;
       floors?: components["schemas"]["BusinessFloor"][];
-    } & { [key: string]: unknown };
+    };
     User: components["schemas"]["RegisterBody"] & {
       id: number;
       floors?: {
@@ -938,24 +937,7 @@ export interface components {
   requestBodies: {
     Register: {
       content: {
-        "application/json": components["schemas"]["RegisterBody"] & {
-          password: string;
-        } & {
-          businessName: unknown;
-          businessType: unknown;
-          businessService: unknown;
-          siteName: unknown;
-          buildingName: unknown;
-          contactName: unknown;
-          position: unknown;
-          phoneNumber: unknown;
-          email: unknown;
-          countryId: unknown;
-          stateId: unknown;
-          town: unknown;
-          postCode: unknown;
-          subscriptionDate: unknown;
-        } & { [key: string]: unknown };
+        "application/json": components["schemas"]["RegisterBody"];
       };
     };
     Login: {

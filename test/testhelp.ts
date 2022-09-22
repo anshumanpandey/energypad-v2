@@ -26,11 +26,6 @@ export const registerUser = async (email?: string, password?: string) => {
     town: 'magna dolore dolor in',
     postCode: 'velit id',
     subscriptionDate: '1989-07-20',
-    holydayDate: '1942-04-26',
-    totalArea: 76421184.56177847,
-    totalPopulation: 78438954.75821584,
-    workingHoursStart: 1,
-    workingHoursEnd: 1,
   };
 
   await supertest(app).post('/api/auth').send(body);
