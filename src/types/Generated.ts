@@ -592,6 +592,7 @@ export interface components {
       date: string;
       consumption: number;
       cost: number;
+      conversionUnit?: string;
       siteId: number;
       fuelSourceId: number;
     };

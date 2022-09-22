@@ -16,6 +16,7 @@ const bodySchema: CreateSchemaParams = {
       date: { type: 'string', format: 'date' },
       consumption: { type: 'number', format: 'int32' },
       cost: { type: 'number', format: 'int32' },
+      conversionUnit: { type: 'string' },
       siteId: { type: 'number', format: 'int32' },
       fuelSourceId: { type: 'number', format: 'int32' },
     },
