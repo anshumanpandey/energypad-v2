@@ -22,15 +22,6 @@ const validColums = [
       return formatISO(new Date(val)).split('T')[0];
     },
   },
-  {
-    name: 'holydayDate',
-    validate: { required: false },
-    parseValue: async (val?: string) => {
-      return val ? formatISO(new Date(val))[0] : undefined;
-    },
-  },
-  { name: 'totalArea', validate: { required: true } },
-  { name: 'totalPopulation', validate: { required: true } },
   { name: 'countryId', validate: { required: true } },
   { name: 'stateId', validate: { required: true } },
   {
@@ -40,8 +31,6 @@ const validColums = [
       return encryptPassword(val);
     },
   },
-  { name: 'workingHoursStart', validate: { required: true } },
-  { name: 'workingHoursEnd', validate: { required: true } },
 ];
 
 export const getBusinessData = async (file: string | Buffer) => {
