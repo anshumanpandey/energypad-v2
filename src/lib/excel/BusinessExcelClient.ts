@@ -24,6 +24,7 @@ const validColums = [
   },
   { name: 'countryId', validate: { required: true } },
   { name: 'stateId', validate: { required: true } },
+  { name: 'currencyCode', validate: { required: true } },
   {
     name: 'password',
     validate: { required: true },

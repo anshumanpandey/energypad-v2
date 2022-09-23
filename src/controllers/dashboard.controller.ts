@@ -107,7 +107,7 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
         });
 
   return {
-    consumptions: consumptions,
+    consumptions: consumptions.sort(AppUtils.sortByProp('consumption', req.query?.order || 'asc')),
     energyTargets: statistics,
     consumptionsDetails: consumptionsDetails,
   };
@@ -290,8 +290,8 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
       allCarbonEmissions = result2 ? result2.filter(DbUtils.filterByYear(selectedYear.getFullYear())) : [];
     }
     return {
-      carbonEmissions,
-      allCarbonEmissions,
+      carbonEmissions: carbonEmissions.sort(AppUtils.sortByProp('carbonEmission', req.query?.order || 'asc')),
+      allCarbonEmissions: allCarbonEmissions,
     };
   };
 
@@ -504,6 +504,6 @@ export const getEnergyWaste: AuthGetAppController<'GetDashboardEnergyWaste', '/a
   }
 
   return {
-    energyTargets: statistics,
+    energyTargets: statistics.sort(AppUtils.sortByProp('consumption', req.query?.order || 'asc')),
   };
 };

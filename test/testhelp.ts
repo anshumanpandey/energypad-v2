@@ -24,6 +24,7 @@ export const registerUser = async (email?: string, password?: string) => {
     countryId: 2,
     stateId: 42,
     town: 'magna dolore dolor in',
+    currencyCode: 'USD',
     postCode: 'velit id',
     subscriptionDate: '1989-07-20',
   };

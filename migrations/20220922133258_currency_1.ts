@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
   return knex.schema.alterTable('Businesses', function (table) {
-    table.string('currencyCode').nullable();
+    table.string('currencyCode').notNullable();
     table.dropColumn('workingHoursStart');
     table.dropColumn('workingHoursEnd');
     table.dropColumn('holydayDate');

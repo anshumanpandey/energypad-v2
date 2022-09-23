@@ -43,6 +43,7 @@ describe('/auth', () => {
       countryId: 2,
       stateId: 42,
       town: 'magna dolore dolor in',
+      currencyCode: 'USD',
       postCode: 'velit id',
       subscriptionDate: '1989-07-20',
     });
@@ -65,6 +66,7 @@ describe('/auth', () => {
       countryId: 2,
       stateId: 42,
       town: 'magna dolore dolor in',
+      currencyCode: 'USD',
       postCode: 'velit id',
       subscriptionDate: '1989-07-20',
     });
@@ -159,6 +161,7 @@ describe('/auth', () => {
       countryId: 2,
       stateId: 42,
       town: 'magna dolore dolor in',
+      currencyCode: 'USD',
       postCode: 'velit id',
       subscriptionDate: '1989-07-20',
     };
@@ -187,6 +190,7 @@ describe('/auth', () => {
       countryId: 2,
       stateId: 42,
       town: 'magna dolore dolor in',
+      currencyCode: 'USD',
       postCode: 'velit id',
       subscriptionDate: '1989-07-20',
     };
@@ -224,6 +228,7 @@ describe('/auth', () => {
       countryId: 2,
       stateId: 42,
       town: 'magna dolore dolor in',
+      currencyCode: 'USD',
       postCode: 'velit id',
       subscriptionDate: '1989-07-20',
     };

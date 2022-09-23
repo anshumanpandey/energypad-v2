@@ -207,6 +207,7 @@ export interface paths {
         query: {
           year: string;
           fuelSourceId: string;
+          order?: "asc" | "desc";
           siteId: string;
         };
       };
@@ -239,6 +240,7 @@ export interface paths {
         query: {
           year: string;
           siteId: string;
+          order?: "asc" | "desc";
           fuelSourceId: string;
         };
       };
@@ -272,6 +274,7 @@ export interface paths {
           year: string;
           month: string;
           fuelSourceId: string;
+          order?: "asc" | "desc";
           siteId: string;
         };
       };
@@ -482,6 +485,7 @@ export interface components {
       population: number;
       size: number;
       workinghours: number;
+      fullTimeEmployee: boolean;
     };
     JWTToken: {
       jwt: string;

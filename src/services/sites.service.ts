@@ -150,6 +150,12 @@ const getSiteDetails = async (params: { id: number }): Promise<RequestResponses<
   return record;
 };
 
+const mapSimpleSite = (record: any) => {
+  return {
+    ...record,
+    fullTimeEmployee: record.fullTimeEmployee === 1,
+  };
+};
 export type FindByParams = {
   id?: number | number[];
   businessId?: number;
@@ -176,7 +182,8 @@ const findBy = async (params?: FindByParams): Promise<(AppModels['Site'] & { id:
       .groupBy('Sites.id');
   }
 
-  return query;
+  const sites = await query;
+  return sites.map(mapSimpleSite);
 };
 
 const deleteById = async (params: { id: number }) => {
