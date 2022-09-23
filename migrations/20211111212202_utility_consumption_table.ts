@@ -5,7 +5,7 @@ export async function up(knex: Knex): Promise<void> {
     table.increments('id').primary();
     table.string('date', 255).notNullable();
     table.integer('consumption').notNullable();
-    table.integer('cost').notNullable();
+    table.float('cost').notNullable();
     table.integer('utilityId').notNullable();
     table.foreign('utilityId').references('Utilities.id').deferrable('deferred');
   });

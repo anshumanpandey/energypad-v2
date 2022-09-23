@@ -36,6 +36,7 @@ const GetDashboardEnergyWaste: OpenAPIV3.OperationObject = {
     { in: 'query', name: 'year', schema: { type: 'string' }, required: true },
     { in: 'query', name: 'month', schema: { type: 'string' }, required: true },
     { in: 'query', name: 'fuelSourceId', schema: { type: 'string' }, required: true },
+    { in: 'query', name: 'order', schema: { type: 'string', enum: ['asc', 'desc'] }, required: false },
     { in: 'query', name: 'siteId', schema: { type: 'string' }, required: true },
   ],
   responses: {

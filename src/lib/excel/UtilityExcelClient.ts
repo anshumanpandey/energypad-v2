@@ -25,11 +25,13 @@ const getRows = (Worksheet: Worksheet) => {
 
   const consumptionCol = Worksheet.columns[1].values;
   const costCol = Worksheet.columns[2].values;
-  const siteCol = Worksheet.columns[3].values;
-  const usedInCol = Worksheet.columns[4].values;
+  const totalCostCol = Worksheet.columns[3].values;
+  const siteCol = Worksheet.columns[4].values;
+  const usedInCol = Worksheet.columns[5].values;
 
   if (!consumptionCol) return [];
   if (!costCol) return [];
+  if (!totalCostCol) return [];
   if (!siteCol) return [];
   if (!usedInCol) return [];
 
@@ -40,11 +42,19 @@ const getRows = (Worksheet: Worksheet) => {
 
   const year = Worksheet.name;
 
-  const months: { month: string; consumption: string; cost: number; siteId: number; usedInId: number }[] = [];
+  const months: {
+    month: string;
+    consumption: string;
+    cost: number;
+    totalCost: number;
+    siteId: number;
+    usedInId: number;
+  }[] = [];
 
   for (let a = 1, len = 12; a <= len; a++) {
     const consumptionCell = consumptionCol[a + 1];
     const costCell = costCol[a + 1];
+    const totalCostCell = totalCostCol[a + 1];
     const siteCell = siteCol[a + 1];
     const usedInCell = usedInCol[a + 1];
 
@@ -66,6 +76,7 @@ const getRows = (Worksheet: Worksheet) => {
       month,
       consumption: consumptionCell.toString(),
       cost: parseInt(costCell.toString(), 10),
+      totalCost: totalCostCell ? parseInt(totalCostCell.toString(), 10) : 0,
       siteId: parseInt(siteCell.toString(), 10),
       usedInId: parseInt(usedInCell.toString(), 10),
     });

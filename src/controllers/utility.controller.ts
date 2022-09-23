@@ -100,6 +100,7 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
           date: `${yearEntry.year}-${currentMonth.month}-01`,
           consumption: parseInt(currentMonth.consumption, 10),
           cost: currentMonth.cost,
+          totalCost: currentMonth.totalCost,
           siteId: currentMonth.siteId,
         });
       }

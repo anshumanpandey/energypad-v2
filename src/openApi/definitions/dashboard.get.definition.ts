@@ -64,6 +64,7 @@ const GetDashboardData: OpenAPIV3.OperationObject = {
   parameters: [
     { in: 'query', name: 'year', schema: { type: 'string' }, required: true },
     { in: 'query', name: 'fuelSourceId', schema: { type: 'string' }, required: true },
+    { in: 'query', name: 'order', schema: { type: 'string', enum: ['asc', 'desc'] }, required: false },
     { in: 'query', name: 'siteId', schema: { type: 'string' }, required: true },
   ],
   responses: {
