@@ -485,7 +485,7 @@ export interface components {
       population: number;
       size: number;
       workinghours: number;
-      fullTimeEmployee: boolean;
+      fullTimeEmployee?: boolean;
     };
     JWTToken: {
       jwt: string;
