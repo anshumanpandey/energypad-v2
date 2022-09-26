@@ -20,10 +20,6 @@ export async function up(knex: Knex): Promise<void> {
       table.string('holydayDate', 255).nullable();
       table.integer('totalArea').notNullable();
       table.integer('totalPopulation').notNullable();
-      table.integer('countryId', 255).notNullable();
-      table.foreign('countryId').references('Countries.id').deferrable('deferred');
-      table.integer('stateId', 255).notNullable();
-      table.foreign('stateId').references('States.id').deferrable('deferred');
     })
     .createTable('Floors', function (table) {
       table.increments('id');
@@ -45,5 +41,6 @@ export async function up(knex: Knex): Promise<void> {
     });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export async function down(): Promise<void> {}
+export async function down(knex: Knex): Promise<void> {
+  return knex.schema.dropTable('Floors').dropTable('Businesses');
+}

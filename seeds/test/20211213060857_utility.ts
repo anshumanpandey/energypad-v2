@@ -150,6 +150,18 @@ export async function seed(knex: Knex): Promise<void> {
       size: 15,
       businessId: 302,
     },
+    {
+      id: 89,
+      type: 'some',
+      address: 'anywhere',
+      postCode: '484 sd8',
+      town: 'some town',
+      population: 15000,
+      fullTimeEmployee: false,
+      workinghours: 2,
+      size: 15,
+      businessId: 198,
+    },
   ]);
 
   await knex('Utilities').insert([

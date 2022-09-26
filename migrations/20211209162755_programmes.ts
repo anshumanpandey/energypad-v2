@@ -12,9 +12,10 @@ export async function up(knex: Knex): Promise<void> {
       table.increments('id');
       table.string('answer').notNullable();
       table.integer('programmeId').notNullable();
-      table.foreign('programmeId').references('Programmes.id').deferrable('deferred').onDelete('CASCADE');
+      table.foreign('programmeId').references('Programmes.id').onDelete('CASCADE');
     });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export async function down(): Promise<void> {}
+export async function down(knex: Knex): Promise<void> {
+  return knex.schema.dropTable('ProgrammeAnswers').dropTable('Programmes');
+}

@@ -120,7 +120,10 @@ describe('/Business ', () => {
     expect(meData.body.length).toBe(1);
     expect(meData.body[0].brands.length).toBe(2);
     expect(meData.body[0].meternumbers.length).toBe(2);
-    expect(meData.body[0].brands[0].days.length).toBe(3);
+    expect(meData.body[0].brands[0].days.length).toBe(2);
+    expect(meData.body[0].brands[0].name).toBe('Rate 1');
+    expect(meData.body[0].brands[1].days.length).toBe(3);
+    expect(meData.body[0].brands[1].name).toBe('All Time');
     expect(meData.body[0].usedInId.length).toBe(2);
   });
 

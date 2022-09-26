@@ -5,9 +5,9 @@ export async function up(knex: Knex): Promise<void> {
     table.dropColumn('usedInId');
     table.dropColumn('siteId');
     table.integer('fuelSourceId', 255).notNullable();
-    table.foreign('fuelSourceId').references('FuelSources.id').deferrable('deferred').onDelete('CASCADE');
+    table.foreign('fuelSourceId').references('FuelSources.id').onDelete('CASCADE');
     table.integer('businessId', 255).notNullable();
-    table.foreign('businessId').references('Businesses.id').deferrable('deferred');
+    table.foreign('businessId').references('Businesses.id');
   });
 }
 

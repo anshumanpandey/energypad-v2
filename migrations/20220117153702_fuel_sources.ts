@@ -7,9 +7,9 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('UsedInToFuelSource', function (table) {
     table.increments('id');
     table.integer('fuelSourceId', 255).notNullable();
-    table.foreign('fuelSourceId').references('FuelSources.id').deferrable('deferred').onDelete('CASCADE');
+    table.foreign('fuelSourceId').references('FuelSources.id').onDelete('CASCADE');
     table.integer('usedInId', 255).notNullable();
-    table.foreign('usedInId').references('FuelUses.id').deferrable('deferred').onDelete('CASCADE');
+    table.foreign('usedInId').references('FuelUses.id').onDelete('CASCADE');
   });
 }
 

@@ -6,15 +6,16 @@ export async function up(knex: Knex): Promise<void> {
       table.increments('id');
       table.string('question').notNullable();
       table.integer('siteId', 255).notNullable();
-      table.foreign('siteId').references('Sites.id').deferrable('deferred').onDelete('CASCADE');
+      table.foreign('siteId').references('Sites.id').onDelete('CASCADE');
     })
     .createTable('ReviewsAnswers', function (table) {
       table.increments('id');
       table.string('answer').notNullable();
       table.integer('reviewId').notNullable();
-      table.foreign('reviewId').references('Reviews.id').deferrable('deferred').onDelete('CASCADE');
+      table.foreign('reviewId').references('Reviews.id').onDelete('CASCADE');
     });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export async function down(): Promise<void> {}
+export async function down(knex: Knex): Promise<void> {
+  return knex.schema.dropTable('ReviewsAnswers').dropTable('Reviews');
+}

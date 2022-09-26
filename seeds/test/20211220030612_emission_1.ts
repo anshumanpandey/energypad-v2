@@ -40,14 +40,12 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('UtilityEmissions').insert([
     {
-      id: 10,
       year: 2010,
       value: 200,
       fuelSourceId: 1,
       siteId: 640,
     },
     {
-      id: 12,
       year: 2011,
       value: 200,
       fuelSourceId: 1,
@@ -57,7 +55,6 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('UtilityConsumptions').insert([
     {
-      id: 10,
       date: '2001-01-01',
       consumption: 100,
       cost: 100,
@@ -65,7 +62,6 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: 640,
     },
     {
-      id: 12,
       date: '2001-02-01',
       consumption: 100,
       cost: 100,

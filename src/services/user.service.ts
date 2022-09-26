@@ -295,10 +295,10 @@ const getBusinessEnergies = async <T>(p: GetBusinessEnergiesParams, opt?: { incl
         .andOn('FS.id', '=', 'BB.fuelSourceId');
     })
     .innerJoin({ FUTOFS: 'UsedInToFuelSourceToSite' }, (q) => {
-      return q.on('FS.id', 'FUTOFS.fuelSourceId').andOn('FU.id', 'FUTOFS.usedInId').andOn('Sites.id', 'FUTOFS.siteId');
+      return q.on('FS.id', 'FUTOFS.fuelSourceId').andOn('Sites.id', 'FUTOFS.siteId');
     })
     .innerJoin({ FU: 'FuelUses' }, (q) => {
-      return q.on('FS.id', 'FUTOFS.fuelSourceId').andOn('FU.id', 'FUTOFS.usedInId');
+      return q.on('FU.id', 'FUTOFS.usedInId').andOn('FS.id', 'FUTOFS.fuelSourceId');
     });
 
   const records = await query;

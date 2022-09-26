@@ -42,6 +42,7 @@ export const int32Format = {
   type: 'number' as const,
   validate: (val: number) => {
     if (val < 0) return false;
+    if (Number.isInteger(val) === false) return false;
     return true;
   },
 };

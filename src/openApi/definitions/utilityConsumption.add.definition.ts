@@ -7,6 +7,7 @@ import {
   CreateSchemaParams,
   createSchema,
 } from '../OpenApiDefinition';
+import { SupportedUnits } from '../../utils/unitsUtils';
 
 const bodySchema: CreateSchemaParams = {
   name: 'AddFuelSourceConsumptionBody',
@@ -15,9 +16,9 @@ const bodySchema: CreateSchemaParams = {
     properties: {
       date: { type: 'string', format: 'date' },
       consumption: { type: 'number', format: 'int32' },
+      conversionUnit: { type: 'string', enum: SupportedUnits },
       cost: { type: 'number', format: 'int32' },
       totalCost: { type: 'number', format: 'int32' },
-      conversionUnit: { type: 'string' },
       siteId: { type: 'number', format: 'int32' },
       fuelSourceId: { type: 'number', format: 'int32' },
     },

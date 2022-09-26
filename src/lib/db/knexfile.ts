@@ -23,9 +23,13 @@ export const config = {
   },
 
   test: {
-    client: 'sqlite3',
+    client: 'pg',
     connection: {
-      filename: path.resolve('testdb.db'),
+      host: '127.0.0.1',
+      port: 5432,
+      user: 'energypad',
+      password: 'energypad',
+      database: 'energypad',
     },
     useNullAsDefault: true,
     migrations: {

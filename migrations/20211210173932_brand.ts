@@ -15,7 +15,7 @@ export async function up(knex: Knex): Promise<void> {
       table.increments('id');
       table.string('name').notNullable();
       table.integer('brandId').notNullable();
-      table.foreign('brandId').references('Brands.id').deferrable('deferred').onDelete('CASCADE');
+      table.foreign('brandId').references('Brands.id').onDelete('CASCADE');
     });
 }
 

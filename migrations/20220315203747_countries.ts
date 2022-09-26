@@ -10,9 +10,20 @@ export async function up(knex: Knex): Promise<void> {
     table.increments('id');
     table.string('name', 255).notNullable();
     table.integer('countryId', 255).notNullable();
-    table.foreign('countryId').references('Countries.id').deferrable('deferred').onDelete('CASCADE');
+    table.foreign('countryId').references('Countries.id').onDelete('CASCADE');
+  });
+  await knex.schema.alterTable('Businesses', function (table) {
+    table.integer('countryId', 255).notNullable();
+    table.foreign('countryId').references('Countries.id');
+    table.integer('stateId', 255).notNullable();
+    table.foreign('stateId').references('States.id');
   });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export async function down(): Promise<void> {}
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.alterTable('Businesses', function (table) {
+    table.dropColumn('countryId');
+    table.dropColumn('stateId');
+  });
+  return knex.schema.dropTable('States').dropTable('Countries');
+}

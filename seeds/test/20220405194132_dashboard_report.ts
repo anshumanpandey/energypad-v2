@@ -296,6 +296,7 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('UtilityConsumptions').insert([
     {
+      id: 1000,
       date: '2019-01-01',
       consumption: 157,
       cost: 99 * 3,
@@ -303,6 +304,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1002,
       date: '2019-02-01',
       consumption: 65,
       cost: 65 * 2,
@@ -310,6 +312,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1004,
       date: '2019-03-01',
       consumption: 985,
       cost: 65 * 2,
@@ -318,6 +321,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
 
     {
+      id: 1006,
       date: '2019-01-01',
       consumption: 345,
       cost: 99 * 3,
@@ -325,6 +329,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site2.id,
     },
     {
+      id: 1008,
       date: '2019-02-01',
       consumption: 485,
       cost: 65 * 2,
@@ -332,6 +337,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site2.id,
     },
     {
+      id: 1010,
       date: '2019-03-01',
       consumption: 198,
       cost: 65 * 2,
@@ -340,6 +346,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
 
     {
+      id: 1012,
       date: '2019-03-01',
       consumption: 79,
       cost: 79 * 2,
@@ -347,6 +354,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1014,
       date: '2019-04-01',
       consumption: 75,
       cost: 75 * 2,
@@ -354,6 +362,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1016,
       date: '2019-05-01',
       consumption: 87,
       cost: 87 * 2,
@@ -361,6 +370,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1018,
       date: '2019-06-01',
       consumption: 81,
       cost: 81 * 2,
@@ -368,6 +378,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1020,
       date: '2019-07-01',
       consumption: 0,
       cost: 0,
@@ -375,6 +386,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1022,
       date: '2019-08-01',
       consumption: 0,
       cost: 0,
@@ -382,6 +394,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1024,
       date: '2019-09-01',
       consumption: 0,
       cost: 0,
@@ -389,6 +402,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1026,
       date: '2019-10-01',
       consumption: 0,
       cost: 0,
@@ -396,6 +410,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1028,
       date: '2019-11-01',
       consumption: 0,
       cost: 0,
@@ -403,6 +418,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1030,
       date: '2019-12-01',
       consumption: 0,
       cost: 0,
@@ -411,6 +427,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     //2020
     {
+      id: 1034,
       date: '2020-01-01',
       consumption: 99,
       cost: 99 * 2,
@@ -418,6 +435,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1038,
       date: '2020-01-01',
       consumption: 99,
       cost: 99 * 2,
@@ -425,6 +443,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1040,
       date: '2020-02-01',
       consumption: 40,
       cost: 40 * 2,
@@ -432,6 +451,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1042,
       date: '2020-03-01',
       consumption: 70,
       cost: 70 * 2,
@@ -439,6 +459,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1046,
       date: '2020-04-01',
       consumption: 198,
       cost: 70 * 2,
@@ -446,6 +467,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1048,
       date: '2020-04-01',
       consumption: 87,
       cost: 70 * 2,
@@ -453,6 +475,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1050,
       date: '2020-04-01',
       consumption: 34,
       cost: 70 * 2,
@@ -460,6 +483,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1052,
       date: '2020-04-01',
       consumption: 250,
       cost: 70 * 2,
@@ -467,6 +491,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1054,
       date: '2020-04-01',
       consumption: 112,
       cost: 70 * 2,
@@ -474,6 +499,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1056,
       date: '2020-05-01',
       consumption: 648,
       cost: 70 * 2,
@@ -481,6 +507,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1058,
       date: '2020-06-01',
       consumption: 432,
       cost: 70 * 2,
@@ -489,6 +516,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     //site2
     {
+      id: 1060,
       date: '2020-01-01',
       consumption: 99,
       cost: 99 * 2,
@@ -496,6 +524,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site2.id,
     },
     {
+      id: 1062,
       date: '2020-01-01',
       consumption: 40,
       cost: 40 * 2,
@@ -503,6 +532,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site2.id,
     },
     {
+      id: 1064,
       date: '2020-02-01',
       consumption: 40,
       cost: 40 * 2,
@@ -511,6 +541,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
 
     {
+      id: 1066,
       date: '2020-01-01',
       consumption: 99,
       cost: 99 * 2,
@@ -518,6 +549,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site2.id,
     },
     {
+      id: 1068,
       date: '2020-02-01',
       consumption: 40,
       cost: 40 * 2,
@@ -526,6 +558,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     //2021
     {
+      id: 1070,
       date: '2021-01-01',
       consumption: 37,
       cost: 37 * 2,
@@ -533,6 +566,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1072,
       date: '2021-02-01',
       consumption: 64,
       cost: 64 * 2,
@@ -540,6 +574,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1074,
       date: '2021-03-01',
       consumption: 44,
       cost: 44 * 2,
@@ -547,6 +582,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1076,
       date: '2021-04-01',
       consumption: 78,
       cost: 78 * 2,
@@ -554,6 +590,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1078,
       date: '2021-05-01',
       consumption: 55,
       cost: 55 * 2,
@@ -561,6 +598,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1080,
       date: '2021-06-01',
       consumption: 19,
       cost: 19 * 2,
@@ -568,6 +606,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1082,
       date: '2021-07-01',
       consumption: 0,
       cost: 0,
@@ -575,6 +614,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1084,
       date: '2021-08-01',
       consumption: 0,
       cost: 0,
@@ -582,6 +622,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1086,
       date: '2021-09-01',
       consumption: 0,
       cost: 0,
@@ -589,6 +630,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1088,
       date: '2021-10-01',
       consumption: 0,
       cost: 0,
@@ -596,6 +638,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1090,
       date: '2021-11-01',
       consumption: 0,
       cost: 0,
@@ -603,6 +646,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1092,
       date: '2021-12-01',
       consumption: 0,
       cost: 0,
@@ -611,6 +655,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     //2022
     {
+      id: 1094,
       date: '2022-01-01',
       consumption: 39,
       cost: 39 * 2,
@@ -618,6 +663,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1096,
       date: '2022-02-01',
       consumption: 11,
       cost: 11 * 2,
@@ -626,6 +672,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
 
     {
+      id: 1098,
       date: '2016-01-01',
       consumption: 11,
       cost: 11 * 2,
@@ -633,6 +680,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1100,
       date: '2016-02-01',
       consumption: 34,
       cost: 34 * 2,
@@ -640,6 +688,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1102,
       date: '2016-04-01',
       consumption: 44,
       cost: 44 * 2,
@@ -648,6 +697,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
 
     {
+      id: 1104,
       date: '2015-01-01',
       consumption: 11,
       cost: 11 * 2,
@@ -655,6 +705,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1106,
       date: '2015-02-01',
       consumption: 34,
       cost: 34 * 2,
@@ -662,6 +713,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },
     {
+      id: 1108,
       date: '2015-05-01',
       consumption: 34,
       cost: 34 * 2,

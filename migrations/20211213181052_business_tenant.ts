@@ -7,9 +7,9 @@ export async function up(knex: Knex): Promise<void> {
     table.integer('regularTenantAmount').notNullable();
     table.integer('irregularTenantAmount').notNullable();
     table.integer('siteId', 255).notNullable();
-    table.foreign('siteId').references('Sites.id').deferrable('deferred').onDelete('CASCADE');
+    table.foreign('siteId').references('Sites.id').onDelete('CASCADE');
     table.integer('usedInId', 255).notNullable();
-    table.foreign('usedInId').references('FuelUses.id').deferrable('deferred').onDelete('CASCADE');
+    table.foreign('usedInId').references('FuelUses.id').onDelete('CASCADE');
   });
 }
 

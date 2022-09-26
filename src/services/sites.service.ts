@@ -7,7 +7,7 @@ const createSite = async (params: { id?: number } & RequestBodyParams<'Site'>) =
   if (id) {
     return DB('Sites').update(vals).where('id', id);
   } else {
-    return DB('Sites').insert(vals);
+    return DB('Sites').insert(vals).returning('id');
   }
 };
 
@@ -150,12 +150,6 @@ const getSiteDetails = async (params: { id: number }): Promise<RequestResponses<
   return record;
 };
 
-const mapSimpleSite = (record: any) => {
-  return {
-    ...record,
-    fullTimeEmployee: record.fullTimeEmployee === 1,
-  };
-};
 export type FindByParams = {
   id?: number | number[];
   businessId?: number;
@@ -182,8 +176,7 @@ const findBy = async (params?: FindByParams): Promise<(AppModels['Site'] & { id:
       .groupBy('Sites.id');
   }
 
-  const sites = await query;
-  return sites.map(mapSimpleSite);
+  return query;
 };
 
 const deleteById = async (params: { id: number }) => {

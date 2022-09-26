@@ -219,7 +219,6 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('UsedInToFuelSourceToSite').insert([
     {
-      id: 1,
       siteId: 476,
       fuelSourceId: 1,
       usedInId: 3,

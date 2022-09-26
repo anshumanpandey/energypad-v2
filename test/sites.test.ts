@@ -13,8 +13,8 @@ describe('/Site ', () => {
       address: 'irure aliquip cillum esse magna',
       postCode: 'dolor enim',
       town: 'somwehre',
-      population: 17391920.135333613,
-      size: 45786843.40282458,
+      population: 17391920,
+      size: 45786843,
       workinghours: 10,
       fullTimeEmployee: false,
     });
@@ -42,14 +42,14 @@ describe('/Site ', () => {
     expect(response.statusCode).toBe(200);
 
     const details = await supertest(app).get('/api/business/sites').set('Authorization', `Bearer ${body.jwt}`);
-    expect(details.body[0].type).toBe(siteBody.type);
-    expect(details.body[0].address).toBe(siteBody.address);
-    expect(details.body[0].postCode).toBe(siteBody.postCode);
-    expect(details.body[0].town).toBe(siteBody.town);
-    expect(details.body[0].population).toBe(siteBody.population);
-    expect(details.body[0].size).toBe(siteBody.size);
-    expect(details.body[0].workinghours).toBe(siteBody.workinghours);
-    expect(details.body[0].fullTimeEmployee).toBe(siteBody.fullTimeEmployee);
+    expect(details.body[1].type).toBe(siteBody.type);
+    expect(details.body[1].address).toBe(siteBody.address);
+    expect(details.body[1].postCode).toBe(siteBody.postCode);
+    expect(details.body[1].town).toBe(siteBody.town);
+    expect(details.body[1].population).toBe(siteBody.population);
+    expect(details.body[1].size).toBe(siteBody.size);
+    expect(details.body[1].workinghours).toBe(siteBody.workinghours);
+    expect(details.body[1].fullTimeEmployee).toBe(siteBody.fullTimeEmployee);
 
     const siteBody2 = {
       type: 'iuiuiu',
