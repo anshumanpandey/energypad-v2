@@ -2,20 +2,14 @@ import { DB } from '@lib';
 import Decimal from 'decimal.js';
 import { formatISO, setDay, setMonth } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
-import { DbUtils, UnitsUtil } from '@utils';
+import { DbUtils } from '@utils';
 import SiteService from './sites.service';
 import { ProducedConsumption } from './dashboard.service';
 import { capitalizeFirstLetter } from '../utils/appUtils';
 
 export type AddConsumptionToUtilityParam = RequestBodyParams<'AddFuelSourceConsumption'>;
-const bodyToRecord = (r: AddConsumptionToUtilityParam[0]) => {
-  return {
-    ...r,
-    consumption: UnitsUtil.resolveUnitConversion(r.consumption, 'L'),
-  };
-};
 export const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam, opt?: Transactionable) => {
-  const query = DB('UtilityConsumptions').insert(params.map(bodyToRecord));
+  const query = DB('UtilityConsumptions').insert(params);
 
   if (opt?.txr) {
     query.transacting(opt.txr);

@@ -11,7 +11,9 @@ export const m3ToKwh = (meters: number) => {
   return new Decimal(meters).times(10.55).toNumber();
 };
 
-export const resolveUnitConversion = (value: number, unit?: typeof SupportedUnits[number]) => {
+export type ConversionResolverFn = (value: number, unit?: typeof SupportedUnits[number]) => number;
+
+export const resolveUnitConversion: ConversionResolverFn = (value, unit?) => {
   let result = value;
   if (unit === 'L') {
     result = litersToKwh(value);

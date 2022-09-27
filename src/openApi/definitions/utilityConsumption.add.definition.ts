@@ -15,10 +15,10 @@ const bodySchema: CreateSchemaParams = {
     required: ['date', 'consumption', 'cost', 'siteId', 'fuelSourceId'],
     properties: {
       date: { type: 'string', format: 'date' },
-      consumption: { type: 'number', format: 'int32' },
+      consumption: { type: 'number', format: 'float' },
       conversionUnit: { type: 'string', enum: SupportedUnits },
-      cost: { type: 'number', format: 'int32' },
-      totalCost: { type: 'number', format: 'int32' },
+      cost: { type: 'number', format: 'float' },
+      totalCost: { type: 'number', format: 'float' },
       siteId: { type: 'number', format: 'int32' },
       fuelSourceId: { type: 'number', format: 'int32' },
     },

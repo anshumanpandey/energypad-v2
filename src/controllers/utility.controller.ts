@@ -1,5 +1,5 @@
 import { AuthAppController, AuthGetAppController } from '@types';
-import { UtilityService, SitesService, UserService } from '@services';
+import { UtilityService, SitesService, UserService, ConversionUnitService } from '@services';
 import { ApiError, ExcelClient, DB } from '@lib';
 import { DbUtils, MathUtils } from '@utils';
 
@@ -24,7 +24,15 @@ export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddF
     siteId: sitesToFind,
     month: req.body.map((i) => DbUtils.stringDateToDate(i.date)),
   });
-  await UtilityService.addConsumptionToUtility(req.body);
+
+  const conversionFn = await ConversionUnitService.buildConversionFnForSite({ siteId: sitesToFind });
+  const mapRecords = (r: typeof req.body[0]) => {
+    return {
+      ...r,
+      consumption: conversionFn(r.consumption, r.conversionUnit, r.siteId),
+    };
+  };
+  await UtilityService.addConsumptionToUtility(req.body.map(mapRecords));
 
   return { success: true };
 };

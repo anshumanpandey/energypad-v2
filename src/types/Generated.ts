@@ -493,6 +493,7 @@ export interface components {
       success: boolean;
     };
     Site: {
+      id?: number;
       type: string;
       address: string;
       postCode: string;
@@ -766,9 +767,7 @@ export interface components {
     /** Success message */
     GetSites: {
       content: {
-        "application/json": (components["schemas"]["Site"] & {
-          id: number;
-        })[];
+        "application/json": components["schemas"]["Site"][];
       };
     };
     /** Success message */

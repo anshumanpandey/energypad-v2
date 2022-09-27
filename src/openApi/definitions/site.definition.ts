@@ -5,6 +5,7 @@ const siteBodySchema: CreateSchemaParams = {
   schema: {
     required: ['type', 'address', 'postCode', 'town', 'population', 'size', 'workinghours'],
     properties: {
+      id: { type: 'number', readOnly: true },
       type: { type: 'string' },
       address: { type: 'string' },
       postCode: { type: 'string' },

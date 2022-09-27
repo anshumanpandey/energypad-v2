@@ -7,17 +7,7 @@ addResponseComponentFor('GetSites', {
     'application/json': {
       schema: {
         type: 'array',
-        items: {
-          allOf: [
-            getReferenceFor({ for: 'schemas', name: 'Site' }),
-            {
-              required: ['id'],
-              properties: {
-                id: { type: 'number' },
-              },
-            },
-          ],
-        },
+        items: getReferenceFor({ for: 'schemas', name: 'Site' }),
       },
     },
   },
