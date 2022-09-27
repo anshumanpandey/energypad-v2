@@ -85,6 +85,7 @@ type PathNames =
   | 'GetLogs'
   | 'GetEmissions'
   | 'SaveBusinessPattern'
+  | 'SetSiteConversionUnit'
   | 'GetConsumptions'
   | 'LogFileImport'
   | 'GetHeatingEnergy'

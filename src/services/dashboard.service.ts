@@ -125,6 +125,7 @@ const generateMockConsumption = (p: { date: string; siteId: number }) => {
     fuelSourceName: '',
     fuelSourceId: 0,
     produced: true,
+    conversionUnit: 'm3' as const,
   };
 };
 type ProduceYearConsumptionsParams = {

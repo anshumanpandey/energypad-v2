@@ -48,6 +48,16 @@ export const int32Format = {
 };
 ajv.addFormat('int32', int32Format);
 
+export const floatFormat = {
+  type: 'number' as const,
+  validate: (val: number) => {
+    if (val < 0) return false;
+    if (Number.isInteger(val) === false && !!(val % 1) === false) return false;
+    return true;
+  },
+};
+ajv.addFormat('float', floatFormat);
+
 export const timeFormat = {
   type: 'string' as const,
   validate: (val: string) => {

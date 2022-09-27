@@ -17,16 +17,16 @@ describe('/Utility ', () => {
           date: '2010-01-01',
           consumption: 100,
           cost: 100,
-          conversionUnit: 'F',
-          siteId: 451,
+          conversionUnit: 'L',
+          siteId: 89,
           fuelSourceId: 1,
         },
         {
           date: '2010-02-01',
           consumption: 100,
           cost: 100,
-          conversionUnit: 'F',
-          siteId: 451,
+          conversionUnit: 'm3',
+          siteId: 89,
           fuelSourceId: 1,
         },
       ]);
@@ -34,6 +34,12 @@ describe('/Utility ', () => {
     expect(response.body).toMatchSchema(
       schema.components.responses.AddFuelSourceConsumption.content['application/json'].schema,
     );
+
+    const user2 = await loginUser('mail198@mail.com');
+    const consumptions = await supertest(app)
+      .get('/api/utility/consumptions')
+      .set('Authorization', `Bearer ${user2.jwt}`);
+    expect(consumptions.body.length).toBe(2);
   });
 
   test('It should respond with success message when importing utilities from file', async () => {

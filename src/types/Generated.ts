@@ -80,6 +80,21 @@ export interface paths {
       requestBody: components["requestBodies"]["DeleteSite"];
     };
   };
+  "/api/site/setConversionUnit/{siteId}": {
+    /** Create a new site for a business. */
+    post: {
+      parameters: {
+        path: {
+          siteId: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["SetSiteConversionUnit"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["SetSiteConversionUnit"];
+    };
+  };
   "/api/site/update/{siteId}": {
     /** Create a new site for a business. */
     put: {
@@ -595,9 +610,9 @@ export interface components {
     AddFuelSourceConsumptionBody: {
       date: string;
       consumption: number;
+      conversionUnit?: "L" | "m3";
       cost: number;
       totalCost?: number;
-      conversionUnit?: string;
       siteId: number;
       fuelSourceId: number;
     };
@@ -610,10 +625,13 @@ export interface components {
     UtilityEmission: components["schemas"]["AddFuelSourceEmissionBody"] & {
       id: number;
     };
-    UtilityConsumption: components["schemas"]["AddFuelSourceConsumptionBody"] & {
-      id: number;
-      fuelSourceName: string;
-    };
+    UtilityConsumption: components["schemas"]["AddFuelSourceConsumptionBody"] &
+      ({
+        id: number;
+        fuelSourceName: string;
+      } & {
+        conversionUnit: unknown;
+      });
   };
   responses: {
     /** Error message */
@@ -936,6 +954,12 @@ export interface components {
         };
       };
     };
+    /** Success message */
+    SetSiteConversionUnit: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     GetSiteDetails: number;
@@ -1062,6 +1086,14 @@ export interface components {
           excel?: string;
         };
         "application/json": string;
+      };
+    };
+    SetSiteConversionUnit: {
+      content: {
+        "application/json": {
+          unitValue: number;
+          unitType: "L" | "m3";
+        }[];
       };
     };
   };

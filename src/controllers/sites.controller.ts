@@ -68,3 +68,15 @@ export const getStates: AuthGetAppController<'GetStates', '/api/site/states'> = 
 
   return countries;
 };
+
+export const setSiteUnitConversion: AuthAppController<'SetSiteConversionUnit', 'SetSiteConversionUnit'> = async (
+  req,
+) => {
+  const [found] = await SitesService.findBy({ id: MathUtils.toInt(req.params.siteId) });
+  if (!found) return new ApiError('Site not found');
+
+  await SitesService.setSiteConversionUnits(
+    req.body.map((i) => ({ ...i, siteId: MathUtils.toInt(req.params.siteId) })),
+  );
+  return { success: true };
+};

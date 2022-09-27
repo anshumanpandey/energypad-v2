@@ -125,6 +125,21 @@ describe('/Site ', () => {
     expect(response3.statusCode).toBe(400);
   });
 
+  test('It should respond with success when setting the conversion unit for a site', async () => {
+    const body = await loginUser('mail400@mail.com');
+    const response = await supertest(app)
+      .post('/api/site/setConversionUnit/490')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .send([
+        { unitType: 'L', unitValue: 58.52 },
+        { unitType: 'm3', unitValue: 789.12 },
+      ]);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(
+      schema.components.responses.SetSiteConversionUnit.content['application/json'].schema,
+    );
+  });
+
   test('It should respond with success when deleting site', async () => {
     const body = await loginUser('mail312@mail.com');
     const response = await supertest(app).delete('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({

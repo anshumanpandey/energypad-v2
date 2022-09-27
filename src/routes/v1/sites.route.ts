@@ -8,6 +8,7 @@ import {
   GetSiteDetailsPath,
   GetStatesPath,
   UpdateSitePath,
+  SetSiteConversionUnitPath,
 } from '@openApi';
 
 const authRoutes = express.Router();
@@ -24,6 +25,16 @@ authRoutes.post(
     body: 'Site',
   }),
   ExpressAsync(SitesController.createSite),
+);
+
+authRoutes.post(
+  '/setConversionUnit/:siteId',
+  SetSiteConversionUnitPath,
+  AuthMiddleware,
+  RequestValidatorMiddleware({
+    body: 'SetSiteConversionUnit',
+  }),
+  ExpressAsync(SitesController.setSiteUnitConversion),
 );
 
 authRoutes.put(

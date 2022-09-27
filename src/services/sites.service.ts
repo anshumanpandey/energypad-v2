@@ -1,5 +1,5 @@
 import { DB } from '@lib';
-import { AppModels, RequestBodyParams, RequestResponses } from '@types';
+import { AppModels, RequestBodyParams, RequestBodies, RequestResponses } from '@types';
 import userService from './user.service';
 
 const createSite = async (params: { id?: number } & RequestBodyParams<'Site'>) => {
@@ -203,6 +203,10 @@ const filterBySiteId = (id: number) => (s: { siteId: number }) => {
   return id === s.siteId;
 };
 
+const setSiteConversionUnits = async (p: RequestBodies['SetSiteConversionUnit']['content']['application/json']) => {
+  return DB('SiteConversionUnits').insert(p);
+};
+
 export default {
   findBy,
   createSite,
@@ -211,4 +215,5 @@ export default {
   getCountries,
   getStates,
   filterBySiteId,
+  setSiteConversionUnits,
 };

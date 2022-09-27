@@ -58,6 +58,7 @@ import { GetDashboardReportsPath } from './definitions/dashboard.report.get.defi
 import { GetDashboardCarbonFootprintPath } from './definitions/dashboard.carbonfootprint.get.definition';
 import { GetDashboardPortfolioPath } from './definitions/dashboard.portfolio.get.definition';
 import { GetDashboardEnergyWastePath } from './definitions/dashboard.energywaste.get.definition';
+import { SetSiteConversionUnitPath } from './definitions/siteConversionUnit.set.definition';
 
 export default OpenApiDefinition;
 export {
@@ -100,4 +101,5 @@ export {
   GetDashboardCarbonFootprintPath,
   GetDashboardPortfolioPath,
   GetDashboardEnergyWastePath,
+  SetSiteConversionUnitPath,
 };
