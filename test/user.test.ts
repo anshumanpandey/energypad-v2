@@ -7,7 +7,7 @@ expect.extend(matcher);
 
 describe('/Business ', () => {
   test('It should respond with success message when updating an user', async () => {
-    const body = await registerUser();
+    const body = await registerUser(app)();
     const newData = {
       businessName: 'new_businessName',
       businessType: 'new_businessType',
@@ -18,7 +18,7 @@ describe('/Business ', () => {
       contactName: 'new_contactName',
       position: 'new_position',
       phoneNumber: 'new_phoneNumber',
-      email: 'new_email',
+      email: 'new_email@mail.com',
       countryId: 5,
       stateId: 46,
       town: 'new_town',
@@ -29,12 +29,18 @@ describe('/Business ', () => {
     const response = await supertest(app).put('/api/business').set('Authorization', `Bearer ${body.jwt}`).send(newData);
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.UpdateUser.content['application/json'].schema);
+    const login = await supertest(app).post('/api/auth/login').send({
+      email: newData.email,
+      password: newData.password,
+    });
+    expect(login.body).toMatchSchema(schema.components.responses.Login.content['application/json'].schema);
+    expect(login.statusCode).toBe(200);
   });
 
   test('It should respond with success message when updating an user without optional values', async () => {
-    const body = await registerUser();
+    const body = await registerUser(app)();
     const newData = {
-      businessName: 'new_businessName',
+      businessName: 'new_businessName2',
       businessType: 'new_businessType',
       businessService: 'new_businessService',
       password: 'new_password',
@@ -57,7 +63,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when saving energy', async () => {
-    const body = await loginUser('mail482@mail.com');
+    const body = await loginUser(app)('mail482@mail.com');
     const newData = {
       siteId: 101,
       records: [
@@ -128,7 +134,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when saving a log', async () => {
-    const body = await loginUser('mail226@mail.com');
+    const body = await loginUser(app)('mail226@mail.com');
     const newData = {
       usedInId: 2,
       siteId: 454,
@@ -146,7 +152,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when saving tenants', async () => {
-    const body = await loginUser('mail226@mail.com');
+    const body = await loginUser(app)('mail226@mail.com');
     const newData = [
       {
         siteId: 454,
@@ -178,7 +184,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when saving reviews', async () => {
-    const body = await loginUser('mail232@mail.com');
+    const body = await loginUser(app)('mail232@mail.com');
     const newData = [
       {
         siteId: 460,
@@ -213,7 +219,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when saving programmes', async () => {
-    const body = await loginUser('mail234@mail.com');
+    const body = await loginUser(app)('mail234@mail.com');
     const newData = [
       { question: 'How often?', answers: ['Montly', 'Yearly'], siteId: 464, usedInId: 2 },
       { question: 'What type?', answers: ['Single', 'Triple'], siteId: 464, usedInId: 2 },
@@ -227,14 +233,14 @@ describe('/Business ', () => {
   });
 
   test('It should respond with correct sites for user', async () => {
-    const body = await loginUser('mail236@mail.com');
+    const body = await loginUser(app)('mail236@mail.com');
     const response = await supertest(app).get('/api/business/sites').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(2);
     expect(response.body[0].id).toBe(466);
     expect(response.body[1].id).toBe(468);
 
-    const body2 = await loginUser('mail240@mail.com');
+    const body2 = await loginUser(app)('mail240@mail.com');
     const response2 = await supertest(app).get('/api/business/sites').set('Authorization', `Bearer ${body2.jwt}`);
     expect(response2.statusCode).toBe(200);
     expect(response2.body.length).toBe(2);
@@ -243,7 +249,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with success message when saving floors', async () => {
-    const body = await registerUser();
+    const body = await registerUser(app)();
     const newData = [
       {
         size: 'floor_1',
@@ -278,7 +284,7 @@ describe('/Business ', () => {
   });
 
   test('It should respond with correct floors for user', async () => {
-    const body = await loginUser('mail242@mail.com');
+    const body = await loginUser(app)('mail242@mail.com');
     const response = await supertest(app).get('/api/business/foors').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(2);
@@ -287,7 +293,7 @@ describe('/Business ', () => {
   });
 
   test('It should save patterns successfully', async () => {
-    const body = await loginUser('mail434@mail.com');
+    const body = await loginUser(app)('mail434@mail.com');
     const response = await supertest(app)
       .post('/api/business/savePattern')
       .set('Authorization', `Bearer ${body.jwt}`)
@@ -305,13 +311,13 @@ describe('/Business ', () => {
   });
 
   test('It should get user data successfully', async () => {
-    const body = await registerUser();
+    const body = await registerUser(app)();
     const response = await supertest(app).get('/api/business').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
   });
 
   test('It should data from excel file successfully', async () => {
-    const body = await registerUser();
+    const body = await registerUser(app)();
     const response = await supertest(app)
       .post('/api/business/importBusiness')
       .set('Authorization', `Bearer ${body.jwt}`)

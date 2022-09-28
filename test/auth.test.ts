@@ -1,5 +1,6 @@
 import supertest from 'supertest';
 import { matchers } from 'jest-json-schema';
+import { faker } from '@faker-js/faker';
 expect.extend(matchers);
 import { app } from '../src/app';
 import schema from '../src/types/Schema.json';
@@ -7,7 +8,7 @@ import schema from '../src/types/Schema.json';
 describe('/auth', () => {
   test('It should respond with success message when register', async () => {
     const response = await supertest(app).post('/api/auth').send({
-      businessName: 'proident nulla dolor',
+      businessName: faker.company.name(),
       businessType: 'dolor',
       businessService: 'sit nisi',
       password: 'irure in eiusmod sint nostrud',
@@ -30,7 +31,7 @@ describe('/auth', () => {
 
   test('It should respond with success message when register with services', async () => {
     const response = await supertest(app).post('/api/auth').send({
-      businessName: 'proident nulla dolor',
+      businessName: faker.company.name(),
       businessType: 'dolor',
       businessService: 'sit nisi',
       password: 'irure in eiusmod sint nostrud',
@@ -53,7 +54,7 @@ describe('/auth', () => {
 
   test('It should respond with success message when register without passing optional values', async () => {
     const response = await supertest(app).post('/api/auth').send({
-      businessName: 'proident nulla dolor',
+      businessName: faker.company.name(),
       businessType: 'dolor',
       businessService: 'sit nisi',
       password: 'irure in eiusmod sint nostrud',
@@ -148,7 +149,7 @@ describe('/auth', () => {
 
   test('It should respond with success message when login', async () => {
     const body = {
-      businessName: 'proident nulla dolor',
+      businessName: faker.company.name(),
       businessType: 'dolor',
       businessService: 'sit nisi',
       password: 'irure in eiusmod sint nostrud',
@@ -177,7 +178,7 @@ describe('/auth', () => {
 
   test('It should respond with error message when login with wrong credentials', async () => {
     const body = {
-      businessName: 'proident nulla dolor',
+      businessName: faker.company.name(),
       businessType: 'dolor',
       businessService: 'sit nisi',
       password: 'irure in eiusmod sint nostrud',
@@ -215,7 +216,7 @@ describe('/auth', () => {
 
   test('It should respond with error when using existing email', async () => {
     const body = {
-      businessName: 'proident nulla dolor',
+      businessName: faker.company.name(),
       businessType: 'dolor',
       businessService: 'sit nisi',
       password: 'irure in eiusmod sint nostrud',

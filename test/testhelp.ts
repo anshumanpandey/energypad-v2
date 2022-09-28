@@ -1,7 +1,7 @@
 import supertest from 'supertest';
+import { faker } from '@faker-js/faker';
 import { int32Format } from '../src/middleware/requestValidator.middleware';
 import { matchersWithOptions } from 'jest-json-schema';
-import { app } from '../src/app';
 
 export const matcher = matchersWithOptions({
   formats: {
@@ -9,9 +9,9 @@ export const matcher = matchersWithOptions({
   },
 });
 
-export const registerUser = async (email?: string, password?: string) => {
+export const registerUser = (app: Express.Application) => async (email?: string, password?: string) => {
   const body = {
-    businessName: 'proident nulla dolor',
+    businessName: faker.company.name(),
     businessType: 'dolor',
     businessService: 'sit nisi',
     password: password || 'irure in eiusmod sint nostrud',
@@ -41,7 +41,7 @@ export const registerUser = async (email?: string, password?: string) => {
     });
 };
 
-export const loginUser = (email: string, password?: string) => {
+export const loginUser = (app: Express.Application) => (email: string, password?: string) => {
   return supertest(app)
     .post('/api/auth/login')
     .send({
@@ -51,6 +51,28 @@ export const loginUser = (email: string, password?: string) => {
     .then((res) => {
       return res.body;
     });
+};
+
+export const buildFakeBusiness = (p: { id: number; email: string }) => {
+  return {
+    id: p.id,
+    businessName: faker.company.name(),
+    businessType: 'a type',
+    businessService: 'a service',
+    password: '$2b$10$XYSGA3eqhW17sX1Gyb83bemjRva.O2CfzlgE6EJH.NGBnKlyuWQWW', // 123456Abc!
+    siteName: 'a site',
+    buildingName: 'a name',
+    contactName: 'a contact name',
+    position: 'a position',
+    phoneNumber: '+55 122334444',
+    email: p.email,
+    countryId: 2,
+    stateId: 42,
+    town: 'a town',
+    currencyCode: 'USD',
+    postCode: '485 s8d',
+    subscriptionDate: new Date().toISOString().split('T')[0],
+  };
 };
 
 export const SHOULD_BE_STRING_ERROR = 'should be string';

@@ -7,7 +7,7 @@ import schema from '../src/types/Schema.json';
 
 describe('/Utility ', () => {
   test('It should respond with success when adding a consuption to a utility', async () => {
-    const body = await loginUser('mail198@mail.com');
+    const body = await loginUser(app)('mail198@mail.com');
 
     const response = await supertest(app)
       .post('/api/utility/addConsumption')
@@ -35,7 +35,7 @@ describe('/Utility ', () => {
       schema.components.responses.AddFuelSourceConsumption.content['application/json'].schema,
     );
 
-    const user2 = await loginUser('mail198@mail.com');
+    const user2 = await loginUser(app)('mail198@mail.com');
     const consumptions = await supertest(app)
       .get('/api/utility/consumptions')
       .set('Authorization', `Bearer ${user2.jwt}`);
@@ -47,7 +47,7 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with success for a site with defined conversion units', async () => {
-    const body = await loginUser('mail402@mail.com');
+    const body = await loginUser(app)('mail402@mail.com');
 
     const response = await supertest(app)
       .post('/api/utility/addConsumption')
@@ -75,7 +75,7 @@ describe('/Utility ', () => {
       schema.components.responses.AddFuelSourceConsumption.content['application/json'].schema,
     );
 
-    const user2 = await loginUser('mail402@mail.com');
+    const user2 = await loginUser(app)('mail402@mail.com');
     const consumptions = await supertest(app)
       .get('/api/utility/consumptions')
       .set('Authorization', `Bearer ${user2.jwt}`);
@@ -87,7 +87,7 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with success message when importing utilities from file', async () => {
-    const body = await loginUser('mail212@mail.com');
+    const body = await loginUser(app)('mail212@mail.com');
 
     await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
       name: 'Gas',
@@ -98,14 +98,14 @@ describe('/Utility ', () => {
       .set('Authorization', `Bearer ${body.jwt}`)
       .field('fuelSource', '1')
       .attach('excel', 'test/fixtures/utility_sample_good.xlsx');
+    expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(
       schema.components.responses.UtilityFileImport.content['application/json'].schema,
     );
-    expect(response.statusCode).toBe(200);
   });
 
   test('It should respond with success message when importing logs from file', async () => {
-    const body = await loginUser('mail212@mail.com');
+    const body = await loginUser(app)('mail212@mail.com');
 
     const response = await supertest(app)
       .post('/api/utility/importLogs')
@@ -118,7 +118,7 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with saving tips succesfully', async () => {
-    const body = await registerUser();
+    const body = await registerUser(app)();
     const response = await supertest(app).get('/api/utility/savingTips').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.body.length).toBeGreaterThan(0);
     expect(response.body[0].id).toBe(1);
@@ -128,7 +128,7 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with success when saving energy emission', async () => {
-    const body = await loginUser('mail224@mail.com');
+    const body = await loginUser(app)('mail224@mail.com');
     const response = await supertest(app)
       .post('/api/utility/addEmission')
       .send([
@@ -169,21 +169,21 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with fuel sources', async () => {
-    const body = await registerUser();
+    const body = await registerUser(app)();
     const response = await supertest(app).get('/api/utility/fuelSources').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(6);
   });
 
   test('It should respond with business emissions', async () => {
-    const body = await loginUser('mail310@mail.com');
+    const body = await loginUser(app)('mail310@mail.com');
     const response = await supertest(app).get('/api/utility/emissions').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(2);
   });
 
   test('It should respond with business consumption', async () => {
-    const body = await loginUser('mail310@mail.com');
+    const body = await loginUser(app)('mail310@mail.com');
     const response = await supertest(app).get('/api/utility/consumptions').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(2);

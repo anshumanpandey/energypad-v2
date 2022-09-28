@@ -1,45 +1,10 @@
 import { Knex } from 'knex';
+import { buildFakeBusiness } from '../../test/testhelp';
 
 export async function seed(knex: Knex): Promise<void> {
   await knex('Businesses').insert([
-    {
-      id: 312,
-      businessName: 'long name',
-      businessType: 'a type',
-      businessService: 'a service',
-      password: '$2b$10$XYSGA3eqhW17sX1Gyb83bemjRva.O2CfzlgE6EJH.NGBnKlyuWQWW', // 123456Abc!
-      siteName: 'a site',
-      buildingName: 'a name',
-      contactName: 'a contact name',
-      position: 'a position',
-      phoneNumber: '+55 122334444',
-      email: 'mail312@mail.com',
-      countryId: 2,
-      stateId: 42,
-      town: 'a town',
-      currencyCode: 'USD',
-      postCode: '485 s8d',
-      subscriptionDate: new Date().toISOString().split('T')[0],
-    },
-    {
-      id: 316,
-      businessName: 'long name',
-      businessType: 'a type',
-      businessService: 'a service',
-      password: '$2b$10$XYSGA3eqhW17sX1Gyb83bemjRva.O2CfzlgE6EJH.NGBnKlyuWQWW', // 123456Abc!
-      siteName: 'a site',
-      buildingName: 'a name',
-      contactName: 'a contact name',
-      position: 'a position',
-      phoneNumber: '+55 122334444',
-      email: 'mail316@mail.com',
-      countryId: 2,
-      stateId: 42,
-      town: 'a town',
-      currencyCode: 'USD',
-      postCode: '485 s8d',
-      subscriptionDate: new Date().toISOString(),
-    },
+    buildFakeBusiness({ id: 312, email: 'mail312@mail.com' }),
+    buildFakeBusiness({ id: 316, email: 'mail316@mail.com' }),
   ]);
 
   await knex('Sites').insert([

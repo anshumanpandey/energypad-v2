@@ -7,7 +7,7 @@ expect.extend(matcher);
 
 describe('/Site ', () => {
   test('It should respond with success message when create a site', async () => {
-    const body = await loginUser('mail238@mail.com');
+    const body = await loginUser(app)('mail238@mail.com');
     const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       type: 'in amet enim',
       address: 'irure aliquip cillum esse magna',
@@ -23,7 +23,7 @@ describe('/Site ', () => {
   });
 
   test('It should respond with success message when updating a site', async () => {
-    const body = await loginUser('mail316@mail.com');
+    const body = await loginUser(app)('mail316@mail.com');
     const siteBody = {
       type: 'some_new',
       address: 'anywhere_new',
@@ -80,7 +80,7 @@ describe('/Site ', () => {
   });
 
   test('It should respond with fail message when create a site when passing wrong data', async () => {
-    const body = await loginUser('mail238@mail.com');
+    const body = await loginUser(app)('mail238@mail.com');
     const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       type: 'in amet enim',
       address: 'irure aliquip cillum esse magna',
@@ -126,7 +126,7 @@ describe('/Site ', () => {
   });
 
   test('It should respond with success when setting the conversion unit for a site', async () => {
-    const body = await loginUser('mail400@mail.com');
+    const body = await loginUser(app)('mail400@mail.com');
     const response = await supertest(app)
       .post('/api/site/setConversionUnit/490')
       .set('Authorization', `Bearer ${body.jwt}`)
@@ -141,7 +141,7 @@ describe('/Site ', () => {
   });
 
   test('It should respond with success when deleting site', async () => {
-    const body = await loginUser('mail312@mail.com');
+    const body = await loginUser(app)('mail312@mail.com');
     const response = await supertest(app).delete('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       id: 474,
     });
@@ -150,7 +150,7 @@ describe('/Site ', () => {
   });
 
   test('It should respond with error when site does not exist on db', async () => {
-    const body = await loginUser('mail312@mail.com');
+    const body = await loginUser(app)('mail312@mail.com');
     const response = await supertest(app).delete('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       id: 999,
     });
@@ -159,7 +159,7 @@ describe('/Site ', () => {
   });
 
   test('It should respond with success when getting sites details', async () => {
-    const body = await loginUser('mail312@mail.com');
+    const body = await loginUser(app)('mail312@mail.com');
     const response = await supertest(app).get('/api/site/details/476').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(schema.components.responses.GetSiteDetails.content['application/json'].schema);
@@ -167,7 +167,7 @@ describe('/Site ', () => {
   });
 
   test('It should filter sites by fuel source', async () => {
-    const body = await loginUser('mail312@mail.com');
+    const body = await loginUser(app)('mail312@mail.com');
     const response = await supertest(app).get('/api/business/sites?fsi=1').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(1);

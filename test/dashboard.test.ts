@@ -9,7 +9,7 @@ describe('/Dashboard ', () => {
   test(
     'It should respond with success message when create an utility',
     async () => {
-      const body = await loginUser('mail322@mail.com');
+      const body = await loginUser(app)('mail322@mail.com');
       const response = await supertest(app)
         .get('/api/dashboard?year=2020&fuelSourceId=1&siteId=484')
         .set('Authorization', `Bearer ${body.jwt}`);

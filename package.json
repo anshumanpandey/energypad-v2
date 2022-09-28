@@ -27,6 +27,7 @@
     "seed:execute": "knex seed:run --knexfile ./src/lib/db/knexfile.ts"
   },
   "devDependencies": {
+    "@faker-js/faker": "^7.5.0",
     "@openapi-contrib/openapi-schema-to-json-schema": "^3.1.1",
     "@stoplight/json-ref-resolver": "^3.1.3",
     "@types/bcrypt": "^5.0.0",

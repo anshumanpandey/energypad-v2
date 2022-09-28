@@ -2,6 +2,7 @@ import { AppModels, AuthAppController, AuthGetAppController } from '@types';
 import { UserService, SitesService, UtilityService } from '@services';
 import { ApiError, DB, ExcelClient } from '@lib';
 import { getSinglePropArr, MathUtils, DbUtils } from '@utils';
+import { encryptPassword } from '@utils';
 import { FindByParams } from '../services/sites.service';
 
 export const updateUser: AuthAppController<'UpdateUser', 'UpdateUser'> = async (req) => {
@@ -10,7 +11,13 @@ export const updateUser: AuthAppController<'UpdateUser', 'UpdateUser'> = async (
 
   try {
     const { floors, ...data } = registerData;
-    await UserService.updateUser({ ...data, id: req.user.id }, { txr });
+
+    const userRecord = { ...data, id: req.user.id };
+    if (data.password) {
+      const password = await encryptPassword(data.password);
+      userRecord.password = password;
+    }
+    await UserService.updateUser(userRecord, { txr });
 
     if (floors && floors.length > 0) {
       await UserService.setFloors({ floors: floors, businessId: req.user.id }, { txr });
