@@ -1,27 +1,8 @@
 import { ApiError } from '@lib';
+import { SitesService } from '@services';
 import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
-
-const validColums = [
-  {
-    name: 'startDate',
-    validate: { required: true },
-    parseValue: async (val: string) => {
-      return formatISO(new Date(val)).split('T')[0];
-    },
-  },
-  {
-    name: 'endDate',
-    validate: { required: true },
-    parseValue: async (val: string) => {
-      return formatISO(new Date(val)).split('T')[0];
-    },
-  },
-  { name: 'consumption', validate: { required: true } },
-  { name: 'daysOnYear', validate: { required: true } },
-  { name: 'usedInId', validate: { required: true } },
-  { name: 'siteId', validate: { required: true } },
-];
+import { findFuelBy } from '../../services/utility.service';
 
 export const getPatternsData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
@@ -35,6 +16,61 @@ export const getPatternsData = async (file: string | Buffer) => {
 
 const getRows = async (Worksheet: Worksheet) => {
   const rows = [];
+
+  const usedInIdCol = Worksheet.columns[4].values;
+  const siteIdCol = Worksheet.columns[5].values;
+
+  const names = Array.from(
+    new Set(
+      (siteIdCol || [])
+        .slice(2)
+        .map((c) => c?.toString() || '')
+        .filter((c) => c !== ''),
+    ).values(),
+  );
+
+  const fuels = Array.from(
+    new Set(
+      (usedInIdCol || [])
+        .slice(2)
+        .map((c) => c?.toString() || '')
+        .filter((c) => c !== ''),
+    ).values(),
+  );
+  const [sites, fuelsRecords] = await Promise.all([SitesService.findBy({ name: names }), findFuelBy({ names: fuels })]);
+
+  const validColums = [
+    {
+      name: 'startDate',
+      validate: { required: true },
+      parseValue: async (val: string) => {
+        return formatISO(new Date(val)).split('T')[0];
+      },
+    },
+    {
+      name: 'endDate',
+      validate: { required: true },
+      parseValue: async (val: string) => {
+        return formatISO(new Date(val)).split('T')[0];
+      },
+    },
+    { name: 'consumption', validate: { required: true } },
+    { name: 'daysOnYear', validate: { required: true } },
+    {
+      name: 'usedInId',
+      parseValue: async (val: string) => {
+        return fuelsRecords.find((f) => f.source === val)?.id;
+      },
+      validate: { required: true },
+    },
+    {
+      name: 'siteId',
+      parseValue: async (val: string) => {
+        return sites.find((s) => val === s.name)?.id;
+      },
+      validate: { required: true },
+    },
+  ];
 
   const rowAmount = Worksheet.rowCount;
   root_loop: for (let i = 2; i <= rowAmount; i++) {
@@ -59,8 +95,8 @@ const getRows = async (Worksheet: Worksheet) => {
         if (validCol.parseValue) {
           if (colVal) {
             validCol
-              .parseValue(colVal)
-              .then((val) => {
+              ?.parseValue(colVal)
+              .then((val: any) => {
                 singleRow[validCol.name] = val;
               })
               .then(resolve)

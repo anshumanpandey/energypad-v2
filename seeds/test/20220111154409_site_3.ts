@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { buildFakeBusiness } from '../../test/testhelp';
+import { buildFakeBusiness, buildFakeSite } from '../../test/testhelp';
 
 export async function seed(knex: Knex): Promise<void> {
   await knex('Businesses').insert([
@@ -8,54 +8,10 @@ export async function seed(knex: Knex): Promise<void> {
   ]);
 
   await knex('Sites').insert([
-    {
-      id: 474,
-      type: 'some',
-      address: 'anywhere',
-      postCode: '484 sd8',
-      town: 'some town',
-      population: 15000,
-      fullTimeEmployee: false,
-      workinghours: 2,
-      size: 15,
-      businessId: 312,
-    },
-    {
-      id: 478,
-      type: 'some',
-      address: 'anywhere',
-      postCode: '484 sd8',
-      town: 'some town',
-      population: 15000,
-      fullTimeEmployee: false,
-      workinghours: 2,
-      size: 15,
-      businessId: 316,
-    },
-    {
-      id: 479,
-      type: 'some',
-      address: 'anywhere',
-      postCode: '484 sd8',
-      town: 'some town',
-      population: 15000,
-      fullTimeEmployee: true,
-      workinghours: 2,
-      size: 15,
-      businessId: 316,
-    },
-    {
-      id: 480,
-      type: 'some',
-      address: 'anywhere',
-      postCode: '484 sd8',
-      town: 'some town',
-      population: 15000,
-      fullTimeEmployee: false,
-      workinghours: 2,
-      size: 15,
-      businessId: 312,
-    },
+    buildFakeSite({ id: 474, businessId: 312 }),
+    buildFakeSite({ id: 478, businessId: 316 }),
+    buildFakeSite({ id: 479, businessId: 316 }),
+    buildFakeSite({ id: 480, businessId: 312 }),
   ]);
 
   await knex('BusinessFuelsSize').insert([

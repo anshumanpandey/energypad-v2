@@ -1,38 +1,8 @@
 import { ApiError, DB } from '@lib';
+import { SitesService } from '@services';
 import { encryptPassword } from '@utils';
 import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
-
-const validColums = [
-  { name: 'businessName', validate: { required: true } },
-  { name: 'businessType', validate: { required: true } },
-  { name: 'businessService', validate: { required: true } },
-  { name: 'siteName', validate: { required: true } },
-  { name: 'buildingName', validate: { required: true } },
-  { name: 'contactName', validate: { required: true } },
-  { name: 'position', validate: { required: true } },
-  { name: 'phoneNumber', validate: { required: true } },
-  { name: 'email', validate: { required: true } },
-  { name: 'town', validate: { required: true } },
-  { name: 'postCode', validate: { required: true } },
-  {
-    name: 'subscriptionDate',
-    validate: { required: true },
-    parseValue: async (val: string) => {
-      return formatISO(new Date(val)).split('T')[0];
-    },
-  },
-  { name: 'countryId', validate: { required: true } },
-  { name: 'stateId', validate: { required: true } },
-  { name: 'currencyCode', validate: { required: true } },
-  {
-    name: 'password',
-    validate: { required: true },
-    parseValue: (val: string) => {
-      return encryptPassword(val);
-    },
-  },
-];
 
 export const getBusinessData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
@@ -93,17 +63,19 @@ const getSitesRecords = (Worksheet: Worksheet) => {
 
   const rowCount = Worksheet.actualRowCount;
 
-  const typeCol = Worksheet.columns[0];
-  const addressCol = Worksheet.columns[1];
-  const postCodeCol = Worksheet.columns[2];
-  const townCol = Worksheet.columns[3];
-  const populationCol = Worksheet.columns[4];
-  const sizeCol = Worksheet.columns[5];
-  const businessEmailCol = Worksheet.columns[6];
-  const workinghours = Worksheet.columns[7];
+  const nameCol = Worksheet.columns[0];
+  const typeCol = Worksheet.columns[1];
+  const addressCol = Worksheet.columns[2];
+  const postCodeCol = Worksheet.columns[3];
+  const townCol = Worksheet.columns[4];
+  const populationCol = Worksheet.columns[5];
+  const sizeCol = Worksheet.columns[6];
+  const businessEmailCol = Worksheet.columns[7];
+  const workinghours = Worksheet.columns[8];
 
   for (let a = 2; a <= rowCount; a++) {
     const row: any = {
+      [`${nameCol?.values?.[1]}`]: nameCol.values?.[a],
       [`${typeCol?.values?.[1]}`]: typeCol.values?.[a],
       [`${addressCol?.values?.[1]}`]: addressCol.values?.[a],
       [`${postCodeCol?.values?.[1]}`]: postCodeCol.values?.[a],
@@ -120,6 +92,52 @@ const getSitesRecords = (Worksheet: Worksheet) => {
 
 const getRows = async (Worksheet: Worksheet) => {
   const rows = [];
+
+  const [countries, states] = await Promise.all([SitesService.getCountries(), SitesService.getStates()]);
+
+  const validColums = [
+    { name: 'businessName', validate: { required: true } },
+    { name: 'businessType', validate: { required: true } },
+    { name: 'businessService', validate: { required: true } },
+    { name: 'siteName', validate: { required: true } },
+    { name: 'buildingName', validate: { required: true } },
+    { name: 'contactName', validate: { required: true } },
+    { name: 'position', validate: { required: true } },
+    { name: 'phoneNumber', validate: { required: true } },
+    { name: 'email', validate: { required: true } },
+    { name: 'town', validate: { required: true } },
+    { name: 'postCode', validate: { required: true } },
+    {
+      name: 'subscriptionDate',
+      validate: { required: true },
+      parseValue: async (val: string) => {
+        return formatISO(new Date(val)).split('T')[0];
+      },
+    },
+    {
+      name: 'countryId',
+      parseValue: async (val: string) => {
+        console.log(val);
+        return countries.find((c) => c.name === val)?.id;
+      },
+      validate: { required: true },
+    },
+    {
+      name: 'stateId',
+      parseValue: async (val: string) => {
+        return states.find((c) => c.name === val)?.id;
+      },
+      validate: { required: true },
+    },
+    { name: 'currencyCode', validate: { required: true } },
+    {
+      name: 'password',
+      validate: { required: true },
+      parseValue: (val: string) => {
+        return encryptPassword(val);
+      },
+    },
+  ];
 
   const rowAmount = Worksheet.rowCount;
   root_loop: for (let i = 2; i <= rowAmount; i++) {
@@ -145,7 +163,7 @@ const getRows = async (Worksheet: Worksheet) => {
           if (colVal) {
             validCol
               .parseValue(colVal)
-              .then((val) => {
+              .then((val: string) => {
                 singleRow[validCol.name] = val;
               })
               .then(resolve)

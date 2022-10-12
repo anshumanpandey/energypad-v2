@@ -9,6 +9,7 @@ describe('/Site ', () => {
   test('It should respond with success message when create a site', async () => {
     const body = await loginUser(app)('mail238@mail.com');
     const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
+      name: 'a site 1',
       type: 'in amet enim',
       address: 'irure aliquip cillum esse magna',
       postCode: 'dolor enim',
@@ -25,6 +26,7 @@ describe('/Site ', () => {
   test('It should respond with success message when updating a site', async () => {
     const body = await loginUser(app)('mail316@mail.com');
     const siteBody = {
+      name: 'cccc',
       type: 'some_new',
       address: 'anywhere_new',
       postCode: '484 sd8_new',
@@ -52,6 +54,7 @@ describe('/Site ', () => {
     expect(details.body[1].fullTimeEmployee).toBe(siteBody.fullTimeEmployee);
 
     const siteBody2 = {
+      name: 'ttttt',
       type: 'iuiuiu',
       address: 'yuyucxwh',
       postCode: 'cccccccc',
@@ -82,6 +85,7 @@ describe('/Site ', () => {
   test('It should respond with fail message when create a site when passing wrong data', async () => {
     const body = await loginUser(app)('mail238@mail.com');
     const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
+      name: 'aaaaa',
       type: 'in amet enim',
       address: 'irure aliquip cillum esse magna',
       postCode: 'dolor enim',
@@ -111,6 +115,7 @@ describe('/Site ', () => {
     expect(response2.statusCode).toBe(400);
 
     const response3 = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
+      name: 'bbbb',
       type: 'some_new',
       address: 'anywhere_new',
       postCode: '484 sd8_new',

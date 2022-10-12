@@ -1,8 +1,8 @@
 import { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.alterTable('Businesses', function (table) {
-    table.unique(['businessName']);
+  await knex.schema.alterTable('Sites', function (table) {
+    table.string('name').notNullable().unique();
   });
 }
 

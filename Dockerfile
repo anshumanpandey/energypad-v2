@@ -24,7 +24,7 @@ COPY yarn.lock ./
 USER node
 RUN yarn install --production
 COPY --from=builder /home/node/app/dist ./dist
-COPY --from=builder /home/node/app/migrations ./migrations
+COPY --from=builder /home/node/app/dist/lib/db ./src/lib/db
 ARG PROD_DB_HOSTNAME
 ARG DB_USERNAME
 ARG DB_PASSWORD
@@ -42,10 +42,6 @@ ENV DB_DIALECT=$DB_DIALECT
 ENV PORT=$PORT
 ENV NODE_ENV=$NODE_ENV
 ENV JWT_SECRET=$JWT_SECRET
-
-# RUN NODE_ENV=production npm run migration:execute
-# RUN npx sequelize db:seed:all; exit 0
-# RUN npm un sequelize-cli
 
 EXPOSE 2700
 CMD [ "node", "dist/index.js" ]

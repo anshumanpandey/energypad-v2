@@ -75,6 +75,20 @@ export const buildFakeBusiness = (p: { id: number; email: string }) => {
   };
 };
 
+export const buildFakeSite = (p: { id: number; businessId: number; name?: string }) => ({
+  id: p.id,
+  name: p.name || faker.word.noun() + Math.random().toString(),
+  type: 'some',
+  address: 'anywhere',
+  postCode: '484 sd8',
+  town: 'some town',
+  population: 15000,
+  fullTimeEmployee: false,
+  workinghours: 2,
+  size: 15,
+  businessId: p.businessId,
+});
+
 export const SHOULD_BE_STRING_ERROR = 'should be string';
 export const NO_EXTRA_PROPERTY_ERROR_MESSAGE = 'should NOT have additional properties';
 export const WRONG_DATE_ERROR_MESSAGE = 'should match format "date"';

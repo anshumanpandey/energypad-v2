@@ -1,0 +1,38 @@
+# STAGE 1
+FROM ubuntu:latest
+WORKDIR /app
+COPY package*.json ./
+COPY yarn.lock ./
+COPY ./migration_tsconfig.json ./tsconfig.json
+COPY ./src/lib/db/knexfile.ts ./src/lib/db/knexfile.ts
+
+RUN apt-get -y update
+
+RUN apt-get -y install curl
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+RUN apt-get install -y nodejs
+RUN node -v
+RUN npm install --global yarn
+
+RUN yarn install
+
+ARG PROD_DB_HOSTNAME
+ARG DB_USERNAME
+ARG DB_PASSWORD
+ARG DB_NAME
+ARG DB_DIALECT
+
+ENV PROD_DB_HOSTNAME=$PROD_DB_HOSTNAME
+ENV DB_USERNAME=$DB_USERNAME
+ENV DB_PASSWORD=$DB_PASSWORD
+ENV DB_NAME=$DB_NAME
+ENV DB_DIALECT=$DB_DIALECT
+ENV PORT=$PORT
+ENV NODE_ENV=$NODE_ENV
+
+RUN yarn run build
+COPY dist/lib/db/knexfile.js ./lib/db/knexfile.js
+
+RUN apt-get -y install git
+
+RUN git clone https://github.com/vishnubob/wait-for-it.git

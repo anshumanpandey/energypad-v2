@@ -5,7 +5,7 @@ import userService from './user.service';
 const createSite = async (params: { id?: number } & RequestBodyParams<'Site'>) => {
   const { id, ...vals } = params;
   if (id) {
-    return DB('Sites').update(vals).where('id', id);
+    return DB('Sites').update(vals).where('id', id).returning('*');
   } else {
     return DB('Sites').insert(vals).returning('id');
   }
@@ -152,6 +152,7 @@ const getSiteDetails = async (params: { id: number }): Promise<RequestResponses<
 
 export type FindByParams = {
   id?: number | number[];
+  name?: string | string[];
   businessId?: number;
   fuelSourceIdUsedInConsumption?: number;
 };
@@ -160,6 +161,11 @@ const findBy = async (params?: FindByParams): Promise<(AppModels['Site'] & { id:
   if (params?.id) {
     Array.isArray(params.id) ? query.whereIn('id', params.id) : query.where('id', params.id);
   }
+
+  if (params?.name) {
+    Array.isArray(params.name) ? query.whereIn('name', params.name) : query.where('name', params.name);
+  }
+
   if (params?.businessId) {
     query.where('businessId', params.businessId);
   }

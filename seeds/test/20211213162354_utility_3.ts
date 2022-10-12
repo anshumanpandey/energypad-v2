@@ -1,23 +1,10 @@
 import { Knex } from 'knex';
-import { buildFakeBusiness } from '../../test/testhelp';
+import { buildFakeBusiness, buildFakeSite } from '../../test/testhelp';
 
 export async function seed(knex: Knex): Promise<void> {
   await knex('Businesses').insert([buildFakeBusiness({ id: 224, email: 'mail224@mail.com' })]);
 
-  await knex('Sites').insert([
-    {
-      id: 452,
-      type: 'some',
-      address: 'anywhere',
-      postCode: '484 sd8',
-      town: 'some town',
-      population: 15000,
-      fullTimeEmployee: false,
-      workinghours: 2,
-      size: 15,
-      businessId: 224,
-    },
-  ]);
+  await knex('Sites').insert([buildFakeSite({ id: 452, businessId: 224 })]);
   await knex('Utilities').insert([
     {
       id: 188,
@@ -48,20 +35,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
   ]);
 
-  await knex('Sites').insert([
-    {
-      id: 454,
-      type: 'some',
-      address: 'anywhere',
-      postCode: '484 sd8',
-      town: 'some town',
-      population: 15000,
-      fullTimeEmployee: false,
-      workinghours: 2,
-      size: 15,
-      businessId: 226,
-    },
-  ]);
+  await knex('Sites').insert([buildFakeSite({ id: 454, businessId: 226 })]);
   await knex('Utilities').insert([
     {
       id: 190,

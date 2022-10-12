@@ -1,31 +1,60 @@
+import { SitesService } from '@services';
 import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
 import { SaveLogParams } from '../../services/user.service';
+import { findFuelBy } from '../../services/utility.service';
 
 export const getLogData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
-  const utilityConsumption = [];
+  const utilityConsumption: Awaited<ReturnType<typeof getRows>>[] = [];
+  const promises = [];
 
   for (let i = 0, len = workbook.worksheets.length; i < len; i++) {
-    const worksheet = workbook.worksheets[i];
-    const rows = getRows(worksheet);
-    utilityConsumption.push(rows);
+    promises.push(
+      new Promise<void>(async (resolve) => {
+        const worksheet = workbook.worksheets[i];
+        const rows = await getRows(worksheet);
+        utilityConsumption.push(rows);
+        resolve();
+      }),
+    );
   }
+
+  await Promise.all(promises);
 
   return utilityConsumption.flat();
 };
 
-const getRows = (Worksheet: Worksheet) => {
+const getRows = async (Worksheet: Worksheet) => {
   const rows: SaveLogParams[] = [];
 
-  for (let i = 1, len = Worksheet.columns.length; i < len; i++) {
-    const startDateCol = Worksheet.columns[1].values;
-    const endDateCol = Worksheet.columns[2].values;
-    const commentsCol = Worksheet.columns[3].values;
-    const operationCol = Worksheet.columns[4].values;
-    const siteIdCol = Worksheet.columns[5].values;
-    const usedInIdCol = Worksheet.columns[6].values;
+  const startDateCol = Worksheet.columns[1].values;
+  const endDateCol = Worksheet.columns[2].values;
+  const commentsCol = Worksheet.columns[3].values;
+  const operationCol = Worksheet.columns[4].values;
+  const siteIdCol = Worksheet.columns[5].values;
+  const usedInIdCol = Worksheet.columns[6].values;
 
+  const names = Array.from(
+    new Set(
+      (siteIdCol || [])
+        .slice(2)
+        .map((c) => c?.toString() || '')
+        .filter((c) => c !== ''),
+    ).values(),
+  );
+
+  const fuels = Array.from(
+    new Set(
+      (usedInIdCol || [])
+        .slice(2)
+        .map((c) => c?.toString() || '')
+        .filter((c) => c !== ''),
+    ).values(),
+  );
+  const [sites, fuelsRecords] = await Promise.all([SitesService.findBy({ name: names }), findFuelBy({ names: fuels })]);
+
+  for (let i = 1, len = Worksheet.columns.length; i < len; i++) {
     if (!startDateCol) break;
     if (!endDateCol) break;
     if (!commentsCol) break;
@@ -38,19 +67,19 @@ const getRows = (Worksheet: Worksheet) => {
       const endDateCell = endDateCol[a];
       const commentCell = commentsCol[a];
       const operationCell = operationCol[a];
-      const siteIdCell = siteIdCol[a];
-      const usedInIdCell = usedInIdCol[a];
+      const siteRecord = sites.find((s) => s.name === siteIdCol[a]);
+      const usedInIdRecord = fuelsRecords.find((s) => s.source === usedInIdCol[a]);
 
       if (!startDateCell) break;
       if (!endDateCell) break;
       if (!commentCell) break;
       if (!operationCell) break;
-      if (!siteIdCell) break;
-      if (!usedInIdCell) break;
+      if (!siteRecord) break;
+      if (!usedInIdRecord) break;
 
       const r = {
-        siteId: parseInt(siteIdCell.toString(), 10),
-        usedInId: parseInt(usedInIdCell.toString(), 10),
+        siteId: siteRecord.id,
+        usedInId: usedInIdRecord.id,
         startDate: formatISO(startDateCell as Date).split('T')[0],
         endDate: formatISO(endDateCell as Date).split('T')[0],
         comments: commentCell.toString(),

@@ -1,26 +1,45 @@
 import { ApiError } from '@lib';
+import { SitesService } from '@services';
 import { Workbook, Worksheet } from 'exceljs';
 
+type Record = {
+  month: string;
+  consumption: string;
+  cost: number;
+  totalCost: number;
+  siteId: number;
+  usedInId: number;
+};
 export const getUtilityData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
-  const utilityConsumption = [];
+  const utilityConsumption: { rows: { year: string; months: Record[] }[]; year: string }[] = [];
+  const promises = [];
 
   for (let i = 0, len = workbook.worksheets.length; i < len; i++) {
-    const worksheet = workbook.worksheets[i];
-    const rows = getRows(worksheet);
-    if (rows instanceof ApiError) return rows;
-
-    const year = worksheet.name;
-    utilityConsumption.push({
-      rows,
-      year,
-    });
+    promises.push(
+      new Promise<void>(async (resolve, rejected) => {
+        const worksheet = workbook.worksheets[i];
+        const rows = await getRows(worksheet);
+        if (rows instanceof ApiError) {
+          rejected(rows);
+        } else {
+          const year = worksheet.name;
+          utilityConsumption.push({
+            rows,
+            year,
+          });
+          resolve();
+        }
+      }),
+    );
   }
 
-  return utilityConsumption;
+  return Promise.all(promises).then(() => {
+    return utilityConsumption;
+  });
 };
 
-const getRows = (Worksheet: Worksheet) => {
+const getRows = async (Worksheet: Worksheet) => {
   const rows = [];
 
   const consumptionCol = Worksheet.columns[1].values;
@@ -37,25 +56,28 @@ const getRows = (Worksheet: Worksheet) => {
 
   if (consumptionCol[1]?.toString() !== 'consumption') return new ApiError('Wrong format');
   if (costCol[1]?.toString() !== 'cost') return new ApiError('Wrong format');
-  if (siteCol[1]?.toString() !== 'siteId') return new ApiError('Wrong format');
+  if (siteCol[1]?.toString() !== 'siteName') return new ApiError('Wrong format');
   if (usedInCol[1]?.toString() !== 'usedInId') return new ApiError('Wrong format');
 
   const year = Worksheet.name;
 
-  const months: {
-    month: string;
-    consumption: string;
-    cost: number;
-    totalCost: number;
-    siteId: number;
-    usedInId: number;
-  }[] = [];
+  const months: Record[] = [];
+
+  const names = Array.from(
+    new Set(
+      siteCol
+        .slice(2)
+        .map((c) => c?.toString() || '')
+        .filter((c) => c !== ''),
+    ).values(),
+  );
+  const sites = await SitesService.findBy({ name: names });
 
   for (let a = 1, len = 12; a <= len; a++) {
     const consumptionCell = consumptionCol[a + 1];
     const costCell = costCol[a + 1];
     const totalCostCell = totalCostCol[a + 1];
-    const siteCell = siteCol[a + 1];
+    const siteRecord = sites.find((s) => s.name === siteCol[a + 1]);
     const usedInCell = usedInCol[a + 1];
 
     const month = ('0' + a).slice(-2);
@@ -65,7 +87,7 @@ const getRows = (Worksheet: Worksheet) => {
     if (!costCell) {
       break;
     }
-    if (!siteCell) {
+    if (!siteRecord) {
       break;
     }
     if (!usedInCell) {
@@ -77,7 +99,7 @@ const getRows = (Worksheet: Worksheet) => {
       consumption: consumptionCell.toString(),
       cost: parseInt(costCell.toString(), 10),
       totalCost: totalCostCell ? parseInt(totalCostCell.toString(), 10) : 0,
-      siteId: parseInt(siteCell.toString(), 10),
+      siteId: siteRecord.id,
       usedInId: parseInt(usedInCell.toString(), 10),
     });
   }

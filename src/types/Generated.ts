@@ -494,6 +494,7 @@ export interface components {
     };
     Site: {
       id?: number;
+      name: string;
       type: string;
       address: string;
       postCode: string;

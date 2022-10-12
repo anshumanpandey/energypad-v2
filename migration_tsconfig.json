@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "rootDir": "./src",
+    "paths": {
+      "@lib": ["./src/lib"],
+      "@middleware": ["./src/middleware"],
+      "@routes/v1": ["./src/routes/v1"],
+      "@openApi": ["./src/openApi"],
+      "@types": ["./src/types"],
+      "@controllers": ["./src/controllers"],
+      "@services": ["./src/services"],
+      "@utils": ["./src/utils"]
+    },
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "strict": false,
+    "skipLibCheck": true,
+    "inlineSourceMap": true
+  }
+}

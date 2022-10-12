@@ -75,11 +75,11 @@ export const config = {
     },
     migrations: {
       tableName: 'knex_migrations',
-      directory: path.resolve('..', '..', '..', 'migrations'),
+      directory: path.resolve('..', 'migrations'),
       loadExtensions: ['.ts'],
     },
     seeds: {
-      directory: path.resolve('..', '..', '..', 'seeds', 'prod'),
+      directory: path.resolve('..', 'seeds', 'prod'),
       loadExtensions: ['.ts'],
       timestampFilenamePrefix: true,
     },

@@ -208,8 +208,9 @@ export const getFuelSources = async (): Promise<FuelSource[]> => {
 
 type FindFuelByParams = {
   fuelSourceId?: number | number[];
+  names?: string | string[];
 };
-export const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: string }[]> => {
+export const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; source: string }[]> => {
   const query = DB('FuelSources').select('FuelSources.*');
 
   if (p.fuelSourceId) {
@@ -217,6 +218,14 @@ export const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; use: stri
       query.whereIn('FuelSources.id', p.fuelSourceId);
     } else {
       query.where('FuelSources.id', p.fuelSourceId);
+    }
+  }
+
+  if (p?.names) {
+    if (Array.isArray(p.names)) {
+      query.whereIn('source', p.names);
+    } else {
+      query.where('source', p.names);
     }
   }
 

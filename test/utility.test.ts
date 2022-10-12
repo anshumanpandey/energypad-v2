@@ -117,6 +117,32 @@ describe('/Utility ', () => {
     expect(response.statusCode).toBe(200);
   });
 
+  test('It should respond with success message when importing patterns from file', async () => {
+    const body = await loginUser(app)('mail230@mail.com');
+
+    const response = await supertest(app)
+      .post('/api/business/importPatterns')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .attach('excel', 'test/fixtures/business_patterns.xlsx');
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(
+      schema.components.responses.FileImportBusinessPatterns.content['application/json'].schema,
+    );
+  });
+
+  test('It should respond with success message when importing tenants from file', async () => {
+    const body = await loginUser(app)('mail228@mail.com');
+
+    const response = await supertest(app)
+      .post('/api/business/importTenants')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .attach('excel', 'test/fixtures/business_tenant.xlsx');
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(
+      schema.components.responses.FileImportBusiness.content['application/json'].schema,
+    );
+  });
+
   test('It should respond with saving tips succesfully', async () => {
     const body = await registerUser(app)();
     const response = await supertest(app).get('/api/utility/savingTips').set('Authorization', `Bearer ${body.jwt}`);

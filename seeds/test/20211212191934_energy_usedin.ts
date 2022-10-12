@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { buildFakeBusiness } from '../../test/testhelp';
+import { buildFakeBusiness, buildFakeSite } from '../../test/testhelp';
 
 export async function seed(knex: Knex): Promise<void> {
   // Inserts seed entries
@@ -21,18 +21,5 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('Businesses').insert([buildFakeBusiness({ id: 148, email: 'mail482@mail.com' })]);
 
-  await knex('Sites').insert([
-    {
-      id: 101,
-      type: 'some',
-      address: 'anywhere',
-      postCode: '484 sd8',
-      town: 'some town',
-      population: 15000,
-      fullTimeEmployee: false,
-      workinghours: 2,
-      size: 15,
-      businessId: 148,
-    },
-  ]);
+  await knex('Sites').insert([buildFakeSite({ id: 101, businessId: 148 })]);
 }
