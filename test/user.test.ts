@@ -325,3 +325,7 @@ describe('/Business ', () => {
     expect(response.statusCode).toBe(200);
   });
 });
+
+
+
+scp zakajia@92.205.58.16:/home/zakajia/energiepad-dashboard-api/testdb.db ./server.sqlite3
