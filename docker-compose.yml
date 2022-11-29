@@ -44,8 +44,6 @@ services:
       context: .
       dockerfile: DockerfileMigration
       args:
-        POSTGRES_PASSWORD: ${DB_PASSWORD}
-        POSTGRES_USER: ${DB_USERNAME}
         DB_DIALECT: ${DB_DIALECT}
         PROD_DB_HOSTNAME: ${PROD_DB_HOSTNAME}
         DB_NAME: ${DB_NAME}
