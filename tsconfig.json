@@ -4,28 +4,14 @@
     "module": "commonjs",
     "rootDir": "./src",
     "paths": {
-      "@lib": [
-        "./src/lib"
-      ],
+      "@lib": ["./src/lib"],
       "@middleware": ["./src/middleware"],
-      "@routes/v1": [
-        "./src/routes/v1"
-      ],
-      "@openApi": [
-        "./src/openApi"
-      ],
-      "@types": [
-        "./src/types"
-      ],
-      "@controllers": [
-        "./src/controllers"
-      ],
-      "@services": [
-        "./src/services"
-      ],
-      "@utils": [
-        "./src/utils"
-      ]
+      "@routes/v1": ["./src/routes/v1"],
+      "@openApi": ["./src/openApi"],
+      "@types": ["./src/types"],
+      "@controllers": ["./src/controllers"],
+      "@services": ["./src/services"],
+      "@utils": ["./src/utils"]
     },
     "resolveJsonModule": true,
     "outDir": "./dist",
@@ -40,6 +26,7 @@
     "test/**/*.ts",
     "migrations/**/*.ts",
     "seeds/**/*.ts",
+    "Energiepad/**/*",
     "src/scripts/**/*.ts",
     "jest.setup.ts"
   ]

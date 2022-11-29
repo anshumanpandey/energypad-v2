@@ -12,6 +12,14 @@ services:
       - POSTGRES_DB=${DB_NAME}
     ports:
       - '4381:5432'
+  front:
+    build:
+      context: .
+      dockerfile: DockerfileFront
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL}
+    ports:
+      - '3000:3000'
   api:
     build:
       context: .
