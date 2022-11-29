@@ -1,0 +1,3 @@
+[submodule "Energiepad"]
+	path = Energiepad
+	url = git@github.com:Zakajia/Energiepad.git
