@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { buildFakeBusiness, buildFakeSite } from '../../test/testhelp';
+import { buildFakeBusiness, buildFakeEmission, buildFakeSite } from '../../test/testhelp';
 
 export async function seed(knex: Knex): Promise<void> {
   await knex('Businesses').insert([buildFakeBusiness({ id: 324, email: 'mail324@mail.com' })]);
@@ -484,64 +484,75 @@ export async function seed(knex: Knex): Promise<void> {
   ]);
 
   await knex('UtilityEmissions').insert([
-    {
+    buildFakeEmission({
+      id: 104,
       year: 2020,
-      value: 200,
       fuelSourceId: 1,
+      usedInId: 2,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeEmission({
+      id: 106,
       year: 2019,
-      value: 200,
       fuelSourceId: 1,
+      usedInId: 2,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeEmission({
+      id: 108,
       year: 2020,
-      value: 220,
       fuelSourceId: 2,
+      usedInId: 2,
       siteId: site.id,
-    },
+    }),
 
     //site2
-    {
+    buildFakeEmission({
+      id: 110,
       year: 2019,
-      value: 200,
       fuelSourceId: 1,
+      usedInId: 2,
       siteId: site2.id,
-    },
-    {
+    }),
+    buildFakeEmission({
+      id: 112,
       year: 2020,
-      value: 220,
       fuelSourceId: 1,
+      usedInId: 2,
       siteId: site2.id,
-    },
+    }),
 
-    {
+    buildFakeEmission({
+      id: 114,
       year: 2020,
-      value: 220,
       fuelSourceId: 3,
+      usedInId: 2,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeEmission({
+      id: 116,
       year: 2020,
-      value: 220,
       fuelSourceId: 4,
+      usedInId: 2,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeEmission({
+      id: 118,
       year: 2020,
-      value: 220,
       fuelSourceId: 5,
+      usedInId: 2,
       siteId: site.id,
-    },
-    {
+    }),
+
+    buildFakeEmission({
+      id: 120,
       year: 2019,
-      value: 250,
       fuelSourceId: 2,
+      usedInId: 2,
       siteId: site.id,
-    },
+    }),
   ]);
+
   await knex('BusinessLog').insert([
     {
       id: 2000,

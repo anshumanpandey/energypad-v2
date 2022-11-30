@@ -258,13 +258,7 @@ export const findFuelUseBy = (p?: FindFuelUseByParams): Promise<{ id: number; us
   return query;
 };
 
-type AddUtilityEmissionsParams = {
-  year: number;
-  value: number;
-  fuelSourceId: number;
-  siteId: number;
-};
-export const addUtilityEmissions = (p: AddUtilityEmissionsParams[], opt?: Transactionable) => {
+export const addUtilityEmissions = (p: Omit<AppModels['UtilityEmission'], 'id'>[], opt?: Transactionable) => {
   const query = DB('UtilityEmissions').insert(p);
   if (opt?.txr) {
     query.transacting(opt.txr);

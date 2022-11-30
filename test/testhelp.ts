@@ -89,6 +89,26 @@ export const buildFakeSite = (p: { id: number; businessId: number; name?: string
   businessId: p.businessId,
 });
 
+export const buildFakeEmission = (p: {
+  id: number;
+  siteId: number;
+  fuelSourceId: number;
+  usedInId: number;
+  year?: number;
+}) => ({
+  id: p.id,
+  totalCost: 10,
+  conversionFactor: 20,
+  kwhConversionFactor: 15,
+  emissionFactor: 25,
+  month: 1,
+  year: p.year || 2020,
+
+  siteId: p.siteId,
+  fuelSourceId: p.fuelSourceId,
+  usedInId: p.usedInId,
+});
+
 export const SHOULD_BE_STRING_ERROR = 'should be string';
 export const NO_EXTRA_PROPERTY_ERROR_MESSAGE = 'should NOT have additional properties';
 export const WRONG_DATE_ERROR_MESSAGE = 'should match format "date"';

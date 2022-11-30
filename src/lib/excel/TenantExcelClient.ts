@@ -2,7 +2,7 @@ import { ApiError } from '@lib';
 import { SitesService } from '@services';
 import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
-import { findFuelBy } from '../../services/utility.service';
+import { findFuelUseBy } from '../../services/utility.service';
 
 export const getTenantData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
@@ -38,7 +38,10 @@ const getRows = async (Worksheet: Worksheet) => {
     ).values(),
   );
 
-  const [sites, fuelsRecords] = await Promise.all([SitesService.findBy({ name: names }), findFuelBy({ names: fuels })]);
+  const [sites, fuelsRecords] = await Promise.all([
+    SitesService.findBy({ name: names }),
+    findFuelUseBy({ names: fuels }),
+  ]);
 
   const validColums = [
     {
@@ -51,7 +54,7 @@ const getRows = async (Worksheet: Worksheet) => {
     {
       name: 'usedInId',
       parseValue: async (val: string) => {
-        return fuelsRecords.find((f) => f.source === val)?.id;
+        return fuelsRecords.find((f) => f.use === val)?.id;
       },
       validate: { required: true },
     },

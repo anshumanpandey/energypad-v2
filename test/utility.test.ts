@@ -159,35 +159,62 @@ describe('/Utility ', () => {
       .post('/api/utility/addEmission')
       .send([
         {
-          value: 600,
+          emissionFactor: 15,
+          kwhConversionFactor: 45,
+          conversionFactor: 34,
+          totalCost: 11,
           year: 2001,
+          month: 1,
+
           siteId: 452,
           fuelSourceId: 1,
+          usedInId: 2,
         },
         {
-          value: 200,
+          emissionFactor: 8,
+          kwhConversionFactor: 14,
+          conversionFactor: 22,
+          totalCost: 33,
           year: 2003,
+          month: 7,
+
           siteId: 452,
           fuelSourceId: 1,
+          usedInId: 2,
         },
       ])
       .set('Authorization', `Bearer ${body.jwt}`);
+    expect(response.body).toMatchSchema(
+      schema.components.responses.AddFuelSourceEmission.content['application/json'].schema,
+    );
     expect(response.statusCode).toBe(200);
 
     const response2 = await supertest(app)
       .post('/api/utility/addEmission')
       .send([
         {
-          value: 600,
+          emissionFactor: 18,
+          kwhConversionFactor: 37,
+          conversionFactor: 52,
+          totalCost: 46,
           year: 2003,
+          month: 5,
+
           siteId: 452,
           fuelSourceId: 1,
+          usedInId: 2,
         },
         {
-          value: 600,
+          emissionFactor: 4,
+          kwhConversionFactor: 13,
+          conversionFactor: 37,
+          totalCost: 27,
           year: 2002,
+          month: 7,
+
           siteId: 452,
           fuelSourceId: 1,
+          usedInId: 2,
         },
       ])
       .set('Authorization', `Bearer ${body.jwt}`);

@@ -11,12 +11,28 @@ import {
 const bodySchema: CreateSchemaParams = {
   name: 'AddFuelSourceEmissionBody',
   schema: {
-    required: ['value', 'year', 'siteId', 'fuelSourceId'],
+    required: [
+      'emissionFactor',
+      'kwhConversionFactor',
+      'conversionFactor',
+      'totalCost',
+      'year',
+      'month',
+      'siteId',
+      'fuelSourceId',
+      'usedInId',
+    ],
     properties: {
-      value: { type: 'number', format: 'int32' },
+      emissionFactor: { type: 'number', format: 'int32' },
+      kwhConversionFactor: { type: 'number', format: 'int32' },
+      conversionFactor: { type: 'number', format: 'int32' },
+      totalCost: { type: 'number', format: 'int32' },
       year: { type: 'number', format: 'int32' },
+      month: { type: 'number', format: 'int32' },
+
       siteId: { type: 'number', format: 'int32' },
       fuelSourceId: { type: 'number', format: 'int32' },
+      usedInId: { type: 'number', format: 'int32' },
     },
   },
 };

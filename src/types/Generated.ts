@@ -619,10 +619,15 @@ export interface components {
       fuelSourceId: number;
     };
     AddFuelSourceEmissionBody: {
-      value: number;
+      emissionFactor: number;
+      kwhConversionFactor: number;
+      conversionFactor: number;
+      totalCost: number;
       year: number;
+      month: number;
       siteId: number;
       fuelSourceId: number;
+      usedInId: number;
     };
     UtilityEmission: components["schemas"]["AddFuelSourceEmissionBody"] & {
       id: number;
