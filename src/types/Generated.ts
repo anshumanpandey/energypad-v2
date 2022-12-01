@@ -625,6 +625,7 @@ export interface components {
       totalCost: number;
       year: number;
       month: number;
+      vat: number;
       siteId: number;
       fuelSourceId: number;
       usedInId: number;

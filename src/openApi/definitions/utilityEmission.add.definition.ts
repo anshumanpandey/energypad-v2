@@ -21,6 +21,7 @@ const bodySchema: CreateSchemaParams = {
       'siteId',
       'fuelSourceId',
       'usedInId',
+      'vat',
     ],
     properties: {
       emissionFactor: { type: 'number', format: 'int32' },
@@ -29,6 +30,7 @@ const bodySchema: CreateSchemaParams = {
       totalCost: { type: 'number', format: 'int32' },
       year: { type: 'number', format: 'int32' },
       month: { type: 'number', format: 'int32' },
+      vat: { type: 'number', format: 'int32' },
 
       siteId: { type: 'number', format: 'int32' },
       fuelSourceId: { type: 'number', format: 'int32' },

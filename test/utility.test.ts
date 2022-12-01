@@ -165,6 +165,7 @@ describe('/Utility ', () => {
           totalCost: 11,
           year: 2001,
           month: 1,
+          vat: 20,
 
           siteId: 452,
           fuelSourceId: 1,
@@ -177,6 +178,7 @@ describe('/Utility ', () => {
           totalCost: 33,
           year: 2003,
           month: 7,
+          vat: 20,
 
           siteId: 452,
           fuelSourceId: 1,
@@ -199,6 +201,7 @@ describe('/Utility ', () => {
           totalCost: 46,
           year: 2003,
           month: 5,
+          vat: 20,
 
           siteId: 452,
           fuelSourceId: 1,
@@ -211,6 +214,7 @@ describe('/Utility ', () => {
           totalCost: 27,
           year: 2002,
           month: 7,
+          vat: 20,
 
           siteId: 452,
           fuelSourceId: 1,

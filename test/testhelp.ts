@@ -103,6 +103,7 @@ export const buildFakeEmission = (p: {
   emissionFactor: 25,
   month: 1,
   year: p.year || 2020,
+  vat: 20,
 
   siteId: p.siteId,
   fuelSourceId: p.fuelSourceId,

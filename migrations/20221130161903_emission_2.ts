@@ -10,6 +10,7 @@ export async function up(knex: Knex): Promise<void> {
     table.integer('emissionFactor').notNullable();
     table.integer('month').notNullable();
     table.integer('year').notNullable();
+    table.integer('vat').notNullable();
 
     table.integer('siteId', 255).notNullable();
     table.foreign('siteId').references('Sites.id').onDelete('CASCADE');
