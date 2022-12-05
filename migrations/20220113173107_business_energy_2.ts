@@ -18,5 +18,18 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('BusinessFuelsSize').dropTable('BusinessFuelsPricing').dropTable('BusinessBrands');
+  await knex.schema.alterTable('BusinessFuelsSize', function (table) {
+    table.dropForeign('usedInId');
+    table.dropColumn('usedInId');
+  });
+
+  await knex.schema.alterTable('BusinessFuelsPricing', function (table) {
+    table.dropForeign('usedInId');
+    table.dropColumn('usedInId');
+  });
+
+  await knex.schema.alterTable('BusinessBrands', function (table) {
+    table.dropForeign('usedInId');
+    table.dropColumn('usedInId');
+  });
 }

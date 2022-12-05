@@ -12,5 +12,18 @@ export async function up(knex: Knex): Promise<void> {
   });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export async function down(): Promise<void> {}
+export async function down(knex: Knex): Promise<void> {
+  return knex.schema.alterTable('UtilityConsumptions', function (table) {
+    table.integer('siteId', 255).notNullable().defaultTo(89);
+    table.foreign('siteId').references('Sites.id').onDelete('CASCADE');
+    table.integer('usedInId', 255).notNullable().defaultTo(2);
+    table.foreign('usedInId').references('FuelUses.id').onDelete('CASCADE');
+    table.integer('utilityId').notNullable().defaultTo(124);
+    table.foreign('utilityId').references('Utilities.id').deferrable('deferred');
+
+    table.dropForeign('fuelSourceId');
+    table.dropColumn('fuelSourceId');
+    table.dropForeign('businessId');
+    table.dropColumn('businessId');
+  });
+}

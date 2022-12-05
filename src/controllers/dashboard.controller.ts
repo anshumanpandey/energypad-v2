@@ -324,7 +324,7 @@ export const getReportData: AuthGetAppController<'GetDashboardPortfolio', '/api/
     fuelSourceId,
   });
 
-  const carbonEmissions = await DashboardService.findCarbonEmissions({
+  const carbonEmissions = DashboardService.findCarbonEmissions({
     forYear: selectedYear,
     emissions,
     allConsumptions: consumptions,

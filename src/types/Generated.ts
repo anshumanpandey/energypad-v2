@@ -612,7 +612,7 @@ export interface components {
     AddFuelSourceConsumptionBody: {
       date: string;
       consumption: number;
-      conversionUnit?: "L" | "m3";
+      conversionUnit?: "L" | "m3" | "kWh";
       cost: number;
       totalCost?: number;
       siteId: number;
@@ -1098,7 +1098,7 @@ export interface components {
       content: {
         "application/json": {
           unitValue: number;
-          unitType: "L" | "m3";
+          unitType: "L" | "m3" | "kWh";
         }[];
       };
     };

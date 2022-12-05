@@ -12,8 +12,5 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  /*await knex.schema.alterTable('UtilityConsumptions', (table) => {
-    table.dropColumn('utilityId');
-  });
-  return knex.schema.dropTable('UtilityConsumptions');*/
+  return knex.schema.dropTable('UtilityConsumptions');
 }

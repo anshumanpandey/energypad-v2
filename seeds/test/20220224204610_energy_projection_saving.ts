@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { buildFakeBusiness, buildFakeSite } from '../../test/testhelp';
+import { buildFakeBusiness, buildFakeConsumption, buildFakeSite } from '../../test/testhelp';
 
 export async function seed(knex: Knex): Promise<void> {
   await knex('Businesses').insert([buildFakeBusiness({ id: 322, email: 'mail322@mail.com' })]);
@@ -22,135 +22,119 @@ export async function seed(knex: Knex): Promise<void> {
   ]);
 
   await knex('UtilityConsumptions').insert([
-    {
+    buildFakeConsumption({
       id: 100,
       date: '2019-01-01',
       consumption: 99,
-      cost: 99 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 102,
       date: '2019-02-01',
       consumption: 65,
-      cost: 65 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 104,
       date: '2019-03-01',
       consumption: 79,
-      cost: 79 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 106,
       date: '2019-04-01',
       consumption: 75,
-      cost: 75 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 108,
       date: '2019-05-01',
       consumption: 87,
-      cost: 87 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 110,
       date: '2019-06-01',
       consumption: 81,
-      cost: 81 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 112,
       date: '2019-07-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 114,
       date: '2019-08-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 116,
       date: '2019-09-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 118,
       date: '2019-10-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 120,
       date: '2019-11-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 122,
       date: '2019-12-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
+    }),
     //2020
-    {
+    buildFakeConsumption({
       id: 124,
       date: '2020-01-01',
       consumption: 99,
-      cost: 99 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 123,
       date: '2020-01-01',
       consumption: 99,
-      cost: 99 * 2,
       fuelSourceId: 2,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 126,
       date: '2020-02-01',
       consumption: 40,
-      cost: 40 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 128,
       date: '2020-03-01',
       consumption: 70,
-      cost: 70 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
+    }),
     /*{
       id: 130,
       date: '2020-04-01',
@@ -224,168 +208,148 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     },*/
     //2021
-    {
+    buildFakeConsumption({
       id: 148,
       date: '2021-01-01',
       consumption: 37,
-      cost: 37 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 150,
       date: '2021-02-01',
       consumption: 64,
-      cost: 64 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 152,
       date: '2021-03-01',
       consumption: 44,
-      cost: 44 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 154,
       date: '2021-04-01',
       consumption: 78,
-      cost: 78 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 156,
       date: '2021-05-01',
       consumption: 55,
-      cost: 55 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 158,
       date: '2021-06-01',
       consumption: 19,
-      cost: 19 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 160,
       date: '2021-07-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 162,
       date: '2021-08-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 164,
       date: '2021-09-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 166,
       date: '2021-10-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 168,
       date: '2021-11-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 170,
       date: '2021-12-01',
       consumption: 0,
-      cost: 0,
       fuelSourceId: 1,
       siteId: site.id,
-    },
+    }),
     //2022
-    {
+    buildFakeConsumption({
       id: 172,
       date: '2022-01-01',
       consumption: 39,
-      cost: 39 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 174,
       date: '2022-02-01',
       consumption: 11,
-      cost: 11 * 2,
       fuelSourceId: 1,
       siteId: site.id,
-    },
+    }),
 
-    {
+    buildFakeConsumption({
       id: 176,
       date: '2016-01-01',
       consumption: 11,
-      cost: 11 * 2,
       fuelSourceId: 2,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 178,
       date: '2016-02-01',
       consumption: 34,
-      cost: 34 * 2,
       fuelSourceId: 2,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 179,
       date: '2016-04-01',
       consumption: 44,
-      cost: 44 * 2,
       fuelSourceId: 2,
       siteId: site.id,
-    },
+    }),
 
-    {
+    buildFakeConsumption({
       id: 180,
       date: '2015-01-01',
       consumption: 11,
-      cost: 11 * 2,
       fuelSourceId: 2,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 182,
       date: '2015-02-01',
       consumption: 34,
-      cost: 34 * 2,
       fuelSourceId: 2,
       siteId: site.id,
-    },
-    {
+    }),
+    buildFakeConsumption({
       id: 184,
       date: '2015-05-01',
       consumption: 34,
-      cost: 34 * 2,
       fuelSourceId: 2,
       siteId: site.id,
-    },
+    }),
   ]);
 }

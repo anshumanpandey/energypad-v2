@@ -1,117 +1,193 @@
 import { ApiError } from '@lib';
-import { SitesService } from '@services';
+import parse from 'date-fns/parse';
+import { ConversionUnitService, SitesService, UtilityService } from '@services';
 import { Workbook, Worksheet } from 'exceljs';
+import { capitalizeFirstLetter } from '../../utils/appUtils';
+import { DbUtils } from '@utils';
 
-type Record = {
-  month: string;
-  consumption: string;
-  cost: number;
-  totalCost: number;
-  siteId: number;
-  usedInId: number;
-};
 export const getUtilityData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
-  const utilityConsumption: { rows: { year: string; months: Record[] }[]; year: string }[] = [];
-  const promises = [];
+  let error = null;
 
-  for (let i = 0, len = workbook.worksheets.length; i < len; i++) {
-    promises.push(
-      new Promise<void>(async (resolve, rejected) => {
-        const worksheet = workbook.worksheets[i];
-        const rows = await getRows(worksheet);
-        if (rows instanceof ApiError) {
-          rejected(rows);
-        } else {
-          const year = worksheet.name;
-          utilityConsumption.push({
-            rows,
-            year,
-          });
-          resolve();
-        }
-      }),
-    );
-  }
+  const rawConsumptions = getConsumptions(workbook.worksheets[0]);
+  const rawEmissions = getEmissions(workbook.worksheets[1]);
 
-  return Promise.all(promises).then(() => {
-    return utilityConsumption;
-  });
-};
+  const sitesNames = rawConsumptions.map((i: any) => i.siteName).concat(rawEmissions.map((i: any) => i.siteName));
+  const fuelUsesName = rawConsumptions
+    .map((i: any) => i.fuelUses)
+    .concat(rawEmissions.map((i: any) => i.fuelUses))
+    .flat();
+  const fuelSourceNames = rawConsumptions.map((i: any) => i.fuelType).concat(rawEmissions.map((i: any) => i.fuelType));
+  const conversionUnitsNames = rawConsumptions
+    .map((i: any) => i.fuelUnit)
+    .concat(rawEmissions.map((i: any) => i.fuelUnit));
 
-const getRows = async (Worksheet: Worksheet) => {
-  const rows = [];
+  const [sites, fuelUses, fuelTypes, conversionUnits] = await Promise.all([
+    SitesService.findBy({ name: sitesNames }),
+    UtilityService.findFuelUseBy({ names: fuelUsesName }),
+    UtilityService.findFuelBy({ names: fuelSourceNames }),
+    ConversionUnitService.findBy({ names: conversionUnitsNames }),
+  ]);
 
-  const consumptionCol = Worksheet.columns[1].values;
-  const costCol = Worksheet.columns[2].values;
-  const totalCostCol = Worksheet.columns[3].values;
-  const siteCol = Worksheet.columns[4].values;
-  const usedInCol = Worksheet.columns[5].values;
+  const consumptions = [];
+  for (let i = 0; i < rawConsumptions.length; i++) {
+    const consumption = rawConsumptions[i];
 
-  if (!consumptionCol) return [];
-  if (!costCol) return [];
-  if (!totalCostCol) return [];
-  if (!siteCol) return [];
-  if (!usedInCol) return [];
-
-  if (consumptionCol[1]?.toString() !== 'consumption') return new ApiError('Wrong format');
-  if (costCol[1]?.toString() !== 'cost') return new ApiError('Wrong format');
-  if (siteCol[1]?.toString() !== 'siteName') return new ApiError('Wrong format');
-  if (usedInCol[1]?.toString() !== 'usedInId') return new ApiError('Wrong format');
-
-  const year = Worksheet.name;
-
-  const months: Record[] = [];
-
-  const names = Array.from(
-    new Set(
-      siteCol
-        .slice(2)
-        .map((c) => c?.toString() || '')
-        .filter((c) => c !== ''),
-    ).values(),
-  );
-  const sites = await SitesService.findBy({ name: names });
-
-  for (let a = 1, len = 12; a <= len; a++) {
-    const consumptionCell = consumptionCol[a + 1];
-    const costCell = costCol[a + 1];
-    const totalCostCell = totalCostCol[a + 1];
-    const siteRecord = sites.find((s) => s.name === siteCol[a + 1]);
-    const usedInCell = usedInCol[a + 1];
-
-    const month = ('0' + a).slice(-2);
-    if (!consumptionCell) {
-      break;
+    const site = sites.find((s) => s.name === consumption.siteName);
+    if (site === undefined) {
+      error = new ApiError(`Site not found ${consumption.siteName}`);
     }
-    if (!costCell) {
-      break;
+    const foundFuelUses = fuelUses.filter((fu) => consumption.fuelUses.includes(fu.use));
+    if (foundFuelUses.length !== consumption.fuelUses.length) {
+      error = new ApiError(
+        `Invalid one fuel use: ${
+          Array.isArray(consumption.fuelUses) ? consumption.fuelUses.join(', ') : consumption.fuelUses
+        }`,
+      );
     }
-    if (!siteRecord) {
-      break;
+    const fuelSource = fuelTypes.find((ft) => ft.source === consumption.fuelType);
+    if (fuelSource === undefined) {
+      error = new ApiError(`Fuel type not found ${consumption.fuelType}`);
     }
-    if (!usedInCell) {
-      break;
+    const fuelUnit = conversionUnits.find((s: any) => s === consumption.fuelUnit);
+    if (fuelUnit === undefined) {
+      error = new ApiError(`Invalid fuel unit ${consumption.fuelUnit}`);
     }
-
-    months.push({
-      month,
-      consumption: consumptionCell.toString(),
-      cost: parseInt(costCell.toString(), 10),
-      totalCost: totalCostCell ? parseInt(totalCostCell.toString(), 10) : 0,
-      siteId: siteRecord.id,
-      usedInId: parseInt(usedInCell.toString(), 10),
+    consumptions.push({
+      date: DbUtils.dateToStringDate(parse(`01/${consumption.month}/${consumption.year}`, 'dd/MMM/yyyy', new Date())),
+      conversionFactor: consumption.conversionFactor,
+      consumption: consumption.consumptionValue,
+      vat: consumption.vat,
+      totalCost: consumption.totalCost,
+      siteId: site?.id,
+      fuelSourceId: fuelSource?.id,
+      fuelUnit: fuelUnit,
+      fuelUses: foundFuelUses.map((i) => i.id),
     });
   }
 
-  rows.push({
-    year,
-    months,
-  });
+  const emissions = [];
+  for (let i = 0; i < rawEmissions.length; i++) {
+    const consumption = rawEmissions[i];
 
-  return rows;
+    const site = sites.find((s) => s.name === consumption.siteName);
+    if (site === undefined) {
+      error = new ApiError(`Site not found ${consumption.siteName}`);
+    }
+    const foundFuelUses = fuelUses.filter((fu) => consumption.fuelUses.includes(fu.use));
+    if (foundFuelUses.length !== consumption.fuelUses.length) {
+      error = new ApiError(
+        `Invalid one fuel use: ${
+          Array.isArray(consumption.fuelUses) ? consumption.fuelUses.join(', ') : consumption.fuelUses
+        }`,
+      );
+    }
+    const fuelSource = fuelTypes.find((ft) => ft.source === consumption.fuelType);
+    if (fuelSource === undefined) {
+      error = new ApiError(`Fuel type not found ${consumption.fuelType}`);
+    }
+    const fuelUnit = conversionUnits.find((s: any) => s === consumption.fuelUnit);
+    if (fuelUnit === undefined) {
+      error = new ApiError(`Invalid fuel unit ${consumption.fuelUnit}`);
+    }
+    emissions.push({
+      date: DbUtils.dateToStringDate(parse(`01/${consumption.month}/${consumption.year}`, 'dd/MMM/yyyy', new Date())),
+      conversionFactor: consumption.conversionFactor,
+      consumption: consumption.consumptionValue,
+      emissionFactor: consumption.emissionFactor,
+      siteId: site?.id,
+      fuelSourceId: fuelSource?.id,
+      fuelUnit: fuelUnit,
+      fuelUses: foundFuelUses.map((i) => i.id),
+    });
+  }
+
+  const result = {
+    consumptions,
+    emissions,
+  };
+
+  if (error !== null) {
+    return error;
+  }
+  return result;
 };
 
+const getConsumptions = (w: Worksheet) => {
+  const columnMap = {
+    siteName: 'A',
+    year: 'B',
+    month: 'C',
+    fuelType: 'D',
+    fuelUnit: 'E',
+    conversionFactor: 'F',
+    consumptionValue: 'G',
+    vat: 'H',
+    totalCost: 'I',
+    fuelUses: 'J',
+  };
+  const records: Record<string, string | string[]>[] = [];
+  for (let i = 2; i <= w.rowCount; i++) {
+    const row = w.getRow(i);
+
+    const r = {
+      siteName: row.getCell(columnMap.siteName).toString(),
+      year: row.getCell(columnMap.year).toString(),
+      month: row.getCell(columnMap.month).toString(),
+      fuelType: row.getCell(columnMap.fuelType).toString(),
+      fuelUnit: row.getCell(columnMap.fuelUnit).toString().split('-').pop() || '',
+      conversionFactor: row.getCell(columnMap.conversionFactor).toString(),
+      consumptionValue: row.getCell(columnMap.consumptionValue).toString(),
+      vat: row.getCell(columnMap.vat).toString(),
+      totalCost: row.getCell(columnMap.totalCost).toString(),
+      fuelUses: row
+        .getCell(columnMap.fuelUses)
+        .toString()
+        .split(';')
+        .flat()
+        .map((i) => capitalizeFirstLetter(i.trim())),
+    };
+    records.push(r);
+  }
+  return records;
+};
+
+const getEmissions = (w: Worksheet) => {
+  const columnMap = {
+    siteName: 'A',
+    year: 'B',
+    month: 'C',
+    fuelType: 'D',
+    fuelUnit: 'E',
+    conversionFactor: 'F',
+    consumptionValue: 'G',
+    fuelUses: 'H',
+    emissionFactor: 'I',
+  };
+  const records: Record<string, string | string[]>[] = [];
+  for (let i = 2; i <= w.rowCount; i++) {
+    const row = w.getRow(i);
+
+    const r = {
+      siteName: row.getCell(columnMap.siteName).toString(),
+      year: row.getCell(columnMap.year).toString(),
+      month: row.getCell(columnMap.month).toString(),
+      fuelType: row.getCell(columnMap.fuelType).toString(),
+      fuelUnit: row.getCell(columnMap.fuelUnit).toString().split('-').pop() || '',
+      conversionFactor: row.getCell(columnMap.conversionFactor).toString(),
+      consumptionValue: row.getCell(columnMap.consumptionValue).toString(),
+      emissionFactor: row.getCell(columnMap.emissionFactor).toString(),
+      fuelUses: row
+        .getCell(columnMap.fuelUses)
+        .toString()
+        .split(';')
+        .flat()
+        .map((i) => capitalizeFirstLetter(i.trim())),
+    };
+    records.push(r);
+  }
+  return records;
+};
 const readExcelFile = async (file: string | Buffer) => {
   const workbook = new Workbook();
   if (typeof file === 'string') {

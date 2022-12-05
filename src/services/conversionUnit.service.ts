@@ -17,6 +17,18 @@ const buildConversionFnForSite = async (s: { siteId: number[] }): Promise<Return
   };
 };
 
+const findBy = (p: { names: string | string[] }) => {
+  if (p?.names) {
+    if (Array.isArray(p.names)) {
+      return UnitsUtil.SupportedUnits.filter((unit) => p.names.includes(unit));
+    } else {
+      return UnitsUtil.SupportedUnits.filter((unit) => unit === p.names);
+    }
+  }
+  return UnitsUtil.SupportedUnits;
+};
+
 export default {
   buildConversionFnForSite,
+  findBy,
 };

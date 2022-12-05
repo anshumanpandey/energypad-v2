@@ -56,12 +56,27 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.alterTable('FuelUses', (table) => {
-    table.dropColumn('use');
-  });
   await knex.schema
+    .dropTable('BusinessBrands')
+    .dropTable('BusinessFuelsSize')
+    .dropTable('BusinessFuelsPricing')
     .dropTable('BusinessFuelUses')
-    .dropTable('BusinessTenant')
     .dropTable('FuelUses')
     .dropTable('FuelSources');
+  await knex.schema
+    .createTable('Brands', function (table) {
+      table.increments('id');
+      table.string('name').notNullable();
+      table.string('startTime').notNullable();
+      table.string('endTime').notNullable();
+      table.integer('rate').notNullable();
+      table.integer('businessId', 255).notNullable();
+      table.foreign('businessId').references('Businesses.id').deferrable('deferred');
+    })
+    .createTable('BrandDays', function (table) {
+      table.increments('id');
+      table.string('name').notNullable();
+      table.integer('brandId').notNullable();
+      table.foreign('brandId').references('Brands.id').onDelete('CASCADE');
+    });
 }

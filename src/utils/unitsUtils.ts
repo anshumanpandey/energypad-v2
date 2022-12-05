@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 
-const SUPPORTED_UNITS = ['L', 'm3'] as const;
+const SUPPORTED_UNITS = ['L', 'm3', 'kWh'] as const;
 export const SupportedUnits = Array.from(SUPPORTED_UNITS.values());
 
 export const litersToKwh = (liters: number) => {

@@ -11,5 +11,13 @@ export async function up(knex: Knex): Promise<void> {
   });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-export async function down(): Promise<void> {}
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.alterTable('BusinessPatterns', function (table) {
+    table.dropUnique(['usedInId', 'siteId', 'startDate', 'endDate']);
+    table.dropForeign('usedInId');
+    table.dropColumn('usedInId');
+    table.dropForeign('siteId');
+    table.dropColumn('siteId');
+  });
+  await knex.schema.renameTable('BusinessPatterns', 'BusinessService');
+}

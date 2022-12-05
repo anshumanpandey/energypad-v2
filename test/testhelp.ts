@@ -97,18 +97,35 @@ export const buildFakeEmission = (p: {
   year?: number;
 }) => ({
   id: p.id,
-  totalCost: 10,
   conversionFactor: 20,
-  kwhConversionFactor: 15,
+  consumption: 20,
+  fuelUnit: 'm3',
   emissionFactor: 25,
-  month: 1,
-  year: p.year || 2020,
-  vat: 20,
+  date: '01-01-2020',
 
   siteId: p.siteId,
   fuelSourceId: p.fuelSourceId,
-  usedInId: p.usedInId,
 });
+
+export const buildFakeConsumption = (p: {
+  id: number;
+  date: string;
+  consumption: number;
+  siteId: number;
+  fuelSourceId: number;
+}) => {
+  return {
+    id: p.id,
+    date: p.date,
+    consumption: p.consumption,
+    vat: 20,
+    conversionFactor: 10,
+    totalCost: 10,
+    fuelUnit: 'm3',
+    siteId: p.siteId,
+    fuelSourceId: p.fuelSourceId,
+  };
+};
 
 export const SHOULD_BE_STRING_ERROR = 'should be string';
 export const NO_EXTRA_PROPERTY_ERROR_MESSAGE = 'should NOT have additional properties';

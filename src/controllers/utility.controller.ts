@@ -94,39 +94,26 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
 
   if (data instanceof ApiError) return data;
 
-  const dataToInsert: UtilityService.AddConsumptionToUtilityParam = [];
-  for (let i = 0, len = data.length; i < len; i++) {
-    const entry = data[i];
+  return DB.transaction(async (txr) => {
+    const consumptionQuries = data.consumptions.map(async (i) => {
+      const { fuelUses, ...data } = i;
 
-    for (let a = 0, len = entry.rows.length; a < len; a++) {
-      const yearEntry = entry.rows[a];
+      const [recordId] = await txr('UtilityConsumptions').insert(data).returning('id');
+      const usesData = fuelUses.map((fu) => ({ usedInId: fu, consumptionId: recordId }));
+      await txr('UtilityConsumptionsUse').insert(usesData);
+    });
 
-      for (let m = 0, len = yearEntry.months.length; m < len; m++) {
-        const currentMonth = yearEntry.months[m];
-        dataToInsert.push({
-          fuelSourceId: fuelSourceId,
-          date: `${yearEntry.year}-${currentMonth.month}-01`,
-          consumption: parseInt(currentMonth.consumption, 10),
-          cost: currentMonth.cost,
-          totalCost: currentMonth.totalCost,
-          siteId: currentMonth.siteId,
-        });
-      }
-    }
-  }
+    const emissionsQueries = data.emissions.map(async (i) => {
+      const { fuelUses, ...data } = i;
 
-  if (dataToInsert.length === 0) {
-    return new ApiError('No data was imported');
-  }
+      const [recordId] = await txr('UtilityEmissions').insert(data).returning('id');
+      const usesData = fuelUses.map((fu) => ({ usedInId: fu, emissionId: recordId }));
+      await txr('UtilityEmissionsUse').insert(usesData);
+    });
+    await Promise.all(consumptionQuries.concat(emissionsQueries));
 
-  await UtilityService.deleteConsumptionBy({
-    siteId: dataToInsert.map((i) => i.siteId),
-    fuelSourceId: dataToInsert.map((i) => i.fuelSourceId),
-    month: dataToInsert.map((i) => DbUtils.stringDateToDate(i.date)),
+    return { success: true };
   });
-  await UtilityService.addConsumptionToUtility(dataToInsert);
-
-  return { success: true };
 };
 
 export const getSavingTips: AuthGetAppController<'GetSavingTips'> = async () => {

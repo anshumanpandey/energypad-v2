@@ -22,7 +22,9 @@ export async function up(knex: Knex): Promise<void> {
 
 export async function down(knex: Knex): Promise<void> {
   await knex.schema.alterTable('Businesses', function (table) {
+    table.dropForeign('countryId');
     table.dropColumn('countryId');
+    table.dropForeign('stateId');
     table.dropColumn('stateId');
   });
   return knex.schema.dropTable('States').dropTable('Countries');

@@ -9,5 +9,9 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('UsedInToFuelSourceToSite');
+  await knex.schema.alterTable('UsedInToFuelSourceToSite', function (table) {
+    table.dropForeign('siteId');
+    table.dropColumn('siteId');
+  });
+  await knex.schema.renameTable('UsedInToFuelSourceToSite', 'UsedInToFuelSource');
 }

@@ -42,5 +42,5 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('Floors').dropTable('Businesses');
+  return knex.schema.dropTable('BusinessService').dropTable('Floors').dropTable('Businesses');
 }

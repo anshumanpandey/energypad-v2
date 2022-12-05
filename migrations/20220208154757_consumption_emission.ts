@@ -15,5 +15,16 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  return knex.schema.dropTable('UtilityConsumptions').dropTable('UtilityEmissions');
+  await knex.schema.alterTable('UtilityConsumptions', function (table) {
+    table.integer('businessId', 255).notNullable().defaultTo(124);
+    table.foreign('businessId').references('Businesses.id');
+    table.dropForeign('siteId');
+    table.dropColumn('siteId');
+  });
+  await knex.schema.alterTable('UtilityEmissions', function (table) {
+    table.integer('businessId', 255).notNullable().defaultTo(124);
+    table.foreign('businessId').references('Businesses.id');
+    table.dropForeign('siteId');
+    table.dropColumn('siteId');
+  });
 }
