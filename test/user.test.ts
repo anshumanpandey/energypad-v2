@@ -53,6 +53,7 @@ describe('/Business ', () => {
       email: 'new_email',
       countryId: 5,
       stateId: 46,
+      address_1: 'address_1',
       town: 'new_town',
       postCode: 'new_postCode',
       subscriptionDate: '2021-01-01',

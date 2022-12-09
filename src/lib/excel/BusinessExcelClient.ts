@@ -136,6 +136,7 @@ const getRows = async (Worksheet: Worksheet) => {
         return encryptPassword(val);
       },
     },
+    { name: 'address_1', validate: { required: false } },
   ];
 
   const rowAmount = Worksheet.rowCount;

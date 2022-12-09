@@ -26,6 +26,7 @@ export const registerUser = (app: Express.Application) => async (email?: string,
     town: 'magna dolore dolor in',
     currencyCode: 'USD',
     postCode: 'velit id',
+    address_1: 'address_1',
     subscriptionDate: '1989-07-20',
   };
 
