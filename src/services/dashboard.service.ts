@@ -9,14 +9,14 @@ import { FuelSource, GetConsumptionsParams } from './utility.service';
 const getConsumptionStatistics = ({
   consumptions,
 }: {
-  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'cost'>[];
+  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'totalCost'>[];
 }) => {
   const filterByMonth = (monthToSearch: number) => (c: typeof consumptions[0]) => {
     const [, month] = c.date.split('-');
     return new Decimal(month).equals(monthToSearch);
   };
 
-  const getAverage = (record: typeof consumptions[0], of: 'consumption' | 'cost') => {
+  const getAverage = (record: typeof consumptions[0], of: 'consumption') => {
     const date = DbUtils.stringDateToDate(record.date);
     const amountOfDaysOnMonth = getDaysInMonth(date);
     return new Decimal(record[of]).dividedBy(amountOfDaysOnMonth).toDecimalPlaces(2).toNumber();
@@ -37,16 +37,16 @@ const getConsumptionStatistics = ({
     const data = {
       date: `${consumptionOfMonth[0].date.split('-')[0]}-${('0' + idx).slice(-2)}-01`,
       averageConsumption: getAverage(consumptionOfMonth[0], 'consumption'),
-      averageCost: getAverage(consumptionOfMonth[0], 'cost'),
-      cost: mostRecentRecord ? mostRecentRecord.cost : 0,
+      //averageCost: getAverage(consumptionOfMonth[0], 'totalCost'),
+      cost: mostRecentRecord ? mostRecentRecord.totalCost : 0,
       consumption: mostRecentRecord ? mostRecentRecord.consumption : 0,
       increasedConsumptionPercentage: MathUtils.calculateIncreasePercentage({
         currentValue: mostRecentRecord.consumption,
         passValue: previouseRecord.consumption,
       }),
       increasedCostPercentage: MathUtils.calculateIncreasePercentage({
-        currentValue: mostRecentRecord.cost,
-        passValue: previouseRecord.cost,
+        currentValue: mostRecentRecord.totalCost || 0,
+        passValue: previouseRecord.totalCost || 0,
       }),
     };
     consumptionStatistics.push(data);
@@ -71,7 +71,7 @@ function groupBy<T>(list: T[], keyGetter: (i: T) => T[keyof T]) {
 const generateConsumptionDetail = ({
   consumptions,
 }: {
-  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'cost' | 'fuelSourceName'>[];
+  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'totalCost' | 'fuelSourceName'>[];
 }) => {
   const consumptionDetails = [];
   if (consumptions.length === 1) {
@@ -99,7 +99,7 @@ const generateConsumptionDetail = ({
 const getConsumptionDetails = ({
   consumptions,
 }: {
-  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'cost' | 'fuelSourceName'>[];
+  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'totalCost' | 'fuelSourceName'>[];
 }) => {
   const consumptionDetails = [];
   const reducedConsumptions = groupBy(consumptions, (item) => item.fuelSourceName);
@@ -118,7 +118,10 @@ const generateMockConsumption = (p: { date: string; siteId: number }) => {
   return {
     date: p.date,
     consumption: 0,
+    usedInId: [],
     cost: 0,
+    vat: 0,
+    fuelUnit: 'm3',
     totalCost: 0,
     siteId: p.siteId,
     id: 0,
@@ -242,7 +245,7 @@ const findCarbonEmissions = (params: {
     return c.date.slice(0, 4) === dateToFilterBy;
   };
   const findEmissionForConsumption = (c: AppModels['UtilityConsumption']) => (e: AppModels['UtilityEmission']) =>
-    c.date.slice(0, 4) === e.year.toString() && c.fuelSourceId === e.fuelSourceId && c.siteId === e.siteId;
+    c.date.slice(0, 4) === e.date?.split('-').toString() && c.fuelSourceId === e.fuelSourceId && c.siteId === e.siteId;
 
   const filterCarbonEmissionsForDate = (c: CarbonEmission) => (e: CarbonEmission) => {
     return c.date.slice(5, 7) === e.date.slice(5, 7);
@@ -284,8 +287,9 @@ const findCarbonEmissions = (params: {
       fuelSourceId: p.fuelSourceId,
       fuelSourceName: p.fuelSourceName,
       fuelSourceColorCode: params.fuels?.find((i) => i.id === p.fuelSourceId)?.colorCode || '#4989C6',
-      carbonEmission: calculateEmission(p.consumption, currentEmission.value),
-      cost: p.cost,
+      //carbonEmission: calculateEmission(p.consumption, currentEmission.value),
+      carbonEmission: calculateEmission(p.consumption, -1),
+      cost: p.totalCost,
       carbonTarget: 0,
       increasedConsumptionPercentage: 0,
       averageEmissionPerDay: 0,

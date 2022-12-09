@@ -14,7 +14,9 @@ const siteBodySchema: CreateSchemaParams = {
       population: { type: 'number', format: 'int32' },
       size: { type: 'number', format: 'int32' },
       workinghours: { type: 'number', format: 'int32' },
-      fullTimeEmployee: { type: 'boolean', format: 'int32' },
+      fullTimeEmployee: { type: 'boolean' },
+      countryId: { type: 'number', format: 'int32' },
+      stateId: { type: 'number', format: 'int32' },
     },
   },
 };

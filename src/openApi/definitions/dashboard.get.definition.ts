@@ -20,7 +20,6 @@ addResponseComponentFor('GetDashboardData', {
                 averageConsumption: { type: 'number', format: 'int32' },
                 averageCost: { type: 'number', format: 'int32' },
                 consumption: { type: 'number', format: 'int32' },
-                cost: { type: 'number', format: 'int32' },
                 increasedConsumptionPercentage: { type: 'number' },
                 increasedCostPercentage: { type: 'number' },
               },

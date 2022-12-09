@@ -23,6 +23,7 @@ describe('/auth', () => {
       town: 'magna dolore dolor in',
       currencyCode: 'USD',
       postCode: 'velit id',
+      address_1: 'address_1',
       subscriptionDate: '1989-07-20',
     });
     expect(response.body).toMatchSchema(schema.components.responses.Register.content['application/json'].schema);
@@ -46,6 +47,7 @@ describe('/auth', () => {
       town: 'magna dolore dolor in',
       currencyCode: 'USD',
       postCode: 'velit id',
+      address_1: 'address_1',
       subscriptionDate: '1989-07-20',
     });
     expect(response.statusCode).toBe(200);
@@ -69,6 +71,7 @@ describe('/auth', () => {
       town: 'magna dolore dolor in',
       currencyCode: 'USD',
       postCode: 'velit id',
+      address_1: 'address_1',
       subscriptionDate: '1989-07-20',
     });
     expect(response.body).toMatchSchema(schema.components.responses.Register.content['application/json'].schema);
@@ -164,6 +167,7 @@ describe('/auth', () => {
       town: 'magna dolore dolor in',
       currencyCode: 'USD',
       postCode: 'velit id',
+      address_1: 'address_1',
       subscriptionDate: '1989-07-20',
     };
     await supertest(app).post('/api/auth').send(body);
@@ -193,6 +197,7 @@ describe('/auth', () => {
       town: 'magna dolore dolor in',
       currencyCode: 'USD',
       postCode: 'velit id',
+      address_1: 'address_1',
       subscriptionDate: '1989-07-20',
     };
     await supertest(app).post('/api/auth').send(body);
@@ -230,6 +235,7 @@ describe('/auth', () => {
       stateId: 42,
       town: 'magna dolore dolor in',
       currencyCode: 'USD',
+      address_1: 'address_1',
       postCode: 'velit id',
       subscriptionDate: '1989-07-20',
     };

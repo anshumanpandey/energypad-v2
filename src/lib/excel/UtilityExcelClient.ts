@@ -63,6 +63,10 @@ export const getUtilityData = async (file: string | Buffer) => {
       fuelSourceId: fuelSource?.id,
       fuelUnit: fuelUnit,
       fuelUses: foundFuelUses.map((i) => i.id),
+      population: consumption.population,
+      fullTimeEmployeeHours: consumption.fullTimeEmployeeHours,
+      buidingExtension: consumption.buidingExtension,
+      changeBuildingLocation: consumption.changeBuildingLocation,
     });
   }
 
@@ -125,8 +129,12 @@ const getConsumptions = (w: Worksheet) => {
     vat: 'H',
     totalCost: 'I',
     fuelUses: 'J',
+    population: 'K',
+    fullTimeEmployeeHours: 'L',
+    buildingExtension: 'M',
+    changeBuildingLocation: 'N',
   };
-  const records: Record<string, string | string[]>[] = [];
+  const records: Record<string, any>[] = [];
   for (let i = 2; i <= w.rowCount; i++) {
     const row = w.getRow(i);
 
@@ -146,6 +154,10 @@ const getConsumptions = (w: Worksheet) => {
         .split(';')
         .flat()
         .map((i) => capitalizeFirstLetter(i.trim())),
+      population: row.getCell(columnMap.population).toString(),
+      fullTimeEmployeeHours: row.getCell(columnMap.fullTimeEmployeeHours).toString(),
+      buidingExtension: row.getCell(columnMap.buildingExtension).toString() === 'Yes',
+      changeBuildingLocation: row.getCell(columnMap.changeBuildingLocation).toString() === 'Yes',
     };
     records.push(r);
   }

@@ -82,8 +82,8 @@ export const buildFakeSite = (p: { id: number; businessId: number; name?: string
   address: 'anywhere',
   postCode: '484 sd8',
   town: 'some town',
+
   population: 15000,
-  fullTimeEmployee: false,
   workinghours: 2,
   size: 15,
   businessId: p.businessId,
@@ -94,14 +94,14 @@ export const buildFakeEmission = (p: {
   siteId: number;
   fuelSourceId: number;
   usedInId: number;
-  year?: number;
+  date?: string;
 }) => ({
   id: p.id,
   conversionFactor: 20,
   consumption: 20,
   fuelUnit: 'm3',
   emissionFactor: 25,
-  date: '01-01-2020',
+  date: p.date || '2020-01-01',
 
   siteId: p.siteId,
   fuelSourceId: p.fuelSourceId,

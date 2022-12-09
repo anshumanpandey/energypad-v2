@@ -503,6 +503,8 @@ export interface components {
       size: number;
       workinghours: number;
       fullTimeEmployee?: boolean;
+      countryId?: number;
+      stateId?: number;
     };
     JWTToken: {
       jwt: string;
@@ -591,12 +593,13 @@ export interface components {
       position: string;
       phoneNumber: string;
       email: string;
-      countryId: number;
-      password: string;
-      stateId: number;
-      town: string;
-      postCode: string;
+      countryId?: number;
+      password?: string;
+      stateId?: number;
+      town?: string;
+      postCode?: string;
       currencyCode?: string;
+      address_1: string;
       subscriptionDate: string;
       floors?: components["schemas"]["BusinessFloor"][];
     };
@@ -612,23 +615,23 @@ export interface components {
     AddFuelSourceConsumptionBody: {
       date: string;
       consumption: number;
-      conversionUnit?: "L" | "m3" | "kWh";
-      cost: number;
-      totalCost?: number;
-      siteId: number;
-      fuelSourceId: number;
-    };
-    AddFuelSourceEmissionBody: {
-      emissionFactor: number;
-      kwhConversionFactor: number;
-      conversionFactor: number;
       totalCost: number;
-      year: number;
-      month: number;
+      conversionFactor?: number;
+      fuelUnit: string;
       vat: number;
       siteId: number;
       fuelSourceId: number;
-      usedInId: number;
+      usedInId: number[];
+    };
+    AddFuelSourceEmissionBody: {
+      emissionFactor: number;
+      conversionFactor: number;
+      date: string;
+      fuelUnit: string;
+      consumption: number;
+      siteId: number;
+      fuelSourceId: number;
+      usedInId: number[];
     };
     UtilityEmission: components["schemas"]["AddFuelSourceEmissionBody"] & {
       id: number;
@@ -689,7 +692,6 @@ export interface components {
             averageConsumption: number;
             averageCost: number;
             consumption: number;
-            cost?: number;
             increasedConsumptionPercentage: number;
             increasedCostPercentage?: number;
           }[];

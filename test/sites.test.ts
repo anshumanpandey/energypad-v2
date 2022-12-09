@@ -17,7 +17,6 @@ describe('/Site ', () => {
       population: 17391920,
       size: 45786843,
       workinghours: 10,
-      fullTimeEmployee: false,
     });
     expect(response.body).toMatchSchema(schema.components.responses.Site.content['application/json'].schema);
     expect(response.statusCode).toBe(200);
@@ -34,7 +33,6 @@ describe('/Site ', () => {
       population: 44444444,
       size: 8798,
       workinghours: 88,
-      fullTimeEmployee: true,
     };
     const response = await supertest(app)
       .put('/api/site/update/478')
@@ -51,7 +49,6 @@ describe('/Site ', () => {
     expect(details.body[1].population).toBe(siteBody.population);
     expect(details.body[1].size).toBe(siteBody.size);
     expect(details.body[1].workinghours).toBe(siteBody.workinghours);
-    expect(details.body[1].fullTimeEmployee).toBe(siteBody.fullTimeEmployee);
 
     const siteBody2 = {
       name: 'ttttt',
@@ -62,7 +59,6 @@ describe('/Site ', () => {
       population: 44444444,
       size: 8798,
       workinghours: 99,
-      fullTimeEmployee: false,
     };
     const response2 = await supertest(app)
       .put('/api/site/update/479')
@@ -79,7 +75,6 @@ describe('/Site ', () => {
     expect(details2.body[1].population).toBe(siteBody2.population);
     expect(details2.body[1].size).toBe(siteBody2.size);
     expect(details2.body[1].workinghours).toBe(siteBody2.workinghours);
-    expect(details2.body[1].fullTimeEmployee).toBe(siteBody2.fullTimeEmployee);
   });
 
   test('It should respond with fail message when create a site when passing wrong data', async () => {
@@ -92,7 +87,6 @@ describe('/Site ', () => {
       town: 35779417.474086836,
       population: 'some',
       size: 45786843.40282458,
-      fullTimeEmployee: false,
     });
     expect(response.body).toMatchSchema(schema.components.schemas.GenericError);
     expect(response.body.message).toBe('town: should be string');
@@ -103,7 +97,6 @@ describe('/Site ', () => {
       address: 'irure aliquip cillum esse magna',
       postCode: 'dolor enim',
       town: 'a town',
-      fullTimeEmployee: false,
       population: 'some',
       size: 45786843.40282458,
       fuel: 'sed sint incididunt',
@@ -121,7 +114,6 @@ describe('/Site ', () => {
       postCode: '484 sd8_new',
       town: 'some town_new',
       population: 222222,
-      fullTimeEmployee: false,
       size: 8888,
       workinghours: 'a',
     });

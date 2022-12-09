@@ -117,7 +117,6 @@ const getRows = async (Worksheet: Worksheet) => {
     {
       name: 'countryId',
       parseValue: async (val: string) => {
-        console.log(val);
         return countries.find((c) => c.name === val)?.id;
       },
       validate: { required: true },

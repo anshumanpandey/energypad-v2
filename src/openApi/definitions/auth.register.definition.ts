@@ -10,7 +10,6 @@ import {
 const registerBodyRequiredProperties = [
   'businessName',
   'businessType',
-  'password',
   'businessService',
   'siteName',
   'buildingName',
@@ -18,11 +17,8 @@ const registerBodyRequiredProperties = [
   'position',
   'phoneNumber',
   'email',
-  'countryId',
-  'stateId',
-  'town',
-  'postCode',
   'subscriptionDate',
+  'address_1',
 ];
 createSchema({
   name: 'RegisterBody',
@@ -45,6 +41,7 @@ createSchema({
       town: { type: 'string' },
       postCode: { type: 'string' },
       currencyCode: { type: 'string' },
+      address_1: { type: 'string' },
       subscriptionDate: { type: 'string', format: 'date' },
       floors: {
         type: 'array',

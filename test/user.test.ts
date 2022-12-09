@@ -23,6 +23,7 @@ describe('/Business ', () => {
       stateId: 46,
       town: 'new_town',
       postCode: 'new_postCode',
+      address_1: 'new_address_1',
       subscriptionDate: '2021-01-01',
     };
 

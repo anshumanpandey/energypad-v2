@@ -7,8 +7,11 @@ const registerUser = async (params: RequestBodyParams<'Register'>, opt?: Transac
   const { ...p } = params;
   const businessParams = {
     ...p,
-    password: await encryptPassword(p.password),
   };
+
+  if (p.password) {
+    businessParams.password = await encryptPassword(p.password);
+  }
 
   const query = DB('Businesses').insert(businessParams);
 

@@ -16,18 +16,24 @@ describe('/Utility ', () => {
         {
           date: '2010-01-01',
           consumption: 100,
-          cost: 100,
-          conversionUnit: 'L',
+          totalCost: 100,
+          vat: 2,
+          conversionFactor: 20,
+          fuelUnit: 'L',
           siteId: 89,
           fuelSourceId: 1,
+          usedInId: [3],
         },
         {
           date: '2010-02-01',
           consumption: 100,
-          cost: 100,
-          conversionUnit: 'm3',
+          totalCost: 100,
+          vat: 2,
+          conversionFactor: 20,
+          fuelUnit: 'm3',
           siteId: 89,
           fuelSourceId: 1,
+          usedInId: [2],
         },
       ]);
     expect(response.statusCode).toBe(200);
@@ -41,9 +47,9 @@ describe('/Utility ', () => {
       .set('Authorization', `Bearer ${user2.jwt}`);
     expect(consumptions.body.length).toBe(2);
     const first = consumptions.body.find((i: any) => i.date === '2010-01-01');
-    expect(first.consumption).toBe(690);
+    expect(first.consumption).toBe(100);
     const second = consumptions.body.find((i: any) => i.date === '2010-02-01');
-    expect(second.consumption).toBe(1055);
+    expect(second.consumption).toBe(100);
   });
 
   test('It should respond with success for a site with defined conversion units', async () => {
@@ -55,19 +61,25 @@ describe('/Utility ', () => {
       .send([
         {
           date: '2010-01-01',
-          consumption: 746.41,
-          cost: 102.44,
-          conversionUnit: 'L',
+          consumption: 17742.166,
+          totalCost: 100,
+          vat: 2,
+          conversionFactor: 20,
+          fuelUnit: 'm3',
           siteId: 552,
           fuelSourceId: 1,
+          usedInId: [3],
         },
         {
           date: '2010-02-01',
-          consumption: 246,
-          cost: 42.74,
-          conversionUnit: 'm3',
+          consumption: 118.08,
+          totalCost: 100,
+          vat: 2,
+          conversionFactor: 20,
+          fuelUnit: 'm3',
           siteId: 552,
           fuelSourceId: 1,
+          usedInId: [3],
         },
       ]);
     expect(response.statusCode).toBe(200);
@@ -160,29 +172,25 @@ describe('/Utility ', () => {
       .send([
         {
           emissionFactor: 15,
-          kwhConversionFactor: 45,
           conversionFactor: 34,
-          totalCost: 11,
-          year: 2001,
-          month: 1,
-          vat: 20,
+          consumption: 80,
+          fuelUnit: 'm3',
+          date: '2001-01-01',
 
           siteId: 452,
           fuelSourceId: 1,
-          usedInId: 2,
+          usedInId: [2],
         },
         {
           emissionFactor: 8,
-          kwhConversionFactor: 14,
           conversionFactor: 22,
-          totalCost: 33,
-          year: 2003,
-          month: 7,
-          vat: 20,
+          consumption: 130,
+          fuelUnit: 'm3',
+          date: '2001-01-01',
 
           siteId: 452,
           fuelSourceId: 1,
-          usedInId: 2,
+          usedInId: [2],
         },
       ])
       .set('Authorization', `Bearer ${body.jwt}`);
@@ -196,29 +204,25 @@ describe('/Utility ', () => {
       .send([
         {
           emissionFactor: 18,
-          kwhConversionFactor: 37,
           conversionFactor: 52,
-          totalCost: 46,
-          year: 2003,
-          month: 5,
-          vat: 20,
+          consumption: 500,
+          fuelUnit: 'm3',
+          date: '2003-05-01',
 
           siteId: 452,
           fuelSourceId: 1,
-          usedInId: 2,
+          usedInId: [2],
         },
         {
           emissionFactor: 4,
-          kwhConversionFactor: 13,
           conversionFactor: 37,
-          totalCost: 27,
-          year: 2002,
-          month: 7,
-          vat: 20,
+          consumption: 300,
+          fuelUnit: 'm3',
+          date: '2002-07-01',
 
           siteId: 452,
           fuelSourceId: 1,
-          usedInId: 2,
+          usedInId: [2],
         },
       ])
       .set('Authorization', `Bearer ${body.jwt}`);
@@ -237,6 +241,11 @@ describe('/Utility ', () => {
     const response = await supertest(app).get('/api/utility/emissions').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(2);
+    const response2 = await supertest(app)
+      .get('/api/utility/emissions?siteId=640&year=2019')
+      .set('Authorization', `Bearer ${body.jwt}`);
+    expect(response2.statusCode).toBe(200);
+    expect(response2.body.length).toBe(1);
   });
 
   test('It should respond with business consumption', async () => {

@@ -29,7 +29,7 @@ export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddF
   const mapRecords = (r: typeof req.body[0]) => {
     return {
       ...r,
-      consumption: conversionFn(r.consumption, r.conversionUnit, r.siteId),
+      consumption: r.consumption,
     };
   };
   await UtilityService.addConsumptionToUtility(req.body.map(mapRecords));
@@ -40,7 +40,7 @@ export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddF
 export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSourceEmission'> = async (req) => {
   const siteToFind = Array.from(new Set(req.body.map((i) => i.siteId)));
   const fuelSourceToFind = Array.from(new Set(req.body.map((i) => i.fuelSourceId)));
-  const years = Array.from(new Set(req.body.map((i) => i.year)));
+  const years = Array.from(new Set(req.body.map((i) => i.date)));
 
   const [fuelFound, sitesFound] = await Promise.all([
     UtilityService.findFuelBy({ fuelSourceId: fuelSourceToFind }),
@@ -58,7 +58,7 @@ export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSou
       {
         siteId: siteToFind,
         fuelSourceId: fuelSourceToFind,
-        year: years,
+        date: years,
       },
       { txr },
     );

@@ -9,12 +9,16 @@ import { capitalizeFirstLetter } from '../utils/appUtils';
 
 export type AddConsumptionToUtilityParam = RequestBodyParams<'AddFuelSourceConsumption'>;
 export const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam, opt?: Transactionable) => {
-  const query = DB('UtilityConsumptions').insert(params);
+  const driver = opt?.txr || DB;
+  const promises = params.map(async (record) => {
+    const { usedInId, ...data } = record;
 
-  if (opt?.txr) {
-    query.transacting(opt.txr);
-  }
-  return query;
+    const [id] = await driver('UtilityConsumptions').insert(data).returning('id');
+    const usesData = usedInId.map((u) => ({ consumptionId: id, usedInId: u }));
+    await driver('UtilityConsumptionsUse').insert(usesData);
+  });
+
+  return Promise.all(promises);
 };
 
 export const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
@@ -25,18 +29,21 @@ export const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
 
 type DeleteEmissionByParams = {
   siteId?: number | number[];
-  year?: number | number[];
+  date?: string | string[];
   fuelSourceId?: number | number[];
 };
 export const deleteEmissionsBy = (p: DeleteEmissionByParams, opt?: Transactionable) => {
   const query = DB('UtilityEmissions').delete();
 
-  if (p.year) {
-    if (Array.isArray(p.year)) {
-      const years = Array.from(new Set(p.year).values());
-      query.whereIn('year', years);
+  if (p.date) {
+    if (Array.isArray(p.date)) {
+      const years = Array.from(new Set(p.date.map((i) => i.split('-')[0])).values());
+      for (let i = 0; i < years.length; i++) {
+        const year = years[i];
+        query.orWhere('date', year + '%');
+      }
     } else {
-      query.where('year', p.year);
+      query.where('date', 'like', p.date.split('-')[0] + '%');
     }
   }
 
@@ -121,7 +128,7 @@ export const getEmissions = (params: GetEmissionsParams): Promise<AppModels['Uti
   }
 
   if (params.forYear) {
-    query.where('UtilityEmissions.year', params.forYear.getFullYear());
+    query.where('UtilityEmissions.date', 'like', params.forYear.getFullYear() + '%');
   }
 
   if (params.fuelSourceId) {
@@ -259,11 +266,17 @@ export const findFuelUseBy = (p?: FindFuelUseByParams): Promise<{ id: number; us
 };
 
 export const addUtilityEmissions = (p: Omit<AppModels['UtilityEmission'], 'id'>[], opt?: Transactionable) => {
-  const query = DB('UtilityEmissions').insert(p);
-  if (opt?.txr) {
-    query.transacting(opt.txr);
-  }
-  return query;
+  const driver = opt?.txr || DB;
+  const promises = p.map(async (i) => {
+    const { usedInId, ...data } = i;
+    const [id] = await driver('UtilityEmissions').insert(data).returning('id');
+
+    const useData = usedInId.map((u) => ({ usedInId: u, emissionId: id }));
+    await driver('UtilityEmissionsUse').insert(useData);
+    return id;
+  });
+
+  return Promise.all(promises);
 };
 
 type Hdd = { date: Date; value: number };

@@ -7,20 +7,24 @@ import {
   CreateSchemaParams,
   createSchema,
 } from '../OpenApiDefinition';
-import { SupportedUnits } from '../../utils/unitsUtils';
 
 const bodySchema: CreateSchemaParams = {
   name: 'AddFuelSourceConsumptionBody',
   schema: {
-    required: ['date', 'consumption', 'cost', 'siteId', 'fuelSourceId'],
+    required: ['date', 'totalCost', 'consumption', 'vat', 'fuelUnit', 'siteId', 'fuelSourceId', 'usedInId'],
     properties: {
       date: { type: 'string', format: 'date' },
       consumption: { type: 'number', format: 'float' },
-      conversionUnit: { type: 'string', enum: SupportedUnits },
-      cost: { type: 'number', format: 'float' },
       totalCost: { type: 'number', format: 'float' },
+      conversionFactor: { type: 'number', format: 'float' },
+      fuelUnit: { type: 'string' },
+      vat: { type: 'number', format: 'float' },
       siteId: { type: 'number', format: 'int32' },
       fuelSourceId: { type: 'number', format: 'int32' },
+      usedInId: {
+        type: 'array',
+        items: { type: 'number', format: 'int32' },
+      },
     },
   },
 };

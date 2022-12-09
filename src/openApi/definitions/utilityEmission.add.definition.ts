@@ -13,28 +13,27 @@ const bodySchema: CreateSchemaParams = {
   schema: {
     required: [
       'emissionFactor',
-      'kwhConversionFactor',
       'conversionFactor',
-      'totalCost',
-      'year',
-      'month',
+      'consumption',
+      'fuelUnit',
+      'date',
       'siteId',
       'fuelSourceId',
       'usedInId',
-      'vat',
     ],
     properties: {
       emissionFactor: { type: 'number', format: 'int32' },
-      kwhConversionFactor: { type: 'number', format: 'int32' },
       conversionFactor: { type: 'number', format: 'int32' },
-      totalCost: { type: 'number', format: 'int32' },
-      year: { type: 'number', format: 'int32' },
-      month: { type: 'number', format: 'int32' },
-      vat: { type: 'number', format: 'int32' },
+      date: { type: 'string', format: 'date' },
+      fuelUnit: { type: 'string' },
+      consumption: { type: 'number', format: 'int32' },
 
       siteId: { type: 'number', format: 'int32' },
       fuelSourceId: { type: 'number', format: 'int32' },
-      usedInId: { type: 'number', format: 'int32' },
+      usedInId: {
+        type: 'array',
+        items: { type: 'number', format: 'int32' },
+      },
     },
   },
 };
