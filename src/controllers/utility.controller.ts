@@ -110,7 +110,14 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
       const usesData = fuelUses.map((fu) => ({ usedInId: fu, emissionId: recordId }));
       await txr('UtilityEmissionsUse').insert(usesData);
     });
-    await Promise.all(consumptionQuries.concat(emissionsQueries));
+
+    const targetConsumptionQueries = data.targetConsumption.map(async (i) => {
+      const { fuelUnit, targetValue, ...data } = i;
+
+      const [recordId] = await txr('TargetConsumption').insert(data).returning('id');
+      await txr('TargetConsumptionFuelConversion').insert({ targetValue, fuelUnit, targetConsumptionId: recordId });
+    });
+    await Promise.all(consumptionQuries.concat(emissionsQueries).concat(targetConsumptionQueries));
 
     return { success: true };
   });

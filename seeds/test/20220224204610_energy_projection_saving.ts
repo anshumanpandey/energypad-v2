@@ -17,7 +17,7 @@ export async function seed(knex: Knex): Promise<void> {
     businessId: 322,
   };
   await knex('Sites').insert([
-    buildFakeSite({ id: site.id, businessId: site.businessId }),
+    buildFakeSite({ id: site.id, businessId: site.businessId, name: 'Site 484' }),
     buildFakeSite({ id: 486, businessId: 322 }),
   ]);
 

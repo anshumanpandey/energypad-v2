@@ -107,7 +107,7 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
         });
 
   return {
-    consumptions: [],
+    consumptions: consumptions.sort(AppUtils.sortByProp('consumption', req.query?.order || 'asc')),
     energyTargets: statistics,
     consumptionsDetails: consumptionsDetails,
   };

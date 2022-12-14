@@ -11,7 +11,17 @@ import {
 const bodySchema: CreateSchemaParams = {
   name: 'AddFuelSourceConsumptionBody',
   schema: {
-    required: ['date', 'totalCost', 'consumption', 'vat', 'fuelUnit', 'siteId', 'fuelSourceId', 'usedInId'],
+    required: [
+      'date',
+      'totalCost',
+      'consumption',
+      'vat',
+      'fuelUnit',
+      'siteId',
+      'fuelSourceId',
+      'usedInId',
+      'conversionFactor',
+    ],
     properties: {
       date: { type: 'string', format: 'date' },
       consumption: { type: 'number', format: 'float' },

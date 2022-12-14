@@ -616,7 +616,7 @@ export interface components {
       date: string;
       consumption: number;
       totalCost: number;
-      conversionFactor?: number;
+      conversionFactor: number;
       fuelUnit: string;
       vat: number;
       siteId: number;

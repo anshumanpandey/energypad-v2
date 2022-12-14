@@ -5,9 +5,13 @@ import path from 'path';
 
 export const config = {
   development: {
-    client: 'sqlite3',
+    client: 'pg',
     connection: {
-      filename: process.env.PWD + '/dev.sqlite3',
+      host: '127.0.0.1',
+      port: 5432,
+      user: 'energypad',
+      password: 'energypad',
+      database: 'energypad',
     },
     useNullAsDefault: true,
     migrations: {

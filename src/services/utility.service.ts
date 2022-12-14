@@ -4,6 +4,7 @@ import { formatISO, setDay, setMonth } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 import { DbUtils } from '@utils';
 import SiteService from './sites.service';
+import ConversionUnit from './conversionUnit.service';
 import { ProducedConsumption } from './dashboard.service';
 import { capitalizeFirstLetter } from '../utils/appUtils';
 
@@ -287,41 +288,18 @@ type ConsummingStaticsticsParams = {
   currentHdd: Hdd[];
 };
 
-const NX = 6;
-
 export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
-  const patterns = p.pastConsumptionRecords;
+  const targetDataQuery = DB('TargetConsumption').select();
 
-  const totalOfHdd = p.pastHdds.reduce((total, next) => new Decimal(total).plus(next.value).toNumber(), 0);
-  const totalOfConsumption = patterns.reduce((total, next) => new Decimal(total).plus(next.consumption).toNumber(), 0);
-  const totalOfHddPower = p.pastHdds.reduce(
-    (total, next) => new Decimal(next.value).times(next.value).plus(total).toNumber(),
-    0,
-  );
-
-  const hddPerEnergy = patterns.map((item, idx) =>
-    new Decimal(p.pastHdds[idx] ? p.pastHdds[idx].value : 0).times(item.consumption).toNumber(),
-  );
-
-  const totalOfHddPerEnergy = hddPerEnergy.reduce((total, next) => new Decimal(total).plus(next).toNumber(), 0);
-
-  const a9Top = new Decimal(new Decimal(totalOfConsumption).times(totalOfHddPower))
-    .minus(new Decimal(totalOfHdd).times(totalOfHddPerEnergy))
-    .toNumber();
-
-  const b9Top = new Decimal(new Decimal(NX).times(totalOfHddPerEnergy))
-    .minus(new Decimal(totalOfHdd).times(totalOfConsumption))
-    .toNumber();
-  const belowVal = new Decimal(new Decimal(NX).times(totalOfHddPower))
-    .minus(new Decimal(totalOfHdd).times(totalOfHdd))
-    .toNumber();
-
-  const intercept = new Decimal(a9Top).dividedBy(belowVal).toDecimalPlaces(8).toNumber();
-  const slope = new Decimal(b9Top).dividedBy(belowVal).toDecimalPlaces(8).toNumber();
+  for (let idx = 1, len = p.currentConsumptionRecords.length; idx < len; idx++) {
+    const consumption = p.currentConsumptionRecords[idx];
+    targetDataQuery.orWhere('date', consumption.date);
+  }
 
   const reducedData = [];
 
   const sitesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.siteId)).values());
+  const targetData = await ConversionUnit.getTargetConsumption({ siteId: sitesId });
 
   for (let s = 0; s < sitesId.length; s++) {
     const siteId = sitesId[s];
@@ -331,11 +309,16 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
     for (let idx = 1, len = currentSiteConsumptions.length; idx < len; idx++) {
       const thisConsumption = currentSiteConsumptions[idx];
       const item = p.currentHdd[idx];
-      let projectedEnergy = 0;
-      if (!thisConsumption?.produced) {
-        const s = new Decimal(item.value).times(slope).toNumber();
-        projectedEnergy = new Decimal(intercept).plus(s).toNumber();
-      }
+
+      const projetion = targetData.find(
+        (i) =>
+          i.date === thisConsumption.date &&
+          i.siteId === thisConsumption.siteId &&
+          i.fuelSourceId === thisConsumption.fuelSourceId,
+      );
+
+      const foundProjectedEnergy = projetion.factorUnits.find((i: any) => i.fuelUnit === thisConsumption.fuelUnit);
+      const projectedEnergy = foundProjectedEnergy ? foundProjectedEnergy.targetValue : 0;
 
       reducedData.push({
         fuelSourceName: thisConsumption.fuelSourceName,

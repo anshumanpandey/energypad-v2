@@ -9,14 +9,14 @@ import { FuelSource, GetConsumptionsParams } from './utility.service';
 const getConsumptionStatistics = ({
   consumptions,
 }: {
-  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'totalCost'>[];
+  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'totalCost' | 'conversionFactor'>[];
 }) => {
   const filterByMonth = (monthToSearch: number) => (c: typeof consumptions[0]) => {
     const [, month] = c.date.split('-');
     return new Decimal(month).equals(monthToSearch);
   };
 
-  const getAverage = (record: typeof consumptions[0], of: 'consumption') => {
+  const getAverage = (record: typeof consumptions[0], of: 'totalCost' | 'consumption') => {
     const date = DbUtils.stringDateToDate(record.date);
     const amountOfDaysOnMonth = getDaysInMonth(date);
     return new Decimal(record[of]).dividedBy(amountOfDaysOnMonth).toDecimalPlaces(2).toNumber();
@@ -37,9 +37,9 @@ const getConsumptionStatistics = ({
     const data = {
       date: `${consumptionOfMonth[0].date.split('-')[0]}-${('0' + idx).slice(-2)}-01`,
       averageConsumption: getAverage(consumptionOfMonth[0], 'consumption'),
-      //averageCost: getAverage(consumptionOfMonth[0], 'totalCost'),
+      averageCost: getAverage(consumptionOfMonth[0], 'totalCost'),
       cost: mostRecentRecord ? mostRecentRecord.totalCost : 0,
-      consumption: mostRecentRecord ? mostRecentRecord.consumption : 0,
+      consumption: mostRecentRecord ? mostRecentRecord.consumption * mostRecentRecord.conversionFactor : 0,
       increasedConsumptionPercentage: MathUtils.calculateIncreasePercentage({
         currentValue: mostRecentRecord.consumption,
         passValue: previouseRecord.consumption,
@@ -121,6 +121,7 @@ const generateMockConsumption = (p: { date: string; siteId: number }) => {
     usedInId: [],
     cost: 0,
     vat: 0,
+    conversionFactor: 0,
     fuelUnit: 'm3',
     totalCost: 0,
     siteId: p.siteId,
@@ -216,10 +217,6 @@ const consumptionIsProduced = (i: any) => {
   return i.produced && i.produced === true;
 };
 
-const calculateEmission = (a: number, b: number) => {
-  return a * b;
-};
-
 export type CarbonEmission = {
   date: string;
   carbonEmission: number;
@@ -287,8 +284,7 @@ const findCarbonEmissions = (params: {
       fuelSourceId: p.fuelSourceId,
       fuelSourceName: p.fuelSourceName,
       fuelSourceColorCode: params.fuels?.find((i) => i.id === p.fuelSourceId)?.colorCode || '#4989C6',
-      //carbonEmission: calculateEmission(p.consumption, currentEmission.value),
-      carbonEmission: calculateEmission(p.consumption, -1),
+      carbonEmission: p.consumption * p.conversionFactor,
       cost: p.totalCost,
       carbonTarget: 0,
       increasedConsumptionPercentage: 0,

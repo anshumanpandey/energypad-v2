@@ -11,16 +11,24 @@ export const getUtilityData = async (file: string | Buffer) => {
 
   const rawConsumptions = getConsumptions(workbook.worksheets[0]);
   const rawEmissions = getEmissions(workbook.worksheets[1]);
+  const rawTarget = getTargedData(workbook.worksheets[2]);
 
-  const sitesNames = rawConsumptions.map((i: any) => i.siteName).concat(rawEmissions.map((i: any) => i.siteName));
+  const sitesNames = rawConsumptions
+    .map((i: any) => i.siteName)
+    .concat(rawEmissions.map((i: any) => i.siteName))
+    .concat(rawTarget.map((i: any) => i.siteName));
   const fuelUsesName = rawConsumptions
     .map((i: any) => i.fuelUses)
     .concat(rawEmissions.map((i: any) => i.fuelUses))
     .flat();
-  const fuelSourceNames = rawConsumptions.map((i: any) => i.fuelType).concat(rawEmissions.map((i: any) => i.fuelType));
+  const fuelSourceNames = rawConsumptions
+    .map((i: any) => i.fuelType)
+    .concat(rawEmissions.map((i: any) => i.fuelType))
+    .concat(rawTarget.map((i: any) => i.fuelType));
   const conversionUnitsNames = rawConsumptions
     .map((i: any) => i.fuelUnit)
-    .concat(rawEmissions.map((i: any) => i.fuelUnit));
+    .concat(rawEmissions.map((i: any) => i.fuelUnit))
+    .concat(rawTarget.map((i: any) => i.fuelUnit));
 
   const [sites, fuelUses, fuelTypes, conversionUnits] = await Promise.all([
     SitesService.findBy({ name: sitesNames }),
@@ -64,7 +72,6 @@ export const getUtilityData = async (file: string | Buffer) => {
       fuelUnit: fuelUnit,
       fuelUses: foundFuelUses.map((i) => i.id),
       population: consumption.population,
-      fullTimeEmployeeHours: consumption.fullTimeEmployeeHours,
       buidingExtension: consumption.buidingExtension,
       changeBuildingLocation: consumption.changeBuildingLocation,
     });
@@ -106,9 +113,27 @@ export const getUtilityData = async (file: string | Buffer) => {
     });
   }
 
+  const targetConsumption = [];
+  for (let i = 0; i < rawTarget.length; i++) {
+    const target = rawTarget[i];
+
+    const site = sites.find((s) => s.name === target.siteName);
+    const fuelSource = fuelTypes.find((ft) => ft.source === target.fuelType);
+    const fuelUnit = conversionUnits.find((s: any) => s === target.fuelUnit);
+
+    targetConsumption.push({
+      date: DbUtils.dateToStringDate(parse(`01/${target.month}/${target.year}`, 'dd/MMM/yyyy', new Date())),
+      siteId: site?.id,
+      fuelSourceId: fuelSource?.id,
+      fuelUnit: fuelUnit,
+      targetValue: target.value,
+    });
+  }
+
   const result = {
     consumptions,
     emissions,
+    targetConsumption,
   };
 
   if (error !== null) {
@@ -135,7 +160,7 @@ const getConsumptions = (w: Worksheet) => {
     changeBuildingLocation: 'N',
   };
   const records: Record<string, any>[] = [];
-  for (let i = 2; i <= w.rowCount; i++) {
+  for (let i = 2; i <= w.actualRowCount; i++) {
     const row = w.getRow(i);
 
     const r = {
@@ -177,7 +202,7 @@ const getEmissions = (w: Worksheet) => {
     emissionFactor: 'I',
   };
   const records: Record<string, string | string[]>[] = [];
-  for (let i = 2; i <= w.rowCount; i++) {
+  for (let i = 2; i <= w.actualRowCount; i++) {
     const row = w.getRow(i);
 
     const r = {
@@ -200,6 +225,33 @@ const getEmissions = (w: Worksheet) => {
   }
   return records;
 };
+
+const getTargedData = (w: Worksheet) => {
+  const columnMap = {
+    siteName: 'A',
+    year: 'B',
+    month: 'C',
+    fuelType: 'D',
+    fuelUnit: 'E',
+    value: 'F',
+  };
+  const records: Record<string, string | string[]>[] = [];
+  for (let i = 2; i <= w.actualRowCount; i++) {
+    const row = w.getRow(i);
+
+    const r = {
+      siteName: row.getCell(columnMap.siteName).toString(),
+      year: row.getCell(columnMap.year).toString(),
+      month: row.getCell(columnMap.month).toString(),
+      fuelType: row.getCell(columnMap.fuelType).toString(),
+      fuelUnit: row.getCell(columnMap.fuelUnit).toString().split('-').pop() || '',
+      value: row.getCell(columnMap.value).toString() || '',
+    };
+    records.push(r);
+  }
+  return records;
+};
+
 const readExcelFile = async (file: string | Buffer) => {
   const workbook = new Workbook();
   if (typeof file === 'string') {

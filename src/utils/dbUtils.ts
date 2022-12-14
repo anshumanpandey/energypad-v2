@@ -39,6 +39,10 @@ export const sortByDate = (a: Date, b: Date) => {
   return a.valueOf() - b.valueOf();
 };
 
+export const addPrefix = (prefix: string) => (fields: string[]) => {
+  return fields.map((i) => ({ [`${prefix}-${i}`]: `${prefix}.${i}` }));
+};
+
 export const createTransaction = () => {
   return DB.transaction();
 };
