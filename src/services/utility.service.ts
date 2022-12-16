@@ -289,13 +289,6 @@ type ConsummingStaticsticsParams = {
 };
 
 export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
-  const targetDataQuery = DB('TargetConsumption').select();
-
-  for (let idx = 1, len = p.currentConsumptionRecords.length; idx < len; idx++) {
-    const consumption = p.currentConsumptionRecords[idx];
-    targetDataQuery.orWhere('date', consumption.date);
-  }
-
   const reducedData = [];
 
   const sitesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.siteId)).values());
@@ -317,7 +310,7 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
           i.fuelSourceId === thisConsumption.fuelSourceId,
       );
 
-      const foundProjectedEnergy = projetion.factorUnits.find((i: any) => i.fuelUnit === thisConsumption.fuelUnit);
+      const foundProjectedEnergy = projetion?.factorUnits.find((i: any) => i.fuelUnit === thisConsumption.fuelUnit);
       const projectedEnergy = foundProjectedEnergy ? foundProjectedEnergy.targetValue : 0;
 
       reducedData.push({

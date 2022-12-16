@@ -85,9 +85,6 @@ export const importLog: AuthAppController<'UtilityFileImport', 'UtilityFileImpor
 
 export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = async (req) => {
   const excelFile = req.file;
-  const id = (req.body as unknown as Record<string, string>).fuelSource;
-  const fuelSourceId = parseInt(id, 10);
-  if (!fuelSourceId) return new ApiError('Missing fuelSourceId');
   if (!excelFile) return new ApiError('Missing file');
 
   const data = await ExcelClient.getUtilityData(excelFile.buffer);

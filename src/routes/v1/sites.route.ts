@@ -14,8 +14,8 @@ import {
 const authRoutes = express.Router();
 
 authRoutes.get('/details/:siteId', GetSiteDetailsPath, AuthMiddleware, ExpressAsync(SitesController.getSiteDetails));
-authRoutes.get('/countries', GetCountriesPath, AuthMiddleware, ExpressAsync(SitesController.getCountries));
-authRoutes.get('/states', GetStatesPath, AuthMiddleware, ExpressAsync(SitesController.getStates));
+authRoutes.get('/countries', GetCountriesPath, ExpressAsync(SitesController.getCountries));
+authRoutes.get('/states', GetStatesPath, ExpressAsync(SitesController.getStates));
 
 authRoutes.post(
   '/',
