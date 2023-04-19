@@ -587,7 +587,6 @@ export interface components {
       businessName: string;
       businessType: string;
       businessService: string;
-      siteName: string;
       buildingName: string;
       contactName: string;
       position: string;
