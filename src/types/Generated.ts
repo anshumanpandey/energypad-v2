@@ -481,6 +481,20 @@ export interface paths {
       requestBody: components["requestBodies"]["FileImportBusinessPatterns"];
     };
   };
+  "/api/conversionUnit/": {
+    /** Create a new site for a business. */
+    get: {
+      parameters: {
+        query: {
+          fuelSource?: ("L" | "m3")[];
+        };
+      };
+      responses: {
+        200: components["responses"]["GetConversionUnit"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
 }
 
 export interface components {
@@ -965,6 +979,15 @@ export interface components {
     SetSiteConversionUnit: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
+    /** Success message */
+    GetConversionUnit: {
+      content: {
+        "application/json": {
+          value: number;
+          unit: "L" | "m3" | "kWh";
+        }[];
       };
     };
   };

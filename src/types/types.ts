@@ -39,6 +39,7 @@ export type QueryParamsKeys = Pick<
   | '/api/utility/consumptions'
   | '/api/utility/emissions'
   | '/api/business/logs'
+  | '/api/conversionUnit/'
   | '/api/dashboard/reports'
   | '/api/dashboard/carbonFootprint'
   | '/api/dashboard/portfolio'

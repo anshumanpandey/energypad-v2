@@ -2,13 +2,17 @@ import Decimal from 'decimal.js';
 
 const SUPPORTED_UNITS = ['L', 'm3', 'kWh'] as const;
 export const SupportedUnits = Array.from(SUPPORTED_UNITS.values());
+export const ConversionValues = {
+  L: 6.9,
+  m3: 10.55,
+} as const;
 
 export const litersToKwh = (liters: number) => {
-  return new Decimal(liters).times(6.9).toNumber();
+  return new Decimal(liters).times(ConversionValues.L).toNumber();
 };
 
 export const m3ToKwh = (meters: number) => {
-  return new Decimal(meters).times(10.55).toNumber();
+  return new Decimal(meters).times(ConversionValues.m3).toNumber();
 };
 
 export type ConversionResolverFn = (value: number, unit?: typeof SupportedUnits[number]) => number;

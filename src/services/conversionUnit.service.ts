@@ -103,8 +103,30 @@ const getTargetConsumption = async (p: {
   return Array.from(records.values());
 };
 
+const getConversionValue = (p: {
+  fuelSource?: keyof typeof UnitsUtil.ConversionValues | Array<keyof typeof UnitsUtil.ConversionValues>;
+}): Array<{ unit: keyof typeof UnitsUtil.ConversionValues; value: number }> => {
+  if (p.fuelSource) {
+    if (Array.isArray(p.fuelSource)) {
+      const values = [];
+      for (let i = 0; i < p.fuelSource.length; i++) {
+        const unit = p.fuelSource[i];
+        values.push({ unit: unit, value: UnitsUtil.ConversionValues[unit] });
+      }
+      return values;
+    } else {
+      return [{ unit: p.fuelSource, value: UnitsUtil.ConversionValues[p.fuelSource] }];
+    }
+  }
+  return Object.entries(UnitsUtil.ConversionValues).map((entry) => ({
+    unit: entry[0] as keyof typeof UnitsUtil.ConversionValues,
+    value: entry[1],
+  }));
+};
+
 export default {
   buildConversionFnForSite,
   findBy,
   getTargetConsumption,
+  getConversionValue,
 };

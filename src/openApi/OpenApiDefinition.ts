@@ -90,6 +90,7 @@ type PathNames =
   | 'LogFileImport'
   | 'GetHeatingEnergy'
   | 'FileImportBusiness'
+  | 'GetConversionUnit'
   | 'FileImportBusinessTenants'
   | 'FileImportBusinessPatterns'
   | 'UtilityFileImport';
