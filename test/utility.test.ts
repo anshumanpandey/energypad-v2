@@ -173,7 +173,6 @@ describe('/Utility ', () => {
         {
           emissionFactor: 15,
           conversionFactor: 34,
-          consumption: 80,
           fuelUnit: 'm3',
           date: '2001-01-01',
 
@@ -184,7 +183,6 @@ describe('/Utility ', () => {
         {
           emissionFactor: 8,
           conversionFactor: 22,
-          consumption: 130,
           fuelUnit: 'm3',
           date: '2001-01-01',
 
@@ -205,7 +203,6 @@ describe('/Utility ', () => {
         {
           emissionFactor: 18,
           conversionFactor: 52,
-          consumption: 500,
           fuelUnit: 'm3',
           date: '2003-05-01',
 
@@ -216,7 +213,6 @@ describe('/Utility ', () => {
         {
           emissionFactor: 4,
           conversionFactor: 37,
-          consumption: 300,
           fuelUnit: 'm3',
           date: '2002-07-01',
 

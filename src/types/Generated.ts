@@ -641,7 +641,6 @@ export interface components {
       conversionFactor: number;
       date: string;
       fuelUnit: string;
-      consumption: number;
       siteId: number;
       fuelSourceId: number;
       usedInId: number[];

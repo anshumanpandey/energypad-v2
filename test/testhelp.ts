@@ -97,7 +97,6 @@ export const buildFakeEmission = (p: {
 }) => ({
   id: p.id,
   conversionFactor: 20,
-  consumption: 20,
   fuelUnit: 'm3',
   emissionFactor: 25,
   date: p.date || '2020-01-01',

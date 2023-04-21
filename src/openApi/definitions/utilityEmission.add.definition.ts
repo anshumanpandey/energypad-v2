@@ -11,22 +11,12 @@ import {
 const bodySchema: CreateSchemaParams = {
   name: 'AddFuelSourceEmissionBody',
   schema: {
-    required: [
-      'emissionFactor',
-      'conversionFactor',
-      'consumption',
-      'fuelUnit',
-      'date',
-      'siteId',
-      'fuelSourceId',
-      'usedInId',
-    ],
+    required: ['emissionFactor', 'conversionFactor', 'fuelUnit', 'date', 'siteId', 'fuelSourceId', 'usedInId'],
     properties: {
       emissionFactor: { type: 'number', format: 'int32' },
       conversionFactor: { type: 'number', format: 'int32' },
       date: { type: 'string', format: 'date' },
       fuelUnit: { type: 'string' },
-      consumption: { type: 'number', format: 'int32' },
 
       siteId: { type: 'number', format: 'int32' },
       fuelSourceId: { type: 'number', format: 'int32' },
