@@ -22,6 +22,42 @@ export const addConsumptionToUtility = async (params: AddConsumptionToUtilityPar
   return Promise.all(promises);
 };
 
+export const addMonitoringToUtility = async (
+  params: RequestBodyParams<'AddFuelSourceMonitoring'>,
+  opt?: Transactionable,
+) => {
+  const driver = opt?.txr || DB;
+  const promises = params.map(async (record) => {
+    const { usedInId, ...data } = record;
+
+    const [id] = await driver('UtilityMonitoring').insert(data).returning('id');
+    const usesData = usedInId.map((u) => ({ monitoringId: id, usedInId: u }));
+    await driver('UtilityMonitoringToUseInId').insert(usesData);
+  });
+
+  return Promise.all(promises);
+};
+
+export const getMonitoring = (params: { siteId: number; year: number; month: number; businessId: number }) => {
+  const query = DB('UtilityMonitoring')
+    .select(['UtilityMonitoring'])
+    .innerJoin('FuelSources', 'UtilityMonitoring.fuelSourceId', 'FuelSources.id')
+    .innerJoin({ S: 'Sites' }, 'UtilityMonitoring.siteId', 'S.id')
+    .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
+    .where('B.id', params.businessId);
+
+  query.where(
+    'UtilityMonitoring.date',
+    'like',
+    `${params.year}-${new Date(Date.UTC(2018, params.month, 1)).toISOString().split('T')[0].split('-')[1]}-%`,
+  );
+  query.where('UtilityMonitoring.siteId', params.siteId);
+
+  console.log(query.toQuery());
+
+  return query;
+};
+
 export const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   const query = DB('EnergySavingTips').select();
 

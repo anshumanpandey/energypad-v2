@@ -195,6 +195,16 @@ export interface paths {
       requestBody: components["requestBodies"]["AddFuelSourceConsumption"];
     };
   };
+  "/api/utility/addMonitoring": {
+    /** Add emision to utility. */
+    post: {
+      responses: {
+        200: components["responses"]["AddFuelSourceMonitoring"];
+        400: components["responses"]["GenericError"];
+      };
+      requestBody: components["requestBodies"]["AddFuelSourceMonitoring"];
+    };
+  };
   "/api/utility/importUtility": {
     /** Import excel file. */
     post: {
@@ -989,6 +999,12 @@ export interface components {
         }[];
       };
     };
+    /** Success message */
+    AddFuelSourceMonitoring: {
+      content: {
+        "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
   };
   parameters: {
     GetSiteDetails: number;
@@ -1122,6 +1138,20 @@ export interface components {
         "application/json": {
           unitValue: number;
           unitType: "L" | "m3" | "kWh";
+        }[];
+      };
+    };
+    AddFuelSourceMonitoring: {
+      content: {
+        "application/json": {
+          carbon: number;
+          conversionFactor: number;
+          energy: number;
+          date: string;
+          fuelUnit: string;
+          siteId: number;
+          fuelSourceId: number;
+          usedInId: number[];
         }[];
       };
     };

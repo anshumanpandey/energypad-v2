@@ -68,6 +68,37 @@ export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSou
   });
 };
 
+export const addMonitoring: AuthAppController<'AddFuelSourceMonitoring', 'AddFuelSourceMonitoring'> = async (req) => {
+  const siteToFind = Array.from(new Set(req.body.map((i) => i.siteId)));
+  const fuelSourceToFind = Array.from(new Set(req.body.map((i) => i.fuelSourceId)));
+  const years = Array.from(new Set(req.body.map((i) => i.date)));
+
+  const [fuelFound, sitesFound] = await Promise.all([
+    UtilityService.findFuelBy({ fuelSourceId: fuelSourceToFind }),
+    SitesService.findBy({ id: siteToFind }),
+  ]);
+  if (fuelFound.length === 0) {
+    return new ApiError('Utility to add not found');
+  }
+  if (sitesFound.length !== siteToFind.length) {
+    return new ApiError('Site not found');
+  }
+
+  return DB.transaction(async (txr) => {
+    await UtilityService.deleteEmissionsBy(
+      {
+        siteId: siteToFind,
+        fuelSourceId: fuelSourceToFind,
+        date: years,
+      },
+      { txr },
+    );
+    await UtilityService.addMonitoringToUtility(req.body, { txr });
+
+    return { success: true };
+  });
+};
+
 export const importLog: AuthAppController<'UtilityFileImport', 'UtilityFileImport'> = async (req) => {
   const excelFile = req.file;
   if (!excelFile) return new ApiError('Missing file');
@@ -163,6 +194,19 @@ export const getEmissions: AuthGetAppController<'GetEmissions', '/api/utility/em
     businessId: req.user.id,
   };
   const consumptions = await UtilityService.getEmissions(params);
+  return consumptions;
+};
+
+//TODO: generate types for this route
+export const getMonitoring = async (req: any) => {
+  const params = {
+    month: MathUtils.toInt(req.query.month) - 1,
+    year: MathUtils.toInt(req.query.year),
+    siteId: MathUtils.toInt(req.query.siteId),
+    businessId: req.user.id,
+  };
+  console.log(params);
+  const consumptions = await UtilityService.getMonitoring(params);
   return consumptions;
 };
 

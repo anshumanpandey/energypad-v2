@@ -62,6 +62,7 @@ type PathNames =
   | 'GetDashboardEnergyWaste'
   | 'AddFuelSourceConsumption'
   | 'AddFuelSourceEmission'
+  | 'AddFuelSourceMonitoring'
   | 'GetUtilities'
   | 'GetSites'
   | 'GetSiteDetails'

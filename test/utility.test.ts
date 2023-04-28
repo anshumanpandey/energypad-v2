@@ -225,11 +225,84 @@ describe('/Utility ', () => {
     expect(response2.statusCode).toBe(200);
   });
 
+  test('It should respond with success when saving energy monitoring', async () => {
+    const body = await loginUser(app)('mail610@mail.com');
+    const response = await supertest(app)
+      .post('/api/utility/addMonitoring')
+      .send([
+        {
+          carbon: 12,
+          energy: 22,
+          conversionFactor: 34,
+          fuelUnit: 'm3',
+          date: '2001-01-01',
+
+          siteId: 602,
+          fuelSourceId: 1,
+          usedInId: [2],
+        },
+        {
+          carbon: 8,
+          energy: 18,
+          conversionFactor: 22,
+          fuelUnit: 'L',
+          date: '2001-01-01',
+
+          siteId: 602,
+          fuelSourceId: 1,
+          usedInId: [2, 3],
+        },
+      ])
+      .set('Authorization', `Bearer ${body.jwt}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchSchema(
+      schema.components.responses.AddFuelSourceMonitoring.content['application/json'].schema,
+    );
+
+    const response2 = await supertest(app)
+      .post('/api/utility/addMonitoring')
+      .send([
+        {
+          carbon: 18,
+          energy: 28,
+          conversionFactor: 52,
+          fuelUnit: 'm3',
+          date: '2003-05-01',
+
+          siteId: 602,
+          fuelSourceId: 1,
+          usedInId: [2],
+        },
+        {
+          carbon: 4,
+          energy: 44,
+          conversionFactor: 37,
+          fuelUnit: 'm3',
+          date: '2002-07-01',
+
+          siteId: 602,
+          fuelSourceId: 1,
+          usedInId: [2],
+        },
+      ])
+      .set('Authorization', `Bearer ${body.jwt}`);
+    expect(response2.statusCode).toBe(200);
+  });
+
   test('It should respond with fuel sources', async () => {
     const body = await registerUser(app)();
     const response = await supertest(app).get('/api/utility/fuelSources').set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(6);
+  });
+
+  test('It should respond with monitoring', async () => {
+    const body = await loginUser(app)('mail610@mail.com');
+    const response = await supertest(app)
+      .get('/api/utility/monitoring?siteId=602&month=1&year=2020')
+      .set('Authorization', `Bearer ${body.jwt}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.length).toBe(2);
   });
 
   test('It should respond with business emissions', async () => {

@@ -125,6 +125,25 @@ export const buildFakeConsumption = (p: {
   };
 };
 
+export const buildFakeUtilityMonitoring = (p: {
+  id: number;
+  date: string;
+  carbon: number;
+  siteId: number;
+  fuelSourceId: number;
+}) => {
+  return {
+    id: p.id,
+    date: p.date,
+    carbon: p.carbon,
+    energy: 20,
+    conversionFactor: 10,
+    fuelUnit: 'm3',
+    siteId: p.siteId,
+    fuelSourceId: p.fuelSourceId,
+  };
+};
+
 export const SHOULD_BE_STRING_ERROR = 'should be string';
 export const NO_EXTRA_PROPERTY_ERROR_MESSAGE = 'should NOT have additional properties';
 export const WRONG_DATE_ERROR_MESSAGE = 'should match format "date"';

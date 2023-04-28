@@ -22,7 +22,6 @@ describe('/ConversionFactor', () => {
       .get('/api/conversionUnit?fuelSource=L,m3')
       .set('Authorization', `Bearer ${body.jwt}`);
 
-    console.log(response2.body);
     expect(response2.body).toMatchSchema(
       schema.components.responses.GetConversionUnit.content['application/json'].schema,
     );

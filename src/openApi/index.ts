@@ -60,6 +60,7 @@ import { GetDashboardPortfolioPath } from './definitions/dashboard.portfolio.get
 import { GetDashboardEnergyWastePath } from './definitions/dashboard.energywaste.get.definition';
 import { SetSiteConversionUnitPath } from './definitions/siteConversionUnit.set.definition';
 import { GetConversionUnitPath } from './definitions/conversionUnit.get.definition';
+import { AddUtilityMonitoringPath } from './definitions/utilityMonitoring.add.definition';
 
 export default OpenApiDefinition;
 export {
@@ -104,4 +105,5 @@ export {
   GetDashboardEnergyWastePath,
   SetSiteConversionUnitPath,
   GetConversionUnitPath,
+  AddUtilityMonitoringPath,
 };
