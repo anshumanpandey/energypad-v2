@@ -231,7 +231,11 @@ export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusi
   if (data instanceof ApiError) return data;
 
   await DB.transaction(async (trx) => {
-    await Promise.all([DB('Businesses').insert(data).transacting(trx), DB('Sites').insert(sites).transacting(trx)]);
+    const promises = [DB('Businesses').insert(data).transacting(trx)];
+    if (sites.length !== 0) {
+      promises.push(DB('Sites').insert(sites).transacting(trx));
+    }
+    await Promise.all(promises);
   });
 
   return { success: true };
