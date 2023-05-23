@@ -99,7 +99,6 @@ const getRows = async (Worksheet: Worksheet) => {
     { name: 'businessName', validate: { required: true } },
     { name: 'businessType', validate: { required: true } },
     { name: 'businessService', validate: { required: true } },
-    { name: 'siteName', validate: { required: true } },
     { name: 'buildingName', validate: { required: true } },
     { name: 'contactName', validate: { required: true } },
     { name: 'position', validate: { required: true } },

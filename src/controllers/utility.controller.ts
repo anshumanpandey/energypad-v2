@@ -205,7 +205,6 @@ export const getMonitoring = async (req: any) => {
     siteId: MathUtils.toInt(req.query.siteId),
     businessId: req.user.id,
   };
-  console.log(params);
   const consumptions = await UtilityService.getMonitoring(params);
   return consumptions;
 };

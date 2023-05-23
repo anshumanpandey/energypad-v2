@@ -104,7 +104,6 @@ export const getUtilityData = async (file: string | Buffer) => {
     emissions.push({
       date: DbUtils.dateToStringDate(parse(`01/${consumption.month}/${consumption.year}`, 'dd/MMM/yyyy', new Date())),
       conversionFactor: consumption.conversionFactor,
-      consumption: consumption.consumptionValue,
       emissionFactor: consumption.emissionFactor,
       siteId: site?.id,
       fuelSourceId: fuelSource?.id,
@@ -197,9 +196,8 @@ const getEmissions = (w: Worksheet) => {
     fuelType: 'D',
     fuelUnit: 'E',
     conversionFactor: 'F',
-    consumptionValue: 'G',
-    fuelUses: 'H',
-    emissionFactor: 'I',
+    fuelUses: 'G',
+    emissionFactor: 'H',
   };
   const records: Record<string, string | string[]>[] = [];
   for (let i = 2; i <= w.actualRowCount; i++) {
@@ -212,7 +210,6 @@ const getEmissions = (w: Worksheet) => {
       fuelType: row.getCell(columnMap.fuelType).toString(),
       fuelUnit: row.getCell(columnMap.fuelUnit).toString().split('-').pop() || '',
       conversionFactor: row.getCell(columnMap.conversionFactor).toString(),
-      consumptionValue: row.getCell(columnMap.consumptionValue).toString(),
       emissionFactor: row.getCell(columnMap.emissionFactor).toString(),
       fuelUses: row
         .getCell(columnMap.fuelUses)

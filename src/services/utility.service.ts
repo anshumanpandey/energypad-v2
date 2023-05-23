@@ -53,8 +53,6 @@ export const getMonitoring = (params: { siteId: number; year: number; month: num
   );
   query.where('UtilityMonitoring.siteId', params.siteId);
 
-  console.log(query.toQuery());
-
   return query;
 };
 
