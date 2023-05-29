@@ -2,7 +2,7 @@ import { ApiError, DB } from '@lib';
 import { SitesService } from '@services';
 import { encryptPassword } from '@utils';
 import { formatISO } from 'date-fns';
-import { Workbook, Worksheet } from 'exceljs';
+import { Workbook, Worksheet, ValueType } from 'exceljs';
 
 export const getBusinessData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
@@ -103,7 +103,10 @@ const getRows = async (Worksheet: Worksheet) => {
     { name: 'contactName', validate: { required: true } },
     { name: 'position', validate: { required: true } },
     { name: 'phoneNumber', validate: { required: true } },
-    { name: 'email', validate: { required: true } },
+    {
+      name: 'email',
+      validate: { required: true },
+    },
     { name: 'town', validate: { required: true } },
     { name: 'postCode', validate: { required: true } },
     {
@@ -151,7 +154,8 @@ const getRows = async (Worksheet: Worksheet) => {
         return new ApiError('Wrong format');
       }
 
-      const colVal = col[i]?.toString();
+      const castedCol = col[i] as any;
+      const colVal = castedCol?.text ? castedCol?.text : castedCol?.toString();
 
       if (validCol.validate.required === true) {
         if (colVal === undefined) continue root_loop;
