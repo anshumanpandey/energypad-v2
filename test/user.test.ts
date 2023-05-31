@@ -324,4 +324,13 @@ describe('/Business ', () => {
       .attach('excel', 'test/fixtures/business_example_v2.xlsx');
     expect(response.statusCode).toBe(200);
   });
+
+  test('It should data from excel file without a state successfully', async () => {
+    const body = await registerUser(app)();
+    const response = await supertest(app)
+      .post('/api/business/importBusiness')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .attach('excel', 'test/fixtures/business_example_v3.xlsx');
+    expect(response.statusCode).toBe(200);
+  });
 });
