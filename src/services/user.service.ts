@@ -80,7 +80,7 @@ const savePattern = async (params: AddServiceParams, opt?: Transactionable) => {
       usedInId: element.usedInId,
       startDate: element.startDate,
       endDate: element.endDate,
-      consumption: element.consumption,
+      temperature: element.temperature,
       daysOnYear: element.daysOnYear,
     });
   }

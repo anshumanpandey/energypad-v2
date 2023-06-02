@@ -8,6 +8,6 @@ export async function up(knex: Knex): Promise<void> {
 
 export async function down(knex: Knex): Promise<void> {
   await knex.schema.alterTable('Businesses', function (table) {
-    table.integer('stateId', 255).notNullable().alter();
+    table.integer('stateId', 255).defaultTo(0).alter();
   });
 }

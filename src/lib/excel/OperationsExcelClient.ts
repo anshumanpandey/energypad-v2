@@ -2,7 +2,7 @@ import { ApiError } from '@lib';
 import { SitesService } from '@services';
 import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
-import { findFuelBy } from '../../services/utility.service';
+import { findFuelUseBy } from '../../services/utility.service';
 
 export const getPatternsData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
@@ -29,7 +29,7 @@ const getRows = async (Worksheet: Worksheet) => {
     ).values(),
   );
 
-  const fuels = Array.from(
+  const uses = Array.from(
     new Set(
       (usedInIdCol || [])
         .slice(2)
@@ -37,7 +37,10 @@ const getRows = async (Worksheet: Worksheet) => {
         .filter((c) => c !== ''),
     ).values(),
   );
-  const [sites, fuelsRecords] = await Promise.all([SitesService.findBy({ name: names }), findFuelBy({ names: fuels })]);
+  const [sites, fuelsRecords] = await Promise.all([
+    SitesService.findBy({ name: names }),
+    findFuelUseBy({ names: uses }),
+  ]);
 
   const validColums = [
     {
@@ -54,12 +57,13 @@ const getRows = async (Worksheet: Worksheet) => {
         return formatISO(new Date(val)).split('T')[0];
       },
     },
-    { name: 'consumption', validate: { required: true } },
+    { name: 'Temperature set point', validate: { required: false }, alias: 'temperature' },
     { name: 'daysOnYear', validate: { required: true } },
     {
-      name: 'usedInId',
+      name: 'Heating/Cooling/Powering/Lighting',
+      alias: 'usedInId',
       parseValue: async (val: string) => {
-        return fuelsRecords.find((f) => f.source === val)?.id;
+        return fuelsRecords.find((f) => f.use.toLowerCase() === val.toLowerCase())?.id;
       },
       validate: { required: true },
     },
@@ -85,7 +89,8 @@ const getRows = async (Worksheet: Worksheet) => {
         return new ApiError('Wrong format');
       }
 
-      const colVal = col[i]?.toString();
+      const castedCol = col[i] as any;
+      const colVal = castedCol?.result || castedCol?.text || castedCol?.toString();
 
       if (validCol.validate.required === true) {
         if (colVal === undefined) continue root_loop;
@@ -97,16 +102,16 @@ const getRows = async (Worksheet: Worksheet) => {
             validCol
               ?.parseValue(colVal)
               .then((val: any) => {
-                singleRow[validCol.name] = val;
+                singleRow[validCol?.alias || validCol.name] = val;
               })
               .then(resolve)
               .catch(reject);
           } else {
-            singleRow[validCol.name] = undefined;
+            singleRow[validCol?.alias || validCol.name] = undefined;
             resolve();
           }
         } else {
-          singleRow[validCol.name] = colVal;
+          singleRow[validCol?.alias || validCol.name] = colVal;
           resolve();
         }
       });
@@ -118,7 +123,17 @@ const getRows = async (Worksheet: Worksheet) => {
     rows.push(singleRow);
   }
 
-  return rows;
+  return rows.filter(
+    (arr, index, self) =>
+      index ===
+      self.findIndex(
+        (t) =>
+          t.usedInId === arr.usedInId &&
+          t.siteId === arr.siteId &&
+          t.startDate === arr.startDate &&
+          t.endDate === arr.endDate,
+      ),
+  );
 };
 
 const readExcelFile = async (file: string | Buffer) => {

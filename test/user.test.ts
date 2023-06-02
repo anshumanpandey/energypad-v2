@@ -301,7 +301,7 @@ describe('/Business ', () => {
         {
           startDate: '2020-08-01',
           endDate: '2020-09-01',
-          consumption: 20,
+          temperature: 20,
           daysOnYear: 20,
           siteId: 353,
           usedInId: 2,

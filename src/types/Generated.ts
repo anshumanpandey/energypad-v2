@@ -536,7 +536,7 @@ export interface components {
     BusinessPattern: {
       startDate: string;
       endDate: string;
-      consumption: number;
+      temperature: number;
       daysOnYear: number;
       siteId: number;
       usedInId: number;

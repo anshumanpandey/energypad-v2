@@ -2,7 +2,7 @@ import { ApiError, DB } from '@lib';
 import { SitesService } from '@services';
 import { encryptPassword } from '@utils';
 import { formatISO } from 'date-fns';
-import { Workbook, Worksheet, ValueType } from 'exceljs';
+import { Workbook, Worksheet } from 'exceljs';
 
 export const getBusinessData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);

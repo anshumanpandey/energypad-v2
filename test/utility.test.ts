@@ -135,7 +135,7 @@ describe('/Utility ', () => {
     const response = await supertest(app)
       .post('/api/business/importPatterns')
       .set('Authorization', `Bearer ${body.jwt}`)
-      .attach('excel', 'test/fixtures/business_patterns.xlsx');
+      .attach('excel', 'test/fixtures/business_patterns (1).xlsx');
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(
       schema.components.responses.FileImportBusinessPatterns.content['application/json'].schema,
