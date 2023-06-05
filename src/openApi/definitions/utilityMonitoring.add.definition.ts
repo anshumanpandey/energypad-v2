@@ -8,7 +8,6 @@ import {
 
 const props: OpenAPIV3.SchemaObject['properties'] = {
   carbon: { type: 'number', format: 'int32' },
-  conversionFactor: { type: 'number', format: 'int32' },
   energy: { type: 'number', format: 'int32' },
   date: { type: 'string', format: 'date' },
   fuelUnit: { type: 'string' },

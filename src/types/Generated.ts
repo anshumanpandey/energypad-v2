@@ -1145,7 +1145,6 @@ export interface components {
       content: {
         "application/json": {
           carbon: number;
-          conversionFactor: number;
           energy: number;
           date: string;
           fuelUnit: string;

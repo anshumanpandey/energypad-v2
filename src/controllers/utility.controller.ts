@@ -209,172 +209,21 @@ export const getMonitoring = async (req: any) => {
   return consumptions;
 };
 
-/*export const getHeatingEnergy: AuthGetAppController<'GetHeatingEnergy'> = async (req) => {
-  const business = await UserService.getUserBy({ id: req.user.id });
+//TODO: generate types for this route
+export const importUtilityEmissionFromFile = async (req: any) => {
+  const excelFile = req.file;
+  if (!excelFile) return new ApiError('Missing file');
 
-  const today = EnvFactory({ fallback: new Date(), test: new Date(2022, 1, 25) });
-  const patterns = await UserService.getPatterns({
-    businessId: req.user.id,
-    startDate: today,
-    endDate: subMonths(today, 12),
+  const data = await ExcelClient.importUtilityEmissions(excelFile.buffer);
+
+  if (data instanceof ApiError) {
+    return data;
+  }
+
+  return DB.transaction(async (txr) => {
+    await UtilityService.addConsumptionToUtility(data.consumptions, { txr });
+    await UtilityService.addUtilityEmissions(data.emissions, { txr });
+    await UtilityService.addMonitoringToUtility(data.targeting, { txr });
+    return { success: true };
   });
-
-  const mapRecords = (r: any) => ({ startDate: r.startDate, endDate: r.endDate });
-
-  const energyParams = {
-    postCode: business.postCode,
-    dayRanges: patterns.map(mapRecords),
-    patterns,
-  };
-  const statistics = await UtilityService.consumingStatistics(energyParams);
-
-  const hdds = [
-    { value: 8 },
-    { value: 7 },
-    { value: 8 },
-    { value: 6 },
-    { value: 9 },
-    { value: 8 },
-    { value: 9 },
-    { value: 6 },
-  ];
-
-  const sumOfHdd = hdds.reduce((total, next) => new Decimal(total).plus(next.value).toNumber(), 0);
-  const hddsSquared = hdds.map((i) => new Decimal(i.value).pow(2).toNumber());
-  const sumOfhddsSquared = hddsSquared.reduce((total, next) => new Decimal(total).plus(next).toNumber(), 0);
-
-  const cdds = [
-    { value: 4 },
-    { value: 5 },
-    { value: 6 },
-    { value: 6 },
-    { value: 5 },
-    { value: 3 },
-    { value: 4 },
-    { value: 5 },
-  ];
-
-  const sumOfCdd = cdds.reduce((total, next) => new Decimal(total).plus(next.value).toNumber(), 0);
-  const cddsSquared = cdds.map((i) => new Decimal(i.value).pow(2).toNumber());
-  const sumOfCddsSquared = cddsSquared.reduce((total, next) => new Decimal(total).plus(next).toNumber(), 0);
-
-  const energyConsumption = [
-    { consumption: 45 },
-    { consumption: 44 },
-    { consumption: 50 },
-    { consumption: 43 },
-    { consumption: 45 },
-    { consumption: 44 },
-    { consumption: 40 },
-    { consumption: 43 },
-  ];
-
-  const sumOfEnergyConsumption = energyConsumption.reduce(
-    (total, next) => new Decimal(total).plus(next.consumption).toNumber(),
-    0,
-  );
-
-  const hddTimesConsumption = hdds.map((i, idx) =>
-    new Decimal(i.value).times(energyConsumption[idx] ? energyConsumption[idx].consumption : 0).toNumber(),
-  );
-  const sumOfHddTimesConsumption = hddTimesConsumption.reduce(
-    (total, next) => new Decimal(total).plus(next).toNumber(),
-    0,
-  );
-
-  const cddTimesConsumption = cdds.map((i, idx) =>
-    new Decimal(i.value).times(energyConsumption[idx] ? energyConsumption[idx].consumption : 0).toNumber(),
-  );
-  const sumOfCddTimesConsumption = cddTimesConsumption.reduce(
-    (total, next) => new Decimal(total).plus(next).toNumber(),
-    0,
-  );
-
-  const hddTimesCdd = hdds.map((i, idx) => new Decimal(i.value).times(cdds[idx] ? cdds[idx].value : 0).toNumber());
-  const sumOfHddTimesCdd = hddTimesCdd.reduce((total, next) => new Decimal(total).plus(next).toNumber(), 0);
-
-  const NX = hdds.length;
-
-  //X1/NX
-  const sumOfHddByNx = new Decimal(sumOfHdd).dividedBy(NX).toNumber();
-
-  //X2/NX
-  const sumOfCddByNx = new Decimal(sumOfCdd).dividedBy(NX).toNumber();
-
-  //X2/1 result
-  const sumOfHddApprox = new Decimal(sumOfhddsSquared)
-    .minus(new Decimal(sumOfHdd).times(sumOfHdd).dividedBy(NX))
-    .toNumber();
-
-  //X2/2
-  const sumOfCddApprox = new Decimal(sumOfCddsSquared)
-    .minus(new Decimal(sumOfCdd).times(sumOfCdd).dividedBy(NX))
-    .toNumber();
-
-  //X1Y result
-  const hddWithEnergyConsumption = new Decimal(sumOfHddTimesConsumption)
-    .minus(new Decimal(sumOfHdd).times(sumOfEnergyConsumption).dividedBy(NX))
-    .toNumber();
-
-  //X2Y
-  const cddWithEnergyConsumption = new Decimal(sumOfCddTimesConsumption)
-    .minus(new Decimal(sumOfCdd).times(sumOfEnergyConsumption).dividedBy(NX))
-    .toNumber();
-
-  //X1X2 result
-  const hddwithCddApprox = new Decimal(sumOfHddTimesCdd)
-    .minus(new Decimal(sumOfHdd).times(sumOfCdd).dividedBy(NX))
-    .toNumber();
-
-  const b1Top = new Decimal(new Decimal(sumOfCddApprox).times(hddWithEnergyConsumption))
-    .minus(new Decimal(hddwithCddApprox).times(cddWithEnergyConsumption))
-    .toNumber();
-
-  const b1Below = new Decimal(new Decimal(sumOfHddApprox).times(sumOfCddApprox))
-    .minus(new Decimal(hddwithCddApprox).times(hddwithCddApprox))
-    .toNumber();
-
-  //b1
-  const slope1 = new Decimal(b1Top).dividedBy(b1Below).toNumber();
-
-  const b2Top = new Decimal(new Decimal(sumOfHddApprox).times(cddWithEnergyConsumption))
-    .minus(new Decimal(hddwithCddApprox).times(hddWithEnergyConsumption))
-    .toNumber();
-  const b2Below = new Decimal(new Decimal(sumOfHddApprox).times(sumOfCddApprox))
-    .minus(new Decimal(hddwithCddApprox).times(hddwithCddApprox))
-    .toNumber();
-
-  //b2
-  const slope2 = new Decimal(b2Top).dividedBy(b2Below).toNumber();
-
-  const yAvarage = new Decimal(sumOfEnergyConsumption).dividedBy(NX).toNumber();
-
-  //yIntercept
-  const baseload = new Decimal(new Decimal(yAvarage).minus(new Decimal(slope1).times(sumOfHddByNx)))
-    .minus(new Decimal(slope2).times(sumOfCddByNx))
-    .toNumber();
-
-  console.log({
-    b1Top,
-    b1Below,
-    b1: slope1,
-    b2Top,
-    b2: slope2,
-    yAvarage,
-    baseload,
-  });
-
-  const currenData = { hdd: 10, cdd: 5, gas: 48 };
-
-  const projectedEnergy1 = new Decimal(currenData.hdd).times(slope1).toDecimalPlaces(6).toNumber();
-  const projectedEnergy2 = new Decimal(currenData.cdd).times(slope2).toDecimalPlaces(6).toNumber();
-  const totalProjectedEnergy = new Decimal(projectedEnergy1).plus(projectedEnergy2).toDecimalPlaces(8).toNumber();
-  console.log({
-    projectedEnergy1,
-    projectedEnergy2,
-    totalProjectedEnergy,
-    savingWaster: new Decimal(totalProjectedEnergy).minus(currenData.gas).toDecimalPlaces(4).toNumber(),
-  });
-
-  return [];
-};*/
+};

@@ -323,4 +323,15 @@ describe('/Utility ', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(2);
   });
+
+  test('It should respond with success message when importing utilities and Emissions from file', async () => {
+    const body = await loginUser(app)('mail614@mail.com');
+
+    const response = await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .field('fuelSource', '1')
+      .attach('excel', 'test/fixtures/utility_emission.xlsx');
+    expect(response.statusCode).toBe(200);
+  });
 });

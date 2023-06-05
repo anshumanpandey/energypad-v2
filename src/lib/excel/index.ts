@@ -3,3 +3,4 @@ export * from './UtilityExcelClient';
 export * from './BusinessExcelClient';
 export * from './TenantExcelClient';
 export * from './OperationsExcelClient';
+export * from './UtilityEmissionExcelClient';

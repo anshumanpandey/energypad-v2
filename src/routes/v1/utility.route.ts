@@ -69,4 +69,11 @@ authRoutes.post(
   ExpressAsync(UtilityController.importLog),
 );
 
+authRoutes.post(
+  '/importUtilityEmissions',
+  AuthMiddleware,
+  FileUpload.single('excel'),
+  ExpressAsync(UtilityController.importUtilityEmissionFromFile),
+);
+
 export default authRoutes;
