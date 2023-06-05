@@ -221,9 +221,17 @@ export const importUtilityEmissionFromFile = async (req: any) => {
   }
 
   return DB.transaction(async (txr) => {
-    await UtilityService.addConsumptionToUtility(data.consumptions, { txr });
-    await UtilityService.addUtilityEmissions(data.emissions, { txr });
-    await UtilityService.addMonitoringToUtility(data.targeting, { txr });
-    return { success: true };
+    try {
+      await UtilityService.addConsumptionToUtility(data.consumptions, { txr });
+      await UtilityService.addUtilityEmissions(data.emissions, { txr });
+      await UtilityService.addMonitoringToUtility(data.targeting, { txr });
+      return { success: true };
+    } catch (e: any) {
+      if (e.routine === '_bt_check_unique') {
+        return new ApiError(`There are duplicated records for site [${data.consumptions[0].siteId}]`);
+      } else {
+        throw e;
+      }
+    }
   });
 };
