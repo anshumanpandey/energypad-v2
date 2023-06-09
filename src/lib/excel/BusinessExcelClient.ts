@@ -20,30 +20,17 @@ export const getSitesData = async (file: string | Buffer) => {
   const siteWorksheet = workbook.worksheets[1];
   const sites = getSitesRecords(siteWorksheet);
 
-  const getEmails = (record: any) => record.businessEmail;
-  const query = DB('Businesses').select(['id', 'email']).whereIn('email', sites.map(getEmails));
-  const users = await query;
-  const findUser = (businessEmail: string) => (item: any) => item.email === businessEmail;
+  const rows = [];
 
-  const reduceSites = (records: any, users: any[]) => {
-    const rows = [];
+  for (let i = 0; i < sites.length; i++) {
+    const { ['Building Name']: buildingName, ['Site ID']: name, ['Site ID']: siteId, ...el } = sites[i];
 
-    for (let i = 0; i < records.length; i++) {
-      const { businessEmail, ...el } = records[i];
-
-      const foundUser = users.find(findUser(businessEmail));
-
-      if (foundUser) {
-        rows.push({
-          ...el,
-          businessId: foundUser.id,
-        });
-      }
-    }
-    return rows;
-  };
-
-  return reduceSites(sites, users);
+    rows.push({
+      name,
+      ...el,
+    });
+  }
+  return rows;
 };
 
 const isValidSiteRow = (recordToInsert: Record<string, string>) => {
@@ -64,14 +51,14 @@ const getSitesRecords = (Worksheet: Worksheet) => {
   const rowCount = Worksheet.actualRowCount;
 
   const nameCol = Worksheet.columns[0];
-  const typeCol = Worksheet.columns[1];
-  const addressCol = Worksheet.columns[2];
-  const postCodeCol = Worksheet.columns[3];
-  const townCol = Worksheet.columns[4];
-  const populationCol = Worksheet.columns[5];
-  const sizeCol = Worksheet.columns[6];
-  const businessEmailCol = Worksheet.columns[7];
-  const workinghours = Worksheet.columns[8];
+  const typeCol = Worksheet.columns[2];
+  const addressCol = Worksheet.columns[3];
+  const postCodeCol = Worksheet.columns[4];
+  const townCol = Worksheet.columns[5];
+  const populationCol = Worksheet.columns[6];
+  const sizeCol = Worksheet.columns[7];
+  const businessEmailCol = Worksheet.columns[8];
+  const workinghours = Worksheet.columns[9];
 
   for (let a = 2; a <= rowCount; a++) {
     const row: any = {

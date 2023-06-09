@@ -227,15 +227,46 @@ export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusi
 
   const data = await ExcelClient.getBusinessData(excelFile.buffer);
   const sites = await ExcelClient.getSitesData(excelFile.buffer);
+  const operations = await ExcelClient.getPatternsData(excelFile.buffer);
 
   if (data instanceof ApiError) return data;
+  if (sites instanceof ApiError) return sites;
+  if (operations instanceof ApiError) return operations;
 
   await DB.transaction(async (trx) => {
-    const promises = [DB('Businesses').insert(data).transacting(trx)];
-    if (sites.length !== 0) {
-      promises.push(DB('Sites').insert(sites).transacting(trx));
+    const businessToSite = data.map((business) => {
+      const site = sites.find((s) => s.businessEmail === business.email);
+      return {
+        business,
+        site,
+        operation: operations.find((s) => s.siteId === site.name),
+      };
+    });
+
+    const promises = businessToSite.map(async (b) => {
+      const [id] = await DB('Businesses').insert(b.business).transacting(trx).returning('id');
+      if (b.site) {
+        const { businessEmail, ...s } = b.site;
+        const [siteId] = await DB('Sites')
+          .insert({ ...s, businessId: id })
+          .transacting(trx)
+          .returning('id');
+        if (b.operation) {
+          const { businessEmail, ...s } = b.operation;
+          await DB('BusinessPatterns')
+            .insert({ ...s, siteId })
+            .transacting(trx);
+        }
+      }
+    });
+    try {
+      await Promise.all(promises);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        throw e.toString().includes('businesses_businessname_unique') ? new ApiError('Duplicated business name') : e;
+      }
+      throw e;
     }
-    await Promise.all(promises);
   });
 
   return { success: true };

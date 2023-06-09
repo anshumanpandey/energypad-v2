@@ -7,7 +7,7 @@ import { findFuelUseBy } from '../../services/utility.service';
 export const getPatternsData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
 
-  const worksheet = workbook.worksheets[0];
+  const worksheet = workbook.worksheets[2];
   const rows = await getRows(worksheet);
   if (rows instanceof ApiError) return rows;
 
@@ -17,13 +17,13 @@ export const getPatternsData = async (file: string | Buffer) => {
 const getRows = async (Worksheet: Worksheet) => {
   const rows = [];
 
-  const usedInIdCol = Worksheet.columns[4].values;
+  const usedInIdCol = Worksheet.columns[1].values;
   const siteIdCol = Worksheet.columns[5].values;
 
   const names = Array.from(
     new Set(
       (siteIdCol || [])
-        .slice(2)
+        .slice(1)
         .map((c) => c?.toString() || '')
         .filter((c) => c !== ''),
     ).values(),
@@ -37,30 +37,16 @@ const getRows = async (Worksheet: Worksheet) => {
         .filter((c) => c !== ''),
     ).values(),
   );
-  const [sites, fuelsRecords] = await Promise.all([
-    SitesService.findBy({ name: names }),
-    findFuelUseBy({ names: uses }),
-  ]);
+  const [fuelsRecords] = await Promise.all([findFuelUseBy({ names: uses })]);
 
   const validColums = [
     {
-      name: 'startDate',
+      name: 'Site ID',
+      alias: 'siteId',
       validate: { required: true },
-      parseValue: async (val: string) => {
-        return formatISO(new Date(val)).split('T')[0];
-      },
     },
     {
-      name: 'endDate',
-      validate: { required: true },
-      parseValue: async (val: string) => {
-        return formatISO(new Date(val)).split('T')[0];
-      },
-    },
-    { name: 'Temperature set point', validate: { required: false }, alias: 'temperature' },
-    { name: 'daysOnYear', validate: { required: true } },
-    {
-      name: 'Heating/Cooling/Powering/Lighting',
+      name: 'Energy  Demand',
       alias: 'usedInId',
       parseValue: async (val: string) => {
         return fuelsRecords.find((f) => f.use.toLowerCase() === val.toLowerCase())?.id;
@@ -68,24 +54,41 @@ const getRows = async (Worksheet: Worksheet) => {
       validate: { required: true },
     },
     {
-      name: 'siteId',
-      parseValue: async (val: string) => {
-        return sites.find((s) => val === s.name)?.id;
-      },
+      name: 'Start Date',
+      alias: 'startDate',
       validate: { required: true },
+      parseValue: async (val: string) => {
+        return formatISO(new Date(val)).split('T')[0];
+      },
     },
+    {
+      name: 'End Date',
+      alias: 'endDate',
+      validate: { required: true },
+      parseValue: async (val: string) => {
+        return formatISO(new Date(val)).split('T')[0];
+      },
+    },
+    {
+      name: 'Temperature set point',
+      validate: { required: false },
+      alias: 'temperature',
+      parseValue: async (val: string) => {
+        return val === 'N/A' ? undefined : val;
+      },
+    },
+    { name: 'Days in the year', alias: 'daysOnYear', validate: { required: true } },
   ];
 
   const rowAmount = Worksheet.rowCount;
-  root_loop: for (let i = 2; i <= rowAmount; i++) {
+  root_loop: for (let i = 3; i <= rowAmount; i++) {
     const singleRow: Record<string, string | undefined> = {};
     const promises = [];
     loop: for (let a = 0, len = validColums.length; a < len; a++) {
       const validCol = validColums[a];
-      const colIdx = a;
-      const col = Worksheet.columns[colIdx].values;
+      const col = Worksheet.columns[a].values;
       if (!col) continue loop;
-      if (col[1]?.toString() !== validCol.name) {
+      if (col[2]?.toString() !== validCol.name) {
         return new ApiError('Wrong format');
       }
 
