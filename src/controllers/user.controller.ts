@@ -227,11 +227,9 @@ export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusi
 
   const data = await ExcelClient.getBusinessData(excelFile.buffer);
   const sites = await ExcelClient.getSitesData(excelFile.buffer);
-  const operations = await ExcelClient.getPatternsData(excelFile.buffer);
 
   if (data instanceof ApiError) return data;
   if (sites instanceof ApiError) return sites;
-  if (operations instanceof ApiError) return operations;
 
   await DB.transaction(async (trx) => {
     const businessToSite = data.map((business) => {
@@ -239,7 +237,6 @@ export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusi
       return {
         business,
         site,
-        operation: operations.find((s) => s.siteId === site.name),
       };
     });
 
@@ -247,16 +244,9 @@ export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusi
       const [id] = await DB('Businesses').insert(b.business).transacting(trx).returning('id');
       if (b.site) {
         const { businessEmail, ...s } = b.site;
-        const [siteId] = await DB('Sites')
+        await DB('Sites')
           .insert({ ...s, businessId: id })
-          .transacting(trx)
-          .returning('id');
-        if (b.operation) {
-          const { businessEmail, ...s } = b.operation;
-          await DB('BusinessPatterns')
-            .insert({ ...s, siteId })
-            .transacting(trx);
-        }
+          .transacting(trx);
       }
     });
     try {
