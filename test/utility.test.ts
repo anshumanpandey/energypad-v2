@@ -394,4 +394,15 @@ describe('/Utility ', () => {
       .attach('excel', 'test/fixtures/historic_data-emissions.xlsx');
     expect(response.statusCode).toBe(200);
   });
+
+  test('It should respond with faile when importing from file with a site that does not exist', async () => {
+    const body = await loginUser(app)('mail614@mail.com');
+
+    const response = await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .field('fileType', 'consumptions')
+      .attach('excel', 'test/fixtures/historic_data-consumption-bad_site.xlsx');
+    expect(response.statusCode).toBe(400);
+  });
 });

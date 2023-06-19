@@ -227,6 +227,10 @@ export const importUtilityEmissionFromFile = async (req: any) => {
       if (req.body.fileType === 'consumptions') {
         const data = await ExcelClient.importConsumptions(excelFile.buffer);
 
+        if (data instanceof ApiError) {
+          throw data;
+        }
+
         await UtilityService.upsertConsumptionToUtility(data.consumptions, { upsertType: 'CONSUMPTION', txr });
       }
 

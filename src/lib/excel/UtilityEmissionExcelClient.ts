@@ -24,6 +24,10 @@ export const importUtilityEmissions = async (file: string | Buffer) => {
     for (let r = 0; r < rowsWithValues; r++) {
       const currentRow = sitesRows?.[r];
       const siteName = currentRow.getCell('B').text;
+      const site = sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase());
+      if (!site) {
+        return new ApiError(`Site [${siteName}] not found`);
+      }
 
       for (let c = 2; c < currentRow.cellCount; c += 2) {
         const month = (c / 2).toString();
@@ -34,7 +38,7 @@ export const importUtilityEmissions = async (file: string | Buffer) => {
           vat: currentRow.getCell(c + 1).text,
           totalCost: Number.parseInt(currentRow.getCell(c + 2).text),
           fuelUnit: '', //TODO: should this be null?
-          siteId: sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase())?.id,
+          siteId: site?.id,
           fuelSourceId: fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
           consumption: 0,
           conversionFactor: 0,
@@ -60,7 +64,8 @@ export const importConsumptions = async (file: string | Buffer) => {
   ]);
 
   const consumptions: any[] = [];
-  workbook.eachSheet((sheet) => {
+  for (let i = 0; i < workbook.worksheets.length; i++) {
+    const sheet = workbook.worksheets[i];
     const year = sheet.getRow(1).getCell('B').text;
     const fuel = sheet.getRow(2).getCell('B').text;
     const usesSplitted = sheet.getRow(4).getCell('B').text.split(';');
@@ -79,13 +84,17 @@ export const importConsumptions = async (file: string | Buffer) => {
       for (let c = 2; c < currentRow.cellCount; c++) {
         const month = c.toString();
         const date = `${Number.parseInt(year)}-${month.length === 1 ? `0${month}` : month}-01`;
+        const site = sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase());
+        if (!site) {
+          return new ApiError(`Site [${siteName}] not found`);
+        }
 
         const record = {
           date,
           vat: 0,
           totalCost: 0,
           fuelUnit: fuelUnit,
-          siteId: sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase())?.id,
+          siteId: site?.id,
           fuelSourceId: fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
           conversionFactor: 0,
           consumption: currentRow.getCell(c + 1).text,
@@ -96,7 +105,7 @@ export const importConsumptions = async (file: string | Buffer) => {
         consumptions.push(record);
       }
     }
-  });
+  }
 
   return {
     consumptions,
