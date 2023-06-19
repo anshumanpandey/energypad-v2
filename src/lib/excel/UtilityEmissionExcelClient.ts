@@ -86,7 +86,6 @@ export const importConsumptions = async (file: string | Buffer) => {
         const month = c.toString();
         const date = `${Number.parseInt(year)}-${month.length === 1 ? `0${month}` : month}-01`;
         const site = sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase());
-        AppLogger.error({ site, siteName });
         if (!site) {
           return new ApiError(`Site [${siteName}] not found`);
         }
