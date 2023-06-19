@@ -2,6 +2,7 @@ import supertest from 'supertest';
 import { faker } from '@faker-js/faker';
 import { int32Format } from '../src/middleware/requestValidator.middleware';
 import { matchersWithOptions } from 'jest-json-schema';
+import { ulid } from 'ulid';
 
 export const matcher = matchersWithOptions({
   formats: {
@@ -11,7 +12,7 @@ export const matcher = matchersWithOptions({
 
 export const registerUser = (app: Express.Application) => async (email?: string, password?: string) => {
   const body = {
-    businessName: faker.company.name(),
+    businessName: `${faker.company.name()} ${ulid()}`,
     businessType: 'dolor',
     businessService: 'sit nisi',
     password: password || 'irure in eiusmod sint nostrud',

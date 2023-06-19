@@ -241,11 +241,11 @@ export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusi
     });
 
     const promises = businessToSite.map(async (b) => {
-      const [id] = await DB('Businesses').insert(b.business).transacting(trx).returning('id');
+      const [r] = await DB('Businesses').insert(b.business).transacting(trx).returning('id');
       if (b.site) {
         const { businessEmail, ...s } = b.site;
         await DB('Sites')
-          .insert({ ...s, businessId: id })
+          .insert({ ...s, businessId: r.id })
           .transacting(trx);
       }
     });

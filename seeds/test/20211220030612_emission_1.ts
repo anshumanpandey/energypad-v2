@@ -25,14 +25,14 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('UtilityConsumptions').insert([
     buildFakeConsumption({
-      id: 300,
+      id: 4300,
       date: '2001-01-01',
       consumption: 100,
       fuelSourceId: 1,
       siteId: 640,
     }),
     buildFakeConsumption({
-      id: 302,
+      id: 4302,
       date: '2001-02-01',
       consumption: 100,
       fuelSourceId: 1,

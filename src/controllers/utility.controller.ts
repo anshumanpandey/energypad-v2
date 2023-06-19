@@ -2,6 +2,7 @@ import { AuthAppController, AuthGetAppController } from '@types';
 import { UtilityService, SitesService, UserService, ConversionUnitService } from '@services';
 import { ApiError, ExcelClient, DB } from '@lib';
 import { DbUtils, MathUtils } from '@utils';
+import { ulid } from 'ulid';
 
 export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddFuelSourceConsumption'> = async (
   req,
@@ -126,7 +127,8 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
     const consumptionQuries = data.consumptions.map(async (i) => {
       const { fuelUses, ...data } = i;
 
-      const [recordId] = await txr('UtilityConsumptions').insert(data).returning('id');
+      const recordId = ulid();
+      await txr('UtilityConsumptions').insert({ ...data, id: recordId });
       const usesData = fuelUses.map((fu) => ({ usedInId: fu, consumptionId: recordId }));
       await txr('UtilityConsumptionsUse').insert(usesData);
     });
@@ -135,7 +137,7 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
       const { fuelUses, ...data } = i;
 
       const [recordId] = await txr('UtilityEmissions').insert(data).returning('id');
-      const usesData = fuelUses.map((fu) => ({ usedInId: fu, emissionId: recordId }));
+      const usesData = fuelUses.map((fu) => ({ usedInId: fu, emissionId: recordId.id }));
       await txr('UtilityEmissionsUse').insert(usesData);
     });
 
@@ -143,7 +145,7 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
       const { fuelUnit, targetValue, ...data } = i;
 
       const [recordId] = await txr('TargetConsumption').insert(data).returning('id');
-      await txr('TargetConsumptionFuelConversion').insert({ targetValue, fuelUnit, targetConsumptionId: recordId });
+      await txr('TargetConsumptionFuelConversion').insert({ targetValue, fuelUnit, targetConsumptionId: recordId.id });
     });
     await Promise.all(consumptionQuries.concat(emissionsQueries).concat(targetConsumptionQueries));
 
@@ -214,24 +216,30 @@ export const importUtilityEmissionFromFile = async (req: any) => {
   const excelFile = req.file;
   if (!excelFile) return new ApiError('Missing file');
 
-  const data = await ExcelClient.importUtilityEmissions(excelFile.buffer);
-
-  if (data instanceof ApiError) {
-    return data;
-  }
-
   return DB.transaction(async (txr) => {
     try {
-      await UtilityService.addConsumptionToUtility(data.consumptions, { txr });
-      await UtilityService.addUtilityEmissions(data.emissions, { txr });
-      await UtilityService.addMonitoringToUtility(data.targeting, { txr });
-      return { success: true };
-    } catch (e: any) {
-      if (e.routine === '_bt_check_unique') {
-        return new ApiError(`There are duplicated records for site [${data.consumptions[0].siteId}]`);
-      } else {
-        throw e;
+      if (req.body.fileType === 'cost') {
+        const data = await ExcelClient.importUtilityEmissions(excelFile.buffer);
+
+        await UtilityService.upsertConsumptionToUtility(data.consumptions, { upsertType: 'COST', txr });
       }
+
+      if (req.body.fileType === 'consumptions') {
+        const data = await ExcelClient.importConsumptions(excelFile.buffer);
+
+        await UtilityService.upsertConsumptionToUtility(data.consumptions, { upsertType: 'CONSUMPTION', txr });
+      }
+
+      //TODO: work on utility emissions import
+      /*if (req.body.fileType === 'emissions') {
+        const data = await ExcelClient.importEmissions(excelFile.buffer);
+
+        //await UtilityService.upsertEmissions(data);
+      }*/
+
+      return { success: true };
+    } catch (e) {
+      throw e;
     }
   });
 };

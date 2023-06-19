@@ -7,17 +7,171 @@ import SiteService from './sites.service';
 import ConversionUnit from './conversionUnit.service';
 import { ProducedConsumption } from './dashboard.service';
 import { capitalizeFirstLetter } from '../utils/appUtils';
+import { ulid } from 'ulid';
 
 export type AddConsumptionToUtilityParam = RequestBodyParams<'AddFuelSourceConsumption'>;
 export const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam, opt?: Transactionable) => {
   const driver = opt?.txr || DB;
-  const promises = params.map(async (record) => {
-    const { usedInId, ...data } = record;
 
-    const [id] = await driver('UtilityConsumptions').insert(data).returning('id');
-    const usesData = usedInId.map((u) => ({ consumptionId: id, usedInId: u }));
-    await driver('UtilityConsumptionsUse').insert(usesData);
-  });
+  const consumptions: Record<string, any>[] = [];
+  let consumptionUse: Record<string, any>[] = [];
+  for (let i = 0; i < params.length; i++) {
+    const { usedInId, ...data } = params[i];
+
+    const id = ulid();
+    consumptions.push({ ...data, id });
+    if (usedInId.length !== 0) {
+      const usesData = usedInId.map((u) => ({ consumptionId: id, usedInId: u }));
+      consumptionUse = consumptionUse.concat(usesData);
+    }
+  }
+
+  return Promise.all([
+    driver('UtilityConsumptions').insert(consumptions),
+    driver('UtilityConsumptionsUse').insert(consumptionUse),
+  ]);
+};
+
+export const upsertConsumptionToUtility = async (
+  params: Array<RequestBodyParams<'AddFuelSourceConsumption'>[0] & { id: null | undefined | number }>,
+  opt: Transactionable & { upsertType: 'COST' | 'CONSUMPTION' },
+) => {
+  const driver = opt?.txr || (await DB.transaction());
+
+  const existingRecords = await driver('UtilityConsumptions')
+    .select('*')
+    .whereIn('siteId', Array.from(new Set(params.map((r) => r.siteId))))
+    .andWhere('fuelSourceId', 'in', Array.from(new Set(params.map((r) => r.fuelSourceId))))
+    .andWhere('date', 'in', Array.from(new Set(params.map((r) => r.date))));
+
+  const records = [];
+  const uses = [];
+  for (let i = 0; i < params.length; i++) {
+    let record = params[i];
+    const foundToUpdate = existingRecords.findIndex(
+      (r) => r.date === record.date && r.siteId === record.siteId && r.fuelSourceId === record.fuelSourceId,
+    );
+
+    if (foundToUpdate > -1) {
+      const found = existingRecords[foundToUpdate];
+      found.usedInId = record.usedInId;
+      if (opt.upsertType === 'CONSUMPTION') {
+        found.consumption = record.consumption;
+        found.fuelUnit = record.fuelUnit;
+      }
+
+      if (opt.upsertType === 'COST') {
+        found.totalCost = record.totalCost;
+        found.vat = record.vat;
+      }
+      record = found;
+    }
+
+    if (record.usedInId.length > 0) {
+      if (record.id) {
+        const { usedInId, ...data } = record;
+        uses.push({ usedInId, consumptionId: data.id });
+      }
+    }
+    records.push(record);
+  }
+
+  const promises: Promise<any>[] = [];
+
+  const newData = records.filter((r) => r.id === null || r.id === undefined);
+  if (newData.length > 0) {
+    const c = [];
+    let u: any[] = [];
+    for (let i = 0; i < newData.length; i++) {
+      const id = ulid();
+      const { usedInId, ...data } = newData[i] as any;
+      c.push({ ...data, id });
+      if (usedInId) {
+        u = u.concat(usedInId.map((u: any) => ({ usedInId: u, consumptionId: id })));
+      }
+    }
+    if (c.length !== 0) {
+      promises.push(driver('UtilityConsumptions').insert(c));
+    }
+    if (u.length !== 0) {
+      promises.push(driver('UtilityConsumptionsUse').insert(u));
+    }
+  }
+  const upsertData = records.filter((r) => r.id !== null && r.id !== undefined);
+  if (upsertData.length > 0) {
+    const u = upsertData.map((d) => {
+      const { usedInId, ...r } = d;
+      return r;
+    });
+    promises.push(
+      driver('UtilityConsumptions')
+        .insert(u)
+        .onConflict('id')
+        .merge(opt.upsertType === 'CONSUMPTION' ? ['consumption', 'fuelUnit '] : ['vat', 'totalCost']),
+    );
+  }
+
+  if (uses.length > 0) {
+    promises.push(
+      driver('UtilityConsumptionsUse')
+        .delete()
+        .where(
+          'consumptionId',
+          'in',
+          uses.map((i) => i.consumptionId),
+        ),
+    );
+    promises.push(
+      driver('UtilityConsumptionsUse').insert(
+        uses.map((r) => r.usedInId.map((u) => ({ usedInId: u, consumptionId: r.consumptionId }))).flat(),
+      ),
+    );
+  }
+  if (opt.txr) {
+    return Promise.all(promises);
+  } else {
+    return Promise.all(promises).then(driver.commit).catch(driver.rollback);
+  }
+};
+
+export const upsertEmissions = async (
+  params: Array<RequestBodyParams<'AddFuelSourceConsumption'>[0] & { id: null | undefined | number }>,
+  opt?: Transactionable,
+) => {
+  const driver = opt?.txr || DB;
+
+  const existingRecords = await driver('UtilityConsumptions')
+    .select('*')
+    .andWhere('fuelSourceId', 'in', Array.from(new Set(params.map((r) => r.fuelSourceId))))
+    .andWhere('date', 'in', Array.from(new Set(params.map((r) => r.date))));
+
+  const records = [];
+  for (let i = 0; i < params.length; i++) {
+    let record = params[i];
+    const foundToUpdate = existingRecords.findIndex(
+      (r) => r.date === record.date && r.fuelSourceId === record.fuelSourceId,
+    );
+
+    if (foundToUpdate > -1) {
+      const found = existingRecords[foundToUpdate];
+      existingRecords.splice(foundToUpdate, 1);
+      found.conversionFactor = record.conversionFactor;
+      record = found;
+    }
+
+    records.push(record);
+  }
+
+  const promises: Promise<any>[] = [];
+
+  const newData = records.filter((r) => r.id === null || r.id === undefined);
+  if (newData.length > 0) {
+    promises.push(driver('UtilityConsumptions').insert(newData));
+  }
+  const upsertData = records.filter((r) => r.id !== null && r.id !== undefined);
+  if (upsertData.length > 0) {
+    promises.push(driver('UtilityConsumptions').insert(upsertData).onConflict('id').merge(['conversionFactor']));
+  }
 
   return Promise.all(promises);
 };
@@ -30,8 +184,8 @@ export const addMonitoringToUtility = async (
   const promises = params.map(async (record) => {
     const { usedInId, ...data } = record;
 
-    const [id] = await driver('UtilityMonitoring').insert(data).returning('id');
-    const usesData = usedInId.map((u) => ({ monitoringId: id, usedInId: u }));
+    const [r] = await driver('UtilityMonitoring').insert(data).returning('id');
+    const usesData = usedInId.map((u) => ({ monitoringId: r.id, usedInId: u }));
     await driver('UtilityMonitoringToUseInId').insert(usesData);
   });
 
@@ -252,10 +406,10 @@ type FindFuelByParams = {
   fuelSourceId?: number | number[];
   names?: string | string[];
 };
-export const findFuelBy = (p: FindFuelByParams): Promise<{ id: number; source: string }[]> => {
+export const findFuelBy = (p?: FindFuelByParams): Promise<{ id: number; source: string }[]> => {
   const query = DB('FuelSources').select('FuelSources.*');
 
-  if (p.fuelSourceId) {
+  if (p?.fuelSourceId) {
     if (Array.isArray(p.fuelSourceId)) {
       query.whereIn('FuelSources.id', p.fuelSourceId);
     } else {
@@ -304,11 +458,11 @@ export const addUtilityEmissions = (p: Omit<AppModels['UtilityEmission'], 'id'>[
   const driver = opt?.txr || DB;
   const promises = p.map(async (i) => {
     const { usedInId, ...data } = i;
-    const [id] = await driver('UtilityEmissions').insert(data).returning('id');
+    const [record] = await driver('UtilityEmissions').insert(data).returning('id');
 
-    const useData = usedInId.map((u) => ({ usedInId: u, emissionId: id }));
+    const useData = usedInId.map((u) => ({ usedInId: u, emissionId: record.id }));
     await driver('UtilityEmissionsUse').insert(useData);
-    return id;
+    return record.id;
   });
 
   return Promise.all(promises);

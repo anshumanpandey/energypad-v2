@@ -3,217 +3,159 @@ import { SitesService, UtilityService } from '@services';
 import { Workbook, Worksheet } from 'exceljs';
 import { capitalizeFirstLetter } from '../../utils/appUtils';
 import { formatISO } from 'date-fns';
+import { SupportedUnits } from '../../utils/unitsUtils';
 
 export const importUtilityEmissions = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
 
-  const metaData = workbook.worksheets[0];
-  const consumptionsSheet = workbook.worksheets[1];
-  const emissionSheet = workbook.worksheets[2];
-  const monitoringSheet = workbook.worksheets[3];
-
-  const date = metaData.getRow(5).getCell('D');
-  const siteName = metaData.getRow(5).getCell('B');
-  const usedIn = metaData.getRow(5).getCell('F');
-
-  const [sites, fuelSources, uses] = await Promise.all([
-    SitesService.findBy({ name: siteName.text }),
-    UtilityService.getFuelSources(),
-    UtilityService.findFuelUseBy({ names: usedIn.text.split(',') }),
+  const [sites, uses, fuels] = await Promise.all([
+    SitesService.findBy(),
+    UtilityService.findFuelUseBy(),
+    UtilityService.findFuelBy(),
   ]);
 
-  if (sites[0] === undefined) {
-    return new ApiError(`Site [${siteName.text}] not found`);
-  }
+  const consumptions: any[] = [];
+  workbook.eachSheet((sheet) => {
+    const year = sheet.getRow(1).getCell('B').text;
+    const fuel = sheet.getRow(2).getCell('B').text;
+    const currency = sheet.getRow(3).getCell('B').text;
 
-  const consumptions = [];
-  for (let i = 2; i <= consumptionsSheet.actualRowCount; i++) {
-    const fuelSource = consumptionsSheet.getRow(i).getCell('A').text;
-    const consumption = consumptionsSheet.getRow(i).getCell('B').text;
-    const fuelUnit = consumptionsSheet.getRow(i).getCell('C').text;
-    const vat = consumptionsSheet.getRow(i).getCell('D').text;
-    const totalCost = consumptionsSheet.getRow(i).getCell('E').text;
-    const conversionFactor = consumptionsSheet.getRow(i).getCell('F').text;
-
-    const foundFuelSource = fuelSources.find((i) => i.source === fuelSource);
-    if (!foundFuelSource) {
-      return new ApiError('Fuel source [${fuelSource}] not found');
+    const sitesRows = sheet.getRows(5, sheet.actualRowCount - 4);
+    if (!sitesRows) {
+      return new ApiError('Could not parse the file');
     }
+    const rowsWithValues = sitesRows?.length || 0;
 
-    consumptions.push({
-      date: formatISO(new Date(date.text)).split('T')[0],
-      consumption: Number.parseInt(consumption),
-      totalCost: Number.parseInt(totalCost),
-      vat: Number.parseInt(vat),
-      conversionFactor: Number.parseInt(conversionFactor),
-      fuelUnit,
-      siteId: sites[0].id,
-      fuelSourceId: foundFuelSource.id,
-      usedInId: uses.filter((i) => usedIn.text.split(',').includes(i.use)).map((i) => i.id),
-    });
-  }
+    for (let r = 0; r < rowsWithValues; r++) {
+      const currentRow = sitesRows?.[r];
+      const siteName = currentRow.getCell('A').text;
 
-  const emissions = [];
-  for (let i = 2; i <= emissionSheet.actualRowCount; i++) {
-    const fuelSource = emissionSheet.getRow(i).getCell('A').text;
-    const fuelUnit = emissionSheet.getRow(i).getCell('B').text;
-    const emissionFactor = emissionSheet.getRow(i).getCell('C').text;
-    const conversionFactor = emissionSheet.getRow(i).getCell('D').text;
+      for (let c = 2; c < currentRow.cellCount; c += 2) {
+        const month = (c / 2).toString();
+        const date = `${Number.parseInt(year)}-${month.length === 1 ? `0${month}` : month}-01`;
 
-    const foundFuelSource = fuelSources.find((i) => i.source === fuelSource);
-    if (!foundFuelSource) {
-      return new ApiError('Fuel source [${fuelSource}] not found');
+        const record = {
+          date,
+          vat: currentRow.getCell(c).text,
+          totalCost: Number.parseInt(currentRow.getCell(c + 1).text),
+          fuelUnit: '', //TODO: should this be null?
+          siteId: sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase())?.id,
+          fuelSourceId: fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
+          consumption: 0,
+          conversionFactor: 0,
+          usedInId: [] as number[],
+        };
+        consumptions.push(record);
+      }
     }
-
-    emissions.push({
-      date: formatISO(new Date(date.text)).split('T')[0],
-      conversionFactor: Number.parseInt(conversionFactor),
-      emissionFactor: Number.parseInt(emissionFactor),
-      fuelUnit,
-      siteId: sites[0].id,
-      fuelSourceId: foundFuelSource.id,
-      usedInId: uses.filter((i) => usedIn.text.split(',').includes(i.use)).map((i) => i.id),
-    });
-  }
-
-  const targeting = [];
-  for (let i = 2; i <= monitoringSheet.actualRowCount; i++) {
-    const fuelSource = monitoringSheet.getRow(i).getCell('A').text;
-    const fuelUnit = monitoringSheet.getRow(i).getCell('B').text;
-    const conversionUnit = monitoringSheet.getRow(i).getCell('C').text;
-    const energy = monitoringSheet.getRow(i).getCell('D').text;
-    const carbon = monitoringSheet.getRow(i).getCell('E').text;
-
-    const foundFuelSource = fuelSources.find((i) => i.source === fuelSource);
-    if (!foundFuelSource) {
-      return new ApiError('Fuel source [${fuelSource}] not found');
-    }
-
-    targeting.push({
-      date: formatISO(new Date(date.text)).split('T')[0],
-      fuelUnit,
-      conversionFactor: Number.parseInt(conversionUnit),
-      energy: Number.parseInt(energy),
-      carbon: Number.parseInt(carbon),
-      siteId: sites[0].id,
-      fuelSourceId: foundFuelSource.id,
-      usedInId: uses.filter((i) => usedIn.text.split(',').includes(i.use)).map((i) => i.id),
-    });
-  }
+  });
 
   return {
     consumptions,
-    emissions,
-    targeting,
   };
 };
 
-const getConsumptions = (w: Worksheet) => {
-  const columnMap = {
-    siteName: 'A',
-    year: 'B',
-    month: 'C',
-    fuelType: 'D',
-    fuelUnit: 'E',
-    conversionFactor: 'F',
-    consumptionValue: 'G',
-    vat: 'H',
-    totalCost: 'I',
-    fuelUses: 'J',
-    population: 'K',
-    fullTimeEmployeeHours: 'L',
-    buildingExtension: 'M',
-    changeBuildingLocation: 'N',
-  };
-  const records: Record<string, any>[] = [];
-  for (let i = 2; i <= w.actualRowCount; i++) {
-    const row = w.getRow(i);
+export const importConsumptions = async (file: string | Buffer) => {
+  const workbook = await readExcelFile(file);
 
-    const r = {
-      siteName: row.getCell(columnMap.siteName).toString(),
-      year: row.getCell(columnMap.year).toString(),
-      month: row.getCell(columnMap.month).toString(),
-      fuelType: row.getCell(columnMap.fuelType).toString(),
-      fuelUnit: row.getCell(columnMap.fuelUnit).toString().split('-').pop() || '',
-      conversionFactor: row.getCell(columnMap.conversionFactor).toString(),
-      consumptionValue: row.getCell(columnMap.consumptionValue).toString(),
-      vat: row.getCell(columnMap.vat).toString(),
-      totalCost: row.getCell(columnMap.totalCost).toString(),
-      fuelUses: row
-        .getCell(columnMap.fuelUses)
-        .toString()
-        .split(';')
-        .flat()
-        .map((i) => capitalizeFirstLetter(i.trim())),
-      population: row.getCell(columnMap.population).toString(),
-      fullTimeEmployeeHours: row.getCell(columnMap.fullTimeEmployeeHours).toString(),
-      buidingExtension: row.getCell(columnMap.buildingExtension).toString() === 'Yes',
-      changeBuildingLocation: row.getCell(columnMap.changeBuildingLocation).toString() === 'Yes',
-    };
-    records.push(r);
-  }
-  return records;
+  const [sites, uses, fuels] = await Promise.all([
+    SitesService.findBy(),
+    UtilityService.findFuelUseBy(),
+    UtilityService.findFuelBy(),
+  ]);
+
+  const consumptions: any[] = [];
+  workbook.eachSheet((sheet) => {
+    const year = sheet.getRow(1).getCell('B').text;
+    const fuel = sheet.getRow(2).getCell('B').text;
+    const usesSplitted = sheet.getRow(4).getCell('B').text.split(',');
+    const fuelUnit = sheet.getRow(3).getCell('B').text;
+
+    const sitesRows = sheet.getRows(6, sheet.actualRowCount - 5);
+    if (!sitesRows) {
+      return new ApiError('Could not parse the file');
+    }
+    const rowsWithValues = sitesRows?.length || 0;
+
+    for (let r = 0; r < rowsWithValues; r++) {
+      const currentRow = sitesRows?.[r];
+      const siteName = currentRow.getCell('A').text;
+
+      for (let c = 2; c < currentRow.cellCount; c++) {
+        const month = c.toString();
+        const date = `${Number.parseInt(year)}-${month.length === 1 ? `0${month}` : month}-01`;
+
+        const record = {
+          date,
+          vat: 0,
+          totalCost: 0,
+          fuelUnit: fuelUnit,
+          siteId: sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase())?.id,
+          fuelSourceId: fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
+          conversionFactor: 0,
+          consumption: currentRow.getCell(c).text,
+          usedInId: uses
+            .filter((u) => usesSplitted.find((us) => us.toLowerCase() === u.use.toLowerCase()))
+            .map((u) => u.id),
+        };
+        consumptions.push(record);
+      }
+    }
+  });
+
+  return {
+    consumptions,
+  };
 };
 
-const getEmissions = (w: Worksheet) => {
-  const columnMap = {
-    siteName: 'A',
-    year: 'B',
-    month: 'C',
-    fuelType: 'D',
-    fuelUnit: 'E',
-    conversionFactor: 'F',
-    fuelUses: 'G',
-    emissionFactor: 'H',
-  };
-  const records: Record<string, string | string[]>[] = [];
-  for (let i = 2; i <= w.actualRowCount; i++) {
-    const row = w.getRow(i);
+export const importEmissions = async (file: string | Buffer) => {
+  const workbook = await readExcelFile(file);
 
-    const r = {
-      siteName: row.getCell(columnMap.siteName).toString(),
-      year: row.getCell(columnMap.year).toString(),
-      month: row.getCell(columnMap.month).toString(),
-      fuelType: row.getCell(columnMap.fuelType).toString(),
-      fuelUnit: row.getCell(columnMap.fuelUnit).toString().split('-').pop() || '',
-      conversionFactor: row.getCell(columnMap.conversionFactor).toString(),
-      emissionFactor: row.getCell(columnMap.emissionFactor).toString(),
-      fuelUses: row
-        .getCell(columnMap.fuelUses)
-        .toString()
-        .split(';')
-        .flat()
-        .map((i) => capitalizeFirstLetter(i.trim())),
-    };
-    records.push(r);
+  const emissions: any[] = [];
+  const sheet = workbook.getWorksheet(1);
+  const fuelUnit = sheet.getRow(2).getCell('B').text;
+  const fuelType = sheet.getRow(1).getCell('B').text;
+
+  const [fuel] = await UtilityService.findFuelBy({ names: fuelType });
+  if (!fuel) {
+    return new ApiError('Fuel not found');
   }
-  return records;
-};
 
-const getTargedData = (w: Worksheet) => {
-  const columnMap = {
-    siteName: 'A',
-    year: 'B',
-    month: 'C',
-    fuelType: 'D',
-    fuelUnit: 'E',
-    value: 'F',
-  };
-  const records: Record<string, string | string[]>[] = [];
-  for (let i = 2; i <= w.actualRowCount; i++) {
-    const row = w.getRow(i);
-
-    const r = {
-      siteName: row.getCell(columnMap.siteName).toString(),
-      year: row.getCell(columnMap.year).toString(),
-      month: row.getCell(columnMap.month).toString(),
-      fuelType: row.getCell(columnMap.fuelType).toString(),
-      fuelUnit: row.getCell(columnMap.fuelUnit).toString().split('-').pop() || '',
-      value: row.getCell(columnMap.value).toString() || '',
-    };
-    records.push(r);
+  const sitesRows = sheet.getRows(4, sheet.actualRowCount - 3);
+  if (!sitesRows) {
+    return new ApiError('Could not parse the file');
   }
-  return records;
+
+  const yearsRow = sheet.getRow(3);
+  if (!yearsRow) {
+    return new ApiError('Could not parse the file');
+  }
+
+  const rowsWithValues = sitesRows?.length || 0;
+
+  for (let r = 0; r < rowsWithValues; r++) {
+    const currentRow = sitesRows?.[r];
+    for (let c = 2; c < currentRow.cellCount; c += 2) {
+      const year = yearsRow.getCell(c).text.split(' ')[0];
+
+      if (year) {
+        const date = formatISO(new Date(Number.parseInt(year), r, 1)).split('T')[0];
+
+        const emission = currentRow.getCell(c).text;
+        const conversionFactor = currentRow.getCell(c + 1).text;
+
+        const record = {
+          date,
+          emission,
+          conversionFactor,
+          fuelSourceId: fuel.id,
+        };
+        emissions.push(record);
+      }
+    }
+  }
+
+  return emissions;
 };
 
 const readExcelFile = async (file: string | Buffer) => {

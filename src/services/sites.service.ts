@@ -7,7 +7,7 @@ const createSite = async (params: { id?: number } & RequestBodyParams<'Site'>) =
   if (id) {
     return DB('Sites').update(vals).where('id', id).returning('*');
   } else {
-    return DB('Sites').insert(vals).returning('id');
+    return (await DB('Sites').insert(vals).returning('id'))[0].id;
   }
 };
 

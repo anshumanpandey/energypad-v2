@@ -324,14 +324,71 @@ describe('/Utility ', () => {
     expect(response.body.length).toBe(2);
   });
 
-  test('It should respond with success message when importing utilities and Emissions from file', async () => {
+  test('It should respond with success message when importing utilities cost from file', async () => {
+    const body = await loginUser(app)('mail614@mail.com');
+
+    const response2 = await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .field('fileType', 'cost')
+      .attach('excel', 'test/fixtures/historic_data-cost.xlsx');
+    expect(response2.statusCode).toBe(200);
+  });
+
+  test('It should respond with success message when importing utilities consumption from file', async () => {
+    const body = await loginUser(app)('mail614@mail.com');
+
+    const response2 = await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .field('fileType', 'consumption')
+      .attach('excel', 'test/fixtures/historic_data-consumption.xlsx');
+    expect(response2.statusCode).toBe(200);
+  });
+
+  test('It should respond with success message when importing utilities cost then consumption from file', async () => {
     const body = await loginUser(app)('mail614@mail.com');
 
     const response = await supertest(app)
       .post('/api/utility/importUtilityEmissions')
       .set('Authorization', `Bearer ${body.jwt}`)
-      .field('fuelSource', '1')
-      .attach('excel', 'test/fixtures/utility_emission.xlsx');
+      .field('fileType', 'consumptions')
+      .attach('excel', 'test/fixtures/historic_data-consumption.xlsx');
+    expect(response.statusCode).toBe(200);
+
+    const response2 = await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .field('fileType', 'cost')
+      .attach('excel', 'test/fixtures/historic_data-cost.xlsx');
+    expect(response2.statusCode).toBe(200);
+  });
+
+  test('It should respond with success message when importing utilities consumption then cost from file', async () => {
+    const body = await loginUser(app)('mail614@mail.com');
+
+    await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .field('fileType', 'cost')
+      .attach('excel', 'test/fixtures/historic_data-cost.xlsx');
+
+    const response2 = await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .field('fileType', 'consumptions')
+      .attach('excel', 'test/fixtures/historic_data-consumption.xlsx');
+    expect(response2.statusCode).toBe(200);
+  });
+
+  test('It should respond with success message when importing utilities emission from file', async () => {
+    const body = await loginUser(app)('mail614@mail.com');
+
+    const response = await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .field('fileType', 'emissions')
+      .attach('excel', 'test/fixtures/historic_data-emissions.xlsx');
     expect(response.statusCode).toBe(200);
   });
 });
