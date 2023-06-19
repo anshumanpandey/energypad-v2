@@ -2,6 +2,7 @@ import { ApiError } from '@lib';
 import { SitesService, UtilityService } from '@services';
 import { Workbook } from 'exceljs';
 import { formatISO } from 'date-fns';
+import AppLogger from '../Logger';
 
 export const importUtilityEmissions = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
@@ -85,7 +86,7 @@ export const importConsumptions = async (file: string | Buffer) => {
         const month = c.toString();
         const date = `${Number.parseInt(year)}-${month.length === 1 ? `0${month}` : month}-01`;
         const site = sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase());
-        console.log({ site, siteName });
+        AppLogger.error({ site, siteName });
         if (!site) {
           return new ApiError(`Site [${siteName}] not found`);
         }
