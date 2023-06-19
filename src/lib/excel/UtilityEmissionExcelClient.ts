@@ -1,23 +1,18 @@
 import { ApiError } from '@lib';
 import { SitesService, UtilityService } from '@services';
-import { Workbook, Worksheet } from 'exceljs';
-import { capitalizeFirstLetter } from '../../utils/appUtils';
+import { Workbook } from 'exceljs';
 import { formatISO } from 'date-fns';
-import { SupportedUnits } from '../../utils/unitsUtils';
 
 export const importUtilityEmissions = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
 
-  const [sites, uses, fuels] = await Promise.all([
-    SitesService.findBy(),
-    UtilityService.findFuelUseBy(),
-    UtilityService.findFuelBy(),
-  ]);
+  const [sites, fuels] = await Promise.all([SitesService.findBy(), UtilityService.findFuelBy()]);
 
   const consumptions: any[] = [];
   workbook.eachSheet((sheet) => {
     const year = sheet.getRow(1).getCell('B').text;
     const fuel = sheet.getRow(2).getCell('B').text;
+    //TODO: save currency code on DB
     const currency = sheet.getRow(3).getCell('B').text;
 
     const sitesRows = sheet.getRows(5, sheet.actualRowCount - 4);
@@ -28,7 +23,7 @@ export const importUtilityEmissions = async (file: string | Buffer) => {
 
     for (let r = 0; r < rowsWithValues; r++) {
       const currentRow = sitesRows?.[r];
-      const siteName = currentRow.getCell('A').text;
+      const siteName = currentRow.getCell('B').text;
 
       for (let c = 2; c < currentRow.cellCount; c += 2) {
         const month = (c / 2).toString();
@@ -36,8 +31,8 @@ export const importUtilityEmissions = async (file: string | Buffer) => {
 
         const record = {
           date,
-          vat: currentRow.getCell(c).text,
-          totalCost: Number.parseInt(currentRow.getCell(c + 1).text),
+          vat: currentRow.getCell(c + 1).text,
+          totalCost: Number.parseInt(currentRow.getCell(c + 2).text),
           fuelUnit: '', //TODO: should this be null?
           siteId: sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase())?.id,
           fuelSourceId: fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
@@ -68,7 +63,7 @@ export const importConsumptions = async (file: string | Buffer) => {
   workbook.eachSheet((sheet) => {
     const year = sheet.getRow(1).getCell('B').text;
     const fuel = sheet.getRow(2).getCell('B').text;
-    const usesSplitted = sheet.getRow(4).getCell('B').text.split(',');
+    const usesSplitted = sheet.getRow(4).getCell('B').text.split(';');
     const fuelUnit = sheet.getRow(3).getCell('B').text;
 
     const sitesRows = sheet.getRows(6, sheet.actualRowCount - 5);
@@ -79,7 +74,7 @@ export const importConsumptions = async (file: string | Buffer) => {
 
     for (let r = 0; r < rowsWithValues; r++) {
       const currentRow = sitesRows?.[r];
-      const siteName = currentRow.getCell('A').text;
+      const siteName = currentRow.getCell('B').text;
 
       for (let c = 2; c < currentRow.cellCount; c++) {
         const month = c.toString();
@@ -93,7 +88,7 @@ export const importConsumptions = async (file: string | Buffer) => {
           siteId: sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase())?.id,
           fuelSourceId: fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
           conversionFactor: 0,
-          consumption: currentRow.getCell(c).text,
+          consumption: currentRow.getCell(c + 1).text,
           usedInId: uses
             .filter((u) => usesSplitted.find((us) => us.toLowerCase() === u.use.toLowerCase()))
             .map((u) => u.id),

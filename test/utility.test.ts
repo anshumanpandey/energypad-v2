@@ -342,6 +342,7 @@ describe('/Utility ', () => {
       .post('/api/utility/importUtilityEmissions')
       .set('Authorization', `Bearer ${body.jwt}`)
       .field('fileType', 'consumption')
+      .field('fuels', [2, 3])
       .attach('excel', 'test/fixtures/historic_data-consumption.xlsx');
     expect(response2.statusCode).toBe(200);
   });
@@ -353,6 +354,7 @@ describe('/Utility ', () => {
       .post('/api/utility/importUtilityEmissions')
       .set('Authorization', `Bearer ${body.jwt}`)
       .field('fileType', 'consumptions')
+      .field('fuels', [2, 3])
       .attach('excel', 'test/fixtures/historic_data-consumption.xlsx');
     expect(response.statusCode).toBe(200);
 
@@ -377,6 +379,7 @@ describe('/Utility ', () => {
       .post('/api/utility/importUtilityEmissions')
       .set('Authorization', `Bearer ${body.jwt}`)
       .field('fileType', 'consumptions')
+      .field('fuels', [2, 3])
       .attach('excel', 'test/fixtures/historic_data-consumption.xlsx');
     expect(response2.statusCode).toBe(200);
   });
