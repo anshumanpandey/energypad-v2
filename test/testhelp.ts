@@ -77,7 +77,7 @@ export const buildFakeBusiness = (p: { id: number; email: string }) => {
 
 export const buildFakeSite = (p: { id: number; businessId: number; name?: string }) => ({
   id: p.id,
-  name: p.name || faker.word.noun() + Math.random().toString(),
+  name: p.name || `${faker.word.noun()} ${ulid()}`,
   type: 'some',
   address: 'anywhere',
   postCode: '484 sd8',
