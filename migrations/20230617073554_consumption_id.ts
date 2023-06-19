@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable('UtilityConsumptions', function (table) {
-    table.dropColumn('updated_at');
+    table.dropTimestamps();
   });
   await knex.schema.alterTable('UtilityConsumptionsUse', function (table) {
     table.dropTimestamps();
@@ -10,7 +10,7 @@ export async function up(knex: Knex): Promise<void> {
   });
   await knex.schema.alterTable('UtilityConsumptions', function (table) {
     table.string('id', 26).alter({ alterNullable: false });
-    table.timestamp('created_at').defaultTo(knex.fn.now()).alter();
+    table.timestamps(true, true);
   });
   await knex.schema.alterTable('UtilityConsumptionsUse', function (table) {
     table.string('consumptionId', 26).alter({ alterNullable: false });
@@ -20,7 +20,5 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.alterTable('UtilityConsumptions', function (table) {
-    table.datetime('updated_at');
-  });
+  //EMPTY
 }
