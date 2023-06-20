@@ -219,7 +219,10 @@ export const importUtilityEmissionFromFile = async (req: any) => {
   return DB.transaction(async (txr) => {
     try {
       if (req.body.fileType === 'cost') {
-        const data = await ExcelClient.importUtilityEmissions(excelFile.buffer);
+        const data = await ExcelClient.importUtilityCost(excelFile.buffer);
+        if (data instanceof ApiError) {
+          throw data;
+        }
 
         await UtilityService.upsertConsumptionToUtility(data.consumptions, { upsertType: 'COST', txr });
       }

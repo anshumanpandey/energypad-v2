@@ -2,15 +2,15 @@ import { ApiError } from '@lib';
 import { SitesService, UtilityService } from '@services';
 import { Workbook } from 'exceljs';
 import { formatISO } from 'date-fns';
-import AppLogger from '../Logger';
 
-export const importUtilityEmissions = async (file: string | Buffer) => {
+export const importUtilityCost = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
 
   const [sites, fuels] = await Promise.all([SitesService.findBy(), UtilityService.findFuelBy()]);
 
   const consumptions: any[] = [];
-  workbook.eachSheet((sheet) => {
+  for (let i = 0; i < workbook.worksheets.length; i++) {
+    const sheet = workbook.worksheets[i];
     const year = sheet.getRow(1).getCell('B').text;
     const fuel = sheet.getRow(2).getCell('B').text;
     //TODO: save currency code on DB
@@ -48,7 +48,7 @@ export const importUtilityEmissions = async (file: string | Buffer) => {
         consumptions.push(record);
       }
     }
-  });
+  }
 
   return {
     consumptions,
@@ -83,7 +83,7 @@ export const importConsumptions = async (file: string | Buffer) => {
       const siteName = currentRow.getCell('B').text;
 
       for (let c = 2; c < currentRow.cellCount; c++) {
-        const month = c.toString();
+        const month = (c - 1).toString();
         const date = `${Number.parseInt(year)}-${month.length === 1 ? `0${month}` : month}-01`;
         const site = sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase());
         if (!site) {

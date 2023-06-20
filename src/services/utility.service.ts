@@ -8,6 +8,7 @@ import ConversionUnit from './conversionUnit.service';
 import { ProducedConsumption } from './dashboard.service';
 import { capitalizeFirstLetter } from '../utils/appUtils';
 import { ulid } from 'ulid';
+import knex, { Knex } from 'knex';
 
 export type AddConsumptionToUtilityParam = RequestBodyParams<'AddFuelSourceConsumption'>;
 export const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam, opt?: Transactionable) => {

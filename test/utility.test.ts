@@ -348,22 +348,48 @@ describe('/Utility ', () => {
   });
 
   test('It should respond with success message when importing utilities cost then consumption from file', async () => {
-    const body = await loginUser(app)('mail614@mail.com');
+    const user = await loginUser(app)('mail616@mail.com');
 
     const response = await supertest(app)
       .post('/api/utility/importUtilityEmissions')
-      .set('Authorization', `Bearer ${body.jwt}`)
+      .set('Authorization', `Bearer ${user.jwt}`)
       .field('fileType', 'consumptions')
       .field('fuels', [2, 3])
-      .attach('excel', 'test/fixtures/historic_data-consumption.xlsx');
+      .attach('excel', 'test/fixtures/historic_data-consumption-2.xlsx');
     expect(response.statusCode).toBe(200);
+
+    const consumptions = await supertest(app)
+      .get('/api/utility/consumptions')
+      .set('Authorization', `Bearer ${user.jwt}`);
+    expect(consumptions.body.length).toBe(144);
+    const one = consumptions.body.find((i: any) => i.date === '2020-03-01' && i.siteId === 608);
+    expect(one.consumption).toBe(68);
+    expect(one.vat).toBe(0);
+    expect(one.totalCost).toBe(0);
+    const two = consumptions.body.find((i: any) => i.date === '2020-05-01' && i.siteId === 610);
+    expect(two.consumption).toBe(845);
+    expect(two.vat).toBe(0);
+    expect(two.totalCost).toBe(0);
 
     const response2 = await supertest(app)
       .post('/api/utility/importUtilityEmissions')
-      .set('Authorization', `Bearer ${body.jwt}`)
+      .set('Authorization', `Bearer ${user.jwt}`)
       .field('fileType', 'cost')
-      .attach('excel', 'test/fixtures/historic_data-cost.xlsx');
+      .attach('excel', 'test/fixtures/historic_data-cost-2.xlsx');
     expect(response2.statusCode).toBe(200);
+
+    const consumptions2 = await supertest(app)
+      .get('/api/utility/consumptions')
+      .set('Authorization', `Bearer ${user.jwt}`);
+    expect(consumptions2.body.length).toBe(144);
+    const three = consumptions2.body.find((i: any) => i.date === '2020-03-01' && i.siteId === 608);
+    expect(three.consumption).toBe(68);
+    expect(three.vat).toBe(84);
+    expect(three.totalCost).toBe(34);
+    const four = consumptions2.body.find((i: any) => i.date === '2020-05-01' && i.siteId === 610);
+    expect(four.consumption).toBe(845);
+    expect(four.vat).toBe(8);
+    expect(four.totalCost).toBe(9);
   });
 
   test('It should respond with success message when importing utilities consumption then cost from file', async () => {
