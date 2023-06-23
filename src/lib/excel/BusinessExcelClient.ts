@@ -83,49 +83,38 @@ const getRows = async (Worksheet: Worksheet) => {
   const [countries, states] = await Promise.all([SitesService.getCountries(), SitesService.getStates()]);
 
   const validColums = [
-    { name: 'businessName', validate: { required: true } },
-    { name: 'businessType', validate: { required: true } },
-    { name: 'businessService', validate: { required: true } },
-    { name: 'buildingName', validate: { required: true } },
-    { name: 'contactName', validate: { required: true } },
-    { name: 'position', validate: { required: true } },
-    { name: 'phoneNumber', validate: { required: true } },
+    { colLetter: 'A', name: 'businessName', validate: { required: true } },
+    { colLetter: 'B', name: 'businessType', validate: { required: true } },
+    { colLetter: 'C', name: 'businessService', validate: { required: true } },
+    { colLetter: 'D', name: 'buildingName', validate: { required: true } },
+    { colLetter: 'E', name: 'contactName', validate: { required: true } },
+    { colLetter: 'F', name: 'position', validate: { required: true } },
+    { colLetter: 'G', name: 'phoneNumber', validate: { required: true } },
     {
+      colLetter: 'H',
       name: 'email',
       validate: { required: true },
     },
-    { name: 'town', validate: { required: true } },
-    { name: 'postCode', validate: { required: true } },
+    { colLetter: 'K', name: 'town', validate: { required: true } },
+    { colLetter: 'L', name: 'postCode', validate: { required: true } },
     {
-      name: 'subscriptionDate',
-      validate: { required: true },
-      parseValue: async (val: string) => {
-        return formatISO(new Date(val)).split('T')[0];
-      },
-    },
-    {
+      colLetter: 'M',
       name: 'countryId',
       parseValue: async (val: string) => {
         return countries.find((c) => c.name === val)?.id;
       },
       validate: { required: true },
     },
+    { colLetter: 'N', name: 'currencyCode', validate: { required: true } },
     {
-      name: 'stateId',
-      parseValue: async (val: string) => {
-        return states.find((c) => c.name === val)?.id || null;
-      },
-      validate: { required: false },
-    },
-    { name: 'currencyCode', validate: { required: true } },
-    {
+      colLetter: 'I',
       name: 'password',
       validate: { required: true },
       parseValue: (val: string) => {
         return encryptPassword(val);
       },
     },
-    { name: 'address_1', validate: { required: false } },
+    { colLetter: 'J', name: 'address_1', validate: { required: false } },
   ];
 
   const rowAmount = Worksheet.rowCount;
@@ -134,12 +123,8 @@ const getRows = async (Worksheet: Worksheet) => {
     const promises = [];
     loop: for (let a = 0, len = validColums.length; a < len; a++) {
       const validCol = validColums[a];
-      const colIdx = a;
-      const col = Worksheet.columns[colIdx].values;
+      const col = Worksheet.getColumn(validCol.colLetter).values;
       if (!col) continue loop;
-      if (col[1]?.toString() !== validCol.name) {
-        return new ApiError('Wrong format');
-      }
 
       const castedCol = col[i] as any;
       const colVal = castedCol?.text ? castedCol?.text : castedCol?.toString();
