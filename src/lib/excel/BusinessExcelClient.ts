@@ -1,7 +1,6 @@
 import { ApiError, DB } from '@lib';
 import { SitesService } from '@services';
 import { encryptPassword } from '@utils';
-import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
 
 export const getBusinessData = async (file: string | Buffer) => {
@@ -18,7 +17,7 @@ export const getSitesData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
 
   const siteWorksheet = workbook.worksheets[1];
-  const sites = getSitesRecords(siteWorksheet);
+  const sites = await getSitesRecords(siteWorksheet);
 
   const rows = [];
 
@@ -40,12 +39,12 @@ const isValidSiteRow = (recordToInsert: Record<string, string>) => {
     recordToInsert.postCode &&
     recordToInsert.town &&
     recordToInsert.population &&
-    recordToInsert.size &&
-    recordToInsert.businessEmail
+    recordToInsert.size
   );
 };
 
-const getSitesRecords = (Worksheet: Worksheet) => {
+const getSitesRecords = async (Worksheet: Worksheet) => {
+  const countries = await SitesService.getCountries();
   const rows = [];
 
   const rowCount = Worksheet.actualRowCount;
@@ -57,20 +56,20 @@ const getSitesRecords = (Worksheet: Worksheet) => {
   const townCol = Worksheet.columns[5];
   const populationCol = Worksheet.columns[6];
   const sizeCol = Worksheet.columns[7];
-  const businessEmailCol = Worksheet.columns[8];
-  const workinghours = Worksheet.columns[9];
+  const workinghours = Worksheet.columns[8];
+  const countryName = Worksheet.getColumn('F');
 
   for (let a = 2; a <= rowCount; a++) {
     const row: any = {
-      [`${nameCol?.values?.[1]}`]: nameCol.values?.[a],
-      [`${typeCol?.values?.[1]}`]: typeCol.values?.[a],
-      [`${addressCol?.values?.[1]}`]: addressCol.values?.[a],
-      [`${postCodeCol?.values?.[1]}`]: postCodeCol.values?.[a],
-      [`${townCol?.values?.[1]}`]: townCol.values?.[a],
-      [`${populationCol?.values?.[1]}`]: populationCol.values?.[a],
-      [`${sizeCol?.values?.[1]}`]: sizeCol.values?.[a],
-      [`${businessEmailCol?.values?.[1]}`]: businessEmailCol.values?.[a],
-      [`${workinghours?.values?.[1]}`]: workinghours.values?.[a],
+      ['name']: nameCol.values?.[a],
+      [`type`]: typeCol.values?.[a],
+      [`address`]: addressCol.values?.[a],
+      [`postCode`]: postCodeCol.values?.[a],
+      [`town`]: townCol.values?.[a],
+      [`population`]: populationCol.values?.[a],
+      [`size`]: sizeCol.values?.[a],
+      [`workinghours`]: workinghours.values?.[a],
+      [`countryId`]: countries.find((c) => c.name === countryName.values?.[a])?.id,
     };
     rows.push(row);
   }
@@ -80,7 +79,7 @@ const getSitesRecords = (Worksheet: Worksheet) => {
 const getRows = async (Worksheet: Worksheet) => {
   const rows = [];
 
-  const [countries, states] = await Promise.all([SitesService.getCountries(), SitesService.getStates()]);
+  const countries = await SitesService.getCountries();
 
   const validColums = [
     { colLetter: 'A', name: 'businessName', validate: { required: true } },

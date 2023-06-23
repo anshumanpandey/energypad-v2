@@ -323,6 +323,13 @@ describe('/Business ', () => {
       .set('Authorization', `Bearer ${body.jwt}`)
       .attach('excel', 'test/fixtures/business sites 1.xlsx');
     expect(response.statusCode).toBe(200);
+
+    const user = await loginUser(app)('info@gpad.org.uk', 'ffd11212');
+    expect(user.jwt).toBeDefined();
+    const site = await supertest(app).get('/api/business/sites').set('Authorization', `Bearer ${user.jwt}`);
+    expect(site.statusCode).toBe(200);
+    expect(site.body.find((s: Record<string, string>) => s.name === 'Head Office')).toBeDefined();
+    expect(site.body.find((s: Record<string, string>) => s.name === 'Regional Office')).toBeDefined();
   });
 
   /*test('It should data from excel file without a state successfully', async () => {

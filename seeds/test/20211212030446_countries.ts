@@ -24,13 +24,10 @@ const reduceData = () => {
 export async function seed(knex: Knex): Promise<void> {
   const data = reduceData();
 
-  const promises = [];
-  promises.push(knex('Countries').insert(data.countries));
+  await knex('Countries').insert(data.countries);
 
   const size = 100;
   for (let i = 0; i < data.states.length; i += size) {
-    promises.push(knex('States').insert(data.states.slice(i, i + size)));
+    await knex('States').insert(data.states.slice(i, i + size));
   }
-
-  await Promise.all(promises);
 }

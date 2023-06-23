@@ -57,7 +57,7 @@ export const loginUser = (app: Express.Application) => (email: string, password?
 export const buildFakeBusiness = (p: { id: number; email: string }) => {
   return {
     id: p.id,
-    businessName: faker.company.name(),
+    businessName: `${faker.company.name()} ${ulid()}`,
     businessType: 'a type',
     businessService: 'a service',
     password: '$2b$10$XYSGA3eqhW17sX1Gyb83bemjRva.O2CfzlgE6EJH.NGBnKlyuWQWW', // 123456Abc!

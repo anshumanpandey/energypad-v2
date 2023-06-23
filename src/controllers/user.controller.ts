@@ -232,25 +232,13 @@ export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusi
   if (sites instanceof ApiError) return sites;
 
   await DB.transaction(async (trx) => {
-    const businessToSite = data.map((business) => {
-      const site = sites.find((s) => s.businessEmail === business.email);
-      return {
-        business,
-        site,
-      };
-    });
-
-    const promises = businessToSite.map(async (b) => {
-      const [r] = await DB('Businesses').insert(b.business).transacting(trx).returning('id');
-      if (b.site) {
-        const { businessEmail, ...s } = b.site;
+    try {
+      const [r] = await DB('Businesses').insert(data[0]).transacting(trx).returning('id');
+      if (sites.length !== 0) {
         await DB('Sites')
-          .insert({ ...s, businessId: r.id })
+          .insert(sites.map((s) => ({ ...s, businessId: r.id })))
           .transacting(trx);
       }
-    });
-    try {
-      await Promise.all(promises);
     } catch (e: unknown) {
       if (e instanceof Error) {
         throw e.toString().includes('businesses_businessname_unique') ? new ApiError('Duplicated business name') : e;
