@@ -2,60 +2,24 @@ import { ApiError } from '@lib';
 import { SitesService, UtilityService } from '@services';
 import { Workbook } from 'exceljs';
 import { formatISO } from 'date-fns';
+import { resolveUnitConversion, SupportedUnits } from '../../utils/unitsUtils';
 
-export const importUtilityCost = async (file: string | Buffer) => {
-  const workbook = await readExcelFile(file);
-
-  const [sites, fuels] = await Promise.all([SitesService.findBy(), UtilityService.findFuelBy()]);
-
-  const consumptions: any[] = [];
-  for (let i = 0; i < workbook.worksheets.length; i++) {
-    const sheet = workbook.worksheets[i];
-    const year = sheet.getRow(1).getCell('B').text;
-    const fuel = sheet.getRow(2).getCell('B').text;
-    //TODO: save currency code on DB
-    const currency = sheet.getRow(3).getCell('B').text;
-
-    const sitesRows = sheet.getRows(5, sheet.actualRowCount - 4);
-    if (!sitesRows) {
-      return new ApiError('Could not parse the file');
-    }
-    const rowsWithValues = sitesRows?.length || 0;
-
-    for (let r = 0; r < rowsWithValues; r++) {
-      const currentRow = sitesRows?.[r];
-      const siteName = currentRow.getCell('B').text;
-      const site = sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase());
-      if (!site) {
-        return new ApiError(`Site [${siteName}] not found`);
-      }
-
-      for (let c = 2; c < currentRow.cellCount; c += 2) {
-        const month = (c / 2).toString();
-        const date = `${Number.parseInt(year)}-${month.length === 1 ? `0${month}` : month}-01`;
-
-        const record = {
-          date,
-          vat: currentRow.getCell(c + 1).text,
-          totalCost: Number.parseInt(currentRow.getCell(c + 2).text),
-          fuelUnit: '', //TODO: should this be null?
-          siteId: site?.id,
-          fuelSourceId: fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
-          consumption: 0,
-          conversionFactor: 0,
-          usedInId: [] as number[],
-        };
-        consumptions.push(record);
-      }
-    }
-  }
-
-  return {
-    consumptions,
-  };
+const MonthMap: Record<string, string> = {
+  Jan: '1',
+  Feb: '2',
+  Mar: '3',
+  Apr: '4',
+  May: '5',
+  Jun: '6',
+  Jul: '7',
+  Aug: '8',
+  Sep: '9',
+  Oct: '10',
+  Nov: '11',
+  Dec: '12',
 };
 
-export const importConsumptions = async (file: string | Buffer) => {
+export const extractConsumptionData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
 
   const [sites, uses, fuels] = await Promise.all([
@@ -65,102 +29,116 @@ export const importConsumptions = async (file: string | Buffer) => {
   ]);
 
   const consumptions: any[] = [];
-  for (let i = 0; i < workbook.worksheets.length; i++) {
-    const sheet = workbook.worksheets[i];
-    const year = sheet.getRow(1).getCell('B').text;
-    const fuel = sheet.getRow(2).getCell('B').text;
-    const usesSplitted = sheet.getRow(4).getCell('B').text.split(';');
-    const fuelUnit = sheet.getRow(3).getCell('B').text;
+  const sheet = workbook.worksheets[0];
 
-    const sitesRows = sheet.getRows(6, sheet.actualRowCount - 5);
-    if (!sitesRows) {
-      return new ApiError('Could not parse the file');
+  for (let r = 2; r <= sheet.actualRowCount; r++) {
+    const currentRow = sheet.getRow(r);
+
+    const siteId = currentRow.getCell('A').text;
+    const site = sites.find((s) => s.id.toString() === siteId);
+    if (!site) {
+      return new ApiError(`Site [${siteId}] not found`);
     }
-    const rowsWithValues = sitesRows?.length || 0;
+    const fuel = currentRow.getCell('E').text;
+    const year = currentRow.getCell('B').text;
+    const month = MonthMap[currentRow.getCell('C').text];
 
-    for (let r = 0; r < rowsWithValues; r++) {
-      const currentRow = sitesRows?.[r];
-      const siteName = currentRow.getCell('B').text;
+    const date = `${year}-${month.length === 1 ? `0${month}` : month}-01`;
 
-      for (let c = 2; c < currentRow.cellCount; c++) {
-        const month = (c - 1).toString();
-        const date = `${Number.parseInt(year)}-${month.length === 1 ? `0${month}` : month}-01`;
-        const site = sites.find((s) => s.name.toLowerCase() === siteName.toLowerCase());
-        if (!site) {
-          return new ApiError(`Site [${siteName}] not found`);
-        }
-
-        const record = {
-          date,
-          vat: 0,
-          totalCost: 0,
-          fuelUnit: fuelUnit,
-          siteId: site?.id,
-          fuelSourceId: fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
-          conversionFactor: 0,
-          consumption: currentRow.getCell(c + 1).text,
-          usedInId: uses
-            .filter((u) => usesSplitted.find((us) => us.toLowerCase() === u.use.toLowerCase()))
-            .map((u) => u.id),
-        };
-        consumptions.push(record);
-      }
-    }
+    const record = {
+      date,
+      vat: 0, //TODO: add VAT to the file
+      totalCost: Number.parseInt(currentRow.getCell('H').text),
+      fuelUnit: currentRow.getCell('G').text,
+      siteId: site?.id,
+      fuelSourceId: fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
+      consumption: currentRow.getCell('F').text,
+      conversionFactor: currentRow.getCell('I').text,
+      usedInId: [uses.find((u) => currentRow.getCell('D').text === u.use)?.id],
+    };
+    consumptions.push(record);
   }
 
-  return {
-    consumptions,
-  };
+  return consumptions;
 };
 
-export const importEmissions = async (file: string | Buffer) => {
+export const extractEmissionsData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
 
-  const emissions: any[] = [];
-  const sheet = workbook.getWorksheet(1);
-  const fuelUnit = sheet.getRow(2).getCell('B').text;
-  const fuelType = sheet.getRow(1).getCell('B').text;
+  const [sites, fuels] = await Promise.all([SitesService.findBy(), UtilityService.findFuelBy()]);
 
-  const [fuel] = await UtilityService.findFuelBy({ names: fuelType });
-  if (!fuel) {
-    return new ApiError('Fuel not found');
-  }
+  const consumptions: any[] = [];
+  const sheet = workbook.worksheets[1];
 
-  const sitesRows = sheet.getRows(4, sheet.actualRowCount - 3);
-  if (!sitesRows) {
-    return new ApiError('Could not parse the file');
-  }
+  for (let r = 2; r <= sheet.actualRowCount; r++) {
+    const currentRow = sheet.getRow(r);
 
-  const yearsRow = sheet.getRow(3);
-  if (!yearsRow) {
-    return new ApiError('Could not parse the file');
-  }
-
-  const rowsWithValues = sitesRows?.length || 0;
-
-  for (let r = 0; r < rowsWithValues; r++) {
-    const currentRow = sitesRows?.[r];
-    for (let c = 2; c < currentRow.cellCount; c += 2) {
-      const year = yearsRow.getCell(c).text.split(' ')[0];
-
-      if (year) {
-        const date = formatISO(new Date(Number.parseInt(year), r, 1)).split('T')[0];
-
-        const emission = currentRow.getCell(c).text;
-        const conversionFactor = currentRow.getCell(c + 1).text;
-
-        const record = {
-          date,
-          emission,
-          conversionFactor,
-          fuelSourceId: fuel.id,
-        };
-        emissions.push(record);
-      }
+    const siteId = currentRow.getCell('A').text;
+    const site = sites.find((s) => s.id.toString() === siteId);
+    if (!site) {
+      return new ApiError(`Site [${siteId}] not found`);
     }
+    const fuel = currentRow.getCell('D').text;
+    const year = currentRow.getCell('B').text;
+    const emissionFactor = Number.parseFloat(currentRow.getCell('F').text);
+    const fuelUnit = currentRow.getCell('E').text as typeof SupportedUnits[0];
+    const month = MonthMap[currentRow.getCell('C').text];
+
+    const date = `${year}-${month.length === 1 ? `0${month}` : month}-01`;
+
+    const record = {
+      date,
+      siteId: site.id,
+      emissionFactor,
+      conversionFactor: resolveUnitConversion(emissionFactor, fuelUnit),
+      fuelUnit,
+      fuelSourceId: fuels.find((f) => f.source === fuel)?.id,
+      usedInId: [],
+    };
+    consumptions.push(record);
   }
 
-  return emissions;
+  return consumptions;
+};
+export const extractTargetData = async (file: string | Buffer) => {
+  const workbook = await readExcelFile(file);
+
+  const [sites, fuels] = await Promise.all([SitesService.findBy(), UtilityService.findFuelBy()]);
+
+  const monitoring: any[] = [];
+  const sheet = workbook.worksheets[2];
+
+  for (let r = 2; r <= sheet.actualRowCount; r++) {
+    const currentRow = sheet.getRow(r);
+
+    const siteId = currentRow.getCell('A').text;
+    const site = sites.find((s) => s.id.toString() === siteId);
+    if (!site) {
+      return new ApiError(`Site [${siteId}] not found`);
+    }
+    const fuel = currentRow.getCell('D').text;
+    const year = currentRow.getCell('B').text;
+    const month = MonthMap[currentRow.getCell('C').text];
+    const fuelUnit = currentRow.getCell('E').text as typeof SupportedUnits[0];
+    const energy = Number.parseFloat(currentRow.getCell('F').text);
+    const carbon = currentRow.getCell('G').text;
+
+    const date = `${year}-${month.length === 1 ? `0${month}` : month}-01`;
+
+    const record = {
+      date,
+      siteId: site.id,
+      energy,
+      carbon,
+      fuelUnit,
+      conversionFactor: resolveUnitConversion(energy, fuelUnit),
+      fuelSourceId: fuels.find((f) => f.source === fuel)?.id,
+      usedInId: [],
+    };
+    monitoring.push(record);
+  }
+
+  return monitoring;
 };
 
 const readExcelFile = async (file: string | Buffer) => {

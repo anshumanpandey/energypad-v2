@@ -216,34 +216,26 @@ export const importUtilityEmissionFromFile = async (req: any) => {
   const excelFile = req.file;
   if (!excelFile) return new ApiError('Missing file');
 
+  const consumptions = await ExcelClient.extractConsumptionData(excelFile.buffer);
+
+  if (consumptions instanceof ApiError) {
+    throw consumptions;
+  }
+  const emissions = await ExcelClient.extractEmissionsData(excelFile.buffer);
+  if (emissions instanceof ApiError) {
+    throw emissions;
+  }
+
+  const monitoring = await ExcelClient.extractTargetData(excelFile.buffer);
+  if (monitoring instanceof ApiError) {
+    throw monitoring;
+  }
+
   return DB.transaction(async (txr) => {
     try {
-      if (req.body.fileType === 'cost') {
-        const data = await ExcelClient.importUtilityCost(excelFile.buffer);
-        if (data instanceof ApiError) {
-          throw data;
-        }
-
-        await UtilityService.upsertConsumptionToUtility(data.consumptions, { upsertType: 'COST', txr });
-      }
-
-      if (req.body.fileType === 'consumptions') {
-        const data = await ExcelClient.importConsumptions(excelFile.buffer);
-
-        if (data instanceof ApiError) {
-          throw data;
-        }
-
-        await UtilityService.upsertConsumptionToUtility(data.consumptions, { upsertType: 'CONSUMPTION', txr });
-      }
-
-      //TODO: work on utility emissions import
-      /*if (req.body.fileType === 'emissions') {
-        const data = await ExcelClient.importEmissions(excelFile.buffer);
-
-        //await UtilityService.upsertEmissions(data);
-      }*/
-
+      await UtilityService.upsertConsumptionToUtility(consumptions, { txr });
+      await UtilityService.addUtilityEmissions(emissions, { txr });
+      await UtilityService.addMonitoringToUtility(monitoring, { txr });
       return { success: true };
     } catch (e) {
       throw e;

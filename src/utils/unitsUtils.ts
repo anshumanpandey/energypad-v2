@@ -18,12 +18,15 @@ export const m3ToKwh = (meters: number) => {
 export type ConversionResolverFn = (value: number, unit?: typeof SupportedUnits[number]) => number;
 
 export const resolveUnitConversion: ConversionResolverFn = (value, unit?) => {
-  let result = value;
-  if (unit === 'L') {
-    result = litersToKwh(value);
+  switch (unit) {
+    case 'L': {
+      return litersToKwh(value);
+    }
+    case 'm3': {
+      return m3ToKwh(value);
+    }
+    default: {
+      return value;
+    }
   }
-  if (unit === 'm3') {
-    result = m3ToKwh(value);
-  }
-  return result;
 };
