@@ -58,7 +58,7 @@ export const buildFakeBusiness = (p: { id: number; email: string }) => {
   return {
     id: p.id,
     businessName: `${faker.company.name()} ${ulid()}`,
-    businessType: 'a type',
+    businessType: 'Arts, Entertainment and Recreation',
     businessService: 'a service',
     password: '$2b$10$XYSGA3eqhW17sX1Gyb83bemjRva.O2CfzlgE6EJH.NGBnKlyuWQWW', // 123456Abc!
     buildingName: 'a name',

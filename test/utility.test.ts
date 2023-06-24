@@ -299,10 +299,11 @@ describe('/Utility ', () => {
   test('It should respond with monitoring', async () => {
     const body = await loginUser(app)('mail610@mail.com');
     const response = await supertest(app)
-      .get('/api/utility/monitoring?siteId=602&month=1&year=2020')
+      .get('/api/utility/monitoring?siteId=602&month=0&year=2020')
       .set('Authorization', `Bearer ${body.jwt}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.length).toBe(2);
+    expect(response.body[0].carbon).toBe(22);
   });
 
   test('It should respond with business emissions', async () => {

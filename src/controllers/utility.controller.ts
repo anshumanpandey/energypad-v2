@@ -216,7 +216,7 @@ export const getEmissions: AuthGetAppController<'GetEmissions', '/api/utility/em
 //TODO: generate types for this route
 export const getMonitoring = async (req: any) => {
   const params = {
-    month: MathUtils.toInt(req.query.month) - 1,
+    month: MathUtils.toInt(req.query.month),
     year: MathUtils.toInt(req.query.year),
     siteId: MathUtils.toInt(req.query.siteId),
     businessId: req.user.id,

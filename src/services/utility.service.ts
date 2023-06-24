@@ -230,7 +230,7 @@ export const addMonitoringToUtility = async (
 
 export const getMonitoring = (params: { siteId: number; year: number; month: number; businessId: number }) => {
   const query = DB('UtilityMonitoring')
-    .select(['UtilityMonitoring'])
+    .select(['UtilityMonitoring.*'])
     .innerJoin('FuelSources', 'UtilityMonitoring.fuelSourceId', 'FuelSources.id')
     .innerJoin({ S: 'Sites' }, 'UtilityMonitoring.siteId', 'S.id')
     .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
