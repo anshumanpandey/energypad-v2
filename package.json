@@ -15,6 +15,7 @@
     "generate:definitions": "NODE_ENV=development npm run generate:types && NODE_ENV=development npm run generate:schema",
     "generate:types": "tsc --project ./types-tsconfig.json && ts-node ./src/scripts/GenerateTypes.ts",
     "generate:schema": "tsc --project ./types-tsconfig.json && ts-node --project ./types-tsconfig.json ./src/scripts/GenerateSchema.ts",
+    "app:upgrade": "git pull && git submodule update --remote",
     "lint": "eslint src/**/*.ts",
     "format": "eslint src/**/*.ts --fix",
     "pretest": "rm -f testdb.db && npm run predev",
