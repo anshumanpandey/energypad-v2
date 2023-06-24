@@ -101,13 +101,6 @@ export async function seed(knex: Knex): Promise<void> {
     }),
 
     buildFakeConsumption({
-      id: 1012,
-      date: '2019-03-01',
-      consumption: 79,
-      fuelSourceId: 1,
-      siteId: site.id,
-    }),
-    buildFakeConsumption({
       id: 1014,
       date: '2019-04-01',
       consumption: 75,
@@ -434,21 +427,21 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('UtilityEmissions').insert([
     buildFakeEmission({
       id: 104,
-      year: 2020,
+      date: `2020-01-01`,
       fuelSourceId: 1,
       usedInId: 2,
       siteId: site.id,
     }),
     buildFakeEmission({
       id: 106,
-      year: 2019,
+      date: `2019-01-01`,
       fuelSourceId: 1,
       usedInId: 2,
       siteId: site.id,
     }),
     buildFakeEmission({
       id: 108,
-      year: 2020,
+      date: `2020-01-01`,
       fuelSourceId: 2,
       usedInId: 2,
       siteId: site.id,
@@ -457,14 +450,14 @@ export async function seed(knex: Knex): Promise<void> {
     //site2
     buildFakeEmission({
       id: 110,
-      year: 2019,
+      date: `2019-01-01`,
       fuelSourceId: 1,
       usedInId: 2,
       siteId: site2.id,
     }),
     buildFakeEmission({
       id: 112,
-      year: 2020,
+      date: `2020-02-01`,
       fuelSourceId: 1,
       usedInId: 2,
       siteId: site2.id,
@@ -472,32 +465,32 @@ export async function seed(knex: Knex): Promise<void> {
 
     buildFakeEmission({
       id: 114,
-      year: 2020,
-      fuelSourceId: 3,
+      date: `2020-03-01`,
+      fuelSourceId: 1,
       usedInId: 2,
-      siteId: site.id,
+      siteId: site2.id,
     }),
     buildFakeEmission({
       id: 116,
-      year: 2020,
+      date: `2020-04-01`,
       fuelSourceId: 4,
       usedInId: 2,
-      siteId: site.id,
+      siteId: site2.id,
     }),
     buildFakeEmission({
       id: 118,
-      year: 2020,
+      date: `2020-05-01`,
       fuelSourceId: 5,
       usedInId: 2,
-      siteId: site.id,
+      siteId: site2.id,
     }),
 
     buildFakeEmission({
       id: 120,
-      year: 2019,
+      date: `2020-06-01`,
       fuelSourceId: 2,
       usedInId: 2,
-      siteId: site.id,
+      siteId: site2.id,
     }),
   ]);
 

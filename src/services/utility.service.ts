@@ -120,8 +120,9 @@ export const upsertEmissions = async (
 ) => {
   const driver = opt?.txr || DB;
 
-  const existingRecords = await driver('UtilityConsumptions')
+  const existingRecords = await driver('UtilityEmissions')
     .select('*')
+    .whereIn('siteId', Array.from(new Set(params.map((r) => r.siteId))))
     .andWhere('fuelSourceId', 'in', Array.from(new Set(params.map((r) => r.fuelSourceId))))
     .andWhere('date', 'in', Array.from(new Set(params.map((r) => r.date))));
 
@@ -142,18 +143,71 @@ export const upsertEmissions = async (
     records.push(record);
   }
 
-  const promises: Promise<any>[] = [];
-
+  const removeUsedIn = (n: Record<string, string | number | number[] | undefined | null>) => {
+    const { usedInId, ...r } = n;
+    return r;
+  };
   const newData = records.filter((r) => r.id === null || r.id === undefined);
   if (newData.length > 0) {
-    promises.push(driver('UtilityConsumptions').insert(newData));
+    await driver('UtilityEmissions').insert(newData.map(removeUsedIn));
   }
   const upsertData = records.filter((r) => r.id !== null && r.id !== undefined);
   if (upsertData.length > 0) {
-    promises.push(driver('UtilityConsumptions').insert(upsertData).onConflict('id').merge(['conversionFactor']));
+    await driver('UtilityEmissions')
+      .insert(upsertData.map(removeUsedIn))
+      .onConflict('id')
+      .merge(['conversionFactor', 'fuelUnit', 'emissionFactor']);
   }
 
-  return Promise.all(promises);
+  return [];
+};
+
+export const upsertMonitoring = async (
+  params: Array<RequestBodyParams<'AddFuelSourceConsumption'>[0] & { id: null | undefined | number }>,
+  opt?: Transactionable,
+) => {
+  const driver = opt?.txr || DB;
+
+  const existingRecords = await driver('UtilityMonitoring')
+    .select('*')
+    .whereIn('siteId', Array.from(new Set(params.map((r) => r.siteId))))
+    .andWhere('fuelSourceId', 'in', Array.from(new Set(params.map((r) => r.fuelSourceId))))
+    .andWhere('date', 'in', Array.from(new Set(params.map((r) => r.date))));
+
+  const records = [];
+  for (let i = 0; i < params.length; i++) {
+    let record = params[i];
+    const foundToUpdate = existingRecords.findIndex(
+      (r) => r.date === record.date && r.fuelSourceId === record.fuelSourceId,
+    );
+
+    if (foundToUpdate > -1) {
+      const found = existingRecords[foundToUpdate];
+      existingRecords.splice(foundToUpdate, 1);
+      found.conversionFactor = record.conversionFactor;
+      record = found;
+    }
+
+    records.push(record);
+  }
+
+  const removeUsedIn = (n: Record<string, string | number | number[] | undefined | null>) => {
+    const { usedInId, ...r } = n;
+    return r;
+  };
+  const newData = records.filter((r) => r.id === null || r.id === undefined);
+  if (newData.length > 0) {
+    await driver('UtilityMonitoring').insert(newData.map(removeUsedIn));
+  }
+  const upsertData = records.filter((r) => r.id !== null && r.id !== undefined);
+  if (upsertData.length > 0) {
+    await driver('UtilityMonitoring')
+      .insert(upsertData.map(removeUsedIn))
+      .onConflict('id')
+      .merge(['energy', 'carbon', 'conversionFactor', 'fuelUnit']);
+  }
+
+  return [];
 };
 
 export const addMonitoringToUtility = async (

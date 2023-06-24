@@ -1,7 +1,6 @@
 import { ApiError } from '@lib';
 import { SitesService, UtilityService } from '@services';
 import { Workbook } from 'exceljs';
-import { formatISO } from 'date-fns';
 import { resolveUnitConversion, SupportedUnits } from '../../utils/unitsUtils';
 
 const MonthMap: Record<string, string> = {

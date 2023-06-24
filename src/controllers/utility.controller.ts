@@ -55,17 +55,24 @@ export const addEmission: AuthAppController<'AddFuelSourceEmission', 'AddFuelSou
   }
 
   return DB.transaction(async (txr) => {
-    await UtilityService.deleteEmissionsBy(
-      {
-        siteId: siteToFind,
-        fuelSourceId: fuelSourceToFind,
-        date: years,
-      },
-      { txr },
-    );
-    await UtilityService.addUtilityEmissions(req.body, { txr });
+    try {
+      await UtilityService.deleteEmissionsBy(
+        {
+          siteId: siteToFind,
+          fuelSourceId: fuelSourceToFind,
+          date: years,
+        },
+        { txr },
+      );
+      await UtilityService.addUtilityEmissions(req.body, { txr });
 
-    return { success: true };
+      return { success: true };
+    } catch (e: unknown) {
+      if (e instanceof Error && e.toString().includes('utilityemissions_date_siteid_fuelsourceid_unique')) {
+        return new ApiError('There cannot be more than one row where (siteId + fuelSource + date) are the same');
+      }
+      throw e;
+    }
   });
 };
 
@@ -86,17 +93,24 @@ export const addMonitoring: AuthAppController<'AddFuelSourceMonitoring', 'AddFue
   }
 
   return DB.transaction(async (txr) => {
-    await UtilityService.deleteEmissionsBy(
-      {
-        siteId: siteToFind,
-        fuelSourceId: fuelSourceToFind,
-        date: years,
-      },
-      { txr },
-    );
-    await UtilityService.addMonitoringToUtility(req.body, { txr });
+    try {
+      await UtilityService.deleteEmissionsBy(
+        {
+          siteId: siteToFind,
+          fuelSourceId: fuelSourceToFind,
+          date: years,
+        },
+        { txr },
+      );
+      await UtilityService.addMonitoringToUtility(req.body, { txr });
 
-    return { success: true };
+      return { success: true };
+    } catch (e: unknown) {
+      if (e instanceof Error && e.toString().includes('utilityemissions_date_siteid_fuelsourceid_unique')) {
+        return new ApiError('There cannot be more than one row where (siteId + fuelSource + date) are the same');
+      }
+      throw e;
+    }
   });
 };
 
@@ -219,25 +233,42 @@ export const importUtilityEmissionFromFile = async (req: any) => {
   const consumptions = await ExcelClient.extractConsumptionData(excelFile.buffer);
 
   if (consumptions instanceof ApiError) {
-    throw consumptions;
+    return consumptions;
   }
   const emissions = await ExcelClient.extractEmissionsData(excelFile.buffer);
   if (emissions instanceof ApiError) {
-    throw emissions;
+    return consumptions;
   }
 
   const monitoring = await ExcelClient.extractTargetData(excelFile.buffer);
   if (monitoring instanceof ApiError) {
-    throw monitoring;
+    return consumptions;
   }
 
   return DB.transaction(async (txr) => {
     try {
       await UtilityService.upsertConsumptionToUtility(consumptions, { txr });
-      await UtilityService.addUtilityEmissions(emissions, { txr });
-      await UtilityService.addMonitoringToUtility(monitoring, { txr });
+      await UtilityService.upsertEmissions(emissions, { txr });
+      await UtilityService.upsertMonitoring(monitoring, { txr });
       return { success: true };
-    } catch (e) {
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        if (e.toString().includes('utilityconsumptions_date_siteid_fuelsourceid_unique')) {
+          return new ApiError(
+            'Duplicated values found on Consumption. There cannot be more than one row where (siteId + fuelSource + date) are the same',
+          );
+        } else if (e.toString().includes('utilitymonitoring_date_siteid_fuelsourceid_unique')) {
+          return new ApiError(
+            'Duplicated values found on Target. There cannot be more than one row where (siteId + fuelSource + date) are the same',
+          );
+        } else if (e instanceof Error && e.toString().includes('utilityemissions_date_siteid_fuelsourceid_unique')) {
+          return new ApiError(
+            'Duplicated values found on Emissions. There cannot be more than one row where (siteId + fuelSource + date) are the same',
+          );
+        }
+      } else {
+        throw e;
+      }
       throw e;
     }
   });
