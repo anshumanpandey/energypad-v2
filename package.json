@@ -16,6 +16,7 @@
     "generate:types": "tsc --project ./types-tsconfig.json && ts-node ./src/scripts/GenerateTypes.ts",
     "generate:schema": "tsc --project ./types-tsconfig.json && ts-node --project ./types-tsconfig.json ./src/scripts/GenerateSchema.ts",
     "app:upgrade": "git pull && git submodule update --remote",
+    "app:deploy": "sudo docker-compose build && sudo docker-compose up -d",
     "lint": "eslint src/**/*.ts",
     "format": "eslint src/**/*.ts --fix",
     "pretest": "rm -f testdb.db && npm run predev",
