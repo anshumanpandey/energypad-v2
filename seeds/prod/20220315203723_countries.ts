@@ -4,7 +4,7 @@ import Countries from '../Countries.json';
 const reduceData = () => {
   const data = {
     countries: [] as { id: number; name: string }[],
-    states: [] as { id: number; name: string; countryId: number }[],
+    states: [] as { name: string; countryId: number }[],
   };
 
   const countryFn = ({ country, states }, idx: number) => {
@@ -12,7 +12,7 @@ const reduceData = () => {
     data.countries.push({ id: countryId, name: country });
 
     const stateFn = (state: string, stateIdx: number) => {
-      data.states.push({ id: countryId + (stateIdx + 1), name: state, countryId });
+      data.states.push({ name: state, countryId });
     };
     states.forEach(stateFn);
   };
@@ -26,5 +26,12 @@ export async function seed(knex: Knex): Promise<void> {
 
   // Inserts seed entries
   await knex('Countries').insert(data.countries).onConflict('id').merge();
-  await knex('States').insert(data.states).onConflict('id').merge();
+
+  const size = 500;
+  for (let i = 0; i < data.states.length; i += size) {
+    await knex('States')
+      .insert(data.states.slice(i, i + size))
+      .onConflict('id')
+      .merge(['name', 'countryId']);
+  }
 }
