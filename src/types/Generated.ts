@@ -519,6 +519,7 @@ export interface components {
     Site: {
       id?: number;
       name: string;
+      code: string;
       type: string;
       address: string;
       postCode: string;
@@ -1095,7 +1096,21 @@ export interface components {
     };
     SiteUpdate: {
       content: {
-        "application/json": components["schemas"]["Site"];
+        "application/json": {
+          id: number;
+          name: string;
+          code?: string;
+          type: string;
+          address: string;
+          postCode: string;
+          town: string;
+          population: number;
+          size: number;
+          workinghours: number;
+          fullTimeEmployee?: boolean;
+          countryId?: number;
+          stateId?: number;
+        };
       };
     };
     SaveBusinessPattern: {

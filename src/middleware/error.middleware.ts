@@ -13,14 +13,14 @@ const ErrorMiddleware = (
     message: 'Unknown Error',
   };
   if (err instanceof ApiError) {
-    AppLogger.error({ err, 'id-req': req.id, message: err.message });
+    AppLogger.error({ err, 'id-req': req.id, message: err.message, endpoint: req.url });
     errResponse = {
       statusCode: err.code,
       message: err.message,
     };
   } else if (err instanceof ValidationError) {
     let message = 'Invalid Body';
-    AppLogger.error({ err, 'id-req': req.id, message: err.message });
+    AppLogger.error({ err, 'id-req': req.id, message: err.message, endpoint: req.url });
     if (err.validationErrors.body) {
       const error = err.validationErrors.body.pop();
       if (error) {
@@ -37,7 +37,7 @@ const ErrorMiddleware = (
       message: 'Unauthorized',
     };
   } else {
-    AppLogger.fatal({ err, 'id-req': req.id });
+    AppLogger.fatal({ err, 'id-req': req.id, endpoint: req.url });
   }
 
   res.status(errResponse.statusCode).json(errResponse);

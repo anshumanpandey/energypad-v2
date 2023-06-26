@@ -112,7 +112,6 @@ businessRoutes.post(
 businessRoutes.post(
   '/importBusiness',
   FileImportBusinessPath,
-  AuthMiddleware,
   FileUpload.single('excel'),
   ExpressAsync(UserController.importFile),
 );

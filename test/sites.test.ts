@@ -2,6 +2,7 @@ import supertest from 'supertest';
 import { app } from '../src/app';
 import { NO_EXTRA_PROPERTY_ERROR_MESSAGE, loginUser, matcher } from './testhelp';
 import schema from '../src/types/Schema.json';
+import { ulid } from 'ulid';
 
 expect.extend(matcher);
 
@@ -11,6 +12,7 @@ describe('/Site ', () => {
     const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       name: 'a site 1',
       type: 'in amet enim',
+      code: ulid(),
       address: 'irure aliquip cillum esse magna',
       postCode: 'dolor enim',
       town: 'somwehre',
@@ -25,8 +27,10 @@ describe('/Site ', () => {
   test('It should respond with success message when updating a site', async () => {
     const body = await loginUser(app)('mail316@mail.com');
     const siteBody = {
+      id: 478,
       name: 'cccc',
       type: 'some_new',
+      code: ulid(),
       address: 'anywhere_new',
       postCode: '484 sd8_new',
       town: 'some town_new',
@@ -49,8 +53,10 @@ describe('/Site ', () => {
     expect(details.body[1].population).toBe(siteBody.population);
     expect(details.body[1].size).toBe(siteBody.size);
     expect(details.body[1].workinghours).toBe(siteBody.workinghours);
+    expect(details.body[1].code).toBe(siteBody.code);
 
     const siteBody2 = {
+      id: 479,
       name: 'ttttt',
       type: 'iuiuiu',
       address: 'yuyucxwh',
@@ -68,13 +74,15 @@ describe('/Site ', () => {
     expect(response2.statusCode).toBe(200);
 
     const details2 = await supertest(app).get('/api/business/sites').set('Authorization', `Bearer ${body.jwt}`);
-    expect(details2.body[1].type).toBe(siteBody2.type);
-    expect(details2.body[1].address).toBe(siteBody2.address);
-    expect(details2.body[1].postCode).toBe(siteBody2.postCode);
-    expect(details2.body[1].town).toBe(siteBody2.town);
-    expect(details2.body[1].population).toBe(siteBody2.population);
-    expect(details2.body[1].size).toBe(siteBody2.size);
-    expect(details2.body[1].workinghours).toBe(siteBody2.workinghours);
+    const s = details2.body.find((i: Record<string, string>) => i.name === 'ttttt');
+    expect(s.type).toBe(siteBody2.type);
+    expect(s.address).toBe(siteBody2.address);
+    expect(s.postCode).toBe(siteBody2.postCode);
+    expect(s.town).toBe(siteBody2.town);
+    expect(s.population).toBe(siteBody2.population);
+    expect(s.size).toBe(siteBody2.size);
+    expect(s.workinghours).toBe(siteBody2.workinghours);
+    expect(s.code).toBeDefined();
   });
 
   test('It should respond with fail message when create a site when passing wrong data', async () => {
@@ -82,6 +90,7 @@ describe('/Site ', () => {
     const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       name: 'aaaaa',
       type: 'in amet enim',
+      code: 'in amet enim',
       address: 'irure aliquip cillum esse magna',
       postCode: 'dolor enim',
       town: 35779417.474086836,
@@ -95,6 +104,7 @@ describe('/Site ', () => {
     const response2 = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       type: 'in amet enim',
       address: 'irure aliquip cillum esse magna',
+      code: ulid(),
       postCode: 'dolor enim',
       town: 'a town',
       population: 'some',
@@ -110,6 +120,7 @@ describe('/Site ', () => {
     const response3 = await supertest(app).post('/api/site').set('Authorization', `Bearer ${body.jwt}`).send({
       name: 'bbbb',
       type: 'some_new',
+      code: ulid(),
       address: 'anywhere_new',
       postCode: '484 sd8_new',
       town: 'some town_new',

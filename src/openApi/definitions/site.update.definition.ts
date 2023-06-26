@@ -10,7 +10,24 @@ addRequestComponentFor('SiteUpdate', {
   required: true,
   content: {
     'application/json': {
-      schema: getReferenceFor({ for: 'schemas', name: 'Site' }),
+      schema: {
+        required: ['id', 'name', 'type', 'address', 'postCode', 'town', 'population', 'size', 'workinghours'],
+        properties: {
+          id: { type: 'number' },
+          name: { type: 'string' },
+          code: { type: 'string' },
+          type: { type: 'string' },
+          address: { type: 'string' },
+          postCode: { type: 'string' },
+          town: { type: 'string' },
+          population: { type: 'number', format: 'int32' },
+          size: { type: 'number', format: 'int32' },
+          workinghours: { type: 'number', format: 'int32' },
+          fullTimeEmployee: { type: 'boolean' },
+          countryId: { type: 'number', format: 'int32' },
+          stateId: { type: 'number', format: 'int32' },
+        },
+      },
     },
   },
 });

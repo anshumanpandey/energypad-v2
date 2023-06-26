@@ -79,6 +79,7 @@ export const buildFakeSite = (p: { id: number; businessId: number; name?: string
   id: p.id,
   name: p.name || `${faker.word.noun()} ${ulid()}`,
   type: 'some',
+  code: ulid(),
   address: 'anywhere',
   postCode: '484 sd8',
   town: 'some town',

@@ -2,10 +2,11 @@ import { DB } from '@lib';
 import { AppModels, RequestBodyParams, RequestBodies, RequestResponses } from '@types';
 import userService from './user.service';
 
-const createSite = async (params: { id?: number } & RequestBodyParams<'Site'>) => {
+const createSite = async (params: RequestBodyParams<'SiteUpdate'> | RequestBodyParams<'Site'>) => {
   const { id, ...vals } = params;
   if (id) {
-    return DB('Sites').update(vals).where('id', id).returning('*');
+    const r = vals;
+    return DB('Sites').update(r).where('id', id).returning('*');
   } else {
     return (await DB('Sites').insert(vals).returning('id'))[0].id;
   }

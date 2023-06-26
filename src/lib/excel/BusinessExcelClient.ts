@@ -49,19 +49,21 @@ const getSitesRecords = async (Worksheet: Worksheet) => {
 
   const rowCount = Worksheet.actualRowCount;
 
-  const nameCol = Worksheet.columns[0];
-  const typeCol = Worksheet.columns[2];
-  const addressCol = Worksheet.columns[3];
-  const postCodeCol = Worksheet.columns[4];
-  const townCol = Worksheet.columns[5];
-  const populationCol = Worksheet.columns[6];
-  const sizeCol = Worksheet.columns[7];
-  const workinghours = Worksheet.columns[8];
-  const countryName = Worksheet.getColumn('F');
+  const codeCol = Worksheet.getColumn('A');
+  const nameCol = Worksheet.getColumn('B');
+  const typeCol = Worksheet.getColumn('C');
+  const addressCol = Worksheet.getColumn('D');
+  const postCodeCol = Worksheet.getColumn('F');
+  const townCol = Worksheet.getColumn('E');
+  const populationCol = Worksheet.getColumn('I');
+  const sizeCol = Worksheet.getColumn('H');
+  const workinghours = Worksheet.getColumn('J');
+  const countryName = Worksheet.getColumn('G');
 
   for (let a = 2; a <= rowCount; a++) {
     const row: any = {
       ['name']: nameCol.values?.[a],
+      [`code`]: codeCol.values?.[a],
       [`type`]: typeCol.values?.[a],
       [`address`]: addressCol.values?.[a],
       [`postCode`]: postCodeCol.values?.[a],

@@ -317,10 +317,8 @@ describe('/Business ', () => {
   });
 
   test('It should data from excel file successfully', async () => {
-    const body = await registerUser(app)();
     const response = await supertest(app)
       .post('/api/business/importBusiness')
-      .set('Authorization', `Bearer ${body.jwt}`)
       .attach('excel', 'test/fixtures/business sites 1.xlsx');
     expect(response.statusCode).toBe(200);
 
