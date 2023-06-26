@@ -592,6 +592,7 @@ export interface components {
       irregularTenantAmount: number;
     };
     FuelSource: {
+      id?: number;
       source: string;
       colorCode: string;
       usedIn: string[];
@@ -606,6 +607,7 @@ export interface components {
     };
     FuelUse: {
       use: string;
+      id: number;
     };
     RegisterBody: {
       businessName: string;

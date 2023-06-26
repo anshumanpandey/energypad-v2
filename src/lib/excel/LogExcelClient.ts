@@ -1,8 +1,9 @@
 import { SitesService } from '@services';
 import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
-import { SaveLogParams } from '../../services/user.service';
 import { findFuelBy } from '../../services/utility.service';
+import { AppModels } from '../../types/types';
+import { ApiError } from '../ApiError';
 
 export const getLogData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
@@ -10,14 +11,11 @@ export const getLogData = async (file: string | Buffer) => {
   const promises = [];
 
   for (let i = 0, len = workbook.worksheets.length; i < len; i++) {
-    promises.push(
-      new Promise<void>(async (resolve) => {
-        const worksheet = workbook.worksheets[i];
-        const rows = await getRows(worksheet);
-        utilityConsumption.push(rows);
-        resolve();
-      }),
-    );
+    const worksheet = workbook.worksheets[i];
+    const p = getRows(worksheet).then((rows) => {
+      utilityConsumption.push(rows);
+    });
+    promises.push(p);
   }
 
   await Promise.all(promises);
@@ -26,7 +24,7 @@ export const getLogData = async (file: string | Buffer) => {
 };
 
 const getRows = async (Worksheet: Worksheet) => {
-  const rows: SaveLogParams[] = [];
+  const rows: AppModels['EnergyLog'][] = [];
 
   const startDateCol = Worksheet.columns[1].values;
   const endDateCol = Worksheet.columns[2].values;
@@ -76,6 +74,10 @@ const getRows = async (Worksheet: Worksheet) => {
       if (!operationCell) break;
       if (!siteRecord) break;
       if (!usedInIdRecord) break;
+
+      if (usedInIdRecord.id === undefined) {
+        throw new ApiError('Use not found');
+      }
 
       const r = {
         siteId: siteRecord.id,

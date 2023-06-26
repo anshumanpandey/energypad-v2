@@ -1,6 +1,7 @@
 import { ApiError } from '@lib';
-import { SitesService, UtilityService } from '@services';
+import { SitesService } from '@services';
 import { Workbook } from 'exceljs';
+import { AppModels } from '../../types/types';
 import { resolveUnitConversion, SupportedUnits } from '../../utils/unitsUtils';
 
 const MonthMap: Record<string, string> = {
@@ -18,14 +19,11 @@ const MonthMap: Record<string, string> = {
   Dec: '12',
 };
 
-export const extractConsumptionData = async (file: string | Buffer) => {
+export const extractConsumptionData = async (
+  file: string | Buffer,
+  opt: { sites: AppModels['Site'][]; fuels: AppModels['FuelSource'][]; uses: AppModels['FuelUse'][] },
+) => {
   const workbook = await readExcelFile(file);
-
-  const [sites, uses, fuels] = await Promise.all([
-    SitesService.findBy(),
-    UtilityService.findFuelUseBy(),
-    UtilityService.findFuelBy(),
-  ]);
 
   const consumptions: any[] = [];
   const sheet = workbook.worksheets[0];
@@ -34,7 +32,7 @@ export const extractConsumptionData = async (file: string | Buffer) => {
     const currentRow = sheet.getRow(r);
 
     const siteId = currentRow.getCell('A').text;
-    const site = sites.find((s) => s.id.toString() === siteId);
+    const site = opt.sites.find((s) => s.id?.toString() === siteId);
     if (!site) {
       return new ApiError(`Site [${siteId}] not found`);
     }
@@ -50,10 +48,10 @@ export const extractConsumptionData = async (file: string | Buffer) => {
       totalCost: Number.parseInt(currentRow.getCell('H').text),
       fuelUnit: currentRow.getCell('G').text,
       siteId: site?.id,
-      fuelSourceId: fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
+      fuelSourceId: opt.fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
       consumption: currentRow.getCell('F').text,
       conversionFactor: currentRow.getCell('I').text,
-      usedInId: [uses.find((u) => currentRow.getCell('D').text === u.use)?.id],
+      usedInId: [opt.uses.find((u) => currentRow.getCell('D').text === u.use)?.id],
     };
     consumptions.push(record);
   }
@@ -61,10 +59,11 @@ export const extractConsumptionData = async (file: string | Buffer) => {
   return consumptions;
 };
 
-export const extractEmissionsData = async (file: string | Buffer) => {
+export const extractEmissionsData = async (
+  file: string | Buffer,
+  opt: { sites: Awaited<ReturnType<typeof SitesService.findBy>>; fuels: AppModels['FuelSource'][] },
+) => {
   const workbook = await readExcelFile(file);
-
-  const [sites, fuels] = await Promise.all([SitesService.findBy(), UtilityService.findFuelBy()]);
 
   const consumptions: any[] = [];
   const sheet = workbook.worksheets[1];
@@ -73,7 +72,7 @@ export const extractEmissionsData = async (file: string | Buffer) => {
     const currentRow = sheet.getRow(r);
 
     const siteId = currentRow.getCell('A').text;
-    const site = sites.find((s) => s.id.toString() === siteId);
+    const site = opt.sites.find((s) => s.id.toString() === siteId);
     if (!site) {
       return new ApiError(`Site [${siteId}] not found`);
     }
@@ -91,7 +90,7 @@ export const extractEmissionsData = async (file: string | Buffer) => {
       emissionFactor,
       conversionFactor: resolveUnitConversion(emissionFactor, fuelUnit),
       fuelUnit,
-      fuelSourceId: fuels.find((f) => f.source === fuel)?.id,
+      fuelSourceId: opt.fuels.find((f) => f.source === fuel)?.id,
       usedInId: [],
     };
     consumptions.push(record);
@@ -99,10 +98,11 @@ export const extractEmissionsData = async (file: string | Buffer) => {
 
   return consumptions;
 };
-export const extractTargetData = async (file: string | Buffer) => {
+export const extractTargetData = async (
+  file: string | Buffer,
+  opt: { sites: Awaited<ReturnType<typeof SitesService.findBy>>; fuels: AppModels['FuelSource'][] },
+) => {
   const workbook = await readExcelFile(file);
-
-  const [sites, fuels] = await Promise.all([SitesService.findBy(), UtilityService.findFuelBy()]);
 
   const monitoring: any[] = [];
   const sheet = workbook.worksheets[2];
@@ -111,7 +111,7 @@ export const extractTargetData = async (file: string | Buffer) => {
     const currentRow = sheet.getRow(r);
 
     const siteId = currentRow.getCell('A').text;
-    const site = sites.find((s) => s.id.toString() === siteId);
+    const site = opt.sites.find((s) => s.id.toString() === siteId);
     if (!site) {
       return new ApiError(`Site [${siteId}] not found`);
     }
@@ -131,7 +131,7 @@ export const extractTargetData = async (file: string | Buffer) => {
       carbon,
       fuelUnit,
       conversionFactor: resolveUnitConversion(energy, fuelUnit),
-      fuelSourceId: fuels.find((f) => f.source === fuel)?.id,
+      fuelSourceId: opt.fuels.find((f) => f.source === fuel)?.id,
       usedInId: [],
     };
     monitoring.push(record);

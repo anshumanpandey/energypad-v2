@@ -5,6 +5,7 @@ createSchema({
   schema: {
     required: ['source', 'usedIn', 'colorCode'],
     properties: {
+      id: { type: 'number', readOnly: true },
       source: { type: 'string' },
       colorCode: { type: 'string' },
       usedIn: {

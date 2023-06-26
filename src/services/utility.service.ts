@@ -442,7 +442,7 @@ type FindFuelByParams = {
   fuelSourceId?: number | number[];
   names?: string | string[];
 };
-export const findFuelBy = (p?: FindFuelByParams): Promise<{ id: number; source: string }[]> => {
+export const findFuelBy = async (p?: FindFuelByParams): Promise<AppModels['FuelSource'][]> => {
   const query = DB('FuelSources').select('FuelSources.*');
 
   if (p?.fuelSourceId) {
@@ -461,14 +461,16 @@ export const findFuelBy = (p?: FindFuelByParams): Promise<{ id: number; source: 
     }
   }
 
-  return query;
+  const records = await query;
+
+  return records;
 };
 
 type FindFuelUseByParams = {
   id?: number | number[];
   names?: string | string[];
 };
-export const findFuelUseBy = (p?: FindFuelUseByParams): Promise<{ id: number; use: string }[]> => {
+export const findFuelUseBy = async (p?: FindFuelUseByParams): Promise<AppModels['FuelUse'][]> => {
   const query = DB('FuelUses').select('FuelUses.*');
 
   if (p?.id) {
@@ -486,8 +488,9 @@ export const findFuelUseBy = (p?: FindFuelUseByParams): Promise<{ id: number; us
       query.where('use', capitalizeFirstLetter(p.names));
     }
   }
+  const records = await query;
 
-  return query;
+  return records;
 };
 
 export const addUtilityEmissions = (p: Omit<AppModels['UtilityEmission'], 'id'>[], opt?: Transactionable) => {

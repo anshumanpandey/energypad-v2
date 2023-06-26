@@ -120,6 +120,9 @@ export const importLog: AuthAppController<'UtilityFileImport', 'UtilityFileImpor
 
   const data = await ExcelClient.getLogData(excelFile.buffer);
 
+  if (data instanceof ApiError) {
+    return data;
+  }
   if (data.length === 0) {
     return new ApiError('No data was imported');
   }
@@ -230,26 +233,35 @@ export const importUtilityEmissionFromFile = async (req: any) => {
   const excelFile = req.file;
   if (!excelFile) return new ApiError('Missing file');
 
-  const consumptions = await ExcelClient.extractConsumptionData(excelFile.buffer);
+  const [sites, uses, fuels] = await Promise.all([
+    SitesService.findBy(),
+    UtilityService.findFuelUseBy(),
+    UtilityService.findFuelBy(),
+  ]);
+
+  const [consumptions, emissions, monitoring] = await Promise.all([
+    ExcelClient.extractConsumptionData(excelFile.buffer, { sites, uses, fuels }),
+    ExcelClient.extractEmissionsData(excelFile.buffer, { sites, fuels }),
+    ExcelClient.extractTargetData(excelFile.buffer, { sites, fuels }),
+  ]);
 
   if (consumptions instanceof ApiError) {
     return consumptions;
   }
-  const emissions = await ExcelClient.extractEmissionsData(excelFile.buffer);
   if (emissions instanceof ApiError) {
     return consumptions;
   }
-
-  const monitoring = await ExcelClient.extractTargetData(excelFile.buffer);
   if (monitoring instanceof ApiError) {
     return consumptions;
   }
 
   return DB.transaction(async (txr) => {
     try {
-      await UtilityService.upsertConsumptionToUtility(consumptions, { txr });
-      await UtilityService.upsertEmissions(emissions, { txr });
-      await UtilityService.upsertMonitoring(monitoring, { txr });
+      await Promise.all([
+        UtilityService.upsertConsumptionToUtility(consumptions, { txr }),
+        UtilityService.upsertEmissions(emissions, { txr }),
+        UtilityService.upsertMonitoring(monitoring, { txr }),
+      ]);
       return { success: true };
     } catch (e: unknown) {
       if (e instanceof Error) {

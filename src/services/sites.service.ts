@@ -156,7 +156,7 @@ export type FindByParams = {
   businessId?: number;
   fuelSourceIdUsedInConsumption?: number;
 };
-const findBy = async (params?: FindByParams): Promise<(AppModels['Site'] & { id: number })[]> => {
+const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], 'id'> & { id: number })[]> => {
   const query = DB('Sites').select('Sites.*');
   if (params?.id) {
     Array.isArray(params.id) ? query.whereIn('id', params.id) : query.where('id', params.id);
