@@ -3,15 +3,15 @@ import Countries from '../Countries.json';
 
 const reduceData = () => {
   const data = {
-    countries: [],
-    states: [],
+    countries: [] as { id: number; name: string }[],
+    states: [] as { id: number; name: string; countryId: number }[],
   };
 
-  const countryFn = ({ country, states }, idx) => {
+  const countryFn = ({ country, states }, idx: number) => {
     const countryId = idx + 1;
     data.countries.push({ id: countryId, name: country });
 
-    const stateFn = (state, stateIdx) => {
+    const stateFn = (state: string, stateIdx: number) => {
       data.states.push({ id: countryId + (stateIdx + 1), name: state, countryId });
     };
     states.forEach(stateFn);
