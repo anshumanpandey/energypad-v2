@@ -25,6 +25,6 @@ export async function seed(knex: Knex): Promise<void> {
   const data = reduceData();
 
   // Inserts seed entries
-  await knex('Countries').insert(data.countries).onConflict('id').ignore();
-  await knex('States').insert(data.states).onConflict('id').ignore();
+  await knex('Countries').insert(data.countries).onConflict('id').merge();
+  await knex('States').insert(data.states).onConflict('id').merge();
 }
