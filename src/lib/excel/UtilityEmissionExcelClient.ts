@@ -42,15 +42,17 @@ export const extractConsumptionData = async (
 
     const date = `${year}-${month.length === 1 ? `0${month}` : month}-01`;
 
+    const consumption = Number.parseInt(currentRow.getCell('F').text);
+    const fuelUnit = currentRow.getCell('G').text as typeof SupportedUnits[0];
     const record = {
       date,
       vat: 0, //TODO: add VAT to the file
       totalCost: Number.parseInt(currentRow.getCell('H').text),
-      fuelUnit: currentRow.getCell('G').text,
+      fuelUnit,
       siteId: site?.id,
       fuelSourceId: opt.fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
-      consumption: currentRow.getCell('F').text,
-      conversionFactor: currentRow.getCell('I').text,
+      consumption,
+      conversionFactor: resolveUnitConversion(consumption, fuelUnit),
       usedInId: [opt.uses.find((u) => currentRow.getCell('D').text === u.use)?.id],
     };
     consumptions.push(record);

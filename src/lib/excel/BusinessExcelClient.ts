@@ -1,4 +1,4 @@
-import { ApiError, DB } from '@lib';
+import { ApiError } from '@lib';
 import { SitesService } from '@services';
 import { encryptPassword } from '@utils';
 import { Workbook, Worksheet } from 'exceljs';

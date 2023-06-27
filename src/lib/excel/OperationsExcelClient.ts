@@ -7,7 +7,7 @@ import { findFuelUseBy } from '../../services/utility.service';
 export const getPatternsData = async (file: string | Buffer) => {
   const workbook = await readExcelFile(file);
 
-  const worksheet = workbook.worksheets[2];
+  const worksheet = workbook.worksheets[0];
   const rows = await getRows(worksheet);
   if (rows instanceof ApiError) return rows;
 
@@ -18,12 +18,12 @@ const getRows = async (Worksheet: Worksheet) => {
   const rows = [];
 
   const usedInIdCol = Worksheet.columns[1].values;
-  const siteIdCol = Worksheet.columns[5].values;
+  const siteIdCol = Worksheet.columns[0].values;
 
-  const names = Array.from(
+  const codes = Array.from(
     new Set(
       (siteIdCol || [])
-        .slice(1)
+        .slice(3)
         .map((c) => c?.toString() || '')
         .filter((c) => c !== ''),
     ).values(),
@@ -32,18 +32,21 @@ const getRows = async (Worksheet: Worksheet) => {
   const uses = Array.from(
     new Set(
       (usedInIdCol || [])
-        .slice(2)
+        .slice(3)
         .map((c) => c?.toString() || '')
         .filter((c) => c !== ''),
     ).values(),
   );
-  const [fuelsRecords] = await Promise.all([findFuelUseBy({ names: uses })]);
+  const [fuelsRecords, sites] = await Promise.all([findFuelUseBy({ names: uses }), SitesService.findBy({ codes })]);
 
   const validColums = [
     {
-      name: 'Site ID',
+      name: 'Site Code',
       alias: 'siteId',
       validate: { required: true },
+      parseValue: async (val: string) => {
+        return sites.find((f) => f.code === val)?.id;
+      },
     },
     {
       name: 'Energy  Demand',
@@ -74,7 +77,7 @@ const getRows = async (Worksheet: Worksheet) => {
       validate: { required: false },
       alias: 'temperature',
       parseValue: async (val: string) => {
-        return val === 'N/A' ? undefined : val;
+        return val === 'N/A' || val === '' ? undefined : val;
       },
     },
     { name: 'Days in the year', alias: 'daysOnYear', validate: { required: true } },

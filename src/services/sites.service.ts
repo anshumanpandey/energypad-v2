@@ -154,6 +154,7 @@ const getSiteDetails = async (params: { id: number }): Promise<RequestResponses<
 export type FindByParams = {
   id?: number | number[];
   name?: string | string[];
+  codes?: string | string[];
   businessId?: number;
   fuelSourceIdUsedInConsumption?: number;
 };
@@ -165,6 +166,9 @@ const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], '
 
   if (params?.name) {
     Array.isArray(params.name) ? query.whereIn('name', params.name) : query.where('name', params.name);
+  }
+  if (params?.codes) {
+    Array.isArray(params.codes) ? query.whereIn('code', params.codes) : query.where('code', params.codes);
   }
 
   if (params?.businessId) {
