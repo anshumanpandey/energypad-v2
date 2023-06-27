@@ -75,11 +75,11 @@ export const buildFakeBusiness = (p: { id: number; email: string }) => {
   };
 };
 
-export const buildFakeSite = (p: { id: number; businessId: number; name?: string }) => ({
+export const buildFakeSite = (p: { id: number; businessId: number; name?: string; code?: string }) => ({
   id: p.id,
   name: p.name || `${faker.word.noun()} ${ulid()}`,
   type: 'some',
-  code: ulid(),
+  code: p.code || ulid(),
   address: 'anywhere',
   postCode: '484 sd8',
   town: 'some town',

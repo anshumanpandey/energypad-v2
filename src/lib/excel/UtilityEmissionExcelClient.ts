@@ -31,10 +31,10 @@ export const extractConsumptionData = async (
   for (let r = 2; r <= sheet.actualRowCount; r++) {
     const currentRow = sheet.getRow(r);
 
-    const siteId = currentRow.getCell('A').text;
-    const site = opt.sites.find((s) => s.id?.toString() === siteId);
+    const siteCode = currentRow.getCell('A').text;
+    const site = opt.sites.find((s) => s.code?.toString() === siteCode);
     if (!site) {
-      return new ApiError(`Site [${siteId}] not found`);
+      return new ApiError(`Site [${siteCode}] not found`);
     }
     const fuel = currentRow.getCell('E').text;
     const year = currentRow.getCell('B').text;
@@ -71,10 +71,10 @@ export const extractEmissionsData = async (
   for (let r = 2; r <= sheet.actualRowCount; r++) {
     const currentRow = sheet.getRow(r);
 
-    const siteId = currentRow.getCell('A').text;
-    const site = opt.sites.find((s) => s.id.toString() === siteId);
+    const siteCode = currentRow.getCell('A').text;
+    const site = opt.sites.find((s) => s.code?.toString() === siteCode);
     if (!site) {
-      return new ApiError(`Site [${siteId}] not found`);
+      return new ApiError(`Site [${siteCode}] not found`);
     }
     const fuel = currentRow.getCell('D').text;
     const year = currentRow.getCell('B').text;
@@ -110,10 +110,10 @@ export const extractTargetData = async (
   for (let r = 2; r <= sheet.actualRowCount; r++) {
     const currentRow = sheet.getRow(r);
 
-    const siteId = currentRow.getCell('A').text;
-    const site = opt.sites.find((s) => s.id.toString() === siteId);
+    const siteCode = currentRow.getCell('A').text;
+    const site = opt.sites.find((s) => s.code?.toString() === siteCode);
     if (!site) {
-      return new ApiError(`Site [${siteId}] not found`);
+      return new ApiError(`Site [${siteCode}] not found`);
     }
     const fuel = currentRow.getCell('D').text;
     const year = currentRow.getCell('B').text;

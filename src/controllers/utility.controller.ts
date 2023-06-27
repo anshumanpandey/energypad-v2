@@ -249,10 +249,10 @@ export const importUtilityEmissionFromFile = async (req: any) => {
     return consumptions;
   }
   if (emissions instanceof ApiError) {
-    return consumptions;
+    return emissions;
   }
   if (monitoring instanceof ApiError) {
-    return consumptions;
+    return monitoring;
   }
 
   return DB.transaction(async (txr) => {

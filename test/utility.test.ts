@@ -336,17 +336,20 @@ describe('/Utility ', () => {
     expect(response2.statusCode).toBe(200);
   });
 
-  /*test('It should respond with success message when importing utilities consumption from file', async () => {
+  test('It should respond with error when site is not found on emissions and target', async () => {
     const body = await loginUser(app)('mail614@mail.com');
 
+    const response = await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .attach('excel', 'test/fixtures/Consumption_bad_1.xlsx');
+    expect(response.statusCode).toBe(400);
     const response2 = await supertest(app)
       .post('/api/utility/importUtilityEmissions')
       .set('Authorization', `Bearer ${body.jwt}`)
-      .field('fileType', 'consumption')
-      .field('fuels', [2, 3])
-      .attach('excel', 'test/fixtures/historic_data-consumption.xlsx');
-    expect(response2.statusCode).toBe(200);
-  });*/
+      .attach('excel', 'test/fixtures/Consumption_bad_2.xlsx');
+    expect(response2.statusCode).toBe(400);
+  });
 
   test('It should respond with success message when importing utilities cost then consumption from file', async () => {
     const user = await loginUser(app)('mail614@mail.com');
@@ -354,7 +357,6 @@ describe('/Utility ', () => {
     const response = await supertest(app)
       .post('/api/utility/importUtilityEmissions')
       .set('Authorization', `Bearer ${user.jwt}`)
-      .field('fileType', 'consumptions')
       .field('fuels', [2, 3])
       .attach('excel', 'test/fixtures/Consumption.xlsx');
     expect(response.statusCode).toBe(200);
@@ -375,7 +377,6 @@ describe('/Utility ', () => {
     const response2 = await supertest(app)
       .post('/api/utility/importUtilityEmissions')
       .set('Authorization', `Bearer ${user.jwt}`)
-      .field('fileType', 'cost')
       .attach('excel', 'test/fixtures/Consumption.xlsx');
     expect(response2.statusCode).toBe(200);
 
