@@ -1,8 +1,11 @@
+import Decimal from 'decimal.js';
 import { ApiError } from '@lib';
 import { SitesService } from '@services';
 import { Workbook } from 'exceljs';
 import { AppModels } from '../../types/types';
-import { resolveUnitConversion, SupportedUnits } from '../../utils/unitsUtils';
+import { resolveConsumptionToKwh, SupportedUnits } from '../../utils/unitsUtils';
+import DB from '../db/Db';
+import { Knex } from 'knex';
 
 const MonthMap: Record<string, string> = {
   Jan: '1',
@@ -42,17 +45,20 @@ export const extractConsumptionData = async (
 
     const date = `${year}-${month.length === 1 ? `0${month}` : month}-01`;
 
-    const consumption = Number.parseInt(currentRow.getCell('F').text);
+    const conversionFactor = new Decimal(currentRow.getCell('I').text).toNumber();
+    const consumption = new Decimal(currentRow.getCell('F').text).toDP(2).toNumber();
+    const totalCost = new Decimal(currentRow.getCell('H').text).toDP(2).toNumber();
+
     const fuelUnit = currentRow.getCell('G').text as typeof SupportedUnits[0];
     const record = {
       date,
-      vat: 0, //TODO: add VAT to the file
-      totalCost: Number.parseInt(currentRow.getCell('H').text),
+      vat: new Decimal(totalCost).dividedBy(100).times(site.vat).toDP(2).toNumber(),
+      totalCost: totalCost,
       fuelUnit,
       siteId: site?.id,
       fuelSourceId: opt.fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
-      consumption,
-      conversionFactor: resolveUnitConversion(consumption, fuelUnit),
+      consumption: resolveConsumptionToKwh({ consumption, conversionFactor, fuelUnit }),
+      conversionFactor: conversionFactor,
       usedInId: [opt.uses.find((u) => currentRow.getCell('D').text === u.use)?.id],
     };
     consumptions.push(record);
@@ -63,7 +69,11 @@ export const extractConsumptionData = async (
 
 export const extractEmissionsData = async (
   file: string | Buffer,
-  opt: { sites: Awaited<ReturnType<typeof SitesService.findBy>>; fuels: AppModels['FuelSource'][] },
+  opt: {
+    sites: Awaited<ReturnType<typeof SitesService.findBy>>;
+    fuels: AppModels['FuelSource'][];
+    consumptions: AppModels['UtilityConsumption'][];
+  },
 ) => {
   const workbook = await readExcelFile(file);
 
@@ -80,21 +90,30 @@ export const extractEmissionsData = async (
     }
     const fuel = currentRow.getCell('D').text;
     const year = currentRow.getCell('B').text;
-    const emissionFactor = Number.parseFloat(currentRow.getCell('F').text);
+    const emissionFactor = new Decimal(currentRow.getCell('F').text).toDP(2).toNumber();
     const fuelUnit = currentRow.getCell('E').text as typeof SupportedUnits[0];
     const month = MonthMap[currentRow.getCell('C').text];
+    const fuelSourceId = opt.fuels.find((f) => f.source === fuel)?.id;
 
     const date = `${year}-${month.length === 1 ? `0${month}` : month}-01`;
+
+    const consumptionForThis = opt.consumptions.find(
+      (c) => c.siteId === site.id && c.date === date && c.fuelSourceId === fuelSourceId,
+    );
 
     const record = {
       date,
       siteId: site.id,
-      emissionFactor,
-      conversionFactor: resolveUnitConversion(emissionFactor, fuelUnit),
+      emissionFactor: emissionFactor,
       fuelUnit,
-      fuelSourceId: opt.fuels.find((f) => f.source === fuel)?.id,
+      fuelSourceId: fuelSourceId,
+      conversionFactor: DB.raw('DEFAULT') as Knex.Raw | number,
       usedInId: [],
     };
+    if (consumptionForThis) {
+      const factor = new Decimal(emissionFactor).times(consumptionForThis.consumption).toDP(2).toNumber();
+      record.conversionFactor = factor;
+    }
     consumptions.push(record);
   }
 
@@ -132,7 +151,7 @@ export const extractTargetData = async (
       energy,
       carbon,
       fuelUnit,
-      conversionFactor: resolveUnitConversion(energy, fuelUnit),
+      conversionFactor: energy,
       fuelSourceId: opt.fuels.find((f) => f.source === fuel)?.id,
       usedInId: [],
     };

@@ -2,7 +2,7 @@ import { DB } from '@lib';
 import Decimal from 'decimal.js';
 import { formatISO, setDay, setMonth } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
-import { DbUtils } from '@utils';
+import { DbUtils, UnitsUtil } from '@utils';
 import SiteService from './sites.service';
 import ConversionUnit from './conversionUnit.service';
 import { ProducedConsumption } from './dashboard.service';
@@ -16,10 +16,17 @@ export const addConsumptionToUtility = async (params: AddConsumptionToUtilityPar
   const consumptions: Record<string, any>[] = [];
   let consumptionUse: Record<string, any>[] = [];
   for (let i = 0; i < params.length; i++) {
-    const { usedInId, ...data } = params[i];
+    const { usedInId, consumption, conversionFactor, fuelUnit, ...data } = params[i];
 
     const id = ulid();
-    consumptions.push({ ...data, id });
+    const unit = fuelUnit as UnitsUtil.ONE_OF_SUPPORTED_UNIT;
+    consumptions.push({
+      ...data,
+      id,
+      consumption: UnitsUtil.resolveConsumptionToKwh({ consumption, conversionFactor, fuelUnit: unit }),
+      conversionFactor,
+      fuelUnit,
+    });
     if (usedInId.length !== 0) {
       const usesData = usedInId.map((u) => ({ consumptionId: id, usedInId: u }));
       consumptionUse = consumptionUse.concat(usesData);
@@ -30,9 +37,9 @@ export const addConsumptionToUtility = async (params: AddConsumptionToUtilityPar
   await driver('UtilityConsumptionsUse').insert(consumptionUse);
 };
 
-const findConsumption =
-  (record: RequestBodyParams<'AddFuelSourceConsumption'>[0] & { id: null | undefined | number }) =>
-  (r: Record<string, string | number>) =>
+export const areConsumptionEqual =
+  (record: { siteId: number; fuelSourceId: number; date: string }) =>
+  (r: { siteId: number; fuelSourceId: number; date: string }) =>
     r.date === record.date && r.siteId === record.siteId && r.fuelSourceId === record.fuelSourceId;
 export const upsertConsumptionToUtility = async (
   params: Array<RequestBodyParams<'AddFuelSourceConsumption'>[0] & { id: null | undefined | number }>,
@@ -50,7 +57,7 @@ export const upsertConsumptionToUtility = async (
   const uses = [];
   for (let i = 0; i < params.length; i++) {
     let record = params[i];
-    const foundToUpdate = existingRecords.findIndex(findConsumption(record));
+    const foundToUpdate = existingRecords.findIndex(areConsumptionEqual(record));
 
     if (foundToUpdate > -1) {
       const found = existingRecords[foundToUpdate];
@@ -130,13 +137,13 @@ export const upsertEmissions = async (
   for (let i = 0; i < params.length; i++) {
     let record = params[i];
     const foundToUpdate = existingRecords.findIndex(
-      (r) => r.date === record.date && r.fuelSourceId === record.fuelSourceId,
+      (r) => r.date === record.date && r.fuelSourceId === record.fuelSourceId && r.siteId === record.siteId,
     );
 
     if (foundToUpdate > -1) {
       const found = existingRecords[foundToUpdate];
       existingRecords.splice(foundToUpdate, 1);
-      found.conversionFactor = record.conversionFactor;
+      found.conversionFactor = found.conversionFactor;
       record = found;
     }
 
@@ -148,15 +155,18 @@ export const upsertEmissions = async (
     return r;
   };
   const newData = records.filter((r) => r.id === null || r.id === undefined);
-  if (newData.length > 0) {
+  if (newData.length != 0) {
     await driver('UtilityEmissions').insert(newData.map(removeUsedIn));
   }
   const upsertData = records.filter((r) => r.id !== null && r.id !== undefined);
   if (upsertData.length > 0) {
-    await driver('UtilityEmissions')
-      .insert(upsertData.map(removeUsedIn))
-      .onConflict('id')
-      .merge(['conversionFactor', 'fuelUnit', 'emissionFactor']);
+    const withConversionFactor = upsertData.filter((d) => d.conversionFactor);
+    if (withConversionFactor.length !== 0) {
+      await driver('UtilityEmissions')
+        .insert(upsertData.map(removeUsedIn))
+        .onConflict('id')
+        .merge(['conversionFactor', 'fuelUnit', 'emissionFactor']);
+    }
   }
 
   return [];
@@ -228,7 +238,8 @@ export const addMonitoringToUtility = async (
   return Promise.all(promises);
 };
 
-export const getMonitoring = (params: { siteId: number; year: number; month: number; businessId: number }) => {
+export type GetMonitoringParams = { siteId?: number; year?: number; month?: number; businessId: number };
+export const getMonitoring = (params: GetMonitoringParams) => {
   const query = DB('UtilityMonitoring')
     .select(['UtilityMonitoring.*'])
     .innerJoin('FuelSources', 'UtilityMonitoring.fuelSourceId', 'FuelSources.id')
@@ -236,12 +247,16 @@ export const getMonitoring = (params: { siteId: number; year: number; month: num
     .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
     .where('B.id', params.businessId);
 
-  query.where(
-    'UtilityMonitoring.date',
-    'like',
-    `${params.year}-${new Date(Date.UTC(2018, params.month, 1)).toISOString().split('T')[0].split('-')[1]}-%`,
-  );
-  query.where('UtilityMonitoring.siteId', params.siteId);
+  if (params.year !== undefined && params.month !== undefined) {
+    query.where(
+      'UtilityMonitoring.date',
+      'like',
+      `${params.year}-${new Date(Date.UTC(params.year, params.month, 1)).toISOString().split('T')[0].split('-')[1]}-%`,
+    );
+  }
+  if (params?.siteId) {
+    query.where('UtilityMonitoring.siteId', params.siteId);
+  }
 
   return query;
 };

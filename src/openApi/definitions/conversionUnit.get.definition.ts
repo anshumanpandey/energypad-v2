@@ -32,7 +32,7 @@ const GetConversionUnit: OpenAPIV3.OperationObject = {
         type: 'array',
         items: {
           type: 'string',
-          enum: Object.keys(UnitsUtil.ConversionValues),
+          enum: UnitsUtil.SupportedUnits,
         },
       },
       required: false,

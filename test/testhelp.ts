@@ -75,7 +75,7 @@ export const buildFakeBusiness = (p: { id: number; email: string }) => {
   };
 };
 
-export const buildFakeSite = (p: { id: number; businessId: number; name?: string; code?: string }) => ({
+export const buildFakeSite = (p: { id: number; businessId: number; name?: string; code?: string; vat?: number }) => ({
   id: p.id,
   name: p.name || `${faker.word.noun()} ${ulid()}`,
   type: 'some',
@@ -87,6 +87,7 @@ export const buildFakeSite = (p: { id: number; businessId: number; name?: string
   population: 15000,
   workinghours: 2,
   size: 15,
+  vat: p.vat || 1,
   businessId: p.businessId,
 });
 

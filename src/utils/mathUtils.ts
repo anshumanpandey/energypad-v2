@@ -9,5 +9,5 @@ export const calculateIncreasePercentage = (p: { passValue: number; currentValue
 };
 
 export const toInt = (i: string) => {
-  return parseInt(i, 10);
+  return new Decimal(i).toNumber();
 };

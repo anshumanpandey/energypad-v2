@@ -3,7 +3,7 @@ import { createSchema, CreateSchemaParams } from '../OpenApiDefinition';
 const siteBodySchema: CreateSchemaParams = {
   name: 'Site',
   schema: {
-    required: ['name', 'code', 'type', 'address', 'postCode', 'town', 'population', 'size', 'workinghours'],
+    required: ['name', 'code', 'type', 'address', 'postCode', 'town', 'population', 'size', 'workinghours', 'vat'],
     properties: {
       id: { type: 'number', readOnly: true },
       name: { type: 'string' },
@@ -18,6 +18,7 @@ const siteBodySchema: CreateSchemaParams = {
       fullTimeEmployee: { type: 'boolean' },
       countryId: { type: 'number', format: 'int32' },
       stateId: { type: 'number', format: 'int32' },
+      vat: { type: 'number' },
     },
   },
 };

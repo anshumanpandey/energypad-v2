@@ -59,6 +59,7 @@ const getSitesRecords = async (Worksheet: Worksheet) => {
   const sizeCol = Worksheet.getColumn('H');
   const workinghours = Worksheet.getColumn('J');
   const countryName = Worksheet.getColumn('G');
+  const vat = Worksheet.getColumn('K');
 
   for (let a = 2; a <= rowCount; a++) {
     const row: any = {
@@ -71,6 +72,7 @@ const getSitesRecords = async (Worksheet: Worksheet) => {
       [`population`]: populationCol.values?.[a],
       [`size`]: sizeCol.values?.[a],
       [`workinghours`]: workinghours.values?.[a],
+      [`vat`]: vat.values?.[a],
       [`countryId`]: countries.find((c) => c.name === countryName.values?.[a])?.id,
     };
     rows.push(row);

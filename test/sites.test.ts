@@ -19,6 +19,7 @@ describe('/Site ', () => {
       population: 17391920,
       size: 45786843,
       workinghours: 10,
+      vat: 18.66,
     });
     expect(response.body).toMatchSchema(schema.components.responses.Site.content['application/json'].schema);
     expect(response.statusCode).toBe(200);

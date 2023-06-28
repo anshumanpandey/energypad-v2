@@ -8,10 +8,10 @@ export async function seed(knex: Knex): Promise<void> {
   ]);
 
   await knex('Sites').insert([
-    buildFakeSite({ id: 604, businessId: 614, name: 'Main Building A', code: '604_main_a' }),
+    buildFakeSite({ id: 604, businessId: 614, name: 'Main Building A', code: '604_main_a', vat: 12.37 }),
     buildFakeSite({ id: 606, businessId: 614, name: 'Main Building B' }),
 
-    buildFakeSite({ id: 608, businessId: 616, name: 'Main Building C' }),
+    buildFakeSite({ id: 608, businessId: 616, name: 'Main Building C', code: '608_main_c' }),
     buildFakeSite({ id: 610, businessId: 616, name: 'Main Building D' }),
   ]);
 }

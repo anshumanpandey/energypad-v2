@@ -496,7 +496,7 @@ export interface paths {
     get: {
       parameters: {
         query: {
-          fuelSource?: ("L" | "m3")[];
+          fuelSource?: ("L" | "m3" | "kWh")[];
         };
       };
       responses: {
@@ -530,6 +530,7 @@ export interface components {
       fullTimeEmployee?: boolean;
       countryId?: number;
       stateId?: number;
+      vat: number;
     };
     JWTToken: {
       jwt: string;

@@ -1,5 +1,5 @@
 import { AuthAppController, AuthGetAppController } from '@types';
-import { UtilityService, SitesService, UserService, ConversionUnitService } from '@services';
+import { UtilityService, SitesService, UserService } from '@services';
 import { ApiError, ExcelClient, DB } from '@lib';
 import { DbUtils, MathUtils } from '@utils';
 import { ulid } from 'ulid';
@@ -26,14 +26,7 @@ export const addConsumption: AuthAppController<'AddFuelSourceConsumption', 'AddF
     month: req.body.map((i) => DbUtils.stringDateToDate(i.date)),
   });
 
-  const conversionFn = await ConversionUnitService.buildConversionFnForSite({ siteId: sitesToFind });
-  const mapRecords = (r: typeof req.body[0]) => {
-    return {
-      ...r,
-      consumption: r.consumption,
-    };
-  };
-  await UtilityService.addConsumptionToUtility(req.body.map(mapRecords));
+  await UtilityService.addConsumptionToUtility(req.body);
 
   return { success: true };
 };
@@ -218,12 +211,18 @@ export const getEmissions: AuthGetAppController<'GetEmissions', '/api/utility/em
 
 //TODO: generate types for this route
 export const getMonitoring = async (req: any) => {
-  const params = {
-    month: MathUtils.toInt(req.query.month),
-    year: MathUtils.toInt(req.query.year),
-    siteId: MathUtils.toInt(req.query.siteId),
+  const params: UtilityService.GetMonitoringParams = {
     businessId: req.user.id,
   };
+  if (req.query.month) {
+    params.month = MathUtils.toInt(req.query.month);
+  }
+  if (req.query.year) {
+    params.year = MathUtils.toInt(req.query.year);
+  }
+  if (req.query.siteId) {
+    params.siteId = MathUtils.toInt(req.query.siteId);
+  }
   const consumptions = await UtilityService.getMonitoring(params);
   return consumptions;
 };
@@ -239,18 +238,17 @@ export const importUtilityEmissionFromFile = async (req: any) => {
     UtilityService.findFuelBy(),
   ]);
 
-  const [consumptions, emissions, monitoring] = await Promise.all([
-    ExcelClient.extractConsumptionData(excelFile.buffer, { sites, uses, fuels }),
-    ExcelClient.extractEmissionsData(excelFile.buffer, { sites, fuels }),
-    ExcelClient.extractTargetData(excelFile.buffer, { sites, fuels }),
-  ]);
-
+  const consumptions = await ExcelClient.extractConsumptionData(excelFile.buffer, { sites, uses, fuels });
   if (consumptions instanceof ApiError) {
     return consumptions;
   }
+
+  const emissions = await ExcelClient.extractEmissionsData(excelFile.buffer, { sites, fuels, consumptions });
   if (emissions instanceof ApiError) {
     return emissions;
   }
+
+  const monitoring = await ExcelClient.extractTargetData(excelFile.buffer, { sites, fuels });
   if (monitoring instanceof ApiError) {
     return monitoring;
   }

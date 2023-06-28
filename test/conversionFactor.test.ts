@@ -25,7 +25,7 @@ describe('/ConversionFactor', () => {
     expect(response2.body).toMatchSchema(
       schema.components.responses.GetConversionUnit.content['application/json'].schema,
     );
-    expect(response2.body.length).toBe(2);
+    expect(response2.body.length).toBe(1);
     expect(response2.statusCode).toBe(200);
   });
 });
