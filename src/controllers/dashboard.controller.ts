@@ -22,7 +22,7 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
       startDate: yearToFilterBy,
       endDate: endOfYear(yearToFilterBy),
       fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
-      siteId: parseInt(req.query.siteId),
+      siteId: MathUtils.toInt(req.query.siteId),
     }),
     DashboardService.produceYearConsumptions(
       {
@@ -30,7 +30,7 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
         startDate: lastMonthOfPassYear,
         endDate: endOfYear(selectedYear),
         fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
-        siteId: parseInt(req.query.siteId),
+        siteId: MathUtils.toInt(req.query.siteId),
       },
       { fillStartOnly: true },
     ),
@@ -38,7 +38,7 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
       businessId: req.user.id,
       startDate: lastMonthOfPassYear,
       endDate: lastDayOfCurrentMonth,
-      siteId: parseInt(req.query.siteId),
+      siteId: MathUtils.toInt(req.query.siteId),
     }),
   ]);
 
@@ -127,7 +127,7 @@ export const getReporData: AuthGetAppController<'GetDashboardReports', '/api/das
 
   const lastMonthOfPassYear = subMonths(selectedYear, 1);
   const fuelSourceId = req.query.fuelSourceId ? req.query.fuelSourceId.split(',').map(MathUtils.toInt) : undefined;
-  const siteId = parseInt(req.query.siteId);
+  const siteId = MathUtils.toInt(req.query.siteId);
 
   const [oldConsumptions, currentConsumptionRecords] = await Promise.all([
     DashboardService.produceYearConsumptions({

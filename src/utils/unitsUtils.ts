@@ -17,8 +17,6 @@ export const resolveConsumptionToKwh = (p: {
     case 'm3': {
       val = new Decimal(val).times(p.conversionFactor).toDP(2).toNumber();
     }
-    default: {
-      return val;
-    }
   }
+  return val;
 };

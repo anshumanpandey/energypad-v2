@@ -1,5 +1,6 @@
 import { ApiError } from '@lib';
 import { SitesService } from '@services';
+import { DbUtils, ExcelUtils } from '@utils';
 import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
 import { findFuelUseBy } from '../../services/utility.service';
@@ -61,7 +62,7 @@ const getRows = async (Worksheet: Worksheet) => {
       alias: 'startDate',
       validate: { required: true },
       parseValue: async (val: string) => {
-        return formatISO(new Date(val)).split('T')[0];
+        return formatISO(ExcelUtils.excelDateToDate(val)).split('T')[0];
       },
     },
     {
@@ -69,7 +70,7 @@ const getRows = async (Worksheet: Worksheet) => {
       alias: 'endDate',
       validate: { required: true },
       parseValue: async (val: string) => {
-        return formatISO(new Date(val)).split('T')[0];
+        return formatISO(ExcelUtils.excelDateToDate(val)).split('T')[0];
       },
     },
     {

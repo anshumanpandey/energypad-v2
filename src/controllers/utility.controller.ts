@@ -187,7 +187,7 @@ export const getConsumptions: AuthGetAppController<'GetConsumptions', '/api/util
   const params: UtilityService.GetConsumptionsParams = {
     forMonth: date,
     forYear: date,
-    siteId: req.query.siteId ? parseInt(req.query.siteId) : undefined,
+    siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
     businessId: req.user.id,
   };
   const consumptions = await UtilityService.getConsumptions(params);
@@ -202,7 +202,7 @@ export const getEmissions: AuthGetAppController<'GetEmissions', '/api/utility/em
   }
   const params: UtilityService.GetEmissionsParams = {
     forYear,
-    siteId: req.query.siteId ? parseInt(req.query.siteId) : undefined,
+    siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
     businessId: req.user.id,
   };
   const consumptions = await UtilityService.getEmissions(params);

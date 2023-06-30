@@ -143,7 +143,6 @@ export const upsertEmissions = async (
     if (foundToUpdate > -1) {
       const found = existingRecords[foundToUpdate];
       existingRecords.splice(foundToUpdate, 1);
-      found.conversionFactor = found.conversionFactor;
       record = found;
     }
 

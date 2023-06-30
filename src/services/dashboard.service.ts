@@ -69,10 +69,11 @@ function groupBy<T>(list: T[], keyGetter: (i: T) => T[keyof T]) {
 }
 
 const generateConsumptionDetail = ({
-  consumptions,
+  consumptions: consumptionsArr,
 }: {
   consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'totalCost' | 'fuelSourceName'>[];
 }) => {
+  let consumptions = consumptionsArr;
   const consumptionDetails = [];
   if (consumptions.length === 1) {
     consumptions = consumptions.concat([]);
@@ -258,7 +259,8 @@ const findCarbonEmissions = (params: {
     return new Decimal(total).dividedBy(carbonEmissions.length).toNumber();
   };
 
-  const mapCarbonTarget = (c: CarbonEmission, idx: number, arr: CarbonEmission[]) => {
+  const mapCarbonTarget = (carbon: CarbonEmission, idx: number, arr: CarbonEmission[]) => {
+    const c = carbon;
     const previouseRecord = arr[idx - 1];
     const emissionsForThisItem = carbonEmissions.filter(filterCarbonEmissionsForDate(c));
     c.carbonTarget = getCarbonEmissionsAverage(emissionsForThisItem);

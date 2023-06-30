@@ -2,7 +2,7 @@ import { randomBytes, createHmac } from 'crypto';
 import axios from 'axios';
 import { ApiError } from '@lib';
 import { formatISO } from 'date-fns';
-import { DbUtils, ErrorUtils } from '@utils';
+import { DbUtils, ErrorUtils, MathUtils } from '@utils';
 
 const accountKey = 'test-test-test';
 const securityKey = 'test-test-test-test-test-test-test-test-test-test-test-test-test';
@@ -10,8 +10,6 @@ const securityKey = 'test-test-test-test-test-test-test-test-test-test-test-test
 // over HTTPS using https://apiv1.degreedays.net/json - set the endpoint URL
 // below as appropriate.
 const endpoint = 'http://apiv1.degreedays.net/json';
-
-const toInt = (i: string) => parseInt(i, 10);
 
 const makeRequest = (locationDataRequest: any, siteId: number) => {
   const fullRequest = {
@@ -64,7 +62,7 @@ const handleResponse =
     const reducedData: HDDRecord[] = [];
 
     const mapFn = (v: Value) => {
-      const dateUnits = v.d.split('-').map(toInt);
+      const dateUnits = v.d.split('-').map(MathUtils.toInt);
       const item = { date: new Date(dateUnits[0], dateUnits[1] - 1, 1), value: v.v, siteId };
       reducedData.push(item);
     };

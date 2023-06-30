@@ -1,7 +1,6 @@
 import { DB } from '@lib';
+import { MathUtils } from '@utils';
 import formatISO from 'date-fns/formatISO';
-
-const toInt = (i: string) => parseInt(i, 10);
 
 /**
  * Converts default DB date string to Date object
@@ -9,7 +8,7 @@ const toInt = (i: string) => parseInt(i, 10);
  * @returns {Date} A date object
  */
 export const stringDateToDate = (stringDate: string) => {
-  const dateUnits = stringDate.split('-').map(toInt);
+  const dateUnits = stringDate.split('-').map(MathUtils.toInt);
   return new Date(dateUnits[0], dateUnits[1] - 1, dateUnits[2]);
 };
 

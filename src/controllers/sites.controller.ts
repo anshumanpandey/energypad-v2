@@ -4,7 +4,7 @@ import { ApiError } from '@lib';
 import { MathUtils } from '@utils';
 
 export const getSiteDetails: AuthGetAppController<'GetSiteDetails'> = async (req) => {
-  const siteId = parseInt(req.params.siteId, 10);
+  const siteId = MathUtils.toInt(req.params.siteId);
 
   const details = await SitesService.getSiteDetails({ id: siteId });
   if (!details) {
@@ -24,7 +24,7 @@ export const createSite: AuthAppController<'Site', 'Site'> = async (req) => {
 };
 
 export const updateSite: AuthAppController<'SiteUpdate', 'SiteUpdate'> = async (req) => {
-  const siteId = parseInt(req.params.siteId, 10);
+  const siteId = MathUtils.toInt(req.params.siteId);
   const params = {
     ...req.body,
     id: siteId,

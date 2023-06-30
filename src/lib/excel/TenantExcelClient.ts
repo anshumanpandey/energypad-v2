@@ -1,5 +1,6 @@
 import { ApiError } from '@lib';
 import { SitesService } from '@services';
+import { DbUtils, ExcelUtils } from '@utils';
 import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
 import { findFuelUseBy } from '../../services/utility.service';
@@ -48,7 +49,7 @@ const getRows = async (Worksheet: Worksheet) => {
       name: 'date',
       validate: { required: true },
       parseValue: async (val: string) => {
-        return formatISO(new Date(val)).split('T')[0];
+        return formatISO(ExcelUtils.excelDateToDate(val)).split('T')[0];
       },
     },
     {
@@ -82,7 +83,8 @@ const getRows = async (Worksheet: Worksheet) => {
         return new ApiError('Wrong format');
       }
 
-      const colVal = col[i]?.toString();
+      const castedCol = col[i] as any;
+      const colVal = castedCol?.text || castedCol?.toString();
 
       if (validCol.validate.required === true) {
         if (colVal === undefined) continue root_loop;

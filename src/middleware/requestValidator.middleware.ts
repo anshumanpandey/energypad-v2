@@ -3,6 +3,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { OpenAPIV3 } from 'openapi-types';
 import { QueryParamsKeys, RequestBodieKeys } from '../types/types';
+import { toInt } from '../utils/mathUtils';
 
 type ParsedSchema = Pick<OpenAPIV3.Document, 'components' | 'paths'>;
 let CurrentSchema: ParsedSchema = {
@@ -66,9 +67,9 @@ export const timeFormat = {
     if (!minutes) return false;
     if (!seconds) return false;
 
-    const hoursNumber = parseInt(hours, 10);
-    const minutesNumber = parseInt(minutes, 10);
-    const secondsNumber = parseInt(seconds, 10);
+    const hoursNumber = toInt(hours);
+    const minutesNumber = toInt(minutes);
+    const secondsNumber = toInt(seconds);
 
     if (hoursNumber < 0 || hoursNumber > 24) return false;
     if (minutesNumber < 0 || minutesNumber > 60) return false;
@@ -86,8 +87,8 @@ export const dateFormat = {
     if (reg.test(val) === false) return false;
 
     const [year, month, day] = val.split('-');
-    const numberDay = parseInt(day, 10);
-    const numberYear = parseInt(year, 10);
+    const numberDay = toInt(day);
+    const numberYear = toInt(year);
     const isLeapYear = numberYear % 100 === 0 ? numberYear % 400 === 0 : numberYear % 4 === 0;
 
     switch (month) {
