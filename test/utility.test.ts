@@ -2,10 +2,8 @@ import supertest from 'supertest';
 import { matchers } from 'jest-json-schema';
 expect.extend(matchers);
 import { app } from '../src/app';
-import { loginUser, registerUser } from './testhelp';
+import { Json, loginUser, registerUser } from './testhelp';
 import schema from '../src/types/Schema.json';
-
-type Json = Record<string, string | number>;
 
 describe('/Utility ', () => {
   test('It should respond with success when adding a consuption to a utility', async () => {
@@ -426,5 +424,21 @@ describe('/Utility ', () => {
       (e: Json) => e.siteId === 608 && e.fuelSourceId === 1 && e.date === '2023-03-01',
     );
     expect(emission5.conversionFactor).toBe(374.48);
+  });
+
+  test('It should respond with sucess when passing another month name and when there is no emissions or targets', async () => {
+    const body = await loginUser(app)('mail618@mail.com');
+
+    const response = await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .attach('excel', 'test/fixtures/Consumption_3.xlsx');
+    expect(response.statusCode).toBe(200);
+
+    const response2 = await supertest(app)
+      .post('/api/utility/importUtilityEmissions')
+      .set('Authorization', `Bearer ${body.jwt}`)
+      .attach('excel', 'test/fixtures/Consumption_4.xlsx');
+    expect(response2.statusCode).toBe(200);
   });
 });

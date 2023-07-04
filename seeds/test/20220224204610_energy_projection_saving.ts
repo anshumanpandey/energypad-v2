@@ -6,19 +6,15 @@ export async function seed(knex: Knex): Promise<void> {
 
   const site = {
     id: 484,
-    type: 'some',
-    address: 'anywhere',
-    postCode: '484 sd8',
-    town: 'some town',
-    population: 15000,
-    fullTimeEmployee: false,
-    workinghours: 2,
-    size: 15,
+    businessId: 322,
+  };
+  const site2 = {
+    id: 486,
     businessId: 322,
   };
   await knex('Sites').insert([
     buildFakeSite({ id: site.id, businessId: site.businessId, name: 'Site 484' }),
-    buildFakeSite({ id: 486, businessId: 322 }),
+    buildFakeSite({ id: site2.id, businessId: site2.businessId }),
   ]);
 
   await knex('UtilityConsumptions').insert([
@@ -115,25 +111,42 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site.id,
     }),
     buildFakeConsumption({
-      id: 3123,
-      date: '2020-01-01',
-      consumption: 99,
-      fuelSourceId: 2,
-      siteId: site.id,
-    }),
-    buildFakeConsumption({
       id: 3126,
       date: '2020-02-01',
-      consumption: 40,
+      consumption: 89,
       fuelSourceId: 1,
       siteId: site.id,
     }),
     buildFakeConsumption({
       id: 3128,
       date: '2020-03-01',
-      consumption: 70,
+      consumption: 27,
       fuelSourceId: 1,
       siteId: site.id,
+    }),
+
+    buildFakeConsumption({
+      id: 3123,
+      date: '2020-01-01',
+      consumption: 18,
+      fuelSourceId: 2,
+      siteId: site.id,
+    }),
+
+    buildFakeConsumption({
+      id: 3130,
+      date: '2020-03-01',
+      consumption: 37,
+      fuelSourceId: 1,
+      siteId: site2.id,
+    }),
+
+    buildFakeConsumption({
+      id: 3132,
+      date: '2020-03-01',
+      consumption: 46,
+      fuelSourceId: 2,
+      siteId: site2.id,
     }),
     /*{
       id: 3130,

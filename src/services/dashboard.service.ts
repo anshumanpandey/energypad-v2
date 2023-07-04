@@ -1,15 +1,32 @@
 import { AppModels } from '@types';
 import { Decimal } from 'decimal.js';
-import { addMonths, differenceInMonths, getDaysInMonth } from 'date-fns';
+import { getDaysInMonth } from 'date-fns';
 import { DbUtils, MathUtils } from '@utils';
-import { UtilityService } from '@services';
+import { SitesService, UtilityService } from '@services';
 import formatISO from 'date-fns/formatISO';
 import { FuelSource, GetConsumptionsParams } from './utility.service';
 
+const uniqueElements = (a: any) => {
+  const seen: Record<number, any> = {};
+  const out = [];
+  const len = a.length;
+  let j = 0;
+  for (let i = 0; i < len; i++) {
+    const item = a[i];
+    if (seen[item] !== 1) {
+      seen[item] = 1;
+      out[j++] = item;
+    }
+  }
+  return out;
+};
 const getConsumptionStatistics = ({
   consumptions,
 }: {
-  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'totalCost' | 'conversionFactor'>[];
+  consumptions: Pick<
+    AppModels['UtilityConsumption'],
+    'date' | 'consumption' | 'totalCost' | 'conversionFactor' | 'siteId' | 'fuelSourceId'
+  >[];
 }) => {
   const filterByMonth = (monthToSearch: number) => (c: typeof consumptions[0]) => {
     const [, month] = c.date.split('-');
@@ -22,34 +39,61 @@ const getConsumptionStatistics = ({
     return new Decimal(record[of]).dividedBy(amountOfDaysOnMonth).toDecimalPlaces(2).toNumber();
   };
 
+  const sitesId = uniqueElements(consumptions.map((c) => c.siteId));
+  const fuelSourcesId = uniqueElements(consumptions.map((c) => c.fuelSourceId));
+
+  debugger;
   const consumptionStatistics = [];
-  for (let idx = 1; idx <= consumptions.length; idx++) {
-    const consumptionFilter = filterByMonth(idx);
-    const consumptionOfMonth = consumptions.filter(consumptionFilter).sort(DbUtils.sortByStringDate);
+  for (let siteIdx = 0; siteIdx < sitesId.length; siteIdx++) {
+    let thisStatistics = [];
+    for (let fuelSourcesIdx = 0; fuelSourcesIdx < fuelSourcesId.length; fuelSourcesIdx++) {
+      thisStatistics = [];
+      const thisIterationConsumptions = consumptions
+        .filter(UtilityService.filterByFuelSource(fuelSourcesId[fuelSourcesIdx]))
+        .filter(SitesService.filterBySiteId(sitesId[siteIdx]));
 
-    if (consumptionOfMonth.length === 0) {
-      break;
+      for (let idx = 1; idx <= thisIterationConsumptions.length; idx++) {
+        const consumptionFilter = (c: typeof consumptions[0]) =>
+          filterByMonth(idx)(c) && c.fuelSourceId === fuelSourcesId[fuelSourcesIdx] && sitesId[siteIdx] === c.siteId;
+        const consumptionOfMonth = consumptions.filter(consumptionFilter).sort(DbUtils.sortByStringDate);
+
+        if (consumptionOfMonth.length === 0) {
+          break;
+        }
+
+        const date = `${consumptionOfMonth[0].date.split('-')[0]}-${('0' + idx).slice(-2)}-01`;
+        const mostRecentRecord = consumptionOfMonth.find(
+          (c) => c.date === date && c.siteId === sitesId[siteIdx] && fuelSourcesId[fuelSourcesIdx],
+        );
+        const previouseRecord = consumptions[idx - 1];
+
+        const data = {
+          date,
+          fuelSourceId: fuelSourcesId[fuelSourcesIdx],
+          siteId: sitesId[siteIdx],
+          averageConsumption: getAverage(consumptionOfMonth[0], 'consumption'),
+          averageCost: getAverage(consumptionOfMonth[0], 'totalCost'),
+          cost: consumptionOfMonth[0].totalCost,
+          consumption: consumptionOfMonth[0].consumption,
+          increasedConsumptionPercentage:
+            previouseRecord.consumption === 0
+              ? 0
+              : MathUtils.calculateIncreasePercentage({
+                  currentValue: mostRecentRecord?.consumption || 0,
+                  passValue: previouseRecord.consumption,
+                }),
+          increasedCostPercentage:
+            previouseRecord.totalCost === 0
+              ? 0
+              : MathUtils.calculateIncreasePercentage({
+                  currentValue: mostRecentRecord?.totalCost || 0,
+                  passValue: previouseRecord.totalCost || 0,
+                }),
+        };
+        thisStatistics.push(data);
+      }
+      consumptionStatistics.push(thisStatistics);
     }
-
-    const mostRecentRecord = consumptionOfMonth[consumptionOfMonth.length - 1];
-    const previouseRecord = consumptions[idx - 1];
-
-    const data = {
-      date: `${consumptionOfMonth[0].date.split('-')[0]}-${('0' + idx).slice(-2)}-01`,
-      averageConsumption: getAverage(consumptionOfMonth[0], 'consumption'),
-      averageCost: getAverage(consumptionOfMonth[0], 'totalCost'),
-      cost: mostRecentRecord ? mostRecentRecord.totalCost : 0,
-      consumption: mostRecentRecord ? mostRecentRecord.consumption * mostRecentRecord.conversionFactor : 0,
-      increasedConsumptionPercentage: MathUtils.calculateIncreasePercentage({
-        currentValue: mostRecentRecord.consumption,
-        passValue: previouseRecord.consumption,
-      }),
-      increasedCostPercentage: MathUtils.calculateIncreasePercentage({
-        currentValue: mostRecentRecord.totalCost || 0,
-        passValue: previouseRecord.totalCost || 0,
-      }),
-    };
-    consumptionStatistics.push(data);
   }
   return consumptionStatistics;
 };
@@ -115,7 +159,7 @@ const getConsumptionDetails = ({
   return consumptionDetails.flat();
 };
 
-const generateMockConsumption = (p: { date: string; siteId: number }) => {
+const generateMockConsumption = (p: { date: string; siteId: number; fuelSourceId: number }) => {
   return {
     date: p.date,
     consumption: 0,
@@ -128,7 +172,7 @@ const generateMockConsumption = (p: { date: string; siteId: number }) => {
     siteId: p.siteId,
     id: 0,
     fuelSourceName: '',
-    fuelSourceId: 0,
+    fuelSourceId: p.fuelSourceId,
     produced: true,
     conversionUnit: 'm3' as const,
   };
@@ -146,6 +190,9 @@ type ProduceYearConsumptionsOptions = {
 };
 
 export type ProducedConsumption = AppModels['UtilityConsumption'] & { produced?: boolean };
+const makeMapKey = (date: string, fuelSourceId: number, siteId: number) => {
+  return `${date}-${fuelSourceId}-${siteId}`;
+};
 const produceYearConsumptions = async (
   p: ProduceYearConsumptionsParams,
   opt?: ProduceYearConsumptionsOptions,
@@ -158,54 +205,37 @@ const produceYearConsumptions = async (
     siteId: p.siteId,
   };
 
-  const monthsBetweenDates = Math.abs(differenceInMonths(p.startDate, p.endDate));
-
   const consumption = await UtilityService.getConsumptions(consumptionParams);
-
   const consumptionMap = new Map<string, typeof consumption[0]>();
 
-  const fillMap = (i: typeof consumption[0]) => {
-    consumptionMap.set(`${i.date}-${i.siteId}`, i);
-  };
-  consumption.forEach(fillMap);
-
-  let amountElementsFounds = 0;
-
-  let rootIteration = 1;
-  if (p.siteId) {
-    if (Array.isArray(p.siteId)) {
-      rootIteration = p.siteId.length;
-    }
+  for (let i = 0; i < consumption.length; i++) {
+    const item = consumption[i];
+    consumptionMap.set(makeMapKey(item.date, item.fuelSourceId, item.siteId), item);
   }
-  for (let r = 0; r < rootIteration; r++) {
-    let rootSite = undefined;
-    if (p.siteId) {
-      if (Array.isArray(p.siteId)) {
-        rootSite = p.siteId[r];
-      } else {
-        rootSite = p.siteId;
-      }
-    }
-    for (let idx = 0; idx <= monthsBetweenDates; idx++) {
-      const dateToFind = formatISO(addMonths(p.startDate, idx), { representation: 'date' });
-      let mapKey = dateToFind;
-      if (rootSite) {
-        mapKey = `${dateToFind}-${rootSite}`;
-      }
-      const found = consumptionMap.get(mapKey);
+  const lastDate = consumption.map((c) => c.date).sort((a, b) => b.localeCompare(a))[0];
+  const sitesId = Array.from(new Set(consumption.map((c) => c.siteId)));
+  const fuelSourcesId = Array.from(new Set(consumption.map((c) => c.fuelSourceId)));
 
-      if (!found) {
-        const date = addMonths(p.startDate, idx);
-        const formattedDate = formatISO(date, { representation: 'date' });
-        let key = formattedDate;
-        if (rootSite) {
-          key = `${formattedDate}-${rootSite}`;
-        }
-        consumptionMap.set(key, generateMockConsumption({ date: formattedDate, siteId: rootSite || 0 }));
-      } else {
-        amountElementsFounds = amountElementsFounds + 1;
-        if (opt?.fillStartOnly === true && amountElementsFounds === consumption.length) {
-          break;
+  monthLoop: for (let idx = 0; idx <= 11; idx++) {
+    const month = idx + 1;
+    for (let siteIdx = 0; siteIdx < sitesId.length; siteIdx++) {
+      for (let fuelIdx = 0; fuelIdx < fuelSourcesId.length; fuelIdx++) {
+        const date = `${p.endDate.getFullYear()}-${month < 10 ? `0${month}` : month}-01`;
+        const siteId = sitesId[siteIdx];
+        const fuelSourceId = fuelSourcesId[fuelIdx];
+        const key = makeMapKey(date, fuelSourceId, siteId);
+
+        const iterateConsumption = consumptionMap.get(key);
+        if (!iterateConsumption) {
+          if (opt?.fillStartOnly === true) {
+            if (DbUtils.stringDateToDate(date).getMonth() > DbUtils.stringDateToDate(lastDate).getMonth()) {
+              break monthLoop;
+            } else {
+              consumptionMap.set(key, generateMockConsumption({ date, siteId, fuelSourceId }));
+            }
+          } else {
+            consumptionMap.set(key, generateMockConsumption({ date, siteId, fuelSourceId }));
+          }
         }
       }
     }
@@ -300,6 +330,25 @@ const findCarbonEmissions = (params: {
   const result = carbonEmissions.map(mapCarbonTarget).filter(filterResultForParamDate);
 
   return result;
+};
+
+const agroupConsumptionBySiteFuelsource = (consumptions: AppModels['UtilityConsumption'][]) => {
+  const groups = [];
+  const sitesId = uniqueElements(consumptions.map((c) => c.siteId));
+  const fuelSourcesId = uniqueElements(consumptions.map((c) => c.fuelSourceId));
+
+  for (let i = 0; i < consumptions.length; i++) {
+    for (let siteIdx = 0; siteIdx < sitesId.length; siteIdx++) {
+      const thisStatistics = [];
+      for (let fuelSourcesIdx = 0; fuelSourcesIdx < fuelSourcesId.length; fuelSourcesIdx++) {
+        const thisIterationConsumptions = consumptions
+          .filter(UtilityService.filterByFuelSource(fuelSourcesId[fuelSourcesIdx]))
+          .filter(SitesService.filterBySiteId(sitesId[siteIdx]));
+        thisStatistics.push(thisIterationConsumptions);
+      }
+      groups.push(thisStatistics);
+    }
+  }
 };
 
 export default {

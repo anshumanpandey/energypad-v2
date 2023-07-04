@@ -6,20 +6,25 @@ import { AppModels } from '../../types/types';
 import { resolveConsumptionToKwh, SupportedUnits } from '../../utils/unitsUtils';
 import DB from '../db/Db';
 import { Knex } from 'knex';
+import { MathUtils } from '@utils';
 
-const MonthMap: Record<string, string> = {
-  Jan: '1',
-  Feb: '2',
-  Mar: '3',
-  Apr: '4',
-  May: '5',
-  Jun: '6',
-  Jul: '7',
-  Aug: '8',
-  Sep: '9',
-  Oct: '10',
-  Nov: '11',
-  Dec: '12',
+const MonthMap: { names: string[]; value: string }[] = [
+  { names: ['jan', 'january'], value: '01' },
+  { names: ['feb', 'february'], value: '02' },
+  { names: ['mar', 'march'], value: '03' },
+  { names: ['apr', 'april'], value: '04' },
+  { names: ['may', 'may'], value: '05' },
+  { names: ['jun', 'june'], value: '06' },
+  { names: ['jul', 'july'], value: '07' },
+  { names: ['aug', 'august'], value: '08' },
+  { names: ['sep', 'september'], value: '09' },
+  { names: ['oct', 'october'], value: '10' },
+  { names: ['nov', 'november'], value: '11' },
+  { names: ['dec', 'december'], value: '12' },
+];
+
+const getMonthByName = (name: string) => {
+  return MonthMap.find((m) => m.names.includes(name.toLowerCase()))?.value;
 };
 
 export const extractConsumptionData = async (
@@ -41,9 +46,12 @@ export const extractConsumptionData = async (
     }
     const fuel = currentRow.getCell('E').text;
     const year = currentRow.getCell('B').text;
-    const month = MonthMap[currentRow.getCell('C').text];
+    const month = getMonthByName(currentRow.getCell('C').text);
+    if (!month) {
+      return new ApiError(`Month [${currentRow.getCell('C').text}] not found`);
+    }
 
-    const date = `${year}-${month.length === 1 ? `0${month}` : month}-01`;
+    const date = `${year}-${month}-01`;
 
     const conversionFactor = new Decimal(currentRow.getCell('I').text).toNumber();
     const consumption = new Decimal(currentRow.getCell('F').text).toDP(2).toNumber();
@@ -92,10 +100,13 @@ export const extractEmissionsData = async (
     const year = currentRow.getCell('B').text;
     const emissionFactor = new Decimal(currentRow.getCell('F').text).toDP(2).toNumber();
     const fuelUnit = currentRow.getCell('E').text as typeof SupportedUnits[0];
-    const month = MonthMap[currentRow.getCell('C').text];
+    const month = getMonthByName(currentRow.getCell('C').text);
+    if (!month) {
+      return new ApiError(`Month [${currentRow.getCell('C').text}] not found`);
+    }
     const fuelSourceId = opt.fuels.find((f) => f.source === fuel)?.id;
 
-    const date = `${year}-${month.length === 1 ? `0${month}` : month}-01`;
+    const date = `${year}-${month}-01`;
 
     const consumptionForThis = opt.consumptions.find(
       (c) => c.siteId === site.id && c.date === date && c.fuelSourceId === fuelSourceId,
@@ -138,12 +149,15 @@ export const extractTargetData = async (
     }
     const fuel = currentRow.getCell('D').text;
     const year = currentRow.getCell('B').text;
-    const month = MonthMap[currentRow.getCell('C').text];
+    const month = getMonthByName(currentRow.getCell('C').text);
+    if (!month) {
+      return new ApiError(`Month [${currentRow.getCell('C').text}] not found`);
+    }
     const fuelUnit = currentRow.getCell('E').text as typeof SupportedUnits[0];
-    const energy = Number.parseFloat(currentRow.getCell('F').text);
+    const energy = MathUtils.toInt(currentRow.getCell('F').text);
     const carbon = currentRow.getCell('G').text;
 
-    const date = `${year}-${month.length === 1 ? `0${month}` : month}-01`;
+    const date = `${year}-${month}-01`;
 
     const record = {
       date,

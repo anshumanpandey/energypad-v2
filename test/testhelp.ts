@@ -4,6 +4,8 @@ import { int32Format } from '../src/middleware/requestValidator.middleware';
 import { matchersWithOptions } from 'jest-json-schema';
 import { ulid } from 'ulid';
 
+export type Json = Record<string, string | number>;
+
 export const matcher = matchersWithOptions({
   formats: {
     int32: int32Format,

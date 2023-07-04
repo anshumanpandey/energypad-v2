@@ -11,3 +11,13 @@ export const calculateIncreasePercentage = (p: { passValue: number; currentValue
 export const toInt = (i: string) => {
   return new Decimal(i).toNumber();
 };
+export const getAverage = (vals: number[], total?: number) => {
+  const avg = new Decimal(0);
+  for (let idx = 0; idx < vals.length; idx++) {
+    avg.add(vals[idx]);
+  }
+  return avg
+    .dividedBy(total ? total : vals.length)
+    .toDecimalPlaces(2)
+    .toNumber();
+};

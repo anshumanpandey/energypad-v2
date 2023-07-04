@@ -25,6 +25,41 @@ describe('/Site ', () => {
     expect(response.statusCode).toBe(200);
   });
 
+  test('It should respond with success message when creating 2 sites with same code', async () => {
+    const user = await loginUser(app)('mail620@mail.com');
+    const code = ulid();
+    const response = await supertest(app).post('/api/site').set('Authorization', `Bearer ${user.jwt}`).send({
+      name: 'a site 2',
+      type: 'in amet enim',
+      code: code,
+      address: 'irure aliquip cillum esse magna',
+      postCode: 'dolor enim',
+      town: 'somwehre',
+      population: 17391920,
+      size: 45786843,
+      workinghours: 10,
+      vat: 18.66,
+    });
+    expect(response.body).toMatchSchema(schema.components.responses.Site.content['application/json'].schema);
+    expect(response.statusCode).toBe(200);
+
+    const user2 = await loginUser(app)('mail622@mail.com');
+    const response2 = await supertest(app).post('/api/site').set('Authorization', `Bearer ${user2.jwt}`).send({
+      name: 'a site 3',
+      type: 'in amet enim',
+      code: code,
+      address: 'irure aliquip cillum esse magna',
+      postCode: 'dolor enim',
+      town: 'somwehre',
+      population: 17391920,
+      size: 45786843,
+      workinghours: 10,
+      vat: 18.66,
+    });
+    expect(response2.body).toMatchSchema(schema.components.responses.Site.content['application/json'].schema);
+    expect(response2.statusCode).toBe(200);
+  });
+
   test('It should respond with success message when updating a site', async () => {
     const body = await loginUser(app)('mail316@mail.com');
     const siteBody = {

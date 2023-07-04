@@ -7,7 +7,7 @@ import { CarbonEmission } from '../services/dashboard.service';
 import { HDDRecord } from '../services/greenDays.service';
 import { GetConsumptionsParams } from '../services/utility.service';
 
-export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashboard/'> = async (req) => {
+export const getDataByYear = async (req: any) => {
   const business = await UserService.getUserBy({ id: req.user.id });
 
   const previousYear = (MathUtils.toInt(req.query.year) || new Date().getFullYear()) - 1;
@@ -21,24 +21,21 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
       businessId: req.user.id,
       startDate: yearToFilterBy,
       endDate: endOfYear(yearToFilterBy),
-      fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
-      siteId: MathUtils.toInt(req.query.siteId),
+      fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
+      siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
     }),
-    DashboardService.produceYearConsumptions(
-      {
-        businessId: req.user.id,
-        startDate: lastMonthOfPassYear,
-        endDate: endOfYear(selectedYear),
-        fuelSourceId: MathUtils.toInt(req.query.fuelSourceId),
-        siteId: MathUtils.toInt(req.query.siteId),
-      },
-      { fillStartOnly: true },
-    ),
+    DashboardService.produceYearConsumptions({
+      businessId: req.user.id,
+      startDate: lastMonthOfPassYear,
+      endDate: endOfYear(selectedYear),
+      fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
+      siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
+    }),
     UtilityService.getConsumptions({
       businessId: req.user.id,
       startDate: lastMonthOfPassYear,
       endDate: lastDayOfCurrentMonth,
-      siteId: MathUtils.toInt(req.query.siteId),
+      siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
     }),
   ]);
 
@@ -104,7 +101,7 @@ export const getDataByYear: AuthGetAppController<'GetDashboardData', '/api/dashb
       ? []
       : DashboardService.getConsumptionStatistics({
           consumptions: currentConsumptionRecords.sort(DbUtils.sortByStringDate),
-        });
+        }).map((i) => i.filter((c) => c.consumption !== 0));
 
   return {
     consumptions: consumptions.sort(AppUtils.sortByProp('consumption', req.query?.order || 'asc')),
@@ -216,7 +213,7 @@ export const getReporData: AuthGetAppController<'GetDashboardReports', '/api/das
       fuelSourceId,
     });
 
-    carbonEmissions = await DashboardService.findCarbonEmissions({
+    carbonEmissions = DashboardService.findCarbonEmissions({
       forYear: selectedYear,
       emissions,
       allConsumptions: consumptionsForSelectedMonth,
