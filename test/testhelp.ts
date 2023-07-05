@@ -116,6 +116,7 @@ export const buildFakeConsumption = (p: {
   consumption: number;
   siteId: number;
   fuelSourceId: number;
+  totalCost?: number;
 }) => {
   return {
     id: p.id,
@@ -123,7 +124,7 @@ export const buildFakeConsumption = (p: {
     consumption: p.consumption,
     vat: 20,
     conversionFactor: 10,
-    totalCost: 10,
+    totalCost: p.totalCost || 10,
     fuelUnit: 'm3',
     siteId: p.siteId,
     fuelSourceId: p.fuelSourceId,

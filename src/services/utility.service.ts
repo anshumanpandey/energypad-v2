@@ -8,6 +8,8 @@ import ConversionUnit from './conversionUnit.service';
 import { ProducedConsumption } from './dashboard.service';
 import { capitalizeFirstLetter } from '../utils/appUtils';
 import { ulid } from 'ulid';
+import { UtilityService } from '@services';
+import { HDDRecord } from './greenDays.service';
 
 export type AddConsumptionToUtilityParam = RequestBodyParams<'AddFuelSourceConsumption'>;
 export const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam, opt?: Transactionable) => {
@@ -395,6 +397,8 @@ export const getConsumptions = (params: GetConsumptionsParams): Promise<AppModel
     'UtilityConsumptions.*',
     { fuelSourceId: 'FuelSources.id' },
     { fuelSourceName: 'FuelSources.source' },
+    { siteId: 'S.id' },
+    { siteName: 'S.name' },
   ];
 
   const query = DB('UtilityConsumptions')
@@ -523,50 +527,59 @@ export const addUtilityEmissions = (p: Omit<AppModels['UtilityEmission'], 'id'>[
   return Promise.all(promises);
 };
 
-type Hdd = { date: Date; value: number };
 type ConsummingStaticsticsParams = {
   pastConsumptionRecords: ProducedConsumption[];
   currentConsumptionRecords: ProducedConsumption[];
-  pastHdds: Hdd[];
-  currentHdd: Hdd[];
+  pastHdds: HDDRecord[];
+  currentHdd: HDDRecord[];
 };
 
 export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
   const reducedData = [];
 
   const sitesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.siteId)).values());
+  const fuelSourcesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.fuelSourceId)).values());
   const targetData = await ConversionUnit.getTargetConsumption({ siteId: sitesId });
 
-  for (let s = 0; s < sitesId.length; s++) {
-    const siteId = sitesId[s];
+  for (let fuelIdx = 0; fuelIdx < fuelSourcesId.length; fuelIdx++) {
+    for (let siteIdx = 0; siteIdx < sitesId.length; siteIdx++) {
+      const fuelSourceId = fuelSourcesId[fuelIdx];
+      const siteId = sitesId[siteIdx];
 
-    const currentSiteConsumptions = p.currentConsumptionRecords.filter(SiteService.filterBySiteId(siteId));
+      const currentSiteConsumptions = p.currentConsumptionRecords
+        .filter(SiteService.filterBySiteId(siteId))
+        .filter(UtilityService.filterByFuelSource(fuelSourceId));
 
-    for (let idx = 1, len = currentSiteConsumptions.length; idx < len; idx++) {
-      const thisConsumption = currentSiteConsumptions[idx];
-      const item = p.currentHdd[idx];
+      debugger;
+      for (let idx = 1; idx < currentSiteConsumptions.length; idx++) {
+        const thisConsumption = currentSiteConsumptions[idx];
+        const item = p.currentHdd.find(
+          (hhd) => DbUtils.dateToStringDate(hhd.date) === thisConsumption.date && hhd.siteId === thisConsumption.siteId,
+        );
 
-      const projetion = targetData.find(
-        (i) =>
-          i.date === thisConsumption.date &&
-          i.siteId === thisConsumption.siteId &&
-          i.fuelSourceId === thisConsumption.fuelSourceId,
-      );
+        const projetion = targetData.find(
+          (i) =>
+            i.date === thisConsumption.date &&
+            i.siteId === thisConsumption.siteId &&
+            i.fuelSourceId === thisConsumption.fuelSourceId,
+        );
 
-      const foundProjectedEnergy = projetion?.factorUnits.find((i: any) => i.fuelUnit === thisConsumption.fuelUnit);
-      const projectedEnergy = foundProjectedEnergy ? foundProjectedEnergy.targetValue : 0;
+        const foundProjectedEnergy = projetion?.factorUnits.find((i: any) => i.fuelUnit === thisConsumption.fuelUnit);
+        const projectedEnergy = foundProjectedEnergy ? foundProjectedEnergy.targetValue : 0;
 
-      reducedData.push({
-        fuelSourceName: thisConsumption.fuelSourceName,
-        fuelSourceId: thisConsumption.fuelSourceId,
-        siteId: thisConsumption.siteId,
-        date: DbUtils.dateToStringDate(item?.date || setDay(setMonth(new Date(), idx), 1)),
-        consumption: thisConsumption.consumption,
-        //hdd: i.value,
-        //slope: s,
-        projectedEnergy: projectedEnergy,
-        saving: new Decimal(projectedEnergy).minus(thisConsumption ? thisConsumption.consumption : 0).toNumber(),
-      });
+        reducedData.push({
+          produced: thisConsumption.produced,
+          fuelSourceName: thisConsumption.fuelSourceName,
+          fuelSourceId: thisConsumption.fuelSourceId,
+          siteId: thisConsumption.siteId,
+          date: DbUtils.dateToStringDate(item?.date || setDay(setMonth(new Date(), idx), 1)),
+          consumption: thisConsumption.consumption,
+          //hdd: i.value,
+          //slope: s,
+          projectedEnergy: projectedEnergy,
+          saving: new Decimal(projectedEnergy).minus(thisConsumption ? thisConsumption.consumption : 0).toNumber(),
+        });
+      }
     }
   }
 

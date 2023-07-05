@@ -25,7 +25,14 @@ const getConsumptionStatistics = ({
 }: {
   consumptions: Pick<
     AppModels['UtilityConsumption'],
-    'date' | 'consumption' | 'totalCost' | 'conversionFactor' | 'siteId' | 'fuelSourceId'
+    | 'date'
+    | 'consumption'
+    | 'totalCost'
+    | 'conversionFactor'
+    | 'siteId'
+    | 'fuelSourceId'
+    | 'fuelSourceName'
+    | 'siteName'
   >[];
 }) => {
   const filterByMonth = (monthToSearch: number) => (c: typeof consumptions[0]) => {
@@ -42,7 +49,6 @@ const getConsumptionStatistics = ({
   const sitesId = uniqueElements(consumptions.map((c) => c.siteId));
   const fuelSourcesId = uniqueElements(consumptions.map((c) => c.fuelSourceId));
 
-  debugger;
   const consumptionStatistics = [];
   for (let siteIdx = 0; siteIdx < sitesId.length; siteIdx++) {
     let thisStatistics = [];
@@ -70,7 +76,9 @@ const getConsumptionStatistics = ({
         const data = {
           date,
           fuelSourceId: fuelSourcesId[fuelSourcesIdx],
+          fuelSourceName: consumptionOfMonth[0].fuelSourceName,
           siteId: sitesId[siteIdx],
+          siteName: consumptionOfMonth[0].siteName,
           averageConsumption: getAverage(consumptionOfMonth[0], 'consumption'),
           averageCost: getAverage(consumptionOfMonth[0], 'totalCost'),
           cost: consumptionOfMonth[0].totalCost,
@@ -115,7 +123,10 @@ function groupBy<T>(list: T[], keyGetter: (i: T) => T[keyof T]) {
 const generateConsumptionDetail = ({
   consumptions: consumptionsArr,
 }: {
-  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'totalCost' | 'fuelSourceName'>[];
+  consumptions: Pick<
+    AppModels['UtilityConsumption'],
+    'date' | 'consumption' | 'totalCost' | 'fuelSourceName' | 'siteName'
+  >[];
 }) => {
   let consumptions = consumptionsArr;
   const consumptionDetails = [];
@@ -130,12 +141,15 @@ const generateConsumptionDetail = ({
     const currentRecord = consumptions[i];
     consumptionDetails.push({
       date: currentRecord.date,
+      siteName: currentRecord.siteName,
       fuelSourceName: currentRecord.fuelSourceName,
       consumption: currentRecord.consumption,
-      incesedPercentage: MathUtils.calculateIncreasePercentage({
-        passValue: previousRecord.consumption,
-        currentValue: currentRecord.consumption,
-      }),
+      incesedPercentage: previousRecord.consumption
+        ? MathUtils.calculateIncreasePercentage({
+            passValue: previousRecord.consumption,
+            currentValue: currentRecord.consumption,
+          })
+        : 0,
     });
   }
   return consumptionDetails;
@@ -144,7 +158,10 @@ const generateConsumptionDetail = ({
 const getConsumptionDetails = ({
   consumptions,
 }: {
-  consumptions: Pick<AppModels['UtilityConsumption'], 'date' | 'consumption' | 'totalCost' | 'fuelSourceName'>[];
+  consumptions: Pick<
+    AppModels['UtilityConsumption'],
+    'date' | 'consumption' | 'totalCost' | 'fuelSourceName' | 'siteName'
+  >[];
 }) => {
   const consumptionDetails = [];
   const reducedConsumptions = groupBy(consumptions, (item) => item.fuelSourceName);
@@ -170,6 +187,7 @@ const generateMockConsumption = (p: { date: string; siteId: number; fuelSourceId
     fuelUnit: 'm3',
     totalCost: 0,
     siteId: p.siteId,
+    siteName: '',
     id: 0,
     fuelSourceName: '',
     fuelSourceId: p.fuelSourceId,
@@ -246,6 +264,9 @@ const produceYearConsumptions = async (
 
 const consumptionIsProduced = (i: any) => {
   return i.produced && i.produced === true;
+};
+const consumptionIsNotProduced = (i: any) => {
+  return i.produced === undefined || i.produced === false;
 };
 
 export type CarbonEmission = {
@@ -356,5 +377,6 @@ export default {
   getConsumptionDetails,
   produceYearConsumptions,
   consumptionIsProduced,
+  consumptionIsNotProduced,
   findCarbonEmissions,
 };

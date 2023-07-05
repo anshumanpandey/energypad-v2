@@ -49,6 +49,8 @@ export const getDataByYear = async (req: any) => {
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
   if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
+    const removedDuplicatedDates = (value: typeof oldConsumptions[0], index: number, self: typeof oldConsumptions) =>
+      index === self.findIndex((t: any) => t.date === value.date);
     const mapRecords = (r: typeof oldConsumptions[0]) => {
       const startDate = r.date;
 
@@ -62,7 +64,11 @@ export const getDataByYear = async (req: any) => {
     if (oldConsumptions.length !== 0) {
       const params = {
         postalCode: business.postCode,
-        breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(mapRecords),
+        breakDowns: oldConsumptions
+          .sort(DbUtils.sortByStringDate)
+          .filter(DashboardService.consumptionIsNotProduced)
+          .filter(removedDuplicatedDates)
+          .map(mapRecords),
         valuesToGet: ['HDD' as const],
       };
 
@@ -71,7 +77,11 @@ export const getDataByYear = async (req: any) => {
     if (currentConsumptionRecords.length !== 0) {
       const params = {
         postalCode: business.postCode,
-        breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(mapRecords),
+        breakDowns: currentConsumptionRecords
+          .sort(DbUtils.sortByStringDate)
+          .filter(DashboardService.consumptionIsNotProduced)
+          .filter(removedDuplicatedDates)
+          .map(mapRecords),
         valuesToGet: ['HDD' as const],
       };
       promises.push(GreenDaysServices.getHdds(params));
@@ -105,7 +115,8 @@ export const getDataByYear = async (req: any) => {
 
   return {
     consumptions: consumptions.sort(AppUtils.sortByProp('consumption', req.query?.order || 'asc')),
-    energyTargets: statistics,
+    //@ts-ignore aa
+    energyTargets: statistics.filter((s) => s.produced !== true),
     consumptionsDetails: consumptionsDetails,
   };
 };

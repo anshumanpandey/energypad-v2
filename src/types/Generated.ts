@@ -666,6 +666,7 @@ export interface components {
       ({
         id: number;
         fuelSourceName: string;
+        siteName: string;
       } & {
         conversionUnit: unknown;
       });

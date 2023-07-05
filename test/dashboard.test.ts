@@ -58,6 +58,7 @@ describe('/Dashboard ', () => {
           (c: Json[]) => c.find((i) => i.fuelSourceId === 2 && i.siteId === 486) !== undefined,
         ).length,
       ).toBe(1);
+      expect(response.body.energyTargets.length).toBe(6);
     },
     15 * 1000,
   );
