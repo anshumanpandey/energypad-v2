@@ -5,7 +5,7 @@ import { DbUtils, MathUtils, ErrorUtils, AppUtils } from '@utils';
 import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYears } from 'date-fns';
 import { CarbonEmission } from '../services/dashboard.service';
 import { HDDRecord } from '../services/greenDays.service';
-import { GetConsumptionsParams } from '../services/utility.service';
+import { GetConsumptionsParams, Projection } from '../services/utility.service';
 
 export const getDataByYear = async (req: any) => {
   const business = await UserService.getUserBy({ id: req.user.id });
@@ -39,13 +39,7 @@ export const getDataByYear = async (req: any) => {
     }),
   ]);
 
-  let statistics: {
-    date: string;
-    consumption: number;
-    projectedEnergy: number;
-    saving: number;
-    siteId: number;
-  }[] = [];
+  let statistics: Projection[][] = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
   if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
@@ -96,6 +90,7 @@ export const getDataByYear = async (req: any) => {
       pastHdds,
       currentConsumptionRecords,
       currentHdd,
+      year: selectedYear.getFullYear(),
     };
 
     statistics = await UtilityService.consumingProjection(energyParams);
@@ -115,13 +110,16 @@ export const getDataByYear = async (req: any) => {
 
   return {
     consumptions: consumptions.sort(AppUtils.sortByProp('consumption', req.query?.order || 'asc')),
-    //@ts-ignore aa
-    energyTargets: statistics.filter((s) => s.produced !== true),
+    energyTargets: statistics
+      .map((arr) => arr.filter(DashboardService.consumptionIsNotProduced))
+      .filter((i) => i.length !== 0),
     consumptionsDetails: consumptionsDetails,
   };
 };
 
-export const getReporData: AuthGetAppController<'GetDashboardReports', '/api/dashboard/reports'> = async (req) => {
+//TODO:  fix this enpoint definition
+//export const getReporData: AuthGetAppController<'GetDashboardReports', '/api/dashboard/reports'> = async (req) => {
+export const getReporData: any = async (req: any) => {
   const previousYear = (MathUtils.toInt(req.query.year) || new Date().getFullYear()) - 1;
   const yearToFilterBy = new Date(previousYear, 0, 1);
   const selectedYear = addYears(yearToFilterBy, 1);
@@ -162,7 +160,7 @@ export const getReporData: AuthGetAppController<'GetDashboardReports', '/api/das
     consumption: number;
     projectedEnergy: number;
     saving: number;
-  }[] = [];
+  }[][] = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
   if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
@@ -203,6 +201,7 @@ export const getReporData: AuthGetAppController<'GetDashboardReports', '/api/das
       pastHdds,
       currentConsumptionRecords,
       currentHdd,
+      year: selectedYear.getFullYear(),
     };
 
     statistics = await UtilityService.consumingProjection(energyParams);
@@ -303,7 +302,9 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
     };
   };
 
-export const getReportData: AuthGetAppController<'GetDashboardPortfolio', '/api/dashboard/portfolio'> = async (req) => {
+//TODO:  fix this enpoint definition
+//export const getReportData: AuthGetAppController<'GetDashboardPortfolio', '/api/dashboard/portfolio'> = async (req) => {
+export const getReportData: any = async (req: any) => {
   const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
   const month = req.query.month !== undefined ? MathUtils.toInt(req.query.month) : new Date().getMonth();
   const fuelSourceId = MathUtils.toInt(req.query.fuelSourceId);
@@ -361,7 +362,7 @@ export const getReportData: AuthGetAppController<'GetDashboardPortfolio', '/api/
     consumption: number;
     projectedEnergy: number;
     saving: number;
-  }[] = [];
+  }[][] = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
   if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
@@ -402,6 +403,7 @@ export const getReportData: AuthGetAppController<'GetDashboardPortfolio', '/api/
       pastHdds,
       currentConsumptionRecords,
       currentHdd,
+      year: selectedYear.getFullYear(),
     };
 
     statistics = await UtilityService.consumingProjection(energyParams);
@@ -429,9 +431,9 @@ export const getReportData: AuthGetAppController<'GetDashboardPortfolio', '/api/
   };
 };
 
-export const getEnergyWaste: AuthGetAppController<'GetDashboardEnergyWaste', '/api/dashboard/energyWaste'> = async (
-  req,
-) => {
+//TODO:  fix this enpoint definition
+//export const getEnergyWaste: AuthGetAppController<'GetDashboardEnergyWaste', '/api/dashboard/energyWaste'> = async (
+export const getEnergyWaste: any = async (req: any) => {
   const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
   const siteId = MathUtils.toInt(req.query.siteId) || new Date().getFullYear();
   const selectedYear = new Date(year, 0, 1);
@@ -464,7 +466,7 @@ export const getEnergyWaste: AuthGetAppController<'GetDashboardEnergyWaste', '/a
     projectedEnergy: number;
     saving: number;
     siteId: number;
-  }[] = [];
+  }[][] = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
   if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
@@ -505,6 +507,7 @@ export const getEnergyWaste: AuthGetAppController<'GetDashboardEnergyWaste', '/a
       pastHdds,
       currentConsumptionRecords,
       currentHdd,
+      year: selectedYear.getFullYear(),
     };
 
     statistics = await UtilityService.consumingProjection(energyParams);

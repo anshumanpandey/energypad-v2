@@ -58,7 +58,9 @@ describe('/Dashboard ', () => {
           (c: Json[]) => c.find((i) => i.fuelSourceId === 2 && i.siteId === 486) !== undefined,
         ).length,
       ).toBe(1);
-      expect(response.body.energyTargets.length).toBe(6);
+      console.log(response.body.energyTargets);
+      expect(response.body.energyTargets.length).toBe(3);
+      expect(response.body.energyTargets.flat().every((r: Json) => (r.date as string).endsWith('-01'))).toBe(true);
     },
     15 * 1000,
   );

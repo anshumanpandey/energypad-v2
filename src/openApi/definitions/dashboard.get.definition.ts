@@ -13,29 +13,41 @@ addResponseComponentFor('GetDashboardData', {
           consumptions: {
             type: 'array',
             items: {
-              additionalProperties: false,
-              required: ['date', 'averageConsumption', 'averageCost', 'consumption', 'increasedConsumptionPercentage'],
-              properties: {
-                date: { type: 'string', format: 'date' },
-                averageConsumption: { type: 'number', format: 'int32' },
-                averageCost: { type: 'number', format: 'int32' },
-                consumption: { type: 'number', format: 'int32' },
-                increasedConsumptionPercentage: { type: 'number' },
-                increasedCostPercentage: { type: 'number' },
+              type: 'array',
+              items: {
+                additionalProperties: false,
+                required: [
+                  'date',
+                  'averageConsumption',
+                  'averageCost',
+                  'consumption',
+                  'increasedConsumptionPercentage',
+                ],
+                properties: {
+                  date: { type: 'string', format: 'date' },
+                  averageConsumption: { type: 'number', format: 'int32' },
+                  averageCost: { type: 'number', format: 'int32' },
+                  consumption: { type: 'number', format: 'int32' },
+                  increasedConsumptionPercentage: { type: 'number' },
+                  increasedCostPercentage: { type: 'number' },
+                },
               },
             },
           },
           energyTargets: {
             type: 'array',
             items: {
-              additionalProperties: false,
-              required: ['date', 'projectedEnergy', 'consumption', 'saving', 'siteId'],
-              properties: {
-                date: { type: 'string', format: 'date' },
-                projectedEnergy: { type: 'number', format: 'int32' },
-                consumption: { type: 'number', format: 'int32' },
-                saving: { type: 'number' },
-                siteId: { type: 'number' },
+              type: 'array',
+              items: {
+                additionalProperties: false,
+                required: ['date', 'projectedEnergy', 'consumption', 'saving', 'siteId'],
+                properties: {
+                  date: { type: 'string', format: 'date' },
+                  projectedEnergy: { type: 'number', format: 'int32' },
+                  consumption: { type: 'number', format: 'int32' },
+                  saving: { type: 'number' },
+                  siteId: { type: 'number' },
+                },
               },
             },
           },

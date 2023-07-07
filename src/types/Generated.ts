@@ -721,14 +721,14 @@ export interface components {
             consumption: number;
             increasedConsumptionPercentage: number;
             increasedCostPercentage?: number;
-          }[];
+          }[][];
           energyTargets: {
             date: string;
             projectedEnergy: number;
             consumption: number;
             saving: number;
             siteId: number;
-          }[];
+          }[][];
           consumptionsDetails?: {
             date: string;
             fuelSourceName: string;

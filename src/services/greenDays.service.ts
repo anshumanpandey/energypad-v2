@@ -49,7 +49,6 @@ const handleResponse =
   (a: any[], siteId: number) =>
   ({ data }: { data: GreenData }): HDDRecord[] | ApiError => {
     const response = data.response;
-    debugger;
     if (response.type === 'Failure') {
       return a.map((_) => ({
         date: DbUtils.stringDateToDate(_.first),

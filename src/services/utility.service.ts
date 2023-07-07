@@ -1,6 +1,6 @@
 import { DB } from '@lib';
 import Decimal from 'decimal.js';
-import { formatISO, setDay, setMonth } from 'date-fns';
+import { formatISO, setDate, setMonth } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 import { DbUtils, UnitsUtil } from '@utils';
 import SiteService from './sites.service';
@@ -532,15 +532,23 @@ type ConsummingStaticsticsParams = {
   currentConsumptionRecords: ProducedConsumption[];
   pastHdds: HDDRecord[];
   currentHdd: HDDRecord[];
+  year: number;
 };
 
-export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
-  const reducedData = [];
-
+export type Projection = {
+  date: string;
+  consumption: number;
+  projectedEnergy: number;
+  saving: number;
+  siteId: number;
+  produced: boolean | undefined;
+};
+export const consumingProjection = async (p: ConsummingStaticsticsParams): Promise<Projection[][]> => {
   const sitesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.siteId)).values());
   const fuelSourcesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.fuelSourceId)).values());
   const targetData = await ConversionUnit.getTargetConsumption({ siteId: sitesId });
 
+  const mapMonthRecord = new Map();
   for (let fuelIdx = 0; fuelIdx < fuelSourcesId.length; fuelIdx++) {
     for (let siteIdx = 0; siteIdx < sitesId.length; siteIdx++) {
       const fuelSourceId = fuelSourcesId[fuelIdx];
@@ -550,12 +558,14 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
         .filter(SiteService.filterBySiteId(siteId))
         .filter(UtilityService.filterByFuelSource(fuelSourceId));
 
-      debugger;
       for (let idx = 1; idx < currentSiteConsumptions.length; idx++) {
-        const thisConsumption = currentSiteConsumptions[idx];
-        const item = p.currentHdd.find(
-          (hhd) => DbUtils.dateToStringDate(hhd.date) === thisConsumption.date && hhd.siteId === thisConsumption.siteId,
-        );
+        const thisConsumption = currentSiteConsumptions.find((c) => {
+          const d = DbUtils.stringDateToDate(c.date);
+          return d.getMonth() === idx - 1 && d.getFullYear() === p.year;
+        });
+        if (!thisConsumption) {
+          break;
+        }
 
         const projetion = targetData.find(
           (i) =>
@@ -567,26 +577,35 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams) => {
         const foundProjectedEnergy = projetion?.factorUnits.find((i: any) => i.fuelUnit === thisConsumption.fuelUnit);
         const projectedEnergy = foundProjectedEnergy ? foundProjectedEnergy.targetValue : 0;
 
-        reducedData.push({
+        const r = {
           produced: thisConsumption.produced,
           fuelSourceName: thisConsumption.fuelSourceName,
           fuelSourceId: thisConsumption.fuelSourceId,
           siteId: thisConsumption.siteId,
-          date: DbUtils.dateToStringDate(item?.date || setDay(setMonth(new Date(), idx), 1)),
+          siteName: thisConsumption.siteName,
+          date: thisConsumption
+            ? thisConsumption.date
+            : DbUtils.dateToStringDate(setDate(setMonth(new Date(), idx - 1), 1)),
           consumption: thisConsumption.consumption,
           //hdd: i.value,
           //slope: s,
           projectedEnergy: projectedEnergy,
           saving: new Decimal(projectedEnergy).minus(thisConsumption ? thisConsumption.consumption : 0).toNumber(),
-        });
+        };
+        const found = mapMonthRecord.get(idx.toString());
+        if (found) {
+          found.push(r);
+          mapMonthRecord.set(idx.toString(), found);
+        } else {
+          mapMonthRecord.set(idx.toString(), [r]);
+        }
       }
     }
   }
 
+  const reducedData = Array.from(mapMonthRecord.values());
   return reducedData;
 };
-
-export type Projection = Awaited<ReturnType<typeof consumingProjection>>;
 
 export const filterByFuelSource = (i: number) => (r: { fuelSourceId: number }) => {
   return i === r.fuelSourceId;
