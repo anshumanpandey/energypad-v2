@@ -61,7 +61,7 @@ const getConsumptionStatistics = ({
       for (let idx = 1; idx <= thisIterationConsumptions.length; idx++) {
         const consumptionFilter = (c: typeof consumptions[0]) =>
           filterByMonth(idx)(c) && c.fuelSourceId === fuelSourcesId[fuelSourcesIdx] && sitesId[siteIdx] === c.siteId;
-        const consumptionOfMonth = consumptions.filter(consumptionFilter).sort(DbUtils.sortByStringDate);
+        const consumptionOfMonth = consumptions.filter(consumptionFilter).sort(DbUtils.sortByStringDate).reverse();
 
         if (consumptionOfMonth.length === 0) {
           break;
@@ -73,6 +73,7 @@ const getConsumptionStatistics = ({
         );
         const previouseRecord = consumptions[idx - 1];
 
+        debugger;
         const data = {
           date,
           fuelSourceId: fuelSourcesId[fuelSourcesIdx],
@@ -259,7 +260,7 @@ const produceYearConsumptions = async (
     }
   }
 
-  return Array.from(consumptionMap.values());
+  return Array.from(consumptionMap.values()).sort(DbUtils.sortByStringDate);
 };
 
 const consumptionIsProduced = (i: any) => {

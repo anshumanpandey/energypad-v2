@@ -2,7 +2,7 @@ import { ApiError } from '@lib';
 import { UtilityService, DashboardService, UserService, GreenDaysServices, SitesService } from '@services';
 import { AuthGetAppController } from '@types';
 import { DbUtils, MathUtils, ErrorUtils, AppUtils } from '@utils';
-import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYears } from 'date-fns';
+import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYears, addMonths } from 'date-fns';
 import { CarbonEmission } from '../services/dashboard.service';
 import { HDDRecord } from '../services/greenDays.service';
 import { GetConsumptionsParams, Projection } from '../services/utility.service';
@@ -19,7 +19,7 @@ export const getDataByYear = async (req: any) => {
   const currenMonthParams = {
     businessId: req.user.id,
     startDate: lastMonthOfPassYear,
-    endDate: endOfYear(selectedYear),
+    endDate: addMonths(selectedYear, 11),
     fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
     siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
   };
@@ -111,7 +111,6 @@ export const getDataByYear = async (req: any) => {
           consumptions: currentConsumptionRecords.sort(DbUtils.sortByStringDate),
         }).map((i) => i.filter((c) => c.consumption !== 0));
 
-  console.log(consumptions);
   return {
     consumptions: consumptions.sort(AppUtils.sortByProp('consumption', req.query?.order || 'asc')),
     energyTargets: statistics

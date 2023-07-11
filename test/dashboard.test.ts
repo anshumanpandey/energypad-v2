@@ -15,16 +15,24 @@ describe('/Dashboard ', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.body.consumptions.length).toBe(1);
-      //expect(response.body.energyTargets.length).toBe(3);
+      expect(response.body.energyTargets.length).toBe(3);
 
       expect(response.body.consumptions[0].find((c: Json) => c.date === '2020-01-01').consumption).toBe(99);
       expect(response.body.consumptions[0].find((c: Json) => c.date === '2020-02-01').consumption).toBe(89);
 
       const response2 = await supertest(app)
-        .get('/api/dashboard?year=2022&fuelSourceId=1&siteId=484')
+        .get('/api/dashboard?year=2022&fuelSourceId=1')
         .set('Authorization', `Bearer ${body.jwt}`);
 
-      expect(response2.body.consumptionsDetails.length).toBe(2);
+      expect(response2.body.consumptions.flat().length).toBe(2);
+      expect(response2.body.consumptionsDetails.length).toBe(3);
+
+      const response3 = await supertest(app)
+        .get('/api/dashboard?year=2022&fuelSourceId=6')
+        .set('Authorization', `Bearer ${body.jwt}`);
+
+      expect(response3.body.consumptions.flat().length).toBe(0);
+      expect(response3.body.energyTargets.length).toBe(0);
     },
     15 * 1000,
   );
@@ -58,9 +66,21 @@ describe('/Dashboard ', () => {
           (c: Json[]) => c.find((i) => i.fuelSourceId === 2 && i.siteId === 486) !== undefined,
         ).length,
       ).toBe(1);
-      console.log(response.body.energyTargets);
       expect(response.body.energyTargets.length).toBe(3);
       expect(response.body.energyTargets.flat().every((r: Json) => (r.date as string).endsWith('-01'))).toBe(true);
+    },
+    15 * 1000,
+  );
+  test.only(
+    'It should respond with success message no fuelSourceId and no siteId is pass',
+    async () => {
+      const body = await loginUser(app)('mail700@mail.com');
+      const response = await supertest(app).get('/api/dashboard?year=2023').set('Authorization', `Bearer ${body.jwt}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.consumptions.length).toBe(3);
+      console.log(response.body.consumptions.flat());
+      expect(response.body.consumptions.flat().every((r: Json) => (r.date as string).startsWith('2023'))).toBe(true);
     },
     15 * 1000,
   );
