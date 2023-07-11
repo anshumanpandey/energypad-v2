@@ -109,7 +109,9 @@ export const getDataByYear = async (req: any) => {
       ? []
       : DashboardService.getConsumptionStatistics({
           consumptions: currentConsumptionRecords.sort(DbUtils.sortByStringDate),
-        }).map((i) => i.filter((c) => c.consumption !== 0));
+        })
+          .map((i) => i.filter((c) => c.consumption !== 0))
+          .filter((i) => i.length !== 0);
 
   return {
     consumptions: consumptions.sort(AppUtils.sortByProp('consumption', req.query?.order || 'asc')),
