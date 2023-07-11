@@ -16,6 +16,13 @@ export const getDataByYear = async (req: any) => {
   const lastMonthOfPassYear = subMonths(selectedYear, 1);
   const lastDayOfCurrentMonth = endOfMonth(setMonth(selectedYear, new Date().getMonth()));
 
+  const currenMonthParams = {
+    businessId: req.user.id,
+    startDate: lastMonthOfPassYear,
+    endDate: endOfYear(selectedYear),
+    fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
+    siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
+  };
   const [oldConsumptions, currentConsumptionRecords, currentYearAllSourcesConsumption] = await Promise.all([
     DashboardService.produceYearConsumptions({
       businessId: req.user.id,
@@ -24,13 +31,7 @@ export const getDataByYear = async (req: any) => {
       fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
       siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
     }),
-    DashboardService.produceYearConsumptions({
-      businessId: req.user.id,
-      startDate: lastMonthOfPassYear,
-      endDate: endOfYear(selectedYear),
-      fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
-      siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
-    }),
+    DashboardService.produceYearConsumptions(currenMonthParams),
     UtilityService.getConsumptions({
       businessId: req.user.id,
       startDate: lastMonthOfPassYear,
@@ -39,6 +40,7 @@ export const getDataByYear = async (req: any) => {
     }),
   ]);
 
+  console.log(currenMonthParams);
   console.log(currentConsumptionRecords);
   let statistics: Projection[][] = [];
 
