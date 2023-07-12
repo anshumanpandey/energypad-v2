@@ -6,7 +6,7 @@ export const capitalizeFirstLetter = (str: string) => {
 
 export const sortByProp = (prop: string, order: 'asc' | 'desc') => (a: any, b: any) => {
   if (order === 'desc') {
-    return b[prop] - a[prop];
+    return b[prop].localeCompare(a[prop]);
   }
-  return a[prop] - b[prop];
+  return a[prop].localeCompare(b[prop]);
 };

@@ -40,8 +40,6 @@ export const getDataByYear = async (req: any) => {
     }),
   ]);
 
-  console.log(currenMonthParams);
-  console.log(currentConsumptionRecords);
   let statistics: Projection[][] = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
@@ -111,10 +109,13 @@ export const getDataByYear = async (req: any) => {
           consumptions: currentConsumptionRecords.sort(DbUtils.sortByStringDate),
         })
           .map((i) => i.filter((c) => c.consumption !== 0))
-          .filter((i) => i.length !== 0);
+          .filter((i) => i.length !== 0)
+          .map((arr) =>
+            arr.sort(AppUtils.sortByProp(req.query?.order ? 'consumption' : 'date', req.query?.order || 'asc')),
+          );
 
   return {
-    consumptions: consumptions.sort(AppUtils.sortByProp('consumption', req.query?.order || 'asc')),
+    consumptions,
     energyTargets: statistics
       .map((arr) => arr.filter(DashboardService.consumptionIsNotProduced))
       .filter((i) => i.length !== 0),
