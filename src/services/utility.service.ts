@@ -574,6 +574,14 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
             i.fuelSourceId === thisConsumption.fuelSourceId,
         );
 
+        if (
+          thisConsumption.siteId === 10 &&
+          thisConsumption.fuelSourceId === 4 &&
+          thisConsumption.date === '2023-01-01'
+        ) {
+          console.log(targetData, sitesId);
+        }
+
         const foundProjectedEnergy = projetion?.factorUnits.find((i: any) => i.fuelUnit === thisConsumption.fuelUnit);
         const projectedEnergy = foundProjectedEnergy ? foundProjectedEnergy.targetValue : 0;
 
