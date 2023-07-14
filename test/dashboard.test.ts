@@ -17,7 +17,7 @@ describe('/Dashboard ', () => {
       expect(response.body.consumptions.length).toBe(1);
       expect(response.body.energyTargets.length).toBe(3);
 
-      expect(response.body.consumptions[0].find((c: Json) => c.date === '2020-01-01').consumption).toBe(99);
+      expect(response.body.consumptions[0].find((c: Json) => c.date === '2020-01-01').consumption).toBe(200);
       expect(response.body.consumptions[0].find((c: Json) => c.date === '2020-02-01').consumption).toBe(89);
 
       const response2 = await supertest(app)
@@ -71,7 +71,7 @@ describe('/Dashboard ', () => {
     },
     15 * 1000,
   );
-  test.only(
+  test(
     'It should respond with success message no fuelSourceId and no siteId is pass',
     async () => {
       const body = await loginUser(app)('mail700@mail.com');
@@ -79,7 +79,6 @@ describe('/Dashboard ', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.body.consumptions.length).toBe(3);
-      console.log(response.body.consumptions.flat());
       expect(response.body.consumptions.flat().every((r: Json) => (r.date as string).startsWith('2023'))).toBe(true);
     },
     15 * 1000,

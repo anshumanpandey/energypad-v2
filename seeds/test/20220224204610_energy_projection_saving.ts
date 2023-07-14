@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { buildFakeBusiness, buildFakeConsumption, buildFakeSite } from '../../test/testhelp';
+import { buildFakeBusiness, buildFakeConsumption, buildFakeSite, buildFakeTarget } from '../../test/testhelp';
 
 export async function seed(knex: Knex): Promise<void> {
   await knex('Businesses').insert([
@@ -127,11 +127,29 @@ export async function seed(knex: Knex): Promise<void> {
       fuelSourceId: 2,
       siteId: site.id,
     }),
+  ]);
+  const targetData = buildFakeTarget([
+    {
+      id: 1000,
+      date: '2020-01-01',
+      siteId: site.id,
+      fuelSourceId: 1,
+      targets: [{ targetValue: 348, fuelUnit: 'm3' }],
+    },
+    {
+      id: 1002,
+      date: '2020-01-01',
+      siteId: site.id,
+      fuelSourceId: 2,
+      targets: [{ targetValue: 104, fuelUnit: 'm3' }],
+    },
+  ]);
+  await knex('UtilityConsumptions').insert([
     //2020
     buildFakeConsumption({
       id: 3124,
       date: '2020-01-01',
-      consumption: 99,
+      consumption: 200,
       totalCost: 12,
       fuelSourceId: 1,
       siteId: site.id,
@@ -185,6 +203,13 @@ export async function seed(knex: Knex): Promise<void> {
       date: '2021-01-01',
       consumption: 37,
       fuelSourceId: 1,
+      siteId: site3.id,
+    }),
+    buildFakeConsumption({
+      id: 3149,
+      date: '2021-01-01',
+      consumption: 37,
+      fuelSourceId: 2,
       siteId: site3.id,
     }),
     buildFakeConsumption({
@@ -394,4 +419,6 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site5.id,
     }),
   ]);
+  await knex('TargetConsumption').insert(targetData.TargetConsumption);
+  await knex('TargetConsumptionFuelConversion').insert(targetData.TargetConsumptionFuelConversion);
 }

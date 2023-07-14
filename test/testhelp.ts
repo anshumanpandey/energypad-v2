@@ -131,6 +131,39 @@ export const buildFakeConsumption = (p: {
   };
 };
 
+export const buildFakeTarget = (
+  p: {
+    id: number;
+    date: string;
+    siteId: number;
+    fuelSourceId: number;
+    targets: { targetValue: number; fuelUnit: string }[];
+  }[],
+) => {
+  const data = {
+    TargetConsumption: p.map((i) => {
+      return {
+        id: i.id,
+        date: i.date,
+        siteId: i.siteId,
+        fuelSourceId: i.fuelSourceId,
+      };
+    }),
+    TargetConsumptionFuelConversion: p
+      .map((item) => {
+        return item.targets.map((i) => {
+          return {
+            targetConsumptionId: item.id,
+            targetValue: i.targetValue,
+            fuelUnit: i.fuelUnit,
+          };
+        });
+      })
+      .flat(),
+  };
+  return data;
+};
+
 export const buildFakeUtilityMonitoring = (p: {
   id: number;
   date: string;
