@@ -553,6 +553,7 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
   const sitesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.siteId)).values());
   const fuelSourcesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.fuelSourceId)).values());
   const targetData = await getMonitoring({ siteId: sitesId });
+  console.log(targetData);
 
   const mapMonthRecord = new Map();
   for (let fuelIdx = 0; fuelIdx < fuelSourcesId.length; fuelIdx++) {
