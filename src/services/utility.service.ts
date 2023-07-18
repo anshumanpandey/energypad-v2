@@ -239,15 +239,17 @@ export const addMonitoringToUtility = async (
   return Promise.all(promises);
 };
 
-export type GetMonitoringParams = { siteId?: number; year?: number; month?: number; businessId: number };
+export type GetMonitoringParams = { siteId?: number | number[]; year?: number; month?: number; businessId?: number };
 export const getMonitoring = (params: GetMonitoringParams) => {
   const query = DB('UtilityMonitoring')
     .select(['UtilityMonitoring.*'])
     .innerJoin('FuelSources', 'UtilityMonitoring.fuelSourceId', 'FuelSources.id')
     .innerJoin({ S: 'Sites' }, 'UtilityMonitoring.siteId', 'S.id')
-    .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
-    .where('B.id', params.businessId);
+    .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id');
 
+  if (params.businessId) {
+    query.where('B.id', params.businessId);
+  }
   if (params.year !== undefined && params.month !== undefined) {
     query.where(
       'UtilityMonitoring.date',
@@ -256,7 +258,11 @@ export const getMonitoring = (params: GetMonitoringParams) => {
     );
   }
   if (params?.siteId) {
-    query.where('UtilityMonitoring.siteId', params.siteId);
+    if (Array.isArray(params.siteId)) {
+      query.whereIn('UtilityMonitoring.siteId', params.siteId);
+    } else {
+      query.where('UtilityMonitoring.siteId', params.siteId);
+    }
   }
 
   return query;
@@ -546,7 +552,7 @@ export type Projection = {
 export const consumingProjection = async (p: ConsummingStaticsticsParams): Promise<Projection[][]> => {
   const sitesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.siteId)).values());
   const fuelSourcesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.fuelSourceId)).values());
-  const targetData = await ConversionUnit.getTargetConsumption({ siteId: sitesId });
+  const targetData = await getMonitoring({ siteId: sitesId });
 
   const mapMonthRecord = new Map();
   for (let fuelIdx = 0; fuelIdx < fuelSourcesId.length; fuelIdx++) {
@@ -573,14 +579,6 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
             i.siteId === thisConsumption.siteId &&
             i.fuelSourceId === thisConsumption.fuelSourceId,
         );
-
-        if (
-          thisConsumption.siteId === 10 &&
-          thisConsumption.fuelSourceId === 4 &&
-          thisConsumption.date === '2023-01-01'
-        ) {
-          console.log(targetData, sitesId);
-        }
 
         const foundProjectedEnergy = projetion?.factorUnits.find((i: any) => i.fuelUnit === thisConsumption.fuelUnit);
         const projectedEnergy = foundProjectedEnergy ? foundProjectedEnergy.targetValue : 0;
