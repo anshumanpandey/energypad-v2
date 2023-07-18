@@ -4,7 +4,6 @@ import { formatISO, setDate, setMonth } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 import { DbUtils, UnitsUtil } from '@utils';
 import SiteService from './sites.service';
-import ConversionUnit from './conversionUnit.service';
 import { ProducedConsumption } from './dashboard.service';
 import { capitalizeFirstLetter } from '../utils/appUtils';
 import { ulid } from 'ulid';
@@ -264,6 +263,7 @@ export const getMonitoring = (params: GetMonitoringParams) => {
       query.where('UtilityMonitoring.siteId', params.siteId);
     }
   }
+  console.log(query.toQuery());
 
   return query;
 };
