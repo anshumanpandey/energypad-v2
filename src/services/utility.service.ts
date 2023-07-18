@@ -263,8 +263,6 @@ export const getMonitoring = (params: GetMonitoringParams) => {
       query.where('UtilityMonitoring.siteId', params.siteId);
     }
   }
-  console.log(query.toQuery());
-
   return query;
 };
 
@@ -553,7 +551,6 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
   const sitesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.siteId)).values());
   const fuelSourcesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.fuelSourceId)).values());
   const targetData = await getMonitoring({ siteId: sitesId });
-  console.log(targetData);
 
   const mapMonthRecord = new Map();
   for (let fuelIdx = 0; fuelIdx < fuelSourcesId.length; fuelIdx++) {
@@ -581,8 +578,7 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
             i.fuelSourceId === thisConsumption.fuelSourceId,
         );
 
-        const foundProjectedEnergy = projetion?.factorUnits.find((i: any) => i.fuelUnit === thisConsumption.fuelUnit);
-        const projectedEnergy = foundProjectedEnergy ? foundProjectedEnergy.targetValue : 0;
+        const projectedEnergy = projetion ? projetion.energy : 0;
 
         const r = {
           produced: thisConsumption.produced,
