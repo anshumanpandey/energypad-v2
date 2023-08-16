@@ -10,3 +10,18 @@ export const sortByProp = (prop: string, order: 'asc' | 'desc') => (a: any, b: a
   }
   return a[prop].toString().localeCompare(b[prop].toString());
 };
+
+export const agroupByDate = (arr: { date: string }[]) => {
+  const map = new Map();
+  arr.forEach((i) => {
+    const key = i.date;
+    const found = map.get(key);
+    if (found) {
+      found.push(i);
+      map.set(key, found);
+    } else {
+      map.set(key, [i]);
+    }
+  });
+  return Array.from(map.values());
+};

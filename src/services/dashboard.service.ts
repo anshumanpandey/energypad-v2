@@ -345,6 +345,7 @@ const findCarbonEmissions = (
     return {
       siteId: p.siteId,
       date: p.date,
+      siteName: p.siteName,
       fuelSourceId: p.fuelSourceId,
       fuelSourceName: p.fuelSourceName,
       fuelSourceColorCode: params.fuels?.find((i) => i.id === p.fuelSourceId)?.colorCode || '#4989C6',

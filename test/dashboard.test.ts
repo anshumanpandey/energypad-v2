@@ -102,8 +102,10 @@ describe('/Dashboard ', () => {
         .set('Authorization', `Bearer ${body.jwt}`);
 
       expect(response2.statusCode).toBe(200);
-      expect(response2.body.carbonEmissions.length).toBe(2);
-      expect(response2.body.allCarbonEmissions.length).toBe(2);
+      expect(response2.body.carbonEmissions.length).toBe(1);
+      expect(response2.body.carbonEmissions[0].length).toBe(2);
+      expect(response2.body.allCarbonEmissions.length).toBe(1);
+      expect(response2.body.allCarbonEmissions[0].length).toBe(2);
     },
     15 * 1000,
   );

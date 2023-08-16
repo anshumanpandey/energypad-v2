@@ -311,10 +311,12 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
       carbonEmissions = result1 ? result1 : [];
       allCarbonEmissions = result2 ? result2.filter(DbUtils.filterByYear(selectedYear.getFullYear())) : [];
     }
-    debugger;
+
     return {
-      carbonEmissions: carbonEmissions.sort(AppUtils.sortByProp('carbonEmission', req.query?.order || 'asc')),
-      allCarbonEmissions: allCarbonEmissions,
+      carbonEmissions: AppUtils.agroupByDate(
+        carbonEmissions.sort(AppUtils.sortByProp('carbonEmission', req.query?.order || 'asc')),
+      ),
+      allCarbonEmissions: AppUtils.agroupByDate(allCarbonEmissions),
     };
   };
 

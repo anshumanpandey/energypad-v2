@@ -13,12 +13,15 @@ addResponseComponentFor('GetDashboardCarbonFootprint', {
           carbonEmissions: {
             type: 'array',
             items: {
-              additionalProperties: false,
-              required: ['date', 'carbonEmission', 'carbonTarget'],
-              properties: {
-                date: { type: 'string', format: 'date' },
-                carbonEmission: { type: 'number', format: 'int32' },
-                carbonTarget: { type: 'number', format: 'int32' },
+              type: 'array',
+              items: {
+                additionalProperties: false,
+                required: ['date', 'carbonEmission', 'carbonTarget'],
+                properties: {
+                  date: { type: 'string', format: 'date' },
+                  carbonEmission: { type: 'number', format: 'int32' },
+                  carbonTarget: { type: 'number', format: 'int32' },
+                },
               },
             },
           },
