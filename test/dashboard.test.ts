@@ -83,4 +83,28 @@ describe('/Dashboard ', () => {
     },
     15 * 1000,
   );
+
+  test(
+    'It should respond with correct carbonFootprint data',
+    async () => {
+      const body = await loginUser(app)('mail322@mail.com');
+
+      const response = await supertest(app)
+        .get('/api/dashboard/carbonFootprint?year=2020&fuelSourceId=2&siteId=486')
+        .set('Authorization', `Bearer ${body.jwt}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.carbonEmissions.length).toBe(1);
+      expect(response.body.allCarbonEmissions.length).toBe(1);
+
+      const response2 = await supertest(app)
+        .get('/api/dashboard/carbonFootprint?year=2020')
+        .set('Authorization', `Bearer ${body.jwt}`);
+
+      expect(response2.statusCode).toBe(200);
+      expect(response2.body.carbonEmissions.length).toBe(2);
+      expect(response2.body.allCarbonEmissions.length).toBe(2);
+    },
+    15 * 1000,
+  );
 });

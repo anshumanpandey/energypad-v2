@@ -262,23 +262,26 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
     const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
     const selectedYear = new Date(year, 0, 1);
 
-    const siteId = MathUtils.toInt(req.query.siteId);
-    const fuelSourceId = MathUtils.toInt(req.query.fuelSourceId || '1');
+    const siteId = req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined;
+    const fuelSourceId = req.query.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined;
 
+    const consumptionParams = {
+      businessId: req.user.id,
+      siteId,
+      startDate: subMonths(selectedYear, 1),
+      endDate: endOfYear(selectedYear),
+    };
     const [consumptionsForSelectedMonth, fuelSources] = await Promise.all([
-      UtilityService.getConsumptions({
-        businessId: req.user.id,
-        siteId,
-        startDate: subMonths(selectedYear, 1),
-        endDate: endOfYear(selectedYear),
-      }),
+      UtilityService.getConsumptions(consumptionParams),
       UtilityService.getFuelSources(),
     ]);
 
     let carbonEmissions: CarbonEmission[] = [];
     let allCarbonEmissions: CarbonEmission[] = [];
 
-    const filteredConsumptions = consumptionsForSelectedMonth.filter(UtilityService.filterByFuelSource(fuelSourceId));
+    const filteredConsumptions = fuelSourceId
+      ? consumptionsForSelectedMonth.filter(UtilityService.filterByFuelSource(fuelSourceId))
+      : consumptionsForSelectedMonth;
     if (filteredConsumptions.length > 0) {
       const emissions = await UtilityService.getEmissions({
         businessId: req.user.id,
@@ -286,22 +289,29 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
       });
 
       const [result1, result2] = await Promise.all([
-        DashboardService.findCarbonEmissions({
-          forYear: selectedYear,
-          emissions,
-          allConsumptions: filteredConsumptions,
-          fuels: fuelSources,
-        }),
-        DashboardService.findCarbonEmissions({
-          emissions,
-          allConsumptions: consumptionsForSelectedMonth,
-          fuels: fuelSources,
-        }),
+        DashboardService.findCarbonEmissions(
+          {
+            forYear: selectedYear,
+            emissions,
+            allConsumptions: filteredConsumptions,
+            fuels: fuelSources,
+          },
+          { ignoreFuelSource: fuelSourceId === undefined },
+        ),
+        DashboardService.findCarbonEmissions(
+          {
+            emissions,
+            allConsumptions: consumptionsForSelectedMonth,
+            fuels: fuelSources,
+          },
+          { ignoreFuelSource: fuelSourceId === undefined },
+        ),
       ]);
 
       carbonEmissions = result1 ? result1 : [];
       allCarbonEmissions = result2 ? result2.filter(DbUtils.filterByYear(selectedYear.getFullYear())) : [];
     }
+    debugger;
     return {
       carbonEmissions: carbonEmissions.sort(AppUtils.sortByProp('carbonEmission', req.query?.order || 'asc')),
       allCarbonEmissions: allCarbonEmissions,

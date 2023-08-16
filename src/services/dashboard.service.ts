@@ -73,7 +73,6 @@ const getConsumptionStatistics = ({
         );
         const previouseRecord = consumptions[idx - 1];
 
-        debugger;
         const data = {
           date,
           fuelSourceId: fuelSourcesId[fuelSourcesIdx],
@@ -278,12 +277,15 @@ export type CarbonEmission = {
   averageEmissionPerDay: number;
   siteId: number;
 };
-const findCarbonEmissions = (params: {
-  forYear?: Date;
-  allConsumptions: AppModels['UtilityConsumption'][];
-  emissions: AppModels['UtilityEmission'][];
-  fuels?: FuelSource[];
-}) => {
+const findCarbonEmissions = (
+  params: {
+    forYear?: Date;
+    allConsumptions: AppModels['UtilityConsumption'][];
+    emissions: AppModels['UtilityEmission'][];
+    fuels?: FuelSource[];
+  },
+  opt?: { ignoreFuelSource: boolean },
+) => {
   const filterResultForParamDate = (c: CarbonEmission) => {
     const yearParam = params.forYear;
 
@@ -294,8 +296,16 @@ const findCarbonEmissions = (params: {
     const dateToFilterBy = `${year}`;
     return c.date.slice(0, 4) === dateToFilterBy;
   };
-  const findEmissionForConsumption = (c: AppModels['UtilityConsumption']) => (e: AppModels['UtilityEmission']) =>
-    c.date.slice(0, 4) === e.date?.split('-').toString() && c.fuelSourceId === e.fuelSourceId && c.siteId === e.siteId;
+  const findEmissionForConsumption = (c: AppModels['UtilityConsumption']) => (e: AppModels['UtilityEmission']) => {
+    if (opt?.ignoreFuelSource === true) {
+      return c.date.slice(0, 4) === e.date?.split('-')[0].toString() && c.siteId === e.siteId;
+    }
+    return (
+      c.date.slice(0, 4) === e.date?.split('-')[0].toString() &&
+      c.fuelSourceId === e.fuelSourceId &&
+      c.siteId === e.siteId
+    );
+  };
 
   const filterCarbonEmissionsForDate = (c: CarbonEmission) => (e: CarbonEmission) => {
     return c.date.slice(5, 7) === e.date.slice(5, 7);
