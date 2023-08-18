@@ -455,6 +455,7 @@ export async function seed(knex: Knex): Promise<void> {
       date: `2020-01-01`,
       fuelSourceId: 2,
       usedInId: 2,
+      emissionFactor: 20,
       siteId: site2.id,
     }),
     buildFakeEmission({
@@ -462,6 +463,7 @@ export async function seed(knex: Knex): Promise<void> {
       date: `2020-01-01`,
       fuelSourceId: 3,
       usedInId: 2,
+      emissionFactor: 80,
       siteId: site2.id,
     }),
   ]);

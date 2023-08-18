@@ -99,6 +99,7 @@ export const buildFakeEmission = (p: {
   fuelSourceId: number;
   usedInId: number;
   date?: string;
+  emissionFactor?: number;
 }) => ({
   id: p.id,
   conversionFactor: 20,

@@ -959,7 +959,7 @@ export interface components {
             date: string;
             carbonEmission: number;
             carbonTarget: number;
-          }[];
+          }[][];
         };
       };
     };

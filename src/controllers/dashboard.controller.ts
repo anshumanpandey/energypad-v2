@@ -461,14 +461,15 @@ export const getEnergyWaste: any = async (req: any) => {
     UtilityService.getFuelSources(),
   ]);
 
+  const oldParams = {
+    businessId: req.user.id,
+    startDate: subYears(selectedYear, 1),
+    endDate: endOfYear(subYears(selectedYear, 1)),
+    fuelSourceId: fuelSources.map(AppUtils.getRecordId),
+    siteId: siteId,
+  };
   const [oldConsumptions, currentConsumptionRecords] = await Promise.all([
-    DashboardService.produceYearConsumptions({
-      businessId: req.user.id,
-      startDate: subYears(selectedYear, 1),
-      endDate: endOfYear(subYears(selectedYear, 1)),
-      fuelSourceId: fuelSources.map(AppUtils.getRecordId),
-      siteId: siteId,
-    }),
+    DashboardService.produceYearConsumptions(oldParams),
     DashboardService.produceYearConsumptions({
       businessId: req.user.id,
       startDate: subMonths(selectedYear, 1),
@@ -533,6 +534,6 @@ export const getEnergyWaste: any = async (req: any) => {
   }
 
   return {
-    energyTargets: statistics.sort(AppUtils.sortByProp('consumption', req.query?.order || 'asc')),
+    energyTargets: statistics.map((i) => i.filter(DashboardService.consumptionIsNotProduced)),
   };
 };
