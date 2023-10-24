@@ -2,11 +2,9 @@
 require('ts-node').register({ transpileOnly: true });
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const DB = require('./src/lib/db/Db').default;
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const opt = require('./src/lib/db/knexfile');
 
 const setup = async (): Promise<void> => {
-  await DB.migrate
+  return DB.migrate
     .rollback(undefined, true)
     .then(() => {
       console.log('TEST DB DELETED');
@@ -14,6 +12,10 @@ const setup = async (): Promise<void> => {
     })
     .then(function () {
       return DB.seed.run();
+    })
+    .catch((err: Error) => {
+      console.log(err);
+      return err;
     });
 };
 

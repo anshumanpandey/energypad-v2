@@ -20,27 +20,18 @@ const uniqueElements = (a: any) => {
   }
   return out;
 };
-const getConsumptionStatistics = ({
-  consumptions,
-}: {
-  consumptions: Pick<
-    AppModels['UtilityConsumption'],
-    | 'date'
-    | 'consumption'
-    | 'totalCost'
-    | 'conversionFactor'
-    | 'siteId'
-    | 'fuelSourceId'
-    | 'fuelSourceName'
-    | 'siteName'
-  >[];
-}) => {
-  const filterByMonth = (monthToSearch: number) => (c: typeof consumptions[0]) => {
+
+type ConsumptionForStatistic = Pick<
+  AppModels['UtilityConsumption'],
+  'date' | 'consumption' | 'totalCost' | 'conversionFactor' | 'siteId' | 'fuelSourceId' | 'fuelSourceName' | 'siteName'
+>;
+const getConsumptionStatistics = ({ consumptions }: { consumptions: ConsumptionForStatistic[] }) => {
+  const filterByMonth = (monthToSearch: number) => (c: ConsumptionForStatistic) => {
     const [, month] = c.date.split('-');
     return new Decimal(month).equals(monthToSearch);
   };
 
-  const getAverage = (record: typeof consumptions[0], of: 'totalCost' | 'consumption') => {
+  const getAverage = (record: ConsumptionForStatistic, of: 'totalCost' | 'consumption') => {
     const date = DbUtils.stringDateToDate(record.date);
     const amountOfDaysOnMonth = getDaysInMonth(date);
     return new Decimal(record[of]).dividedBy(amountOfDaysOnMonth).toDecimalPlaces(2).toNumber();
@@ -54,48 +45,55 @@ const getConsumptionStatistics = ({
     let thisStatistics = [];
     for (let fuelSourcesIdx = 0; fuelSourcesIdx < fuelSourcesId.length; fuelSourcesIdx++) {
       thisStatistics = [];
+      const fuelSourceId = fuelSourcesId[fuelSourcesIdx];
+      const siteId = sitesId[siteIdx];
+
       const thisIterationConsumptions = consumptions
-        .filter(UtilityService.filterByFuelSource(fuelSourcesId[fuelSourcesIdx]))
-        .filter(SitesService.filterBySiteId(sitesId[siteIdx]));
+        .filter(UtilityService.filterByFuelSource(fuelSourceId))
+        .filter(SitesService.filterBySiteId(siteId));
 
       for (let idx = 1; idx <= thisIterationConsumptions.length; idx++) {
-        const consumptionFilter = (c: typeof consumptions[0]) =>
-          filterByMonth(idx)(c) && c.fuelSourceId === fuelSourcesId[fuelSourcesIdx] && sitesId[siteIdx] === c.siteId;
-        const consumptionOfMonth = consumptions.filter(consumptionFilter).sort(DbUtils.sortByStringDate).reverse();
+        const consumptionFilter = (month: number) => (c: ConsumptionForStatistic) =>
+          filterByMonth(month)(c) && c.fuelSourceId === fuelSourceId && siteId === c.siteId;
 
-        if (consumptionOfMonth.length === 0) {
+        const [consumptionOfMonth] = consumptions
+          .filter(consumptionFilter(idx))
+          .sort(DbUtils.sortByStringDate)
+          .reverse();
+
+        if (consumptionOfMonth === undefined) {
           break;
         }
 
-        const date = `${consumptionOfMonth[0].date.split('-')[0]}-${('0' + idx).slice(-2)}-01`;
-        const mostRecentRecord = consumptionOfMonth.find(
-          (c) => c.date === date && c.siteId === sitesId[siteIdx] && fuelSourcesId[fuelSourcesIdx],
-        );
-        const previouseRecord = consumptions[idx - 1];
+        const date = `${consumptionOfMonth.date.split('-')[0]}-${('0' + idx).slice(-2)}-01`;
+        const previouseRecord = consumptions
+          .filter(consumptionFilter(idx - 1))
+          .sort(DbUtils.sortByStringDate)
+          .reverse()[0];
 
         const data = {
           date,
           fuelSourceId: fuelSourcesId[fuelSourcesIdx],
-          fuelSourceName: consumptionOfMonth[0].fuelSourceName,
+          fuelSourceName: consumptionOfMonth.fuelSourceName,
           siteId: sitesId[siteIdx],
-          siteName: consumptionOfMonth[0].siteName,
-          averageConsumption: getAverage(consumptionOfMonth[0], 'consumption'),
-          averageCost: getAverage(consumptionOfMonth[0], 'totalCost'),
-          cost: consumptionOfMonth[0].totalCost,
-          consumption: consumptionOfMonth[0].consumption,
+          siteName: consumptionOfMonth.siteName,
+          averageConsumption: getAverage(consumptionOfMonth, 'consumption'),
+          averageCost: getAverage(consumptionOfMonth, 'totalCost'),
+          cost: consumptionOfMonth.totalCost,
+          consumption: consumptionOfMonth.consumption,
           increasedConsumptionPercentage:
-            previouseRecord.consumption === 0
+            !previouseRecord || previouseRecord?.consumption === 0
               ? 0
               : MathUtils.calculateIncreasePercentage({
-                  currentValue: mostRecentRecord?.consumption || 0,
-                  passValue: previouseRecord.consumption,
+                  currentValue: consumptionOfMonth?.consumption || 0,
+                  passValue: previouseRecord?.consumption,
                 }),
           increasedCostPercentage:
-            previouseRecord.totalCost === 0
+            !previouseRecord || previouseRecord?.totalCost === 0
               ? 0
               : MathUtils.calculateIncreasePercentage({
-                  currentValue: mostRecentRecord?.totalCost || 0,
-                  passValue: previouseRecord.totalCost || 0,
+                  currentValue: consumptionOfMonth?.totalCost || 0,
+                  passValue: previouseRecord?.totalCost || 0,
                 }),
         };
         thisStatistics.push(data);
