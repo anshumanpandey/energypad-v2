@@ -5,7 +5,6 @@ COPY package*.json ./
 COPY yarn.lock ./
 COPY ./migration_tsconfig.json ./tsconfig.json
 COPY ./src/lib/db/knexfile.ts ./src/lib/db/knexfile.ts
-COPY ./test ./test
 
 RUN apt-get -y update
 

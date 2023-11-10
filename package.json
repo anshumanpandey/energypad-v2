@@ -16,7 +16,7 @@
     "generate:types": "tsc-silent --project ./types-tsconfig.json --suppress 2339@/src && ts-node ./src/scripts/GenerateTypes.ts",
     "generate:schema": "tsc-silent --project ./types-tsconfig.json --suppress 2339@/src && ts-node --project ./types-tsconfig.json ./src/scripts/GenerateSchema.ts",
     "app:upgrade": "git pull && git submodule update --remote",
-    "app:deploy": "sudo docker-compose build && sudo docker-compose up -d",
+    "app:deploy": "npm run app:upgrade && sudo docker-compose build && sudo docker-compose up -d",
     "lint": "eslint src/",
     "format": "eslint src/**/*.ts --fix",
     "pretest": "rm -f testdb.db && npm run predev",
