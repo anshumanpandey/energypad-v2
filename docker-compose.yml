@@ -39,6 +39,8 @@ services:
       - project_db
     links:
       - 'project_db:project_db'
+    volumes:
+      - ./assets:/app/src/lib/assets
   migration:
     build:
       context: .
