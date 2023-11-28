@@ -25,6 +25,7 @@ USER node
 RUN yarn install --production
 COPY --from=builder /home/node/app/dist ./dist
 COPY --from=builder /home/node/app/dist/lib/db ./src/lib/db
+COPY ./assets ./assets
 ARG PROD_DB_HOSTNAME
 ARG DB_USERNAME
 ARG DB_PASSWORD
