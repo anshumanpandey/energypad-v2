@@ -296,7 +296,8 @@ const findCarbonEmissions = (
   };
   const findEmissionForConsumption = (c: AppModels['UtilityConsumption']) => (e: AppModels['UtilityEmission']) => {
     if (opt?.ignoreFuelSource === true) {
-      return c.date.slice(0, 4) === e.date?.split('-')[0].toString() && c.siteId === e.siteId;
+      const match = c.date.slice(0, 4) === e.date?.slice(0, 4) && c.siteId === e.siteId;
+      return match;
     }
     return (
       c.date.slice(0, 4) === e.date?.split('-')[0].toString() &&
@@ -358,6 +359,7 @@ const findCarbonEmissions = (
   const filterNull = (i: CarbonEmission | null) => i !== null;
   const carbonEmissions = allCarbonEmissions.filter(filterNull) as CarbonEmission[];
 
+  debugger;
   const result = carbonEmissions.map(mapCarbonTarget).filter(filterResultForParamDate);
 
   return result;

@@ -2,6 +2,19 @@
 version: '3.7'
 
 services:
+  nginx:
+    restart: always
+    build:
+      context: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+    links:
+      - 'api:api'
+    volumes:
+      - /etc/ssl/energiepad:/etc/ssl/energiepad
   project_db:
     container_name: project_db
     image: postgres
