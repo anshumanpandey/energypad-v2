@@ -14,6 +14,7 @@ services:
     links:
       - 'api:api'
     volumes:
+      - /var/www/.well-known/pki-validation:/var/www/.well-known/pki-validation
       - /etc/ssl/energiepad:/etc/ssl/energiepad
   project_db:
     container_name: project_db
