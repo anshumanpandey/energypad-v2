@@ -31,7 +31,7 @@ authRoutes.get(
   '/energyWaste',
   GetDashboardEnergyWastePath,
   AuthMiddleware,
-  ExpressAsync(DashboardController.getEnergyWaste),
+  ExpressAsync(DashboardController.energyWaste),
 );
 
 export default authRoutes;

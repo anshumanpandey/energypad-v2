@@ -7,6 +7,7 @@ import SiteService from './sites.service';
 import { ProducedConsumption } from './dashboard.service';
 import { capitalizeFirstLetter } from '../utils/appUtils';
 import { ulid } from 'ulid';
+import * as flatCache from 'flat-cache';
 import { UtilityService } from '@services';
 import { HDDRecord } from './greenDays.service';
 
@@ -396,13 +397,14 @@ export type GetConsumptionsParams = {
   fuelSourceId?: number | number[];
   siteId?: number | number[];
 };
-export const getConsumptions = (params: GetConsumptionsParams): Promise<AppModels['UtilityConsumption'][]> => {
+export const getConsumptions = async (params: GetConsumptionsParams): Promise<AppModels['UtilityConsumption'][]> => {
   const fields = [
     'UtilityConsumptions.*',
     { fuelSourceId: 'FuelSources.id' },
     { fuelSourceName: 'FuelSources.source' },
     { siteId: 'S.id' },
     { siteName: 'S.name' },
+    { usedInId: 'Use.usedInId' },
   ];
 
   const query = DB('UtilityConsumptions')
@@ -410,6 +412,7 @@ export const getConsumptions = (params: GetConsumptionsParams): Promise<AppModel
     .innerJoin('FuelSources', 'UtilityConsumptions.fuelSourceId', 'FuelSources.id')
     .innerJoin({ S: 'Sites' }, 'UtilityConsumptions.siteId', 'S.id')
     .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
+    .innerJoin({ Use: 'UtilityConsumptionsUse' }, 'UtilityConsumptions.id', 'Use.consumptionId')
     .where('B.id', params.businessId);
 
   if (params.startDate) {
@@ -447,8 +450,25 @@ export const getConsumptions = (params: GetConsumptionsParams): Promise<AppModel
       query.where('UtilityConsumptions.siteId', params.siteId);
     }
   }
-
-  return query;
+  const records = await query;
+  const table = new Map();
+  for (let i = 0; i < records.length; i++) {
+    const r = records[i];
+    const found = table.get(r.id);
+    if (found) {
+      const { usedInId } = r;
+      found.usedInId.push(usedInId);
+      table.set(r.id, found);
+    } else {
+      const { usedInId, ...c } = r;
+      table.set(r.id, {
+        ...c,
+        usedInId: [usedInId],
+      });
+    }
+  }
+  const consumptions = Array.from(table.values());
+  return consumptions;
 };
 
 export type FuelSource = AppModels['FuelSource'] & { id: number };
@@ -612,4 +632,37 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
 
 export const filterByFuelSource = (i: number) => (r: { fuelSourceId: number }) => {
   return i === r.fuelSourceId;
+};
+
+/**
+ * The following function caches the records of the FuelUses table
+ * in order to not query the DB each time.
+ * This functions assumes the records on the table will never be changed or updated
+ * and if do so the app needs to be restarted to clear cache and update the values on it
+ **/
+  const usedInCache = flatCache.load('usedIn');
+export const isOnUse = async (p: { usedInId: number | number[]; use: 'Heating' | 'Cooling' }) => {
+  let usedInFound = [usedInCache.getKey(p.usedInId.toString())];
+  if (Array.isArray(p.usedInId)) {
+    usedInFound = p.usedInId.map((i) => usedInCache.getKey(i.toString()));
+  }
+
+  if (usedInFound.some(i => i === undefined || i === null)) {
+    const usesIn = await DB('FuelUses').select();
+    for (let i = 0; i < usesIn.length; i++) {
+      const useIn = usesIn[i];
+      usedInCache.setKey(useIn.id.toString(), useIn);
+      if (Array.isArray(p.usedInId)) {
+        if (p.usedInId.includes(useIn.id)) {
+          usedInFound = useIn;
+        }
+      } else {
+        if (p.usedInId === useIn.id) {
+          usedInFound = useIn;
+        }
+      }
+    }
+      usedInCache.save();
+  }
+  return usedInFound.some(i => i.use === p.use);
 };

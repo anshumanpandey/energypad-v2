@@ -4,7 +4,7 @@ import { AuthGetAppController } from '@types';
 import { DbUtils, MathUtils, ErrorUtils, AppUtils } from '@utils';
 import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYears, addMonths } from 'date-fns';
 import { CarbonEmission } from '../services/dashboard.service';
-import { HDDRecord } from '../services/greenDays.service';
+import { GetHddsParams2, HDDRecord } from '../services/greenDays.service';
 import { GetConsumptionsParams, Projection } from '../services/utility.service';
 
 export const getDataByYear = async (req: any) => {
@@ -449,16 +449,19 @@ export const getReportData: any = async (req: any) => {
   };
 };
 
-//TODO:  fix this enpoint definition
-//export const getEnergyWaste: AuthGetAppController<'GetDashboardEnergyWaste', '/api/dashboard/energyWaste'> = async (
-export const getEnergyWaste: any = async (req: any) => {
+export const energyWaste: any = async (req: any) => {
   const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
-  const siteId = MathUtils.toInt(req.query.siteId) || new Date().getFullYear();
+  const siteId: number | number[] | undefined = req.query?.siteId
+    ? Array.isArray(req.query.siteId)
+      ? req.query.siteId.map(MathUtils.toInt)
+      : MathUtils.toInt(req.query.siteId)
+    : undefined;
   const selectedYear = new Date(year, 0, 1);
 
-  const [business, fuelSources] = await Promise.all([
-    UserService.getUserBy({ id: req.user.id }),
+  const [fuelSources, patterns, sites] = await Promise.all([
     UtilityService.getFuelSources(),
+    UserService.getPatterns({ siteId: siteId, businessId: req.user.id }),
+    SitesService.findBy({ id: siteId }),
   ]);
 
   const oldParams = {
@@ -466,7 +469,7 @@ export const getEnergyWaste: any = async (req: any) => {
     startDate: subYears(selectedYear, 1),
     endDate: endOfYear(subYears(selectedYear, 1)),
     fuelSourceId: fuelSources.map(AppUtils.getRecordId),
-    siteId: siteId,
+    siteId,
   };
   const [oldConsumptions, currentConsumptionRecords] = await Promise.all([
     DashboardService.produceYearConsumptions(oldParams),
@@ -475,21 +478,15 @@ export const getEnergyWaste: any = async (req: any) => {
       startDate: subMonths(selectedYear, 1),
       endDate: endOfYear(selectedYear),
       fuelSourceId: fuelSources.map(AppUtils.getRecordId),
-      siteId: siteId,
+      siteId,
     }),
   ]);
 
-  let statistics: {
-    date: string;
-    consumption: number;
-    projectedEnergy: number;
-    saving: number;
-    siteId: number;
-  }[][] = [];
+  let statistics: Awaited<ReturnType<typeof DashboardService.calculateWaste>> = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
-  if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
-    const mapRecords = (r: typeof oldConsumptions[0]) => {
+  if (allConsumptionAreProduced === false && currentConsumptionRecords.length > 0) {
+    const consumptionToBreakdown = (r: typeof oldConsumptions[0]) => {
       const startDate = r.date;
 
       const date = DbUtils.stringDateToDate(r.date);
@@ -500,21 +497,41 @@ export const getEnergyWaste: any = async (req: any) => {
 
     const promises: Promise<ApiError | HDDRecord[]>[] = [];
     if (oldConsumptions.length !== 0) {
-      const params = {
-        postalCode: business.postCode,
-        breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(mapRecords),
-        valuesToGet: ['HDD' as const],
-      };
+      const params: GetHddsParams2[] = [];
+      for (let i = 0; i < sites.length; i++) {
+        const s = sites[i];
+        const pattern = patterns.find((p) => p.siteId === s.id);
+        if (!pattern) {
+          continue;
+        }
+        params.push({
+          temperature: pattern.temperature,
+          postalCode: s.postCode,
+          siteId: s.id,
+          breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(consumptionToBreakdown),
+          valuesToGet: ['HDD'],
+        });
+      }
 
-      promises.push(GreenDaysServices.getHdds(params));
+      promises.push(GreenDaysServices.getHdds2(params));
     }
     if (currentConsumptionRecords.length !== 0) {
-      const params = {
-        postalCode: business.postCode,
-        breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(mapRecords),
-        valuesToGet: ['HDD' as const],
-      };
-      promises.push(GreenDaysServices.getHdds(params));
+      const params: GetHddsParams2[] = [];
+      for (let i = 0; i < sites.length; i++) {
+        const s = sites[i];
+        const pattern = patterns.find((p) => p.siteId === s.id);
+        if (!pattern) {
+          continue;
+        }
+        params.push({
+          temperature: pattern.temperature,
+          postalCode: s.postCode,
+          siteId: s.id,
+          breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(consumptionToBreakdown),
+          valuesToGet: ['HDD'],
+        });
+      }
+      promises.push(GreenDaysServices.getHdds2(params));
     }
 
     const [pastHdds, currentHdd] = await Promise.all(promises);
@@ -522,18 +539,17 @@ export const getEnergyWaste: any = async (req: any) => {
     if (currentHdd instanceof ApiError) return currentHdd;
 
     const energyParams = {
-      pastConsumptionRecords: oldConsumptions,
-      pastHdds,
-      currentConsumptionRecords,
-      currentHdd,
-      year: selectedYear.getFullYear(),
+      consumptions: oldConsumptions,
+      hdd: pastHdds,
+      nextConsumptions: currentConsumptionRecords,
+      nextHdd: currentHdd,
     };
 
-    statistics = await UtilityService.consumingProjection(energyParams);
+    statistics = await DashboardService.calculateWaste(energyParams);
     if (ErrorUtils.isErrorInstance(statistics)) return statistics;
   }
 
   return {
-    energyTargets: statistics.map((i) => i.filter(DashboardService.consumptionIsNotProduced)),
+    waste: statistics,
   };
 };

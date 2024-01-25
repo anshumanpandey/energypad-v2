@@ -4,6 +4,17 @@ require('ts-node').register({ transpileOnly: true });
 const DB = require('./src/lib/db/Db').default;
 
 const setup = async (): Promise<void> => {
+  let tables: { tablename: string }[] = await DB('pg_catalog.pg_tables')
+    .select('tablename')
+    .where({ schemaname: 'public' });
+  const tablesToIgnore = ['knex_migrations', 'knex_migrations_lock'];
+  tables = tables.filter((t) => !tablesToIgnore.includes(t.tablename));
+
+  for (let idx = 0; idx < tables.length; idx++) {
+    const t = tables[idx];
+    await DB.raw(`TRUNCATE "${t.tablename}" CASCADE;`);
+  }
+    
   return DB.migrate
     .rollback(undefined, true)
     .then(() => {

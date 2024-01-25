@@ -28,6 +28,7 @@
     "seeds/**/*.ts",
     "Energiepad/**/*",
     "src/scripts/**/*.ts",
-    "jest.setup.ts"
+    "jest.setup.ts",
+    "jest.unit.config.ts"
   ]
 }

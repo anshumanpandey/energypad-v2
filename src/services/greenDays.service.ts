@@ -83,6 +83,13 @@ type DateRange = {
   siteId: number;
 };
 
+const dateRangeToBreakdownRange = (i: DateRange) => {
+  return {
+    first: i.startDate,
+    last: i.endDate,
+  };
+};
+
 type GetHddsParams = {
   postalCode: string;
   breakDowns: DateRange[];
@@ -124,16 +131,9 @@ const getHdds = (p: GetHddsParams) => {
   for (let i = 0; i < toIterate.length; i++) {
     const el = toIterate[i];
 
-    const mapDateReanges = (i: DateRange) => {
-      return {
-        first: i.startDate,
-        last: i.endDate,
-      };
-    };
-
     const breakdown = {
       type: 'CustomBreakdown',
-      dayRanges: el.breakDowns.map(mapDateReanges),
+      dayRanges: el.breakDowns.map(dateRangeToBreakdownRange),
     };
 
     const locationDataRequest = {
@@ -180,7 +180,73 @@ const getHdds = (p: GetHddsParams) => {
   });
 };
 
-export default { getHdds };
+export type GetHddsParams2 = {
+  temperature: number;
+  postalCode: string;
+  siteId: number;
+  breakDowns: DateRange[];
+  valuesToGet: ('HDD' | 'CDD')[];
+};
+const getHdds2 = async (params: GetHddsParams2[]) => {
+  const promises = [];
+  for (let i = 0; i < params.length; i++) {
+    const p = params[i];
+
+    const location = {
+      type: 'PostalCodeLocation',
+      postalCode: p.postalCode,
+      countryCode: 'GB',
+    };
+
+    const locationDataRequest = {
+      type: 'LocationDataRequest',
+      location: location,
+      dataSpecs: {} as Record<string, any>,
+    };
+
+    const breakdown = {
+      type: 'CustomBreakdown',
+      dayRanges: p.breakDowns.map(dateRangeToBreakdownRange),
+    };
+
+    if (p.valuesToGet.includes('HDD')) {
+      locationDataRequest.dataSpecs.myHDD = {
+        type: 'DatedDataSpec',
+        calculation: {
+          type: 'HeatingDegreeDaysCalculation',
+          baseTemperature: {
+            unit: 'C',
+            value: p.temperature,
+          },
+        },
+        breakdown: breakdown,
+      };
+    }
+    if (p.valuesToGet.includes('CDD')) {
+      locationDataRequest.dataSpecs.myCDD = {
+        type: 'DatedDataSpec',
+        calculation: {
+          type: 'CoolingDegreeDaysCalculation',
+          baseTemperature: {
+            unit: 'C',
+            value: p.temperature,
+          },
+        },
+        breakdown: breakdown,
+      };
+    }
+    promises.push(makeRequest(locationDataRequest, p.siteId));
+  }
+  return Promise.all(promises).then((results) => {
+    const errorFound = results.find(ErrorUtils.isErrorInstance);
+    if (errorFound) {
+      return errorFound;
+    }
+    return results.flatMap((f) => (ErrorUtils.isErrorInstance(f) ? [] : f));
+  });
+};
+
+export default { getHdds, getHdds2 };
 
 export interface GreenData {
   metadata: Metadata;

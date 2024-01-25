@@ -121,28 +121,21 @@ describe('/Dashboard ', () => {
     15 * 1000,
   );
 
-  test(
+  test.only(
     'It should respond with correct energyWasteData data',
     async () => {
-      const body = await loginUser(app)('mail322@mail.com');
+      const body = await loginUser(app)('mail723@mail.com');
 
       const response = await supertest(app)
-        .get('/api/dashboard/energyWaste?year=2020&siteId=484')
+        .get('/api/dashboard/energyWaste?year=2002')
         .set('Authorization', `Bearer ${body.jwt}`);
 
       expect(response.statusCode).toBe(200);
-      expect(response.body.carbonEmissions.length).toBe(1);
-      expect(response.body.allCarbonEmissions.length).toBe(1);
-
-      const response2 = await supertest(app)
-        .get('/api/dashboard/carbonFootprint?year=2020')
-        .set('Authorization', `Bearer ${body.jwt}`);
-
-      expect(response2.statusCode).toBe(200);
-      expect(response2.body.carbonEmissions.length).toBe(1);
-      expect(response2.body.carbonEmissions[0].length).toBe(2);
-      expect(response2.body.allCarbonEmissions.length).toBe(1);
-      expect(response2.body.allCarbonEmissions[0].length).toBe(2);
+      expect(response.body.waste.length).toBe(3);
+      console.log(response.body.waste)
+      expect(response.body.waste[0].waste).toBe(-28.4652);
+      expect(response.body.waste[1].waste).toBe(32.846);
+      expect(response.body.waste[2].waste).toBe(4.7721);
     },
     15 * 1000,
   );

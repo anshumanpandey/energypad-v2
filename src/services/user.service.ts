@@ -97,9 +97,9 @@ type GetPatternsParams = {
   startDate?: Date;
   endDate?: Date;
   businessId: number;
-  siteId?: number;
+  siteId?: number | number[];
 };
-export const getPatterns = (p: GetPatternsParams) => {
+export const getPatterns = async (p: GetPatternsParams): Promise<AppModels['BusinessPattern'][]> => {
   const query = DB('BusinessPatterns')
     .select('BusinessPatterns.*')
     .innerJoin({ S: 'Sites' }, 'BusinessPatterns.siteId', 'S.id')
@@ -112,10 +112,15 @@ export const getPatterns = (p: GetPatternsParams) => {
     query.where('endDate', '>=', formatISO(p.endDate).split('T')[0]);
   }
   if (p?.siteId) {
-    query.where('S.id', p.siteId);
+    if (Array.isArray(p.siteId)) {
+      query.whereIn('S.id', p.siteId);
+    } else {
+      query.where('S.id', p.siteId);
+    }
   }
 
-  return query;
+  const r = await query;
+  return r;
 };
 
 type DeletePattersParams = {

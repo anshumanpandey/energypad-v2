@@ -2,9 +2,10 @@ import { AppModels } from '@types';
 import { Decimal } from 'decimal.js';
 import { getDaysInMonth } from 'date-fns';
 import { DbUtils, MathUtils } from '@utils';
-import { SitesService, UtilityService } from '@services';
+import { DashboardService, SitesService, UtilityService } from '@services';
 import formatISO from 'date-fns/formatISO';
 import { FuelSource, GetConsumptionsParams } from './utility.service';
+import { HDDRecord } from './greenDays.service';
 
 const uniqueElements = (a: any) => {
   const seen: Record<number, any> = {};
@@ -359,7 +360,6 @@ const findCarbonEmissions = (
   const filterNull = (i: CarbonEmission | null) => i !== null;
   const carbonEmissions = allCarbonEmissions.filter(filterNull) as CarbonEmission[];
 
-  debugger;
   const result = carbonEmissions.map(mapCarbonTarget).filter(filterResultForParamDate);
 
   return result;
@@ -384,6 +384,160 @@ const agroupConsumptionBySiteFuelsource = (consumptions: AppModels['UtilityConsu
   }
 };
 
+const singlefuelFunction = (p: {
+  hdd: HDDRecord;
+  bSlope: number;
+  consumption: AppModels['UtilityConsumption'];
+  cIntercept: number;
+}) => {
+  const { hdd, bSlope, consumption, cIntercept } = p;
+  const weather = new Decimal(hdd.value).times(bSlope);
+  const projectedEnergy = new Decimal(cIntercept).add(weather);
+  return {
+    waste: new Decimal(projectedEnergy).minus(consumption.consumption).toDP(4, Decimal.ROUND_DOWN).toNumber(),
+    siteId: consumption.siteId,
+    date: consumption.date,
+  };
+};
+
+const coolingFunction = (p: {
+  hdd: HDDRecord;
+  bSlope: number;
+  consumption: AppModels['UtilityConsumption'];
+  cIntercept: number;
+}) => {
+  const { hdd, bSlope, consumption, cIntercept } = p;
+  const weather = new Decimal(hdd.value).times(bSlope);
+  const projectedEnergy = new Decimal(Decimal.abs(cIntercept)).add(weather);
+  const adjustedProjectedEnergy = new Decimal(Decimal.abs(cIntercept)).add(weather);
+  return {
+    waste: new Decimal(projectedEnergy).minus(consumption.consumption).toDP(4, Decimal.ROUND_DOWN).toNumber(),
+    siteId: consumption.siteId,
+    date: consumption.date,
+  };
+};
+type EnergyWasteParams = {
+  consumptions: ProducedConsumption[];
+  hdd: HDDRecord[];
+  nextConsumptions: AppModels['UtilityConsumption'][];
+  nextHdd: HDDRecord[];
+};
+const calculateWaste = async (params: EnergyWasteParams) => {
+  const totalOfConsumption = params.consumptions.reduce(
+    (total, next) => new Decimal(total).add(next.consumption).toNumber(),
+    0,
+  );
+  const totalOfHdd = params.hdd.reduce((total, next) => new Decimal(total).add(next.value).toNumber(), 0);
+  let totalOfHddTimesConsumption = 0;
+  for (let i = 0; i < params.hdd.length; i++) {
+    const hdd = params.hdd[i];
+    const consumption = params.consumptions.find(
+      (c) => c.siteId === hdd.siteId && c.date === DbUtils.dateToStringDate(hdd.date),
+    );
+    if (!consumption) {
+      continue;
+    }
+    totalOfHddTimesConsumption = new Decimal(totalOfHddTimesConsumption)
+      .add(new Decimal(hdd.value).times(consumption.consumption))
+      .toNumber();
+  }
+  const sumOfHddConsumptionTotal = new Decimal(totalOfConsumption).add(totalOfHdd).toNumber();
+  const totalPowerOfConsumption = params.consumptions.reduce(
+    (total, next) => new Decimal(total).add(new Decimal(next.consumption).pow(2)).toNumber(),
+    0,
+  );
+  const totalPowerOfHdd = params.hdd.reduce(
+    (total, next) => new Decimal(total).add(new Decimal(next.value).pow(2)).toNumber(),
+    0,
+  );
+
+  const NX = 6 as const;
+
+  const b9Top = new Decimal(new Decimal(NX).times(totalOfHddTimesConsumption))
+    .minus(new Decimal(totalOfHdd).times(totalOfConsumption))
+    .toNumber();
+  const bBelow = new Decimal(new Decimal(NX).times(totalPowerOfHdd))
+    .minus(new Decimal(totalOfHdd).times(totalOfHdd))
+    .toNumber();
+  const bSlope = new Decimal(b9Top).div(bBelow).toDP(8).toNumber();
+
+  const aTop = new Decimal(new Decimal(totalOfConsumption).times(totalPowerOfHdd))
+    .minus(new Decimal(totalOfHdd).times(totalOfHddTimesConsumption))
+    .toNumber();
+  const aBelow = new Decimal(new Decimal(NX).times(totalPowerOfHdd))
+    .minus(new Decimal(totalOfHdd).times(totalOfHdd))
+    .toNumber();
+  const cIntercept = new Decimal(aTop).div(aBelow).toDP(8).toNumber();
+
+  const results = [];
+  for (let i = 0; i < params.nextConsumptions.length; i++) {
+    const consumption = params.nextConsumptions[i];
+    if (DashboardService.consumptionIsProduced(consumption)) {
+      continue;
+    }
+    const hdd = params.nextHdd.find(
+      (h) => h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date),
+    );
+    if (!hdd) {
+      continue;
+    }
+    const isHeatingOrCooling = (c: AppModels['UtilityConsumption']) =>
+      UtilityService.isOnUse({ usedInId: c.usedInId, use: 'Heating' }) ||
+      UtilityService.isOnUse({ usedInId: c.usedInId, use: 'Cooling' });
+
+    const promises = await Promise.all(params.consumptions.filter(DashboardService.consumptionIsNotProduced).map(isHeatingOrCooling));
+    const isSingleUse = promises.every((i) => i === true);
+    if (isSingleUse) {
+      results.push(
+        singlefuelFunction({
+          hdd,
+          consumption,
+          bSlope,
+          cIntercept,
+        }),
+      );
+    }
+  }
+  return results;
+};
+
+type WasteForPowerAndLightingParams = {
+  baselineConsumptions: AppModels['UtilityConsumption'][];
+  projectedConsumptions: AppModels['UtilityConsumption'][];
+  baselineDaylight: number;
+  projectedDaylight: number;
+  baselinePopulation: number;
+  baselineTime: number;
+  projectedPopulation: number;
+  projectedTime: number;
+};
+const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
+  const ecChangePercentageChange = p.projectedConsumptions.map((c, idx) => {
+    const baselineConsumption = p.baselineConsumptions[idx];
+    const baselineVal = baselineConsumption ? baselineConsumption.consumption : 0;
+    return new Decimal(new Decimal(c.consumption).minus(baselineVal).div(baselineVal)).times(100).toDP(8);
+  });
+
+  const daylightPercentageChange = new Decimal(
+    new Decimal(p.projectedDaylight).minus(p.baselineDaylight).div(p.baselineDaylight),
+  )
+    .times(100)
+    .toDP(9);
+
+  const baselinePopulationMultipliedByTime = new Decimal(p.baselinePopulation).times(p.baselineTime).toDP(9);
+  const projectedPopulationMultipliedByTime = new Decimal(p.projectedPopulation).times(p.projectedTime).toDP(9);
+
+  const projectedPopulationMultipliedByTimePercentageChange = new Decimal(
+    new Decimal(projectedPopulationMultipliedByTime)
+      .minus(baselinePopulationMultipliedByTime)
+      .div(baselinePopulationMultipliedByTime),
+  )
+    .times(100)
+    .toDP(9);
+
+  const dd = new Decimal(projectedPopulationMultipliedByTimePercentageChange).plus(daylightPercentageChange).toDP(9);
+};
+
 export default {
   getConsumptionStatistics,
   getConsumptionDetails,
@@ -391,4 +545,6 @@ export default {
   consumptionIsProduced,
   consumptionIsNotProduced,
   findCarbonEmissions,
+  calculateWaste,
+  wasteForPowerAndLighting,
 };
