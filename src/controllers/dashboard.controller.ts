@@ -551,5 +551,6 @@ export const energyWaste: any = async (req: any) => {
 
   return {
     waste: statistics,
+    consumptions: currentConsumptionRecords,
   };
 };

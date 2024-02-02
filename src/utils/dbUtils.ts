@@ -42,6 +42,28 @@ export const addPrefix = (prefix: string) => (fields: string[]) => {
   return fields.map((i) => ({ [`${prefix}-${i}`]: `${prefix}.${i}` }));
 };
 
+/**
+ * Pass 1 for january
+ * 12 for december
+ */
+export const filterByMonth = (month: number) => (i: { date: string }) => {
+  return Number(i.date.split('-')[1]) === month;
+};
+
+export const filterByYearAndMonth = (p: { date: string }) => (record: { date: string }) => {
+  const [year, month] = p.date.split('-').map(Number);
+  return filterByYear(year)(record) && filterByMonth(month)(record);
+};
+
+export const numberToMonth = (n: number) => {
+  return n <= 9 ? `0${n}` : n;
+};
+
+export const increaseYear = (p: { date: string }, amount: number) => {
+  const [year, month] = p.date.split('-').map(Number);
+  return `${year + amount}-${numberToMonth(month)}-01`;
+};
+
 export const createTransaction = () => {
   return DB.transaction();
 };

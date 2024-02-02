@@ -29,6 +29,7 @@
     "seed:generate:test": "NODE_ENV=test knex seed:make --knexfile ./src/lib/db/knexfile.ts",
     "seed:generate:dev": "NODE_ENV=development knex seed:make --knexfile ./src/lib/db/knexfile.ts",
     "seed:execute": "knex seed:run --knexfile ./src/lib/db/knexfile.ts",
+    "seed:test:execute": "NODE_ENV=test knex seed:run --knexfile ./src/lib/db/knexfile.ts",
     "predeploy": "npm run migration:execute && npm run seed:execute"
   },
   "devDependencies": {

@@ -640,14 +640,17 @@ export const filterByFuelSource = (i: number) => (r: { fuelSourceId: number }) =
  * This functions assumes the records on the table will never be changed or updated
  * and if do so the app needs to be restarted to clear cache and update the values on it
  **/
-  const usedInCache = flatCache.load('usedIn');
-export const isOnUse = async (p: { usedInId: number | number[]; use: 'Heating' | 'Cooling' }) => {
+const usedInCache = flatCache.load('usedIn');
+export const isOnUse = async (p: {
+  usedInId: number | number[];
+  use: 'Heating' | 'Cooling' | 'Powering' | 'Lighting';
+}) => {
   let usedInFound = [usedInCache.getKey(p.usedInId.toString())];
   if (Array.isArray(p.usedInId)) {
     usedInFound = p.usedInId.map((i) => usedInCache.getKey(i.toString()));
   }
 
-  if (usedInFound.some(i => i === undefined || i === null)) {
+  if (usedInFound.some((i) => i === undefined || i === null)) {
     const usesIn = await DB('FuelUses').select();
     for (let i = 0; i < usesIn.length; i++) {
       const useIn = usesIn[i];
@@ -662,7 +665,7 @@ export const isOnUse = async (p: { usedInId: number | number[]; use: 'Heating' |
         }
       }
     }
-      usedInCache.save();
+    usedInCache.save();
   }
-  return usedInFound.some(i => i.use === p.use);
+  return usedInFound.some((i) => i.use === p.use);
 };
