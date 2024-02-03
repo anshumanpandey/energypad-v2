@@ -462,6 +462,47 @@ const wasteForSinglefuelFunction = (params: {
   return results;
 };
 
+type KeysWithValsOfType<T,V> = keyof { [ P in keyof T as T[P] extends V ? P : never ] : P };
+const populateByDateFromSite = (
+  propertyVal: KeysWithValsOfType<AppModels['Site'], number>,
+  p: { consumptions: AppModels['UtilityConsumption'][], sites: AppModels['Site'][] },
+): ValueByRecord[] => {
+  const uniqueSites = Array.from(new Map(p.sites.map((s) => [ s.id, s ])).values());
+  const uniqueDates = Array.from(new Set(p.consumptions.map((c) => c.date)).values());
+  const filledArr: ValueByRecord[] = [];
+  for (let i = 0; i < uniqueSites.length; i++) {
+    const site = uniqueSites[i];
+    for (let j = 0; j < uniqueDates.length; j++) {
+      const date = uniqueDates[j];
+      filledArr.push({
+        siteId: site.id as number,
+        date,
+        value: site[propertyVal],
+      });
+    }
+  }
+  return filledArr;
+};
+const populateArrayByDateSite = (
+  populateVal: number,
+  p: { consumptions: AppModels['UtilityConsumption'][] },
+): ValueByRecord[] => {
+  const uniqueSites = Array.from(new Set(p.consumptions.map((c) => c.siteId)).values());
+  const uniqueDates = Array.from(new Set(p.consumptions.map((c) => c.date)).values());
+  const filledArr: ValueByRecord[] = [];
+  for (let i = 0; i < uniqueSites.length; i++) {
+    const siteId = uniqueSites[i];
+    for (let j = 0; j < uniqueDates.length; j++) {
+      const date = uniqueDates[j];
+      filledArr.push({
+        siteId,
+        date,
+        value: populateVal,
+      });
+    }
+  }
+  return filledArr;
+};
 type WasteValue = { waste: number; date: string; siteId: number };
 type EnergyWasteParams = {
   consumptions: ProducedConsumption[];
@@ -493,18 +534,19 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
   promises = await Promise.all(
     params.consumptions.filter(DashboardService.consumptionIsNotProduced).map(isPowerAndLighting),
   );
+  const sites = await SitesService.findBy({ id: params.consumptions.concat(params.nextConsumptions).map(s => s.id)})
   const isPowerAndCooling = promises.every((i) => i === true);
   if (isPowerAndCooling) {
     const records = wasteForPowerAndLighting({
       baselineConsumptions: params.consumptions,
       projectedConsumptions: params.nextConsumptions,
-      baselineDaylight: Array(params.consumptions.length).fill(16),
-      projectedDaylight: Array(params.consumptions.length).fill(18),
-      baselinePopulation: [],
-      projectedPopulation: [],
+      baselineDaylight: populateArrayByDateSite(16, { consumptions: params.consumptions }),
+      projectedDaylight: populateArrayByDateSite(18, { consumptions: params.nextConsumptions }),
+      baselinePopulation: populateByDateFromSite ('population', { consumptions: params.consumptions, sites }),
+      projectedPopulation: populateByDateFromSite ('population', { consumptions: params.nextConsumptions, sites }),
 
-      baselineTime: [],
-      projectedTime: [],
+      baselineTime: populateByDateFromSite ('workinghours', { consumptions: params.consumptions, sites }),
+      projectedTime: populateByDateFromSite ('workinghours', { consumptions: params.nextConsumptions, sites }),
     });
     return records;
   }
@@ -524,12 +566,13 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     const records = wasteForPowerAndLightingAndCooling({
       baselineConsumptions: params.consumptions,
       projectedConsumptions: params.nextConsumptions,
-      baselineDaylight: Array(params.consumptions.length).fill(16),
-      projectedDaylight: Array(params.consumptions.length).fill(18),
-      baselinePopulation: [],
-      projectedPopulation: [],
-      baselineTime: [],
-      projectedTime: [],
+      baselineDaylight: populateArrayByDateSite(16, { consumptions: params.consumptions }),
+      projectedDaylight: populateArrayByDateSite(18, { consumptions: params.consumptions }),
+      baselinePopulation: populateByDateFromSite ('population', { consumptions: params.consumptions, sites }),
+      projectedPopulation: populateByDateFromSite ('population', { consumptions: params.nextConsumptions, sites }),
+
+      baselineTime: populateByDateFromSite ('workinghours', { consumptions: params.consumptions, sites }),
+      projectedTime: populateByDateFromSite ('workinghours', { consumptions: params.nextConsumptions, sites }),
 
       ...params,
     });

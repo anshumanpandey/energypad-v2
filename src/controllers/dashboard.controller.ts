@@ -549,8 +549,23 @@ export const energyWaste: any = async (req: any) => {
     if (ErrorUtils.isErrorInstance(statistics)) return statistics;
   }
 
+  const emissions = await UtilityService.getEmissions({
+    businessId: req.user.id,
+    siteId,
+    fuelSourceId: req.query.fuelSourceId,
+  });
+  const carbonEmissions = DashboardService.findCarbonEmissions(
+    {
+      emissions,
+      allConsumptions: currentConsumptionRecords,
+      fuels: fuelSources,
+    },
+    { ignoreFuelSource: req.query.fuelSourceId === undefined },
+  );
+
   return {
     waste: statistics,
     consumptions: currentConsumptionRecords,
+    carbonEmissions,
   };
 };
