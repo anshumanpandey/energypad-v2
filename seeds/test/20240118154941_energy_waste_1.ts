@@ -233,7 +233,8 @@ export async function seed(knex: Knex): Promise<void> {
     {
       consumptionId: 4522,
       usedInId: 3,
-    },{
+    },
+    {
       consumptionId: 4522,
       usedInId: 4,
     },
@@ -353,7 +354,15 @@ export async function seed(knex: Knex): Promise<void> {
     },
     {
       consumptionId: 4542,
-      usedInId: 2,
+      usedInId: 3,
+    },
+    {
+      consumptionId: 4542,
+      usedInId: 4,
+    },
+    {
+      consumptionId: 4542,
+      usedInId: 105,
     },
     {
       consumptionId: 4544,

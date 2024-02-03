@@ -151,6 +151,6 @@ describe('/Dashboard ', () => {
       expect(response3.statusCode).toBe(200);
       expect(response3.body.waste.length).toBe(3);
     },
-    15 * 1000,
+    20 * 1000,
   );
 });

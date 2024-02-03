@@ -530,7 +530,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       baselineConsumptions: params.consumptions,
       projectedConsumptions: params.nextConsumptions,
       baselineDaylight: populateArrayByDateSite(16, { consumptions: params.consumptions }),
-      projectedDaylight: populateArrayByDateSite(18, { consumptions: params.consumptions }),
+      projectedDaylight: populateArrayByDateSite(18, { consumptions: params.nextConsumptions }),
       baselinePopulation: populateByDateFromSite('population', { consumptions: params.consumptions, sites }),
       projectedPopulation: populateByDateFromSite('population', { consumptions: params.nextConsumptions, sites }),
 
