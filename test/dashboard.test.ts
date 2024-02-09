@@ -121,7 +121,7 @@ describe('/Dashboard ', () => {
     15 * 1000,
   );
 
-  test.only(
+  test(
     'It should respond with correct energyWasteData data',
     async () => {
       const body = await loginUser(app)('mail723@mail.com');
@@ -150,6 +150,21 @@ describe('/Dashboard ', () => {
 
       expect(response3.statusCode).toBe(200);
       expect(response3.body.waste.length).toBe(3);
+    },
+    20 * 1000,
+  );
+
+  test.only(
+    'It should respond with correct report data',
+    async () => {
+      const body = await loginUser(app)('mail723@mail.com');
+
+      const response = await supertest(app)
+        .get('/api/dashboard/getReport?year=2002')
+        .set('Authorization', `Bearer ${body.jwt}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.reports.length).toBe(3);
     },
     20 * 1000,
   );

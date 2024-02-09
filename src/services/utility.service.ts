@@ -472,9 +472,16 @@ export const getConsumptions = async (params: GetConsumptionsParams): Promise<Ap
 };
 
 export type FuelSource = AppModels['FuelSource'] & { id: number };
-export const getFuelSources = async (): Promise<FuelSource[]> => {
+export const getFuelSources = async (p?: { id?: number | number[] }): Promise<FuelSource[]> => {
   const query = DB('FuelSources').select('FuelSources.*');
 
+  if (p?.id) {
+    if (Array.isArray(p.id)) {
+      query.whereIn('id', p.id);
+    } else {
+      query.where('id', p.id);
+    }
+  }
   const records = await query;
 
   return records;

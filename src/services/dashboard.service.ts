@@ -6,6 +6,7 @@ import { DashboardService, SitesService, UtilityService } from '@services';
 import formatISO from 'date-fns/formatISO';
 import { FuelSource, GetConsumptionsParams } from './utility.service';
 import { HDDRecord } from './greenDays.service';
+import { filterByYearAndMonth } from '../utils/dbUtils';
 
 const uniqueElements = (a: any) => {
   const seen: Record<number, any> = {};
@@ -512,7 +513,9 @@ type EnergyWasteParams = {
   nextHdd: HDDRecord[];
 };
 const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> => {
-  const sites = await SitesService.findBy({ id: params.consumptions.concat(params.nextConsumptions).map((s) => s.siteId) });
+  const sites = await SitesService.findBy({
+    id: params.consumptions.concat(params.nextConsumptions).map((s) => s.siteId),
+  });
 
   const isLightingPowerAndCoolingFn = async (c: AppModels['UtilityConsumption']) => {
     const isLighting = await UtilityService.isOnUse({ usedInId: c.usedInId, use: 'Lighting' });
@@ -678,7 +681,6 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
     };
   });
 
-
   const percentageTotalVariable = projectedPopulationMultipliedByTimePercentageChange.map((_) => {
     const [daylightValue] = daylightPercentageChange
       .filter(SitesService.filterBySiteId(_.siteId))
@@ -696,7 +698,7 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
     const record = p.projectedConsumptions[i];
 
     const [currentBaselineConsumption] = p.baselineConsumptions
-      .filter(DbUtils.filterByYearAndMonth({date: DbUtils.decreaseYear(record, 1)}))
+      .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear(record, 1) }))
       .filter(SitesService.filterBySiteId(record.siteId));
     if (!currentBaselineConsumption) {
       continue;
@@ -708,7 +710,7 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
       continue;
     }
     const [percentageVariable] = percentageTotalVariable
-      .filter(DbUtils.filterByYearAndMonth({date: DbUtils.decreaseYear(record, 1)}))
+      .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear(record, 1) }))
       .filter(SitesService.filterBySiteId(record.siteId));
     const waste = new Decimal(
       new Decimal(new Decimal(percentageVariable.value).div(100)).times(currentBaselineConsumption.consumption),
@@ -765,6 +767,57 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingParams & 
   return records;
 };
 
+const calculateFinancialCost = (p: {
+  consumptions: AppModels['UtilityConsumption'][];
+  waste: Awaited<ReturnType<typeof calculateWaste>>;
+}) => {
+  const records = [];
+  for (let i = 0; i < p.consumptions.length; i++) {
+    const consumption = p.consumptions[i];
+    const [waste] = p.waste
+      .filter(filterByYearAndMonth(consumption))
+      .filter(SitesService.filterBySiteId(consumption.siteId));
+    if (!waste) {
+      continue;
+    }
+    records.push({
+      financialCost: new Decimal(waste.waste).times(new Decimal(consumption.totalCost).div(consumption.consumption)),
+    });
+  }
+  return records;
+};
+
+const calculateCarbonImpact = (p: {
+  consumptions: AppModels['UtilityConsumption'][];
+  emissions: Awaited<ReturnType<typeof UtilityService.getEmissions>>;
+  waste: Awaited<ReturnType<typeof calculateWaste>>;
+}) => {
+  const records = [];
+  for (let i = 0; i < p.consumptions.length; i++) {
+    const consumption = p.consumptions[i];
+    const [emission] = p.emissions
+      .filter(filterByYearAndMonth(consumption))
+      .filter(SitesService.filterBySiteId(consumption.siteId));
+    if (!emission) {
+      continue
+    }
+
+    const [waste] = p.waste
+      .filter(filterByYearAndMonth(consumption))
+      .filter(SitesService.filterBySiteId(consumption.siteId));
+    if (!waste) {
+      continue
+    }
+    records.push({
+      date: consumption.date,
+      siteId: consumption.siteId,
+      consumptionCarbonImpact: new Decimal(consumption.consumption).times(emission.emissionFactor).toDP(8).toNumber(),
+      wasteCarbonImpact: new Decimal(waste.waste).times(emission.emissionFactor).toDP(8).toNumber(),
+    });
+  }
+  return records;
+};
+
 export default {
   getConsumptionStatistics,
   getConsumptionDetails,
@@ -776,4 +829,6 @@ export default {
   wasteForPowerAndLighting,
   wasteForSinglefuelFunction,
   wasteForPowerAndLightingAndCooling,
+  calculateFinancialCost,
+  calculateCarbonImpact,
 };

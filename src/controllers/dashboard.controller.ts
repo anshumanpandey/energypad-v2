@@ -483,6 +483,154 @@ export const energyWaste: any = async (req: any) => {
   ]);
 
   let statistics: Awaited<ReturnType<typeof DashboardService.calculateWaste>> = [];
+  let projections: Awaited<ReturnType<typeof UtilityService.consumingProjection>> = [];
+
+  const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
+  if (allConsumptionAreProduced === false && currentConsumptionRecords.length > 0) {
+    const consumptionToBreakdown = (r: typeof oldConsumptions[0]) => {
+      const startDate = r.date;
+
+      const date = DbUtils.stringDateToDate(r.date);
+      const endOfMonthDate = endOfMonth(date);
+      const endDate = formatISO(endOfMonthDate, { representation: 'date' }).split('T')[0];
+      return { startDate, endDate, siteId: r.siteId };
+    };
+
+    const promises: Promise<ApiError | HDDRecord[]>[] = [];
+    if (oldConsumptions.length !== 0) {
+      const params: GetHddsParams2[] = [];
+      for (let i = 0; i < sites.length; i++) {
+        const s = sites[i];
+        const pattern = patterns.find((p) => p.siteId === s.id);
+        if (!pattern) {
+          continue;
+        }
+        params.push({
+          temperature: pattern.temperature,
+          postalCode: s.postCode,
+          siteId: s.id,
+          breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(consumptionToBreakdown),
+          valuesToGet: ['HDD'],
+        });
+      }
+
+      promises.push(GreenDaysServices.getHdds2(params));
+    }
+    if (currentConsumptionRecords.length !== 0) {
+      const params: GetHddsParams2[] = [];
+      for (let i = 0; i < sites.length; i++) {
+        const s = sites[i];
+        const pattern = patterns.find((p) => p.siteId === s.id);
+        if (!pattern) {
+          continue;
+        }
+        params.push({
+          temperature: pattern.temperature,
+          postalCode: s.postCode,
+          siteId: s.id,
+          breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(consumptionToBreakdown),
+          valuesToGet: ['HDD'],
+        });
+      }
+      promises.push(GreenDaysServices.getHdds2(params));
+    }
+
+    const [pastHdds, currentHdd] = await Promise.all(promises);
+    if (pastHdds instanceof ApiError) return pastHdds;
+    if (currentHdd instanceof ApiError) return currentHdd;
+
+    const energyParams = {
+      consumptions: oldConsumptions,
+      hdd: pastHdds,
+      nextConsumptions: currentConsumptionRecords,
+      nextHdd: currentHdd,
+    };
+
+    statistics = await DashboardService.calculateWaste(energyParams);
+    if (ErrorUtils.isErrorInstance(statistics)) return statistics;
+
+    const projectionParams = {
+      pastConsumptionRecords: oldConsumptions,
+      pastHdds,
+      currentConsumptionRecords,
+      currentHdd,
+      year: selectedYear.getFullYear(),
+    };
+    projections = await UtilityService.consumingProjection(projectionParams);
+    if (projections instanceof ApiError) return projections;
+  }
+
+  const emissions = await UtilityService.getEmissions({
+    businessId: req.user.id,
+    siteId,
+    fuelSourceId: req.query.fuelSourceId,
+  });
+  const carbonEmissions = DashboardService.findCarbonEmissions(
+    {
+      emissions,
+      allConsumptions: currentConsumptionRecords,
+      fuels: fuelSources,
+    },
+    { ignoreFuelSource: req.query.fuelSourceId === undefined },
+  );
+
+  return {
+    waste: statistics,
+    consumptions: currentConsumptionRecords,
+    targetConsumptions: projections,
+    carbonEmissions,
+    financialCost: DashboardService.calculateFinancialCost({
+      consumptions: currentConsumptionRecords,
+      waste: statistics,
+    }),
+  };
+};
+
+export const reports: any = async (req: any) => {
+  const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
+  const month = req.query.month !== undefined ? MathUtils.toInt(req.query.month) : new Date().getMonth();
+  const fuelSourceId = req.query.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId): undefined;
+  const selectedYear = new Date(year, month, 1);
+  const siteId = req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined;
+
+  const params = {
+    businessId: req.user.id,
+    startDate: subYears(selectedYear, 1),
+    endDate: endOfYear(subYears(selectedYear, 1)),
+    fuelSourceId: fuelSourceId,
+    siteId,
+  };
+  const [fuelSources, emissions, patterns] = await Promise.all([
+    UtilityService.getFuelSources({ id: fuelSourceId }),
+    UtilityService.getEmissions({
+      businessId: req.user.id,
+      siteId,
+      fuelSourceId: req.query.fuelSourceId,
+    }),
+    UserService.getPatterns({ siteId: siteId, businessId: req.user.id }),
+  ]);
+
+
+  const oldParams = {
+    businessId: req.user.id,
+    startDate: subYears(selectedYear, 1),
+    endDate: endOfYear(subYears(selectedYear, 1)),
+    fuelSourceId: fuelSources.map(AppUtils.getRecordId),
+    siteId,
+  };
+  const [oldConsumptions, currentConsumptionRecords, sites] = await Promise.all([
+    DashboardService.produceYearConsumptions(oldParams),
+    DashboardService.produceYearConsumptions({
+      businessId: req.user.id,
+      startDate: subMonths(selectedYear, 1),
+      endDate: endOfYear(selectedYear),
+      fuelSourceId: fuelSources.map(AppUtils.getRecordId),
+      siteId,
+    }),
+    SitesService.findBy({ id: siteId }),
+  ]);
+
+  let statistics: Awaited<ReturnType<typeof DashboardService.calculateWaste>> = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
   if (allConsumptionAreProduced === false && currentConsumptionRecords.length > 0) {
@@ -549,23 +697,13 @@ export const energyWaste: any = async (req: any) => {
     if (ErrorUtils.isErrorInstance(statistics)) return statistics;
   }
 
-  const emissions = await UtilityService.getEmissions({
-    businessId: req.user.id,
-    siteId,
-    fuelSourceId: req.query.fuelSourceId,
-  });
-  const carbonEmissions = DashboardService.findCarbonEmissions(
-    {
-      emissions,
-      allConsumptions: currentConsumptionRecords,
-      fuels: fuelSources,
-    },
-    { ignoreFuelSource: req.query.fuelSourceId === undefined },
-  );
+  const carbonImpact = DashboardService.calculateCarbonImpact({
+    consumptions: currentConsumptionRecords,
+    emissions,
+    waste: statistics,
+  })
 
   return {
-    waste: statistics,
-    consumptions: currentConsumptionRecords,
-    carbonEmissions,
+    reports: carbonImpact
   };
 };

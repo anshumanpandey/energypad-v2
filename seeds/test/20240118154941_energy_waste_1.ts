@@ -144,6 +144,14 @@ export async function seed(knex: Knex): Promise<void> {
       emissionFactor: 80,
       siteId: 609,
     }),
+    buildFakeEmission({
+      id: 354,
+      date: `2002-03-01`,
+      fuelSourceId: 2,
+      usedInId: 2,
+      emissionFactor: 43,
+      siteId: 609,
+    }),
   ]);
 
   //user2

@@ -309,6 +309,24 @@ export interface paths {
       };
     };
   };
+  "/api/dashboard/getReport": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {
+        query: {
+          year: string;
+          month: string;
+          fuelSourceId: string;
+          order?: "asc" | "desc";
+          siteId: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["GetDashboardEnergyWaste"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/business/": {
     /** Get dashboard data per date. */
     get: {
