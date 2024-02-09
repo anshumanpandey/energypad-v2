@@ -782,6 +782,8 @@ const calculateFinancialCost = (p: {
     }
     records.push({
       financialCost: new Decimal(waste.waste).times(new Decimal(consumption.totalCost).div(consumption.consumption)),
+      siteId: consumption.siteId,
+      date: consumption.date
     });
   }
   return records;

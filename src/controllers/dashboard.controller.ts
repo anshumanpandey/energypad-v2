@@ -593,13 +593,6 @@ export const reports: any = async (req: any) => {
   const selectedYear = new Date(year, month, 1);
   const siteId = req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined;
 
-  const params = {
-    businessId: req.user.id,
-    startDate: subYears(selectedYear, 1),
-    endDate: endOfYear(subYears(selectedYear, 1)),
-    fuelSourceId: fuelSourceId,
-    siteId,
-  };
   const [fuelSources, emissions, patterns] = await Promise.all([
     UtilityService.getFuelSources({ id: fuelSourceId }),
     UtilityService.getEmissions({
