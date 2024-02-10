@@ -7,6 +7,7 @@ import formatISO from 'date-fns/formatISO';
 import { FuelSource, GetConsumptionsParams } from './utility.service';
 import { HDDRecord } from './greenDays.service';
 import { filterByYearAndMonth } from '../utils/dbUtils';
+import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUtils';
 
 const uniqueElements = (a: any) => {
   const seen: Record<number, any> = {};
@@ -351,7 +352,11 @@ const findCarbonEmissions = (
       fuelSourceId: p.fuelSourceId,
       fuelSourceName: p.fuelSourceName,
       fuelSourceColorCode: params.fuels?.find((i) => i.id === p.fuelSourceId)?.colorCode || '#4989C6',
-      carbonEmission: p.consumption * p.conversionFactor,
+      carbonEmission: resolveConsumptionToKwh({
+        consumption: p.consumption,
+        fuelUnit: p.fuelUnit as ONE_OF_SUPPORTED_UNIT,
+        conversionFactor: p.conversionFactor,
+      }),
       cost: p.totalCost,
       carbonTarget: 0,
       increasedConsumptionPercentage: 0,
@@ -459,6 +464,7 @@ const wasteForSinglefuelFunction = (params: {
       siteId: consumption.siteId,
       date: consumption.date,
       projectedEnergy,
+      fuelSourceId: consumption.fuelSourceId
     });
   }
   return results;
@@ -505,7 +511,7 @@ const populateArrayByDateSite = (
   }
   return filledArr;
 };
-type WasteValue = { waste: number; date: string; siteId: number };
+type WasteValue = { waste: number; date: string; siteId: number, fuelSourceId: number };
 type EnergyWasteParams = {
   consumptions: ProducedConsumption[];
   hdd: HDDRecord[];
@@ -725,6 +731,7 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
       siteId: record.siteId,
       date: record.date,
       percentageVariable: percentageVariable.value,
+      fuelSourceId: record.fuelSourceId,
     });
   }
   return records;
@@ -734,7 +741,7 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingParams & 
   const powerAndLighting = wasteForPowerAndLighting(p);
   const oneEnergy = wasteForSinglefuelFunction(p);
 
-  const records = [];
+  const records: WasteValue[] = [];
   for (let i = 0; i < p.nextConsumptions.length; i++) {
     const record = p.nextConsumptions[i];
     const [singlePowerAndLighting] = powerAndLighting
@@ -762,6 +769,7 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingParams & 
         .toNumber(),
       siteId: singleProjectedEnergy.siteId,
       date: singleProjectedEnergy.date,
+      fuelSourceId: singleProjectedEnergy.fuelSourceId
     });
   }
   return records;
@@ -781,9 +789,12 @@ const calculateFinancialCost = (p: {
       continue;
     }
     records.push({
-      financialCost: new Decimal(waste.waste).times(new Decimal(consumption.totalCost).div(consumption.consumption)),
+      financialCost: new Decimal(waste.waste)
+        .times(new Decimal(consumption.totalCost).div(consumption.consumption))
+        .toDP(8)
+        .toNumber(),
       siteId: consumption.siteId,
-      date: consumption.date
+      date: consumption.date,
     });
   }
   return records;
@@ -801,14 +812,14 @@ const calculateCarbonImpact = (p: {
       .filter(filterByYearAndMonth(consumption))
       .filter(SitesService.filterBySiteId(consumption.siteId));
     if (!emission) {
-      continue
+      continue;
     }
 
     const [waste] = p.waste
       .filter(filterByYearAndMonth(consumption))
       .filter(SitesService.filterBySiteId(consumption.siteId));
     if (!waste) {
-      continue
+      continue;
     }
     records.push({
       date: consumption.date,

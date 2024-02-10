@@ -62,6 +62,7 @@ export const getUtilityData = async (file: string | Buffer) => {
       error = new ApiError(`Invalid fuel unit ${consumption.fuelUnit}`);
     }
     consumptions.push({
+      //TODO: add support for short and long month name. eg: January and Jan
       date: DbUtils.dateToStringDate(parse(`01/${consumption.month}/${consumption.year}`, 'dd/MMM/yyyy', new Date())),
       conversionFactor: consumption.conversionFactor,
       consumption: consumption.consumptionValue,

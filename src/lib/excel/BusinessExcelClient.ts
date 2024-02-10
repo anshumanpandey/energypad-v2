@@ -120,7 +120,7 @@ const getRows = async (Worksheet: Worksheet) => {
     { colLetter: 'J', name: 'address_1', validate: { required: false } },
   ];
 
-  const rowAmount = Worksheet.rowCount;
+  const rowAmount = Worksheet.actualRowCount;
   root_loop: for (let i = 2; i <= rowAmount; i++) {
     const singleRow: Record<string, string | undefined> = {};
     const promises = [];

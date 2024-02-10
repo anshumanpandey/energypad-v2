@@ -8,7 +8,7 @@ export type ConversionResolverFn = (value: number, unit?: typeof SupportedUnits[
 
 export const resolveConsumptionToKwh = (p: {
   consumption: number;
-  fuelUnit: typeof SupportedUnits[number];
+  fuelUnit: ONE_OF_SUPPORTED_UNIT ;
   conversionFactor: number;
 }) => {
   let val = p.consumption;
