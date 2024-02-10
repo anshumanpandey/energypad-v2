@@ -464,7 +464,7 @@ const wasteForSinglefuelFunction = (params: {
       siteId: consumption.siteId,
       date: consumption.date,
       projectedEnergy,
-      fuelSourceId: consumption.fuelSourceId
+      fuelSourceId: consumption.fuelSourceId,
     });
   }
   return results;
@@ -511,7 +511,7 @@ const populateArrayByDateSite = (
   }
   return filledArr;
 };
-type WasteValue = { waste: number; date: string; siteId: number, fuelSourceId: number };
+type WasteValue = { waste: number; date: string; siteId: number; fuelSourceId: number };
 type EnergyWasteParams = {
   consumptions: ProducedConsumption[];
   hdd: HDDRecord[];
@@ -769,7 +769,7 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingParams & 
         .toNumber(),
       siteId: singleProjectedEnergy.siteId,
       date: singleProjectedEnergy.date,
-      fuelSourceId: singleProjectedEnergy.fuelSourceId
+      fuelSourceId: singleProjectedEnergy.fuelSourceId,
     });
   }
   return records;
@@ -795,6 +795,7 @@ const calculateFinancialCost = (p: {
         .toNumber(),
       siteId: consumption.siteId,
       date: consumption.date,
+      fuelSourceId: consumption.fuelSourceId,
     });
   }
   return records;
