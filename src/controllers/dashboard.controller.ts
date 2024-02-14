@@ -6,6 +6,8 @@ import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYea
 import { CarbonEmission } from '../services/dashboard.service';
 import { GetHddsParams2, HDDRecord } from '../services/greenDays.service';
 import { GetConsumptionsParams, Projection } from '../services/utility.service';
+import { filterByYearAndMonth } from '../utils/dbUtils';
+import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUtils';
 
 export const getDataByYear = async (req: any) => {
   const business = await UserService.getUserBy({ id: req.user.id });
@@ -578,7 +580,22 @@ export const energyWaste: any = async (req: any) => {
     waste: statistics,
     consumptions: currentConsumptionRecords,
     targetConsumptions: projections,
-    carbonEmissions,
+    carbonEmissions: carbonEmissions.map((i) => {
+      const waste = statistics.filter(filterByYearAndMonth(i)).filter(SitesService.filterBySiteId(i.siteId))?.[0].waste;
+      let carbonEmission = 0;
+      if (waste) {
+        carbonEmission = resolveConsumptionToKwh({
+          consumption: waste,
+          fuelUnit: i.fuelUnit as ONE_OF_SUPPORTED_UNIT,
+          conversionFactor: i.conversionFactor,
+        });
+      }
+
+      return {
+        ...i,
+        carbonEmission,
+      };
+    }),
     financialCost: DashboardService.calculateFinancialCost({
       consumptions: currentConsumptionRecords,
       waste: statistics,
@@ -589,7 +606,7 @@ export const energyWaste: any = async (req: any) => {
 export const reports: any = async (req: any) => {
   const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
   const month = req.query.month !== undefined ? MathUtils.toInt(req.query.month) : new Date().getMonth();
-  const fuelSourceId = req.query.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId): undefined;
+  const fuelSourceId = req.query.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined;
   const selectedYear = new Date(year, month, 1);
   const siteId = req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined;
 
@@ -602,7 +619,6 @@ export const reports: any = async (req: any) => {
     }),
     UserService.getPatterns({ siteId: siteId, businessId: req.user.id }),
   ]);
-
 
   const oldParams = {
     businessId: req.user.id,
@@ -694,9 +710,9 @@ export const reports: any = async (req: any) => {
     consumptions: currentConsumptionRecords,
     emissions,
     waste: statistics,
-  })
+  });
 
   return {
-    reports: carbonImpact
+    reports: carbonImpact,
   };
 };

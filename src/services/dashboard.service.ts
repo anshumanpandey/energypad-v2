@@ -278,6 +278,8 @@ export type CarbonEmission = {
   increasedConsumptionPercentage: number;
   averageEmissionPerDay: number;
   siteId: number;
+  fuelUnit: string;
+  conversionFactor: number;
 };
 const findCarbonEmissions = (
   params: {
@@ -348,6 +350,8 @@ const findCarbonEmissions = (
     return {
       siteId: p.siteId,
       date: p.date,
+      fuelUnit: p.fuelUnit,
+      conversionFactor: p.conversionFactor,
       siteName: p.siteName,
       fuelSourceId: p.fuelSourceId,
       fuelSourceName: p.fuelSourceName,
@@ -370,25 +374,6 @@ const findCarbonEmissions = (
   const result = carbonEmissions.map(mapCarbonTarget).filter(filterResultForParamDate);
 
   return result;
-};
-
-const agroupConsumptionBySiteFuelsource = (consumptions: AppModels['UtilityConsumption'][]) => {
-  const groups = [];
-  const sitesId = uniqueElements(consumptions.map((c) => c.siteId));
-  const fuelSourcesId = uniqueElements(consumptions.map((c) => c.fuelSourceId));
-
-  for (let i = 0; i < consumptions.length; i++) {
-    for (let siteIdx = 0; siteIdx < sitesId.length; siteIdx++) {
-      const thisStatistics = [];
-      for (let fuelSourcesIdx = 0; fuelSourcesIdx < fuelSourcesId.length; fuelSourcesIdx++) {
-        const thisIterationConsumptions = consumptions
-          .filter(UtilityService.filterByFuelSource(fuelSourcesId[fuelSourcesIdx]))
-          .filter(SitesService.filterBySiteId(sitesId[siteIdx]));
-        thisStatistics.push(thisIterationConsumptions);
-      }
-      groups.push(thisStatistics);
-    }
-  }
 };
 
 const wasteForSinglefuelFunction = (params: {
