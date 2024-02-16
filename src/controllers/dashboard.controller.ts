@@ -581,7 +581,9 @@ export const energyWaste: any = async (req: any) => {
     consumptions: currentConsumptionRecords,
     targetConsumptions: projections,
     carbonEmissions: carbonEmissions.map((i) => {
-      const waste = statistics.filter(filterByYearAndMonth(i)).filter(SitesService.filterBySiteId(i.siteId))?.[0].waste;
+      const waste = statistics
+        .filter(filterByYearAndMonth(i))
+        .filter(SitesService.filterBySiteId(i.siteId))?.[0]?.waste;
       let carbonEmission = 0;
       if (waste) {
         carbonEmission = resolveConsumptionToKwh({
