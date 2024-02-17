@@ -274,6 +274,7 @@ const consumptionIsNotProduced = (i: any) => {
 export type CarbonEmission = {
   date: string;
   carbonEmission: number;
+  fuelSourceId: number;
   carbonTarget: number;
   increasedConsumptionPercentage: number;
   averageEmissionPerDay: number;
@@ -796,22 +797,35 @@ const calculateCarbonImpact = (p: {
     const consumption = p.consumptions[i];
     const [emission] = p.emissions
       .filter(filterByYearAndMonth(consumption))
-      .filter(SitesService.filterBySiteId(consumption.siteId));
+      .filter(SitesService.filterBySiteId(consumption.siteId))
+      .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId));
     if (!emission) {
       continue;
     }
 
     const [waste] = p.waste
       .filter(filterByYearAndMonth(consumption))
-      .filter(SitesService.filterBySiteId(consumption.siteId));
+      .filter(SitesService.filterBySiteId(consumption.siteId))
+      .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId));
     if (!waste) {
       continue;
     }
     records.push({
       date: consumption.date,
       siteId: consumption.siteId,
+      fuelSourceId: consumption.fuelSourceId,
+      usedInId: consumption.usedInId,
+      consumption: consumption.consumption,
       consumptionCarbonImpact: new Decimal(consumption.consumption).times(emission.emissionFactor).toDP(8).toNumber(),
+      consumptionFinancialCost: new Decimal(new Decimal(consumption.totalCost).div(consumption.consumption))
+        .times(consumption.consumption)
+        .toDP(8)
+        .toNumber(),
       wasteCarbonImpact: new Decimal(waste.waste).times(emission.emissionFactor).toDP(8).toNumber(),
+      wasteFinancialCost: new Decimal(new Decimal(consumption.totalCost).div(consumption.consumption))
+        .times(waste.waste)
+        .toDP(8)
+        .toNumber(),
     });
   }
   return records;

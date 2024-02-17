@@ -25,3 +25,18 @@ export const agroupByDate = (arr: { date: string }[]) => {
   });
   return Array.from(map.values());
 };
+
+export const agroupBy = <T>(arr: T[], k: keyof T) => {
+  const map = new Map();
+  arr.forEach((i) => {
+    const key = i[k];
+    const found = map.get(key);
+    if (found) {
+      found.push(i);
+      map.set(key, found);
+    } else {
+      map.set(key, [i]);
+    }
+  });
+  return Array.from(map.values());
+};

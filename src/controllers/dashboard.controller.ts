@@ -8,6 +8,7 @@ import { GetHddsParams2, HDDRecord } from '../services/greenDays.service';
 import { GetConsumptionsParams, Projection } from '../services/utility.service';
 import { filterByYearAndMonth } from '../utils/dbUtils';
 import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUtils';
+import { agroupBy } from '../utils/appUtils';
 
 export const getDataByYear = async (req: any) => {
   const business = await UserService.getUserBy({ id: req.user.id });
@@ -617,16 +618,18 @@ export const reports: any = async (req: any) => {
     UtilityService.getEmissions({
       businessId: req.user.id,
       siteId,
-      fuelSourceId: req.query.fuelSourceId,
+      forYear: new Date(year, 0, 2),
+      fuelSourceId,
     }),
     UserService.getPatterns({ siteId: siteId, businessId: req.user.id }),
   ]);
 
+  const fuelSourceToUse = fuelSources.map(AppUtils.getRecordId);
   const oldParams = {
     businessId: req.user.id,
     startDate: subYears(selectedYear, 1),
     endDate: endOfYear(subYears(selectedYear, 1)),
-    fuelSourceId: fuelSources.map(AppUtils.getRecordId),
+    fuelSourceId: fuelSourceToUse,
     siteId,
   };
   const [oldConsumptions, currentConsumptionRecords, sites] = await Promise.all([
@@ -635,7 +638,7 @@ export const reports: any = async (req: any) => {
       businessId: req.user.id,
       startDate: subMonths(selectedYear, 1),
       endDate: endOfYear(selectedYear),
-      fuelSourceId: fuelSources.map(AppUtils.getRecordId),
+      fuelSourceId: fuelSourceToUse,
       siteId,
     }),
     SitesService.findBy({ id: siteId }),
@@ -708,6 +711,13 @@ export const reports: any = async (req: any) => {
     if (ErrorUtils.isErrorInstance(statistics)) return statistics;
   }
 
+  const carbonEmissions = DashboardService.findCarbonEmissions({
+    forYear: selectedYear,
+    emissions,
+    allConsumptions: currentConsumptionRecords,
+    fuels: fuelSources.filter((f) => fuelSourceToUse.includes(f.id)),
+  });
+
   const carbonImpact = DashboardService.calculateCarbonImpact({
     consumptions: currentConsumptionRecords,
     emissions,
@@ -715,6 +725,17 @@ export const reports: any = async (req: any) => {
   });
 
   return {
-    reports: carbonImpact,
+    reports: carbonImpact.map((c) => {
+      return {
+        ...c,
+        waste: statistics
+          .filter(filterByYearAndMonth)
+          .filter(SitesService.filterBySiteId(c.siteId))
+          .filter(UtilityService.filterByFuelSource(c.fuelSourceId))[0]?.waste,
+      };
+    }),
+    //TODO: consumptions and carbonEmissions should be agroup by fuelSourceId AND siteId
+    consumptions: agroupBy(currentConsumptionRecords, 'fuelSourceId'),
+    carbonEmissions: agroupBy(carbonEmissions, 'fuelSourceId'),
   };
 };

@@ -75,6 +75,36 @@ export async function seed(knex: Knex): Promise<void> {
       fuelSourceId: 1,
       siteId: 609,
     }),
+
+    buildFakeConsumption({
+      id: 4600,
+      date: '2007-06-01',
+      consumption: 81,
+      fuelSourceId: 1,
+      siteId: 609,
+    }),
+    buildFakeConsumption({
+      id: 4602,
+      date: '2007-06-01',
+      consumption: 34,
+      fuelSourceId: 2,
+      siteId: 609,
+    }),
+
+    buildFakeConsumption({
+      id: 4604,
+      date: '2008-06-01',
+      consumption: 22,
+      fuelSourceId: 1,
+      siteId: 609,
+    }),
+    buildFakeConsumption({
+      id: 4606,
+      date: '2008-06-01',
+      consumption: 176,
+      fuelSourceId: 2,
+      siteId: 609,
+    }),
   ]);
 
   await knex('BusinessPatterns').insert([
@@ -125,6 +155,22 @@ export async function seed(knex: Knex): Promise<void> {
       consumptionId: 4510,
       usedInId: 2,
     },
+    {
+      consumptionId: 4600,
+      usedInId: 2,
+    },
+    {
+      consumptionId: 4602,
+      usedInId: 2,
+    },
+    {
+      consumptionId: 4604,
+      usedInId: 2,
+    },
+    {
+      consumptionId: 4606,
+      usedInId: 2,
+    },
   ]);
 
   await knex('UtilityEmissions').insert([
@@ -147,6 +193,23 @@ export async function seed(knex: Knex): Promise<void> {
     buildFakeEmission({
       id: 354,
       date: `2002-03-01`,
+      fuelSourceId: 2,
+      usedInId: 2,
+      emissionFactor: 43,
+      siteId: 609,
+    }),
+
+    buildFakeEmission({
+      id: 356,
+      date: `2007-06-01`,
+      fuelSourceId: 1,
+      usedInId: 2,
+      emissionFactor: 43,
+      siteId: 609,
+    }),
+    buildFakeEmission({
+      id: 358,
+      date: `2007-06-01`,
       fuelSourceId: 2,
       usedInId: 2,
       emissionFactor: 43,
