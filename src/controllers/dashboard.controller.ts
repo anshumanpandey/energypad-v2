@@ -645,6 +645,7 @@ export const reports: any = async (req: any) => {
   ]);
 
   let statistics: Awaited<ReturnType<typeof DashboardService.calculateWaste>> = [];
+  let targetConsumptions: Awaited<ReturnType<typeof UtilityService.consumingProjection>> = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
   if (allConsumptionAreProduced === false && currentConsumptionRecords.length > 0) {
@@ -709,6 +710,16 @@ export const reports: any = async (req: any) => {
 
     statistics = await DashboardService.calculateWaste(energyParams);
     if (ErrorUtils.isErrorInstance(statistics)) return statistics;
+
+    const projectionParams = {
+      pastConsumptionRecords: oldConsumptions,
+      pastHdds,
+      currentConsumptionRecords,
+      currentHdd,
+      year: selectedYear.getFullYear(),
+    };
+    targetConsumptions = await UtilityService.consumingProjection(projectionParams);
+    if (ErrorUtils.isErrorInstance(targetConsumptions)) return targetConsumptions;
   }
 
   const carbonEmissions = DashboardService.findCarbonEmissions({
@@ -731,9 +742,10 @@ export const reports: any = async (req: any) => {
         waste: statistics
           .filter(filterByYearAndMonth)
           .filter(SitesService.filterBySiteId(c.siteId))
-          .filter(UtilityService.filterByFuelSource(c.fuelSourceId))[0]?.waste,
+          .filter(UtilityService.filterByFuelSource(c.fuelSourceId))?.[0]?.waste,
       };
     }),
+    targetConsumptions,
     //TODO: consumptions and carbonEmissions should be agroup by fuelSourceId AND siteId
     consumptions: agroupBy(currentConsumptionRecords, 'fuelSourceId'),
     carbonEmissions: agroupBy(carbonEmissions, 'fuelSourceId'),

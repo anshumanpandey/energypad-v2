@@ -691,6 +691,7 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
 
     const [currentBaselineConsumption] = p.baselineConsumptions
       .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear(record, 1) }))
+    //TODO: check and handle case for records with same differents fuelSourceId
       .filter(SitesService.filterBySiteId(record.siteId));
     if (!currentBaselineConsumption) {
       continue;
