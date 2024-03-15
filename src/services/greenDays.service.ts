@@ -105,7 +105,9 @@ export type HDDRecord = {
 const getHdds = (p: GetHddsParams) => {
   const location = {
     type: 'PostalCodeLocation',
-    postalCode: p.postalCode,
+    //TODO: uncomment this code after testing
+    //postalCode: p.postalCode,
+    postalCode: '02632',
     countryCode: 'US',
   };
 
@@ -196,7 +198,7 @@ const getHdds2 = async (params: GetHddsParams2[]) => {
       type: 'PostalCodeLocation',
       //TODO: uncomment this code after testing
       //postalCode: p.postalCode,
-      postalCode: 'KCQX',
+      postalCode: '02632',
       countryCode: 'GB',
     };
 
