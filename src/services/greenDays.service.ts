@@ -194,7 +194,9 @@ const getHdds2 = async (params: GetHddsParams2[]) => {
 
     const location = {
       type: 'PostalCodeLocation',
-      postalCode: p.postalCode,
+      //TODO: uncomment this code after testing
+      //postalCode: p.postalCode,
+      postalCode: 'KCQX',
       countryCode: 'GB',
     };
 
