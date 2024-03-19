@@ -208,9 +208,15 @@ const getHdds2 = async (params: GetHddsParams2[]) => {
       dataSpecs: {} as Record<string, any>,
     };
 
+    const breaks = new Map();
+    for (let i = 0; i < p.breakDowns.length; i++) {
+      const item = p.breakDowns[i];
+      breaks.set(item.startDate, item);
+    }
+
     const breakdown = {
       type: 'CustomBreakdown',
-      dayRanges: p.breakDowns.map(dateRangeToBreakdownRange),
+      dayRanges: Array.from(breaks.values()).map(dateRangeToBreakdownRange),
     };
 
     if (p.valuesToGet.includes('HDD')) {
