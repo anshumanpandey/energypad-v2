@@ -383,75 +383,85 @@ const wasteForSinglefuelFunction = (params: {
   nextConsumptions: AppModels['UtilityConsumption'][];
   nextHdd: HDDRecord[];
 }) => {
-  const totalOfConsumption = params.consumptions.reduce(
-    (total, next) => new Decimal(total).add(next.consumption).toNumber(),
-    0,
-  );
-  const totalOfHdd = params.hdd.reduce((total, next) => new Decimal(total).add(next.value).toNumber(), 0);
-  let totalOfHddTimesConsumption = 0;
-  for (let i = 0; i < params.hdd.length; i++) {
-    const hdd = params.hdd[i];
-    const consumption = params.consumptions.find(
-      (c) => c.siteId === hdd.siteId && c.date === DbUtils.dateToStringDate(hdd.date),
-    );
-    if (!consumption) {
-      continue;
-    }
-    totalOfHddTimesConsumption = new Decimal(totalOfHddTimesConsumption)
-      .add(new Decimal(hdd.value).times(consumption.consumption))
-      .toNumber();
-  }
-  const sumOfHddConsumptionTotal = new Decimal(totalOfConsumption).add(totalOfHdd).toNumber();
-  const totalPowerOfConsumption = params.consumptions.reduce(
-    (total, next) => new Decimal(total).add(new Decimal(next.consumption).pow(2)).toNumber(),
-    0,
-  );
-  const totalPowerOfHdd = params.hdd.reduce(
-    (total, next) => new Decimal(total).add(new Decimal(next.value).pow(2)).toNumber(),
-    0,
-  );
-
-  const NX = 6 as const;
-
-  const b9Top = new Decimal(new Decimal(NX).times(totalOfHddTimesConsumption))
-    .minus(new Decimal(totalOfHdd).times(totalOfConsumption))
-    .toNumber();
-  const bBelow = new Decimal(new Decimal(NX).times(totalPowerOfHdd))
-    .minus(new Decimal(totalOfHdd).times(totalOfHdd))
-    .toNumber();
-  const bSlope = new Decimal(b9Top).div(bBelow).toDP(8).toNumber();
-
-  const aTop = new Decimal(new Decimal(totalOfConsumption).times(totalPowerOfHdd))
-    .minus(new Decimal(totalOfHdd).times(totalOfHddTimesConsumption))
-    .toNumber();
-  const aBelow = new Decimal(new Decimal(NX).times(totalPowerOfHdd))
-    .minus(new Decimal(totalOfHdd).times(totalOfHdd))
-    .toNumber();
-  const cIntercept = new Decimal(aTop).div(aBelow).toDP(8).toNumber();
-
   const results: (WasteValue & { projectedEnergy: number })[] = [];
-  for (let i = 0; i < params.nextConsumptions.length; i++) {
-    const consumption = params.nextConsumptions[i];
-    if (DashboardService.consumptionIsProduced(consumption)) {
-      continue;
-    }
-    const hdd = params.nextHdd.find(
-      (h) => h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date),
+  const fuelSources = Array.from(new Set(params.consumptions.map((i) => i.fuelSourceId)).values());
+  for (let i = 0; i < fuelSources.length; i++) {
+    const currentFuelSourceId = fuelSources[i];
+    const currentFuelSourceConsumption = params.consumptions.filter(
+      UtilityService.filterByFuelSource(currentFuelSourceId),
     );
-    if (!hdd) {
-      continue;
+    const totalOfConsumption = currentFuelSourceConsumption.reduce(
+      (total, next) => new Decimal(total).add(next.consumption).toNumber(),
+      0,
+    );
+    const totalOfHdd = params.hdd.reduce((total, next) => new Decimal(total).add(next.value).toNumber(), 0);
+    let totalOfHddTimesConsumption = 0;
+    for (let i = 0; i < params.hdd.length; i++) {
+      const hdd = params.hdd[i];
+      const consumption = currentFuelSourceConsumption.find(
+        (c) => c.siteId === hdd.siteId && c.date === DbUtils.dateToStringDate(hdd.date),
+      );
+      if (!consumption) {
+        continue;
+      }
+      totalOfHddTimesConsumption = new Decimal(totalOfHddTimesConsumption)
+        .add(new Decimal(hdd.value).times(consumption.consumption))
+        .toNumber();
     }
-    const weather = new Decimal(hdd.value).times(bSlope);
-    const projectedEnergy = new Decimal(cIntercept).add(weather).toNumber();
-    const waste = new Decimal(projectedEnergy).minus(consumption.consumption).toDP(4, Decimal.ROUND_DOWN).toNumber();
+    const sumOfHddConsumptionTotal = new Decimal(totalOfConsumption).add(totalOfHdd).toNumber();
+    const totalPowerOfConsumption = currentFuelSourceConsumption.reduce(
+      (total, next) => new Decimal(total).add(new Decimal(next.consumption).pow(2)).toNumber(),
+      0,
+    );
+    const totalPowerOfHdd = params.hdd.reduce(
+      (total, next) => new Decimal(total).add(new Decimal(next.value).pow(2)).toNumber(),
+      0,
+    );
 
-    results.push({
-      waste,
-      siteId: consumption.siteId,
-      date: consumption.date,
-      projectedEnergy,
-      fuelSourceId: consumption.fuelSourceId,
-    });
+    const NX = 6 as const;
+
+    const b9Top = new Decimal(new Decimal(NX).times(totalOfHddTimesConsumption))
+      .minus(new Decimal(totalOfHdd).times(totalOfConsumption))
+      .toNumber();
+    const bBelow = new Decimal(new Decimal(NX).times(totalPowerOfHdd))
+      .minus(new Decimal(totalOfHdd).times(totalOfHdd))
+      .toNumber();
+    const bSlope = new Decimal(b9Top).div(bBelow).toDP(8).toNumber();
+
+    const aTop = new Decimal(new Decimal(totalOfConsumption).times(totalPowerOfHdd))
+      .minus(new Decimal(totalOfHdd).times(totalOfHddTimesConsumption))
+      .toNumber();
+    const aBelow = new Decimal(new Decimal(NX).times(totalPowerOfHdd))
+      .minus(new Decimal(totalOfHdd).times(totalOfHdd))
+      .toNumber();
+    const cIntercept = new Decimal(aTop).div(aBelow).toDP(8).toNumber();
+
+    const currentFuelSourceNextConsumption = params.nextConsumptions.filter(
+      UtilityService.filterByFuelSource(currentFuelSourceId),
+    );
+    for (let i = 0; i < currentFuelSourceNextConsumption.length; i++) {
+      const consumption = currentFuelSourceNextConsumption[i];
+      if (DashboardService.consumptionIsProduced(consumption)) {
+        continue;
+      }
+      const hdd = params.nextHdd.find(
+        (h) => h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date),
+      );
+      if (!hdd) {
+        continue;
+      }
+      const weather = new Decimal(hdd.value).times(bSlope);
+      const projectedEnergy = new Decimal(cIntercept).add(weather).toNumber();
+      const waste = new Decimal(projectedEnergy).minus(consumption.consumption).toDP(4, Decimal.ROUND_DOWN).toNumber();
+
+      results.push({
+        waste,
+        siteId: consumption.siteId,
+        date: consumption.date,
+        projectedEnergy,
+        fuelSourceId: consumption.fuelSourceId,
+      });
+    }
   }
   return results;
 };
@@ -691,7 +701,7 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
 
     const [currentBaselineConsumption] = p.baselineConsumptions
       .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear(record, 1) }))
-    //TODO: check and handle case for records with same differents fuelSourceId
+      //TODO: check and handle case for records with same differents fuelSourceId
       .filter(SitesService.filterBySiteId(record.siteId));
     if (!currentBaselineConsumption) {
       continue;

@@ -21,7 +21,7 @@
     "format": "eslint src/**/*.ts --fix",
     "pretest": "rm -f testdb.db && npm run predev",
     "test": "NODE_ENV=test jest --runInBand --detectOpenHandles",
-    "jest": "jest --config=jest.unit.config.ts",
+    "test:unit": "jest --config=jest.unit.config.ts",
     "test:simple": "NODE_ENV=test jest --runInBand --detectOpenHandles --colors --verbose",
     "test:debug": "NODE_ENV=test node --nolazy --inspect-brk ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --colors --verbose",
     "migration:execute": "knex migrate:latest --knexfile ./src/lib/db/knexfile.ts",
