@@ -382,14 +382,15 @@ const wasteForSinglefuelFunction = (params: {
   hdd: HDDRecord[];
   nextConsumptions: AppModels['UtilityConsumption'][];
   nextHdd: HDDRecord[];
+  year: number;
 }) => {
   const results: (WasteValue & { projectedEnergy: number })[] = [];
   const fuelSources = Array.from(new Set(params.consumptions.map((i) => i.fuelSourceId)).values());
   for (let i = 0; i < fuelSources.length; i++) {
     const currentFuelSourceId = fuelSources[i];
-    const currentFuelSourceConsumption = params.consumptions.filter(
-      UtilityService.filterByFuelSource(currentFuelSourceId),
-    );
+    const currentFuelSourceConsumption = params.consumptions
+      .filter(UtilityService.filterByFuelSource(currentFuelSourceId))
+      .filter(DbUtils.filterByYear(params.year - 1));
     const totalOfConsumption = currentFuelSourceConsumption.reduce(
       (total, next) => new Decimal(total).add(next.consumption).toNumber(),
       0,
@@ -436,9 +437,9 @@ const wasteForSinglefuelFunction = (params: {
       .toNumber();
     const cIntercept = new Decimal(aTop).div(aBelow).toDP(8).toNumber();
 
-    const currentFuelSourceNextConsumption = params.nextConsumptions.filter(
-      UtilityService.filterByFuelSource(currentFuelSourceId),
-    );
+    const currentFuelSourceNextConsumption = params.nextConsumptions
+      .filter(UtilityService.filterByFuelSource(currentFuelSourceId))
+      .filter(DbUtils.filterByYear(params.year));
     for (let i = 0; i < currentFuelSourceNextConsumption.length; i++) {
       const consumption = currentFuelSourceNextConsumption[i];
       if (DashboardService.consumptionIsProduced(consumption)) {
@@ -513,6 +514,7 @@ type EnergyWasteParams = {
   hdd: HDDRecord[];
   nextConsumptions: AppModels['UtilityConsumption'][];
   nextHdd: HDDRecord[];
+  year: number;
 };
 const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> => {
   const sites = await SitesService.findBy({

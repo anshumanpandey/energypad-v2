@@ -9,6 +9,21 @@ test('single fuel test', async () => {
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
+        date: '2020-12-01',
+        totalCost: 0,
+        conversionFactor: 0,
+        fuelUnit: 'a',
+        vat: 0,
+        fuelSourceId: 1,
+        usedInId: [1],
+        siteId: 1,
+      },
+      {
+        id: 0,
+        consumption: 99,
+        fuelSourceName: 'a',
+        siteName: 'a',
+        conversionUnit: 1,
         date: '2021-01-01',
         totalCost: 0,
         conversionFactor: 0,
@@ -169,6 +184,7 @@ test('single fuel test', async () => {
       { value: 20, date: new Date(2022, 1, 1), siteId: 1 },
       { value: 25, date: new Date(2022, 2, 1), siteId: 1 },
     ],
+    year: 2022
   };
 
   const result = dashboard.wasteForSinglefuelFunction(params);
@@ -2004,6 +2020,7 @@ test('lighting and power and cooling calculation', () => {
       { value: 25, date: new Date(2022, 2, 1), siteId: 1 },
     ],
     daylightPercentageChangeFormula: 'LightingPowerCoolingFormula' as const,
+    year: 2022
   };
 
   const result = dashboard.wasteForPowerAndLightingAndCooling(params);

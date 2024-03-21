@@ -547,6 +547,7 @@ export const energyWaste: any = async (req: any) => {
       hdd: pastHdds,
       nextConsumptions: currentConsumptionRecords,
       nextHdd: currentHdd,
+      year
     };
 
     statistics = await DashboardService.calculateWaste(energyParams);
@@ -706,6 +707,7 @@ export const reports: any = async (req: any) => {
       hdd: pastHdds,
       nextConsumptions: currentConsumptionRecords,
       nextHdd: currentHdd,
+      year
     };
 
     statistics = await DashboardService.calculateWaste(energyParams);
