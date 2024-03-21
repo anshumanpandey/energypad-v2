@@ -579,7 +579,7 @@ export const energyWaste: any = async (req: any) => {
   );
 
   return {
-    waste: statistics,
+    waste: agroupBy(statistics, 'fuelSourceId'),
     consumptions: currentConsumptionRecords,
     targetConsumptions: projections,
     carbonEmissions: carbonEmissions.map((i) => {
