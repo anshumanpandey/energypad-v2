@@ -1,12 +1,11 @@
 import { AppModels } from '@types';
 import { Decimal } from 'decimal.js';
-import { getDaysInMonth } from 'date-fns';
+import { getDaysInMonth, setMonth, subMonths } from 'date-fns';
 import { DbUtils, MathUtils } from '@utils';
 import { DashboardService, SitesService, UtilityService } from '@services';
 import formatISO from 'date-fns/formatISO';
 import { FuelSource, GetConsumptionsParams } from './utility.service';
 import { HDDRecord } from './greenDays.service';
-import { filterByYearAndMonth } from '../utils/dbUtils';
 import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUtils';
 
 const uniqueElements = (a: any) => {
@@ -28,12 +27,7 @@ type ConsumptionForStatistic = Pick<
   AppModels['UtilityConsumption'],
   'date' | 'consumption' | 'totalCost' | 'conversionFactor' | 'siteId' | 'fuelSourceId' | 'fuelSourceName' | 'siteName'
 >;
-const getConsumptionStatistics = ({ consumptions }: { consumptions: ConsumptionForStatistic[] }) => {
-  const filterByMonth = (monthToSearch: number) => (c: ConsumptionForStatistic) => {
-    const [, month] = c.date.split('-');
-    return new Decimal(month).equals(monthToSearch);
-  };
-
+const getConsumptionStatistics = ({ consumptions, year }: { consumptions: ConsumptionForStatistic[]; year: Date }) => {
   const getAverage = (record: ConsumptionForStatistic, of: 'totalCost' | 'consumption') => {
     const date = DbUtils.stringDateToDate(record.date);
     const amountOfDaysOnMonth = getDaysInMonth(date);
@@ -55,12 +49,15 @@ const getConsumptionStatistics = ({ consumptions }: { consumptions: ConsumptionF
         .filter(UtilityService.filterByFuelSource(fuelSourceId))
         .filter(SitesService.filterBySiteId(siteId));
 
-      for (let idx = 1; idx <= thisIterationConsumptions.length; idx++) {
-        const consumptionFilter = (month: number) => (c: ConsumptionForStatistic) =>
-          filterByMonth(month)(c) && c.fuelSourceId === fuelSourceId && siteId === c.siteId;
+      for (let idx = 0; idx <= thisIterationConsumptions.length; idx++) {
+        const date = setMonth(year, idx);
+        const consumptionFilter = (d: { date: Date }) => (c: ConsumptionForStatistic) =>
+          DbUtils.filterByYearAndMonth({ date: DbUtils.dateToStringDate(d.date) })(c) &&
+          c.fuelSourceId === fuelSourceId &&
+          siteId === c.siteId;
 
         const [consumptionOfMonth] = consumptions
-          .filter(consumptionFilter(idx))
+          .filter(consumptionFilter({ date }))
           .sort(DbUtils.sortByStringDate)
           .reverse();
 
@@ -68,14 +65,13 @@ const getConsumptionStatistics = ({ consumptions }: { consumptions: ConsumptionF
           break;
         }
 
-        const date = `${consumptionOfMonth.date.split('-')[0]}-${('0' + idx).slice(-2)}-01`;
-        const previouseRecord = consumptions
-          .filter(consumptionFilter(idx - 1))
+        const [previouseRecord] = consumptions
+          .filter(consumptionFilter({ date: subMonths(date, 1) }))
           .sort(DbUtils.sortByStringDate)
-          .reverse()[0];
+          .reverse();
 
         const data = {
-          date,
+          date: DbUtils.dateToStringDate(date),
           fuelSourceId: fuelSourcesId[fuelSourcesIdx],
           fuelSourceName: consumptionOfMonth.fuelSourceName,
           siteId: sitesId[siteIdx],
@@ -122,57 +118,49 @@ function groupBy<T>(list: T[], keyGetter: (i: T) => T[keyof T]) {
 }
 
 const generateConsumptionDetail = ({
-  consumptions: consumptionsArr,
+  consumptions,
+  year,
 }: {
   consumptions: Pick<
     AppModels['UtilityConsumption'],
-    'date' | 'consumption' | 'totalCost' | 'fuelSourceName' | 'siteName'
+    'date' | 'consumption' | 'totalCost' | 'fuelSourceName' | 'siteName' | 'siteId' | 'fuelSourceId'
   >[];
+  year: Date;
 }) => {
-  let consumptions = consumptionsArr;
   const consumptionDetails = [];
-  if (consumptions.length === 1) {
-    consumptions = consumptions.concat([]);
-    const clone = { ...consumptions[0] };
-    clone.consumption = 0;
-    consumptions.unshift(clone);
-  }
-  for (let i = 1, len = consumptions.length; i < len; i++) {
-    const previousRecord = consumptions[i - 1];
+  for (let i = 0, len = consumptions.length; i < len; i++) {
     const currentRecord = consumptions[i];
-    consumptionDetails.push({
+    const [previousRecord] = consumptions
+      .filter(SitesService.filterBySiteId(currentRecord.siteId))
+      .filter(UtilityService.filterByFuelSource(currentRecord.fuelSourceId))
+      .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseMonth(currentRecord, 1) }));
+    const record = {
       date: currentRecord.date,
       siteName: currentRecord.siteName,
       fuelSourceName: currentRecord.fuelSourceName,
       consumption: currentRecord.consumption,
-      incesedPercentage: previousRecord.consumption
+      incesedPercentage: previousRecord?.consumption
         ? MathUtils.calculateIncreasePercentage({
             passValue: previousRecord.consumption,
             currentValue: currentRecord.consumption,
           })
         : 0,
-    });
+    };
+    if (DbUtils.stringDateToDate(record.date).getFullYear() === year.getFullYear()) {
+      consumptionDetails.push(record);
+    }
   }
   return consumptionDetails;
 };
 
-const getConsumptionDetails = ({
-  consumptions,
-}: {
+const getConsumptionDetails = (p: {
   consumptions: Pick<
     AppModels['UtilityConsumption'],
-    'date' | 'consumption' | 'totalCost' | 'fuelSourceName' | 'siteName'
+    'date' | 'consumption' | 'totalCost' | 'fuelSourceName' | 'siteName' | 'fuelSourceId' | 'siteId'
   >[];
+  year: Date;
 }) => {
-  const consumptionDetails = [];
-  const reducedConsumptions = groupBy(consumptions, (item) => item.fuelSourceName);
-
-  for (let a = 0, len = reducedConsumptions.length; a < len; a++) {
-    const consumptionsForFuel = reducedConsumptions[a][1];
-
-    const r = generateConsumptionDetail({ consumptions: consumptionsForFuel });
-    consumptionDetails.push(r);
-  }
+  const consumptionDetails = generateConsumptionDetail(p);
 
   return consumptionDetails.flat();
 };
@@ -782,7 +770,7 @@ const calculateFinancialCost = (p: {
   for (let i = 0; i < p.consumptions.length; i++) {
     const consumption = p.consumptions[i];
     const [waste] = p.waste
-      .filter(filterByYearAndMonth(consumption))
+      .filter(DbUtils.filterByYearAndMonth(consumption))
       .filter(SitesService.filterBySiteId(consumption.siteId));
     if (!waste) {
       continue;
@@ -809,7 +797,7 @@ const calculateCarbonImpact = (p: {
   for (let i = 0; i < p.consumptions.length; i++) {
     const consumption = p.consumptions[i];
     const [emission] = p.emissions
-      .filter(filterByYearAndMonth(consumption))
+      .filter(DbUtils.filterByYearAndMonth(consumption))
       .filter(SitesService.filterBySiteId(consumption.siteId))
       .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId));
     if (!emission) {
@@ -817,7 +805,7 @@ const calculateCarbonImpact = (p: {
     }
 
     const [waste] = p.waste
-      .filter(filterByYearAndMonth(consumption))
+      .filter(DbUtils.filterByYearAndMonth(consumption))
       .filter(SitesService.filterBySiteId(consumption.siteId))
       .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId));
     if (!waste) {

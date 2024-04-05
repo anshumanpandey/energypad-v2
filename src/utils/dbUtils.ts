@@ -69,6 +69,10 @@ export const decreaseYear = (p: { date: string }, amount: number) => {
   return `${year - amount}-${numberToMonth(month)}-01`;
 };
 
+export const decreaseMonth = (p: { date: string }, amount: number) => {
+  const [year, month] = p.date.split('-').map(Number);
+  return `${year}-${numberToMonth(month - amount)}-01`;
+};
 export const createTransaction = () => {
   return DB.transaction();
 };

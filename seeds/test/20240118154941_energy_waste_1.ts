@@ -94,7 +94,7 @@ export async function seed(knex: Knex): Promise<void> {
     buildFakeConsumption({
       id: 4604,
       date: '2008-06-01',
-      consumption: 22,
+      consumption: 424,
       fuelSourceId: 1,
       siteId: 609,
     }),
@@ -204,7 +204,7 @@ export async function seed(knex: Knex): Promise<void> {
       date: `2008-06-01`,
       fuelSourceId: 1,
       usedInId: 2,
-      emissionFactor: 43,
+      emissionFactor: 22,
       siteId: 609,
     }),
     buildFakeEmission({
@@ -212,7 +212,15 @@ export async function seed(knex: Knex): Promise<void> {
       date: `2008-06-01`,
       fuelSourceId: 2,
       usedInId: 2,
-      emissionFactor: 43,
+      emissionFactor: 126,
+      siteId: 609,
+    }),
+    buildFakeEmission({
+      id: 360,
+      date: `2008-04-01`,
+      fuelSourceId: 2,
+      usedInId: 2,
+      emissionFactor: 4,
       siteId: 609,
     }),
   ]);

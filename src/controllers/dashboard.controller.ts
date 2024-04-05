@@ -13,27 +13,28 @@ import { agroupBy } from '../utils/appUtils';
 export const getDataByYear = async (req: any) => {
   const business = await UserService.getUserBy({ id: req.user.id });
 
-  const previousYear = (MathUtils.toInt(req.query.year) || new Date().getFullYear()) - 1;
-  const yearToFilterBy = new Date(previousYear, 0, 1);
-  const selectedYear = addYears(yearToFilterBy, 1);
+  const year = (MathUtils.toInt(req.query.year) || new Date().getFullYear()) - 1;
+  const previousYear = new Date(year, 0, 1);
+  const selectedYear = new Date(year + 1, 0, 1);
   const lastMonthOfPassYear = subMonths(selectedYear, 1);
-  const lastDayOfCurrentMonth = endOfMonth(setMonth(selectedYear, new Date().getMonth()));
+  const lastDayOfCurrentMonth = (setMonth(selectedYear, 11));
 
+  const previousMonthParams = {
+    businessId: req.user.id,
+    startDate: previousYear,
+    endDate: endOfYear(previousYear),
+    fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
+    siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
+  };
   const currenMonthParams = {
     businessId: req.user.id,
     startDate: lastMonthOfPassYear,
-    endDate: addMonths(selectedYear, 11),
+    endDate: lastDayOfCurrentMonth,
     fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
     siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
   };
   const [oldConsumptions, currentConsumptionRecords, currentYearAllSourcesConsumption] = await Promise.all([
-    DashboardService.produceYearConsumptions({
-      businessId: req.user.id,
-      startDate: yearToFilterBy,
-      endDate: endOfYear(yearToFilterBy),
-      fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
-      siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
-    }),
+    DashboardService.produceYearConsumptions(previousMonthParams),
     DashboardService.produceYearConsumptions(currenMonthParams),
     UtilityService.getConsumptions({
       businessId: req.user.id,
@@ -94,7 +95,7 @@ export const getDataByYear = async (req: any) => {
       pastHdds,
       currentConsumptionRecords,
       currentHdd,
-      year: selectedYear.getFullYear(),
+      year: selectedYear .getFullYear(),
     };
 
     statistics = await UtilityService.consumingProjection(energyParams);
@@ -103,6 +104,7 @@ export const getDataByYear = async (req: any) => {
 
   const consumptionsDetails = DashboardService.getConsumptionDetails({
     consumptions: currentYearAllSourcesConsumption.sort(DbUtils.sortByStringDate),
+    year: selectedYear
   });
 
   const consumptions =
@@ -110,6 +112,7 @@ export const getDataByYear = async (req: any) => {
       ? []
       : DashboardService.getConsumptionStatistics({
           consumptions: currentConsumptionRecords.sort(DbUtils.sortByStringDate),
+          year: selectedYear ,
         })
           .map((i) => i.filter((c) => c.consumption !== 0))
           .filter((i) => i.length !== 0)
@@ -122,7 +125,7 @@ export const getDataByYear = async (req: any) => {
     energyTargets: statistics
       .map((arr) => arr.filter(DashboardService.consumptionIsNotProduced))
       .filter((i) => i.length !== 0),
-    consumptionsDetails: consumptionsDetails,
+    consumptionsDetails,
   };
 };
 
@@ -454,6 +457,10 @@ export const getReportData: any = async (req: any) => {
 
 export const energyWaste: any = async (req: any) => {
   const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
+  const fuelSource =
+    req.query?.fuelSource && Number.isNaN(req.query.fuelSource) === false
+      ? MathUtils.toInt(req.query.fuelSource)
+      : undefined;
   const siteId: number | number[] | undefined = req.query?.siteId
     ? Array.isArray(req.query.siteId)
       ? req.query.siteId.map(MathUtils.toInt)
@@ -462,7 +469,7 @@ export const energyWaste: any = async (req: any) => {
   const selectedYear = new Date(year, 0, 1);
 
   const [fuelSources, patterns, sites] = await Promise.all([
-    UtilityService.getFuelSources(),
+    UtilityService.getFuelSources({ id: fuelSource }),
     UserService.getPatterns({ siteId: siteId, businessId: req.user.id }),
     SitesService.findBy({ id: siteId }),
   ]);
@@ -547,7 +554,7 @@ export const energyWaste: any = async (req: any) => {
       hdd: pastHdds,
       nextConsumptions: currentConsumptionRecords,
       nextHdd: currentHdd,
-      year
+      year,
     };
 
     statistics = await DashboardService.calculateWaste(energyParams);
@@ -707,7 +714,7 @@ export const reports: any = async (req: any) => {
       hdd: pastHdds,
       nextConsumptions: currentConsumptionRecords,
       nextHdd: currentHdd,
-      year
+      year,
     };
 
     statistics = await DashboardService.calculateWaste(energyParams);

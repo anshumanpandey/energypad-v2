@@ -24,6 +24,9 @@ const setup = async (): Promise<void> => {
     .then(function () {
       return DB.seed.run();
     })
+    .then(function () {
+      console.log('SEED ran')
+    })
     .catch((err: Error) => {
       console.log(err);
       return err;
