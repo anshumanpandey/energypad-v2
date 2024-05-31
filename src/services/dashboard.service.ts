@@ -406,8 +406,13 @@ const wasteForSinglefuelFunction = (params: {
       (total, next) => new Decimal(total).add(new Decimal(next.value).pow(2)).toNumber(),
       0,
     );
+    const sumYX = currentFuelSourceConsumption.reduce((total, next, idx) => {
+      const c = currentFuelSourceConsumption[idx];
+      const hdd = params.hdd[idx];
+      return new Decimal(total).plus(new Decimal(c.consumption).times(hdd.value)).toNumber();
+    }, 0);
 
-    const NX = 6 as const;
+    const NX = currentFuelSourceConsumption.length;
 
     const b9Top = new Decimal(new Decimal(NX).times(totalOfHddTimesConsumption))
       .minus(new Decimal(totalOfHdd).times(totalOfConsumption))
@@ -415,7 +420,10 @@ const wasteForSinglefuelFunction = (params: {
     const bBelow = new Decimal(new Decimal(NX).times(totalPowerOfHdd))
       .minus(new Decimal(totalOfHdd).times(totalOfHdd))
       .toNumber();
-    const bSlope = new Decimal(b9Top).div(bBelow).toDP(8).toNumber();
+    const bSlope = new Decimal(new Decimal(NX).times(sumYX).minus(new Decimal(totalOfHdd).times(totalOfConsumption)))
+      .div(new Decimal(new Decimal(NX).times(totalPowerOfHdd)).minus(new Decimal(totalOfHdd).pow(2)))
+      .toDP(8)
+      .toNumber();
 
     const aTop = new Decimal(new Decimal(totalOfConsumption).times(totalPowerOfHdd))
       .minus(new Decimal(totalOfHdd).times(totalOfHddTimesConsumption))
@@ -749,6 +757,7 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingParams & 
       .times(singleProjectedEnergy.projectedEnergy)
       .toDP(8, Decimal.ROUND_HALF_UP);
 
+    console.log({a: ajustedProjectedEnergy, b: singleProjectedEnergy.projectedEnergy, c: record.consumption})
     records.push({
       waste: new Decimal(new Decimal(ajustedProjectedEnergy).add(singleProjectedEnergy.projectedEnergy))
         .minus(record.consumption)
