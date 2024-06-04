@@ -501,7 +501,6 @@ type EnergyWasteParams = {
   nextConsumptions: AppModels['UtilityConsumption'][];
   nextHdd: HDDRecord[];
   year: number;
-  thirdHdd?: HDDRecord[];
 };
 const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> => {
   const sites = await SitesService.findBy({
@@ -519,8 +518,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     params.consumptions.filter(DashboardService.consumptionIsNotProduced).map(isLightingPowerAndCoolingFn),
   );
   const isPowerAndLightingAndCooling = promises.some((i) => i === true);
-  const thirdHdd = params.thirdHdd
-  if (isPowerAndLightingAndCooling && thirdHdd ) {
+  if (isPowerAndLightingAndCooling) {
     const records = wasteForPowerAndLightingAndCooling({
       baselineConsumptions: params.consumptions,
       projectedConsumptions: params.nextConsumptions,
@@ -532,9 +530,9 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       baselineTime: populateByDateFromSite('workinghours', { consumptions: params.consumptions, sites }),
       projectedTime: populateByDateFromSite('workinghours', { consumptions: params.nextConsumptions, sites }),
 
-      thirdHdd,
-
       ...params,
+
+      lightingPowerCoolingHdd: params.nextHdd,
     });
     return records;
   }
@@ -721,7 +719,7 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
 };
 
 const wasteForPowerAndLightingAndCooling = (
-  p: WasteForPowerAndLightingParams & EnergyWasteParams & { thirdHdd: HDDRecord[] },
+  p: WasteForPowerAndLightingParams & EnergyWasteParams & { lightingPowerCoolingHdd: HDDRecord[] },
 ) => {
   const powerAndLighting = wasteForPowerAndLighting(p);
   const oneEnergy = wasteForSinglefuelFunction(p);
@@ -742,7 +740,7 @@ const wasteForPowerAndLightingAndCooling = (
     if (!singleProjectedEnergy) {
       continue;
     }
-    const hddToUse = p.thirdHdd[i];
+    const hddToUse = p.lightingPowerCoolingHdd[i];
     if (!hddToUse) {
       continue;
     }

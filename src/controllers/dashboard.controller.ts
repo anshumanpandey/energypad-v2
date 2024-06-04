@@ -17,7 +17,7 @@ export const getDataByYear = async (req: any) => {
   const previousYear = new Date(year, 0, 1);
   const selectedYear = new Date(year + 1, 0, 1);
   const lastMonthOfPassYear = subMonths(selectedYear, 1);
-  const lastDayOfCurrentMonth = (setMonth(selectedYear, 11));
+  const lastDayOfCurrentMonth = setMonth(selectedYear, 11);
 
   const previousMonthParams = {
     businessId: req.user.id,
@@ -95,7 +95,7 @@ export const getDataByYear = async (req: any) => {
       pastHdds,
       currentConsumptionRecords,
       currentHdd,
-      year: selectedYear .getFullYear(),
+      year: selectedYear.getFullYear(),
     };
 
     statistics = await UtilityService.consumingProjection(energyParams);
@@ -104,7 +104,7 @@ export const getDataByYear = async (req: any) => {
 
   const consumptionsDetails = DashboardService.getConsumptionDetails({
     consumptions: currentYearAllSourcesConsumption.sort(DbUtils.sortByStringDate),
-    year: selectedYear
+    year: selectedYear,
   });
 
   const consumptions =
@@ -112,7 +112,7 @@ export const getDataByYear = async (req: any) => {
       ? []
       : DashboardService.getConsumptionStatistics({
           consumptions: currentConsumptionRecords.sort(DbUtils.sortByStringDate),
-          year: selectedYear ,
+          year: selectedYear,
         })
           .map((i) => i.filter((c) => c.consumption !== 0))
           .filter((i) => i.length !== 0)
