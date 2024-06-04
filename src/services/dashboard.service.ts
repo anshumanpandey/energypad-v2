@@ -372,7 +372,7 @@ const wasteForSinglefuelFunction = (params: {
   nextHdd: HDDRecord[];
   year: number;
 }) => {
-  const results: (WasteValue & { projectedEnergy: number })[] = [];
+  const results: (WasteValue & { projectedEnergy: number; cIntercept: number })[] = [];
   const fuelSources = Array.from(new Set(params.consumptions.map((i) => i.fuelSourceId)).values());
   for (let i = 0; i < fuelSources.length; i++) {
     const currentFuelSourceId = fuelSources[i];
@@ -397,11 +397,6 @@ const wasteForSinglefuelFunction = (params: {
         .add(new Decimal(hdd.value).times(consumption.consumption))
         .toNumber();
     }
-    const sumOfHddConsumptionTotal = new Decimal(totalOfConsumption).add(totalOfHdd).toNumber();
-    const totalPowerOfConsumption = currentFuelSourceConsumption.reduce(
-      (total, next) => new Decimal(total).add(new Decimal(next.consumption).pow(2)).toNumber(),
-      0,
-    );
     const totalPowerOfHdd = params.hdd.reduce(
       (total, next) => new Decimal(total).add(new Decimal(next.value).pow(2)).toNumber(),
       0,
@@ -414,12 +409,6 @@ const wasteForSinglefuelFunction = (params: {
 
     const NX = currentFuelSourceConsumption.length;
 
-    const b9Top = new Decimal(new Decimal(NX).times(totalOfHddTimesConsumption))
-      .minus(new Decimal(totalOfHdd).times(totalOfConsumption))
-      .toNumber();
-    const bBelow = new Decimal(new Decimal(NX).times(totalPowerOfHdd))
-      .minus(new Decimal(totalOfHdd).times(totalOfHdd))
-      .toNumber();
     const bSlope = new Decimal(new Decimal(NX).times(sumYX).minus(new Decimal(totalOfHdd).times(totalOfConsumption)))
       .div(new Decimal(new Decimal(NX).times(totalPowerOfHdd)).minus(new Decimal(totalOfHdd).pow(2)))
       .toDP(8)
@@ -457,6 +446,7 @@ const wasteForSinglefuelFunction = (params: {
         date: consumption.date,
         projectedEnergy,
         fuelSourceId: consumption.fuelSourceId,
+        cIntercept,
       });
     }
   }
@@ -511,6 +501,7 @@ type EnergyWasteParams = {
   nextConsumptions: AppModels['UtilityConsumption'][];
   nextHdd: HDDRecord[];
   year: number;
+  thirdHdd?: HDDRecord[];
 };
 const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> => {
   const sites = await SitesService.findBy({
@@ -528,7 +519,8 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     params.consumptions.filter(DashboardService.consumptionIsNotProduced).map(isLightingPowerAndCoolingFn),
   );
   const isPowerAndLightingAndCooling = promises.some((i) => i === true);
-  if (isPowerAndLightingAndCooling) {
+  const thirdHdd = params.thirdHdd
+  if (isPowerAndLightingAndCooling && thirdHdd ) {
     const records = wasteForPowerAndLightingAndCooling({
       baselineConsumptions: params.consumptions,
       projectedConsumptions: params.nextConsumptions,
@@ -539,6 +531,8 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
 
       baselineTime: populateByDateFromSite('workinghours', { consumptions: params.consumptions, sites }),
       projectedTime: populateByDateFromSite('workinghours', { consumptions: params.nextConsumptions, sites }),
+
+      thirdHdd,
 
       ...params,
     });
@@ -610,12 +604,6 @@ type WasteForPowerAndLightingParams = {
   projectedTime: ValueByRecord[];
 };
 const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
-  const ecChangePercentageChange = p.projectedConsumptions.map((c, idx) => {
-    const baselineConsumption = p.baselineConsumptions[idx];
-    const baselineVal = baselineConsumption ? baselineConsumption.consumption : 0;
-    return new Decimal(new Decimal(c.consumption).minus(baselineVal).div(baselineVal)).times(100).toDP(8);
-  });
-
   const daylightPercentageChange: ValueByRecord[] = [];
   for (let i = 0; i < p.baselineDaylight.length; i++) {
     const item = p.baselineDaylight[i];
@@ -732,7 +720,9 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
   return records;
 };
 
-const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingParams & EnergyWasteParams) => {
+const wasteForPowerAndLightingAndCooling = (
+  p: WasteForPowerAndLightingParams & EnergyWasteParams & { thirdHdd: HDDRecord[] },
+) => {
   const powerAndLighting = wasteForPowerAndLighting(p);
   const oneEnergy = wasteForSinglefuelFunction(p);
 
@@ -752,16 +742,21 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingParams & 
     if (!singleProjectedEnergy) {
       continue;
     }
+    const hddToUse = p.thirdHdd[i];
+    if (!hddToUse) {
+      continue;
+    }
 
-    const ajustedProjectedEnergy = new Decimal(new Decimal(singlePowerAndLighting.percentageVariable).div(100))
-      .times(singleProjectedEnergy.projectedEnergy)
-      .toDP(8, Decimal.ROUND_HALF_UP);
+    const weather = new Decimal(hddToUse.value).times(p.projectedConsumptions[i].consumption);
+    const projected = new Decimal(singleProjectedEnergy.cIntercept).add(weather);
+    const adjustedProjectedEnergyPtdl = new Decimal(singlePowerAndLighting.percentageVariable)
+      .div(100)
+      .times(projected);
 
-    console.log({a: ajustedProjectedEnergy, b: singleProjectedEnergy.projectedEnergy, c: record.consumption})
     records.push({
-      waste: new Decimal(new Decimal(ajustedProjectedEnergy).add(singleProjectedEnergy.projectedEnergy))
+      waste: new Decimal(new Decimal(adjustedProjectedEnergyPtdl).add(projected))
         .minus(record.consumption)
-        .toDP(8)
+        .toDP(6, Decimal.ROUND_HALF_UP)
         .toNumber(),
       siteId: singleProjectedEnergy.siteId,
       date: singleProjectedEnergy.date,

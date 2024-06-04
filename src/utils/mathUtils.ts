@@ -21,3 +21,22 @@ export const getAverage = (vals: number[], total?: number) => {
     .toDecimalPlaces(2)
     .toNumber();
 };
+
+export const totalOf = (vals: number[]) => {
+  return vals.reduce((a, b) => new Decimal(a).add(b).toNumber());
+};
+
+export const sumProduct = (vector1: number[], vector2: number[]) => {
+  let total = 0;
+  for (let i = 0; i < vector1.length; i++) {
+    const A = vector1[i];
+    const B = vector2[i];
+    if (!B) {
+      continue;
+    }
+    const mul = new Decimal(A).times(B);
+    total = mul.add(total).toNumber();
+  }
+
+  return total;
+};
