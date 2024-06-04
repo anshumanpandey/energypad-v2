@@ -2267,7 +2267,7 @@ test.only('lighting and power and cooling calculation', () => {
       { value: 80, date: new Date(2022, 10, 1), siteId: 1 },
       { value: 90, date: new Date(2022, 11, 1), siteId: 1 },
     ],
-    thirdHdd: [
+    lightingPowerCoolingHdd: [
       { value: 14, date: new Date(2022, 0, 1), siteId: 1 },
       { value: 20, date: new Date(2022, 1, 1), siteId: 1 },
       { value: 25, date: new Date(2022, 2, 1), siteId: 1 },
