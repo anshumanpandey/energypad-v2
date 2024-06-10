@@ -558,11 +558,8 @@ export const addUtilityEmissions = (p: Omit<AppModels['UtilityEmission'], 'id'>[
   return Promise.all(promises);
 };
 
-type ConsummingStaticsticsParams = {
-  pastConsumptionRecords: ProducedConsumption[];
+export type ConsummingStaticsticsParams = {
   currentConsumptionRecords: ProducedConsumption[];
-  pastHdds: HDDRecord[];
-  currentHdd: HDDRecord[];
   year: number;
 };
 
@@ -605,8 +602,6 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
             i.fuelSourceId === thisConsumption.fuelSourceId,
         );
 
-        console.log(projetion);
-
         const previouseProjection = projetion
           ? targetData.find(
               (i) =>
@@ -615,8 +610,6 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
                 i.fuelSourceId === projetion.fuelSourceId,
             )
           : undefined;
-
-        console.log(previouseProjection, projetion);
 
         const projectedEnergy = projetion ? projetion.energy : 0;
 

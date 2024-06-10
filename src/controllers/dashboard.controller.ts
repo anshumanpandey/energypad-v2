@@ -2,30 +2,20 @@ import { ApiError } from '@lib';
 import { UtilityService, DashboardService, UserService, GreenDaysServices, SitesService } from '@services';
 import { AuthGetAppController } from '@types';
 import { DbUtils, MathUtils, ErrorUtils, AppUtils } from '@utils';
-import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYears, addMonths } from 'date-fns';
+import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYears } from 'date-fns';
 import { CarbonEmission } from '../services/dashboard.service';
 import { GetHddsParams2, HDDRecord } from '../services/greenDays.service';
-import { GetConsumptionsParams, Projection } from '../services/utility.service';
+import { ConsummingStaticsticsParams, GetConsumptionsParams, Projection } from '../services/utility.service';
 import { filterByYearAndMonth } from '../utils/dbUtils';
 import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUtils';
 import { agroupBy } from '../utils/appUtils';
 
 export const getDataByYear = async (req: any) => {
-  const business = await UserService.getUserBy({ id: req.user.id });
-
   const year = (MathUtils.toInt(req.query.year) || new Date().getFullYear()) - 1;
-  const previousYear = new Date(year, 0, 1);
   const selectedYear = new Date(year + 1, 0, 1);
   const lastMonthOfPassYear = subMonths(selectedYear, 1);
   const lastDayOfCurrentMonth = setMonth(selectedYear, 11);
 
-  const previousMonthParams = {
-    businessId: req.user.id,
-    startDate: previousYear,
-    endDate: endOfYear(previousYear),
-    fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
-    siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
-  };
   const currenMonthParams = {
     businessId: req.user.id,
     startDate: lastMonthOfPassYear,
@@ -33,8 +23,7 @@ export const getDataByYear = async (req: any) => {
     fuelSourceId: req.query?.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined,
     siteId: req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined,
   };
-  const [oldConsumptions, currentConsumptionRecords, currentYearAllSourcesConsumption] = await Promise.all([
-    DashboardService.produceYearConsumptions(previousMonthParams),
+  const [currentConsumptionRecords, currentYearAllSourcesConsumption] = await Promise.all([
     DashboardService.produceYearConsumptions(currenMonthParams),
     UtilityService.getConsumptions({
       businessId: req.user.id,
@@ -47,54 +36,9 @@ export const getDataByYear = async (req: any) => {
   let statistics: Projection[][] = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
-  if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
-    const removedDuplicatedDates = (value: typeof oldConsumptions[0], index: number, self: typeof oldConsumptions) =>
-      index === self.findIndex((t: any) => t.date === value.date);
-    const mapRecords = (r: typeof oldConsumptions[0]) => {
-      const startDate = r.date;
-
-      const date = DbUtils.stringDateToDate(r.date);
-      const endOfMonthDate = endOfMonth(date);
-      const endDate = DbUtils.dateToStringDate(endOfMonthDate);
-      return { startDate, endDate, siteId: r.siteId };
-    };
-
-    const promises: Promise<ApiError | HDDRecord[]>[] = [];
-    if (oldConsumptions.length !== 0) {
-      const params = {
-        postalCode: business.postCode,
-        breakDowns: oldConsumptions
-          .sort(DbUtils.sortByStringDate)
-          .filter(DashboardService.consumptionIsNotProduced)
-          .filter(removedDuplicatedDates)
-          .map(mapRecords),
-        valuesToGet: ['HDD' as const],
-      };
-
-      promises.push(GreenDaysServices.getHdds(params));
-    }
-    if (currentConsumptionRecords.length !== 0) {
-      const params = {
-        postalCode: business.postCode,
-        breakDowns: currentConsumptionRecords
-          .sort(DbUtils.sortByStringDate)
-          .filter(DashboardService.consumptionIsNotProduced)
-          .filter(removedDuplicatedDates)
-          .map(mapRecords),
-        valuesToGet: ['HDD' as const],
-      };
-      promises.push(GreenDaysServices.getHdds(params));
-    }
-
-    const [pastHdds, currentHdd] = await Promise.all(promises);
-    if (pastHdds instanceof ApiError) return pastHdds;
-    if (currentHdd instanceof ApiError) return currentHdd;
-
-    const energyParams = {
-      pastConsumptionRecords: oldConsumptions,
-      pastHdds,
+  if (allConsumptionAreProduced === false && currentConsumptionRecords.length > 0) {
+    const energyParams: ConsummingStaticsticsParams = {
       currentConsumptionRecords,
-      currentHdd,
       year: selectedYear.getFullYear(),
     };
 
