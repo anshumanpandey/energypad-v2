@@ -15,6 +15,7 @@ import './definitions/tenant.definition';
 import './definitions/fuelSource.definition';
 import './definitions/energyLog.definition';
 import './definitions/fuelUse.definition';
+import './definitions/energyTarget.definition';
 import { RegisterPath } from './definitions/auth.register.definition';
 import './definitions/user.definition';
 
@@ -61,6 +62,7 @@ import { GetDashboardEnergyWastePath } from './definitions/dashboard.energywaste
 import { SetSiteConversionUnitPath } from './definitions/siteConversionUnit.set.definition';
 import { GetConversionUnitPath } from './definitions/conversionUnit.get.definition';
 import { AddUtilityMonitoringPath } from './definitions/utilityMonitoring.add.definition';
+import { GetMonitoringPath } from './definitions/utility.getMonitoring.get.definition';
 
 export default OpenApiDefinition;
 export {
@@ -106,4 +108,5 @@ export {
   SetSiteConversionUnitPath,
   GetConversionUnitPath,
   AddUtilityMonitoringPath,
+  GetMonitoringPath,
 };

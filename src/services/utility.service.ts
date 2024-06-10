@@ -1,8 +1,8 @@
 import { DB } from '@lib';
 import Decimal from 'decimal.js';
-import { formatISO, setDate, setMonth } from 'date-fns';
+import { formatISO, setDate, setMonth, subMonths } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
-import { DbUtils, UnitsUtil } from '@utils';
+import { DbUtils, MathUtils, UnitsUtil } from '@utils';
 import SiteService from './sites.service';
 import { ProducedConsumption } from './dashboard.service';
 import { capitalizeFirstLetter } from '../utils/appUtils';
@@ -240,7 +240,7 @@ export const addMonitoringToUtility = async (
 };
 
 export type GetMonitoringParams = { siteId?: number | number[]; year?: number; month?: number; businessId?: number };
-export const getMonitoring = (params: GetMonitoringParams) => {
+export const getMonitoring = (params: GetMonitoringParams): Promise<AppModels['ConsumptionTarget'][]> => {
   const query = DB('UtilityMonitoring')
     .select(['UtilityMonitoring.*'])
     .innerJoin('FuelSources', 'UtilityMonitoring.fuelSourceId', 'FuelSources.id')
@@ -605,6 +605,19 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
             i.fuelSourceId === thisConsumption.fuelSourceId,
         );
 
+        console.log(projetion);
+
+        const previouseProjection = projetion
+          ? targetData.find(
+              (i) =>
+                i.date === DbUtils.dateToStringDate(subMonths(DbUtils.stringDateToDate(projetion.date), 1)) &&
+                i.siteId === projetion.siteId &&
+                i.fuelSourceId === projetion.fuelSourceId,
+            )
+          : undefined;
+
+        console.log(previouseProjection, projetion);
+
         const projectedEnergy = projetion ? projetion.energy : 0;
 
         const r = {
@@ -617,10 +630,15 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
             ? thisConsumption.date
             : DbUtils.dateToStringDate(setDate(setMonth(new Date(), idx - 1), 1)),
           consumption: thisConsumption.consumption,
-          //hdd: i.value,
-          //slope: s,
           projectedEnergy: projectedEnergy,
           saving: new Decimal(projectedEnergy).minus(thisConsumption ? thisConsumption.consumption : 0).toNumber(),
+          increasedPercentage:
+            !previouseProjection || previouseProjection?.energy === 0
+              ? 0
+              : MathUtils.calculateIncreasePercentage({
+                  currentValue: projectedEnergy || 0,
+                  passValue: previouseProjection?.energy || 0,
+                }),
         };
         const found = mapMonthRecord.get(idx.toString());
         if (found) {

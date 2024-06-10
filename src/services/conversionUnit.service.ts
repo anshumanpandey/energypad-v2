@@ -1,5 +1,5 @@
 import { DB } from '@lib';
-import { UnitsUtil } from '@utils';
+import { DbUtils, UnitsUtil } from '@utils';
 import { addPrefix } from '../utils/dbUtils';
 
 const findBy = (p: { names: string | string[] }) => {
@@ -17,10 +17,15 @@ const getTargetConsumption = async (p: {
   date?: string | string[];
   fuelSource?: number | number[];
   siteId?: number | number[];
+  year: Date;
 }) => {
   const query = DB('TargetConsumption')
     .select(['TargetConsumption.*', ...addPrefix('TCFC')(['targetValue', 'fuelUnit'])])
     .innerJoin({ TCFC: 'TargetConsumptionFuelConversion' }, 'TargetConsumption.id', 'TCFC.targetConsumptionId');
+
+  if (p.year) {
+    query.where('date', DbUtils.dateToStringDate(p.year));
+  }
 
   if (p.date) {
     if (Array.isArray(p.date)) {

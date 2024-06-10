@@ -12,6 +12,7 @@ import {
   LogFileImportPath,
   UtilityFileImportPath,
   AddUtilityMonitoringPath,
+  GetMonitoringPath,
 } from '@openApi';
 
 const authRoutes = express.Router();
@@ -21,7 +22,7 @@ authRoutes.get('/fuelSources', GetFuelSourcesPath, AuthMiddleware, ExpressAsync(
 authRoutes.get('/fuelUse', GetUsedInPath, AuthMiddleware, ExpressAsync(UtilityController.getUses));
 authRoutes.get('/emissions', GetEmissionsPath, AuthMiddleware, ExpressAsync(UtilityController.getEmissions));
 authRoutes.get('/consumptions', GetConsumptionsPath, AuthMiddleware, ExpressAsync(UtilityController.getConsumptions));
-authRoutes.get('/monitoring', AuthMiddleware, ExpressAsync(UtilityController.getMonitoring));
+authRoutes.get('/monitoring', GetMonitoringPath, AuthMiddleware, ExpressAsync(UtilityController.getMonitoring));
 
 authRoutes.post(
   '/addEmission',

@@ -47,6 +47,7 @@ type SchemaNames =
   | 'EnergyLog'
   | 'FuelSource'
   | 'FuelUse'
+  | 'ConsumptionTarget'
   | 'BusinessPattern';
 type PathNames =
   | 'CreateUser'
@@ -94,6 +95,7 @@ type PathNames =
   | 'GetConversionUnit'
   | 'FileImportBusinessTenants'
   | 'FileImportBusinessPatterns'
+  | 'GetMonitoring'
   | 'UtilityFileImport';
 
 type ResponsesName = 'GenericError' | 'UpdateUser' | PathNames;

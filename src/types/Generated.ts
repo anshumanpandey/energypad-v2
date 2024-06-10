@@ -175,6 +175,21 @@ export interface paths {
       };
     };
   };
+  "/api/utility/monitoring": {
+    /** Get dashboard data per date. */
+    get: {
+      parameters: {
+        query: {
+          siteId?: string;
+          year?: string;
+        };
+      };
+      responses: {
+        200: components["responses"]["GetMonitoring"];
+        400: components["responses"]["GenericError"];
+      };
+    };
+  };
   "/api/utility/addEmission": {
     /** Add emision to utility. */
     post: {
@@ -629,6 +644,16 @@ export interface components {
       use: string;
       id: number;
     };
+    ConsumptionTarget: {
+      id?: number;
+      energy: number;
+      carbon: number;
+      conversionFactor: number;
+      fuelUnit: string;
+      date: string;
+      siteId: number;
+      fuelSourceId: number;
+    };
     RegisterBody: {
       businessName: string;
       businessType: string;
@@ -1026,6 +1051,12 @@ export interface components {
     AddFuelSourceMonitoring: {
       content: {
         "application/json": components["schemas"]["SuccessMessage"];
+      };
+    };
+    /** Success message */
+    GetMonitoring: {
+      content: {
+        "application/json": components["schemas"]["ConsumptionTarget"][];
       };
     };
   };
