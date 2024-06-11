@@ -436,7 +436,7 @@ export const energyWaste: any = async (req: any) => {
     }),
   ]);
 
-  let statistics: Awaited<ReturnType<typeof DashboardService.calculateWaste>> = [];
+  let wasteData: Awaited<ReturnType<typeof DashboardService.calculateWaste>> = [];
   let projections: Awaited<ReturnType<typeof UtilityService.consumingProjection>> = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
@@ -501,8 +501,8 @@ export const energyWaste: any = async (req: any) => {
       year,
     };
 
-    statistics = await DashboardService.calculateWaste(energyParams);
-    if (ErrorUtils.isErrorInstance(statistics)) return statistics;
+    wasteData = await DashboardService.calculateWaste(energyParams);
+    if (ErrorUtils.isErrorInstance(wasteData)) return wasteData;
 
     const projectionParams = {
       pastConsumptionRecords: oldConsumptions,
@@ -530,13 +530,11 @@ export const energyWaste: any = async (req: any) => {
   );
 
   return {
-    waste: agroupBy(statistics, 'fuelSourceId'),
+    waste: agroupBy(wasteData, 'fuelSourceId'),
     consumptions: currentConsumptionRecords,
     targetConsumptions: projections,
     carbonEmissions: carbonEmissions.map((i) => {
-      const waste = statistics
-        .filter(filterByYearAndMonth(i))
-        .filter(SitesService.filterBySiteId(i.siteId))?.[0]?.waste;
+      const waste = wasteData.filter(filterByYearAndMonth(i)).filter(SitesService.filterBySiteId(i.siteId))?.[0]?.waste;
       let carbonEmission = 0;
       if (waste) {
         carbonEmission = resolveConsumptionToKwh({
@@ -553,7 +551,7 @@ export const energyWaste: any = async (req: any) => {
     }),
     financialCost: DashboardService.calculateFinancialCost({
       consumptions: currentConsumptionRecords,
-      waste: statistics,
+      waste: wasteData,
     }),
   };
 };
