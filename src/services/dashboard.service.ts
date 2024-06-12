@@ -850,16 +850,14 @@ const calculateCarbonImpact = (p: {
       fuelSourceId: consumption.fuelSourceId,
       usedInId: consumption.usedInId,
       consumption: consumption.consumption,
+      totalCost: consumption.totalCost,
       consumptionCarbonImpact: new Decimal(consumption.consumption).times(emission.emissionFactor).toDP(8).toNumber(),
       consumptionFinancialCost: new Decimal(new Decimal(consumption.totalCost).div(consumption.consumption))
         .times(consumption.consumption)
         .toDP(8)
         .toNumber(),
       wasteCarbonImpact: new Decimal(waste.waste).times(emission.emissionFactor).toDP(8).toNumber(),
-      wasteFinancialCost: new Decimal(new Decimal(consumption.totalCost).div(consumption.consumption))
-        .times(waste.waste)
-        .toDP(8)
-        .toNumber(),
+      wasteCost: wasteCost({ consumption, waste: waste.waste }),
     });
   }
   return records;

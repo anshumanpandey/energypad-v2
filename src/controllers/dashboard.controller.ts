@@ -696,9 +696,15 @@ export const reports: any = async (req: any) => {
           .filter(UtilityService.filterByFuelSource(c.fuelSourceId))?.[0]?.waste,
       };
     }),
-    targetConsumptions,
+    targetConsumptions: targetConsumptions
+      .map((r) => r.filter(DashboardService.consumptionIsNotProduced))
+      .filter((r) => r.length !== 0),
     //TODO: consumptions and carbonEmissions should be agroup by fuelSourceId AND siteId
-    consumptions: agroupBy(currentConsumptionRecords, 'fuelSourceId'),
-    carbonEmissions: agroupBy(carbonEmissions, 'fuelSourceId'),
+    consumptions: agroupBy(currentConsumptionRecords, 'fuelSourceId').map((r) =>
+      r.filter(DashboardService.consumptionIsNotProduced),
+    ),
+    carbonEmissions: agroupBy(carbonEmissions, 'fuelSourceId').map((r) =>
+      r.filter(DashboardService.consumptionIsNotProduced),
+    ),
   };
 };
