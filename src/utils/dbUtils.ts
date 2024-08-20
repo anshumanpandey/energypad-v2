@@ -1,6 +1,7 @@
 import { DB } from '@lib';
 import { MathUtils } from '@utils';
 import formatISO from 'date-fns/formatISO';
+import subMonths from 'date-fns/subMonths';
 
 /**
  * Converts default DB date string to Date object
@@ -71,7 +72,10 @@ export const decreaseYear = (p: { date: string }, amount: number) => {
 
 export const decreaseMonth = (p: { date: string }, amount: number) => {
   const [year, month] = p.date.split('-').map(Number);
-  return `${year}-${numberToMonth(month - amount)}-01`;
+  const date = new Date(year, month, 1);
+  return subMonths(date, amount + 1)
+    .toISOString()
+    .split('T')[0];
 };
 export const createTransaction = () => {
   return DB.transaction();

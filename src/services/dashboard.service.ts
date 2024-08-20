@@ -128,8 +128,9 @@ const generateConsumptionDetail = ({
   year: Date;
 }) => {
   const consumptionDetails = [];
-  for (let i = 0, len = consumptions.length; i < len; i++) {
-    const currentRecord = consumptions[i];
+  const thisYearConsumptions = consumptions.filter(DbUtils.filterByYear(year.getFullYear()));
+  for (let i = 0, len = thisYearConsumptions.length; i < len; i++) {
+    const currentRecord = thisYearConsumptions[i];
     const [previousRecord] = consumptions
       .filter(SitesService.filterBySiteId(currentRecord.siteId))
       .filter(UtilityService.filterByFuelSource(currentRecord.fuelSourceId))
@@ -139,12 +140,13 @@ const generateConsumptionDetail = ({
       siteName: currentRecord.siteName,
       fuelSourceName: currentRecord.fuelSourceName,
       consumption: currentRecord.consumption,
-      incesedPercentage: previousRecord?.consumption
-        ? MathUtils.calculateIncreasePercentage({
-            passValue: previousRecord.consumption,
-            currentValue: currentRecord.consumption,
-          })
-        : 0,
+      incesedPercentage:
+        previousRecord?.consumption !== undefined
+          ? MathUtils.calculateIncreasePercentage({
+              passValue: previousRecord.consumption,
+              currentValue: currentRecord.consumption,
+            })
+          : 0,
     };
     if (DbUtils.stringDateToDate(record.date).getFullYear() === year.getFullYear()) {
       consumptionDetails.push(record);
