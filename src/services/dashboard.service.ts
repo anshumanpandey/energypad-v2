@@ -262,7 +262,7 @@ const consumptionIsNotProduced = (i: any) => {
 };
 
 const wasteCost = (p: { consumption: AppModels['UtilityConsumption']; waste: number }) => {
-  return new Decimal(new Decimal(p.consumption.consumption).div(p.consumption.totalCost))
+  return new Decimal(new Decimal(p.consumption.totalCost).div(p.consumption.consumption))
     .times(p.waste)
     .toDP(2)
     .absoluteValue()
