@@ -424,6 +424,8 @@ const wasteForSinglefuelFunction = (params: {
       .toDP(8)
       .toNumber();
 
+    console.log({ totalOfHdd, totalOfConsumption });
+
     const aTop = new Decimal(new Decimal(totalOfConsumption).times(totalPowerOfHdd))
       .minus(new Decimal(totalOfHdd).times(totalOfHddTimesConsumption))
       .toNumber();
