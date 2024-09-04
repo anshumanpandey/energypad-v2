@@ -623,17 +623,17 @@ export const isOnUse = async (p: { usedInId: number | number[]; use: SupportedUs
   }
 
   if (usedInFound.some((i) => i === undefined || i === null)) {
-    const usesIn = await DB('FuelUses').select();
+    const usesIn = await DB<{ id: number; use: string }>('FuelUses').select();
     for (let i = 0; i < usesIn.length; i++) {
       const useIn = usesIn[i];
       usedInCache.setKey(useIn.id.toString(), useIn);
       if (Array.isArray(p.usedInId)) {
         if (p.usedInId.includes(useIn.id)) {
-          usedInFound = useIn;
+          usedInFound = [useIn];
         }
       } else {
         if (p.usedInId === useIn.id) {
-          usedInFound = useIn;
+          usedInFound = [useIn];
         }
       }
     }
