@@ -7,7 +7,7 @@ const reduceData = () => {
     states: [] as { name: string; countryId: number }[],
   };
 
-  const countryFn = ({ country, states }, idx: number) => {
+  const countryFn = ({ country, states }: any, idx: number) => {
     const countryId = idx + 1;
     data.countries.push({ id: countryId, name: country });
 

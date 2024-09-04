@@ -20,10 +20,6 @@ const bodySchema: CreateSchemaParams = {
 
       siteId: { type: 'number', format: 'int32' },
       fuelSourceId: { type: 'number', format: 'int32' },
-      usedInId: {
-        type: 'array',
-        items: { type: 'number', format: 'int32' },
-      },
     },
   },
 };

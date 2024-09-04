@@ -118,61 +118,6 @@ export async function seed(knex: Knex): Promise<void> {
     },
   ]);
 
-  await knex('UtilityConsumptionsUse').insert([
-    {
-      consumptionId: 4512,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4514,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4516,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4500,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4502,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4504,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4506,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4508,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4510,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4600,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4602,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4604,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4606,
-      usedInId: 2,
-    },
-  ]);
-
   await knex('UtilityEmissions').insert([
     buildFakeEmission({
       id: 350,
@@ -304,49 +249,6 @@ export async function seed(knex: Knex): Promise<void> {
     },
   ]);
 
-  await knex('UtilityConsumptionsUse').insert([
-    {
-      consumptionId: 4520,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4522,
-      usedInId: 3,
-    },
-    {
-      consumptionId: 4522,
-      usedInId: 4,
-    },
-    {
-      consumptionId: 4524,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4526,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4528,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4530,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4532,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4534,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4536,
-      usedInId: 2,
-    },
-  ]);
-
   // user 3
   await knex('UtilityConsumptions').insert([
     buildFakeConsumption({
@@ -423,53 +325,6 @@ export async function seed(knex: Knex): Promise<void> {
       endDate: '2010-12-31',
       temperature: 40,
       daysOnYear: 100,
-    },
-  ]);
-
-  await knex('UtilityConsumptionsUse').insert([
-    {
-      consumptionId: 4540,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4542,
-      usedInId: 3,
-    },
-    {
-      consumptionId: 4542,
-      usedInId: 4,
-    },
-    {
-      consumptionId: 4542,
-      usedInId: 105,
-    },
-    {
-      consumptionId: 4544,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4546,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4548,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4550,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4552,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4554,
-      usedInId: 2,
-    },
-    {
-      consumptionId: 4556,
-      usedInId: 2,
     },
   ]);
 }

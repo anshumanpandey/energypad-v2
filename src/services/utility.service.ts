@@ -9,14 +9,14 @@ import { capitalizeFirstLetter } from '../utils/appUtils';
 import { ulid } from 'ulid';
 import * as flatCache from 'flat-cache';
 import { UtilityService } from '@services';
-import { HDDRecord } from './greenDays.service';
+
+export type SupportedUses = 'Heating' | 'Cooling' | 'Powering' | 'Lighting';
 
 export type AddConsumptionToUtilityParam = RequestBodyParams<'AddFuelSourceConsumption'>;
 export const addConsumptionToUtility = async (params: AddConsumptionToUtilityParam, opt?: Transactionable) => {
   const driver = opt?.txr || DB;
 
   const consumptions: Record<string, any>[] = [];
-  let consumptionUse: Record<string, any>[] = [];
   for (let i = 0; i < params.length; i++) {
     const { usedInId, consumption, conversionFactor, fuelUnit, ...data } = params[i];
 
@@ -28,15 +28,11 @@ export const addConsumptionToUtility = async (params: AddConsumptionToUtilityPar
       consumption: UnitsUtil.resolveConsumptionToKwh({ consumption, conversionFactor, fuelUnit: unit }),
       conversionFactor,
       fuelUnit,
+      usedInId,
     });
-    if (usedInId.length !== 0) {
-      const usesData = usedInId.map((u) => ({ consumptionId: id, usedInId: u }));
-      consumptionUse = consumptionUse.concat(usesData);
-    }
   }
 
   await driver('UtilityConsumptions').insert(consumptions);
-  await driver('UtilityConsumptionsUse').insert(consumptionUse);
 };
 
 export const areConsumptionEqual =
@@ -56,7 +52,6 @@ export const upsertConsumptionToUtility = async (
     .andWhere('date', 'in', Array.from(new Set(params.map((r) => r.date))));
 
   const records = [];
-  const uses = [];
   for (let i = 0; i < params.length; i++) {
     let record = params[i];
     const foundToUpdate = existingRecords.findIndex(areConsumptionEqual(record));
@@ -68,12 +63,8 @@ export const upsertConsumptionToUtility = async (
       found.fuelUnit = record.fuelUnit;
       found.totalCost = record.totalCost;
       found.vat = record.vat;
+      found.usedInId = record.usedInId;
       record = found;
-    }
-
-    if (record.usedInId.length > 0 && record.id) {
-      const { usedInId, ...data } = record;
-      uses.push({ usedInId, consumptionId: data.id });
     }
     records.push(record);
   }
@@ -81,20 +72,12 @@ export const upsertConsumptionToUtility = async (
   const newData = records.filter((r) => r.id === null || r.id === undefined);
   if (newData.length > 0) {
     const c = [];
-    let u: any[] = [];
     for (let i = 0; i < newData.length; i++) {
       const id = ulid();
-      const { usedInId, ...data } = newData[i] as any;
-      c.push({ ...data, id });
-      if (usedInId) {
-        u = u.concat(usedInId.map((u: any) => ({ usedInId: u, consumptionId: id })));
-      }
+      c.push({ ...newData[i], id });
     }
     if (c.length !== 0) {
       await driver('UtilityConsumptions').insert(c);
-    }
-    if (u.length !== 0) {
-      await driver('UtilityConsumptionsUse').insert(u);
     }
   }
   const upsertData = records.filter((r) => r.id !== null && r.id !== undefined);
@@ -109,17 +92,6 @@ export const upsertConsumptionToUtility = async (
       .merge(['vat', 'totalCost', 'consumption', 'fuelUnit']);
   }
 
-  if (uses.length > 0) {
-    await driver('UtilityConsumptionsUse')
-      .delete()
-      .where(
-        'consumptionId',
-        'in',
-        uses.map((i) => i.consumptionId),
-      );
-    const ucu = uses.map((r) => r.usedInId.map((u) => ({ usedInId: u, consumptionId: r.consumptionId }))).flat();
-    await driver('UtilityConsumptionsUse').insert(ucu);
-  }
   return [];
 };
 
@@ -151,20 +123,16 @@ export const upsertEmissions = async (
     records.push(record);
   }
 
-  const removeUsedIn = (n: Record<string, string | number | number[] | undefined | null>) => {
-    const { usedInId, ...r } = n;
-    return r;
-  };
   const newData = records.filter((r) => r.id === null || r.id === undefined);
   if (newData.length != 0) {
-    await driver('UtilityEmissions').insert(newData.map(removeUsedIn));
+    await driver('UtilityEmissions').insert(newData);
   }
   const upsertData = records.filter((r) => r.id !== null && r.id !== undefined);
   if (upsertData.length > 0) {
     const withConversionFactor = upsertData.filter((d) => d.conversionFactor);
     if (withConversionFactor.length !== 0) {
       await driver('UtilityEmissions')
-        .insert(upsertData.map(removeUsedIn))
+        .insert(upsertData)
         .onConflict('id')
         .merge(['conversionFactor', 'fuelUnit', 'emissionFactor']);
     }
@@ -404,7 +372,6 @@ export const getConsumptions = async (params: GetConsumptionsParams): Promise<Ap
     { fuelSourceName: 'FuelSources.source' },
     { siteId: 'S.id' },
     { siteName: 'S.name' },
-    { usedInId: 'Use.usedInId' },
   ];
 
   const query = DB('UtilityConsumptions')
@@ -412,7 +379,6 @@ export const getConsumptions = async (params: GetConsumptionsParams): Promise<Ap
     .innerJoin('FuelSources', 'UtilityConsumptions.fuelSourceId', 'FuelSources.id')
     .innerJoin({ S: 'Sites' }, 'UtilityConsumptions.siteId', 'S.id')
     .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
-    .innerJoin({ Use: 'UtilityConsumptionsUse' }, 'UtilityConsumptions.id', 'Use.consumptionId')
     .where('B.id', params.businessId);
 
   if (params.startDate) {
@@ -460,11 +426,7 @@ export const getConsumptions = async (params: GetConsumptionsParams): Promise<Ap
       found.usedInId.push(usedInId);
       table.set(r.id, found);
     } else {
-      const { usedInId, ...c } = r;
-      table.set(r.id, {
-        ...c,
-        usedInId: [usedInId],
-      });
+      table.set(r.id, r);
     }
   }
   const consumptions = Array.from(table.values());
@@ -545,13 +507,8 @@ export const findFuelUseBy = async (p?: FindFuelUseByParams): Promise<AppModels[
 export const addUtilityEmissions = (p: Omit<AppModels['UtilityEmission'], 'id'>[], opt?: Transactionable) => {
   const driver = opt?.txr || DB;
   const promises = p.map(async (i) => {
-    const { usedInId, ...data } = i;
-    const [record] = await driver('UtilityEmissions').insert(data).returning('id');
+    const [record] = await driver('UtilityEmissions').insert(i).returning('id');
 
-    if (usedInId.length !== 0) {
-      const useData = usedInId.map((u) => ({ usedInId: u, emissionId: record.id }));
-      await driver('UtilityEmissionsUse').insert(useData);
-    }
     return record.id;
   });
 
@@ -659,10 +616,7 @@ export const filterByFuelSource = (i: number) => (r: { fuelSourceId: number }) =
  * and if do so the app needs to be restarted to clear cache and update the values on it
  **/
 const usedInCache = flatCache.load('usedIn');
-export const isOnUse = async (p: {
-  usedInId: number | number[];
-  use: 'Heating' | 'Cooling' | 'Powering' | 'Lighting';
-}) => {
+export const isOnUse = async (p: { usedInId: number | number[]; use: SupportedUses }) => {
   let usedInFound = [usedInCache.getKey(p.usedInId.toString())];
   if (Array.isArray(p.usedInId)) {
     usedInFound = p.usedInId.map((i) => usedInCache.getKey(i.toString()));

@@ -1,8 +1,12 @@
 import { Knex } from 'knex';
 import Countries from '../Countries.json';
 
+type Data = {
+  countries: any[];
+  states: any[];
+};
 const reduceData = () => {
-  const data = {
+  const data: Data = {
     countries: [],
     states: [],
   };

@@ -36,20 +36,35 @@ export const extractConsumptionData = async (
   const consumptions: any[] = [];
   const sheet = workbook.worksheets[0];
 
+  const errors: ApiError[] = [];
   for (let r = 2; r <= sheet.actualRowCount; r++) {
     const currentRow = sheet.getRow(r);
 
     const siteCode = currentRow.getCell('A').text;
     const site = opt.sites.find((s) => s.code?.toString() === siteCode);
     if (!site) {
-      return new ApiError(`Site [${siteCode}] not found`);
+      const e = new ApiError(`Consumption sheet: Site [${siteCode}] not found. Line ${currentRow.number}`);
+      errors.push(e);
     }
+    const month = getMonthByName(currentRow.getCell('C').text);
+    if (!month) {
+      const e = new ApiError(`Month [${currentRow.getCell('C').text}] not found. Line ${currentRow.number}`);
+      errors.push(e);
+    }
+  }
+
+  if (errors.length !== 0) {
+    return new ApiError('Err error', 400, { from: errors });
+  }
+
+  for (let r = 2; r <= sheet.actualRowCount; r++) {
+    const currentRow = sheet.getRow(r);
+
+    const siteCode = currentRow.getCell('A').text;
+    const site = opt.sites.find((s) => s.code?.toString() === siteCode) || { vat: 0, id: 0 }; //NOTE: we add optionals values so compiler dont show error
     const fuel = currentRow.getCell('E').text;
     const year = currentRow.getCell('B').text;
     const month = getMonthByName(currentRow.getCell('C').text);
-    if (!month) {
-      return new ApiError(`Month [${currentRow.getCell('C').text}] not found`);
-    }
 
     const date = `${year}-${month}-01`;
 
@@ -59,6 +74,7 @@ export const extractConsumptionData = async (
 
     const fuelUnit = currentRow.getCell('G').text as typeof SupportedUnits[0];
     const record = {
+      rowIdx: currentRow.number,
       date,
       vat: new Decimal(totalCost).dividedBy(100).times(site.vat).toDP(2).toNumber(),
       totalCost: totalCost,
@@ -67,7 +83,7 @@ export const extractConsumptionData = async (
       fuelSourceId: opt.fuels.find((f) => f.source.toLowerCase() === fuel.toLowerCase())?.id,
       consumption: resolveConsumptionToKwh({ consumption, conversionFactor, fuelUnit }),
       conversionFactor: conversionFactor,
-      usedInId: [opt.uses.find((u) => currentRow.getCell('D').text === u.use)?.id],
+      usedInId: opt.uses.find((u) => currentRow.getCell('D').text === u.use)?.id,
     };
     consumptions.push(record);
   }
@@ -88,24 +104,40 @@ export const extractEmissionsData = async (
   const consumptions: any[] = [];
   const sheet = workbook.worksheets[1];
 
+  const errors: ApiError[] = [];
   for (let r = 2; r <= sheet.actualRowCount; r++) {
     const currentRow = sheet.getRow(r);
 
     const siteCode = currentRow.getCell('A').text;
     const site = opt.sites.find((s) => s.code?.toString() === siteCode);
     if (!site) {
-      return new ApiError(`Site [${siteCode}] not found`);
+      const e = new ApiError(`Emission sheet: Site [${siteCode}] not found. Line: ${currentRow.number}`);
+      errors.push(e);
     }
+    const month = getMonthByName(currentRow.getCell('C').text);
+    if (!month) {
+      const e = new ApiError(`Month [${currentRow.getCell('C').text}] not found. Line: ${currentRow.number}`);
+      errors.push(e);
+    }
+  }
+
+  if (errors.length !== 0) {
+    return new ApiError('Err error', 400, { from: errors });
+  }
+
+  for (let r = 2; r <= sheet.actualRowCount; r++) {
+    const currentRow = sheet.getRow(r);
+
+    const siteCode = currentRow.getCell('A').text;
+    const site = opt.sites.find((s) => s.code?.toString() === siteCode) || { id: 0 }; //NOTE: we add optionals values so compiler dont show error
+
     const fuel = currentRow.getCell('D').text;
     const year = currentRow.getCell('B').text;
     const emissionFactor = new Decimal(currentRow.getCell('F').text).toDP(2).toNumber();
     const fuelUnit = currentRow.getCell('E').text as typeof SupportedUnits[0];
     const month = getMonthByName(currentRow.getCell('C').text);
-    if (!month) {
-      return new ApiError(`Month [${currentRow.getCell('C').text}] not found`);
-    }
-    const fuelSourceId = opt.fuels.find((f) => f.source === fuel)?.id;
 
+    const fuelSourceId = opt.fuels.find((f) => f.source === fuel)?.id;
     const date = `${year}-${month}-01`;
 
     const consumptionForThis = opt.consumptions.find(
@@ -113,13 +145,13 @@ export const extractEmissionsData = async (
     );
 
     const record = {
+      rowIdx: currentRow.number,
       date,
       siteId: site.id,
       emissionFactor: emissionFactor,
       fuelUnit,
       fuelSourceId: fuelSourceId,
       conversionFactor: DB.raw('DEFAULT') as Knex.Raw | number,
-      usedInId: [],
     };
     if (consumptionForThis) {
       const factor = new Decimal(emissionFactor).times(consumptionForThis.consumption).toDP(2).toNumber();
@@ -139,27 +171,44 @@ export const extractTargetData = async (
   const monitoring: any[] = [];
   const sheet = workbook.worksheets[2];
 
+  const errors: ApiError[] = [];
   for (let r = 2; r <= sheet.actualRowCount; r++) {
     const currentRow = sheet.getRow(r);
 
     const siteCode = currentRow.getCell('A').text;
     const site = opt.sites.find((s) => s.code?.toString() === siteCode);
     if (!site) {
-      return new ApiError(`Site [${siteCode}] not found`);
+      const e = new ApiError(`Targets sheet: Site [${siteCode}] not found. Line ${currentRow.number}`);
+      errors.push(e);
     }
-    const fuel = currentRow.getCell('D').text;
-    const year = currentRow.getCell('B').text;
     const month = getMonthByName(currentRow.getCell('C').text);
     if (!month) {
-      return new ApiError(`Month [${currentRow.getCell('C').text}] not found`);
+      const e = new ApiError(`Month [${currentRow.getCell('C').text}] not found. Line ${currentRow.number}`);
+      errors.push(e);
     }
+  }
+
+  if (errors.length !== 0) {
+    return new ApiError('Err error', 400, { from: errors });
+  }
+
+  for (let r = 2; r <= sheet.actualRowCount; r++) {
+    const currentRow = sheet.getRow(r);
+    const fuel = currentRow.getCell('D').text;
+    const year = currentRow.getCell('B').text;
+
+    const siteCode = currentRow.getCell('A').text;
+    const site = opt.sites.find((s) => s.code?.toString() === siteCode) || { id: 0 };
+
     const fuelUnit = currentRow.getCell('E').text as typeof SupportedUnits[0];
     const energy = MathUtils.toInt(currentRow.getCell('F').text);
     const carbon = currentRow.getCell('G').text;
+    const month = getMonthByName(currentRow.getCell('C').text);
 
     const date = `${year}-${month}-01`;
 
     const record = {
+      rowIdx: currentRow.number,
       date,
       siteId: site.id,
       energy,

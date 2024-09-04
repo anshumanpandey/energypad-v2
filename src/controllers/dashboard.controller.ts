@@ -420,20 +420,19 @@ export const energyWaste: any = async (req: any) => {
 
   const oldParams = {
     businessId: req.user.id,
-    startDate: subYears(selectedYear, 1),
+    startDate: subYears(selectedYear, 2),
     endDate: endOfYear(subYears(selectedYear, 1)),
-    fuelSourceId: fuelSources.map(AppUtils.getRecordId),
+    siteId,
+  };
+  const newParams = {
+    businessId: req.user.id,
+    startDate: subMonths(selectedYear, 1),
+    endDate: endOfYear(selectedYear),
     siteId,
   };
   const [oldConsumptions, currentConsumptionRecords] = await Promise.all([
     DashboardService.produceYearConsumptions(oldParams),
-    DashboardService.produceYearConsumptions({
-      businessId: req.user.id,
-      startDate: subMonths(selectedYear, 1),
-      endDate: endOfYear(selectedYear),
-      fuelSourceId: fuelSources.map(AppUtils.getRecordId),
-      siteId,
-    }),
+    DashboardService.produceYearConsumptions(newParams),
   ]);
 
   let wasteData: Awaited<ReturnType<typeof DashboardService.calculateWaste>> = [];
@@ -493,12 +492,41 @@ export const energyWaste: any = async (req: any) => {
     if (pastHdds instanceof ApiError) return pastHdds;
     if (currentHdd instanceof ApiError) return currentHdd;
 
+    const singleFuelConsumptions = await DashboardService.filterSingleConsumptionForHeatingOrCooling({
+      yearToFilterBy: year - 2,
+      consumptions: oldConsumptions,
+    });
+    const singleFuelProjectedConsumptions = await DashboardService.filterSingleConsumptionForHeatingOrCooling({
+      yearToFilterBy: year - 1,
+      consumptions: oldConsumptions,
+    });
+    const lightingAndPowerConsumptions = await DashboardService.filterLightingAndPowerConsumption({
+      yearToFilterBy: year - 2,
+      consumptions: oldConsumptions,
+    });
+    const lightingAndPowerProjectedConsumptions = await DashboardService.filterLightingAndPowerConsumption({
+      yearToFilterBy: year - 1,
+      consumptions: oldConsumptions,
+    });
+
     const energyParams = {
       consumptions: oldConsumptions,
       hdd: pastHdds,
       nextConsumptions: currentConsumptionRecords,
       nextHdd: currentHdd,
       year,
+
+      singleFuelConsumptions: singleFuelConsumptions,
+      singleFuelHdd: pastHdds.filter(DbUtils.filterByYear(year - 2)),
+
+      singleFuelProjectedConsumptions: singleFuelProjectedConsumptions,
+      singleFuelProjectedHdd: pastHdds.filter(DbUtils.filterByYear(year - 1)),
+
+      lightingAndPowerConsumptions: lightingAndPowerConsumptions,
+      lightingAndPowerProjectedConsumptions: lightingAndPowerProjectedConsumptions,
+
+      selectedYearConsumptions: currentConsumptionRecords,
+      selectedYearHdd: currentHdd.filter(DbUtils.filterByYear(year)),
     };
 
     wasteData = await DashboardService.calculateWaste(energyParams);
@@ -657,6 +685,18 @@ export const reports: any = async (req: any) => {
       nextConsumptions: currentConsumptionRecords,
       nextHdd: currentHdd,
       year,
+
+      singleFuelConsumptions: [],
+      singleFuelHdd: [],
+
+      singleFuelProjectedConsumptions: [],
+      singleFuelProjectedHdd: [],
+
+      lightingAndPowerConsumptions: [],
+      lightingAndPowerProjectedConsumptions: [],
+
+      selectedYearConsumptions: [],
+      selectedYearHdd: [],
     };
 
     statistics = await DashboardService.calculateWaste(energyParams);

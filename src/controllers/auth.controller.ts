@@ -36,5 +36,5 @@ export const loginUser: AppController<'Login', 'Login'> = async (req) => {
   if (isValid === false) return new ApiError('Wrong credentials');
 
   const jwt = await AuthService.generateJwt({ id: user.id });
-  return { jwt };
+  return { jwt, ...user };
 };

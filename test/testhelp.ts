@@ -129,6 +129,7 @@ export const buildFakeConsumption = (p: {
     fuelUnit: 'm3',
     siteId: p.siteId,
     fuelSourceId: p.fuelSourceId,
+    usedInId: 2,
   };
 };
 

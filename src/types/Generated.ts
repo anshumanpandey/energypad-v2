@@ -691,7 +691,7 @@ export interface components {
       vat: number;
       siteId: number;
       fuelSourceId: number;
-      usedInId: number[];
+      usedInId: number;
     };
     AddFuelSourceEmissionBody: {
       emissionFactor: number;
@@ -700,7 +700,8 @@ export interface components {
       fuelUnit: string;
       siteId: number;
       fuelSourceId: number;
-      usedInId: number[];
+    } & {
+      usedInId: unknown;
     };
     UtilityEmission: components["schemas"]["AddFuelSourceEmissionBody"] & {
       id: number;

@@ -17,8 +17,9 @@ export const dateToStringDate = (date: Date) => {
   return formatISO(date).split('T')[0];
 };
 
-export const filterByYear = (year: number) => (r: { date: string }) => {
-  return year === stringDateToDate(r.date).getFullYear();
+export const filterByYear = (year: number) => (r: { date: string | Date }) => {
+  const d = typeof r.date === 'string' ? r.date : dateToStringDate(r.date);
+  return year === stringDateToDate(d).getFullYear();
 };
 
 /**
@@ -51,9 +52,11 @@ export const filterByMonth = (month: number) => (i: { date: string }) => {
   return Number(i.date.split('-')[1]) === month;
 };
 
-export const filterByYearAndMonth = (p: { date: string }) => (record: { date: string }) => {
-  const [year, month] = p.date.split('-').map(Number);
-  return filterByYear(year)(record) && filterByMonth(month)(record);
+export const filterByYearAndMonth = (p: { date: string | Date }) => (record: { date: string | Date }) => {
+  const d = typeof p.date === 'string' ? p.date : dateToStringDate(p.date);
+  const itemDate = typeof record.date === 'string' ? record.date : dateToStringDate(record.date);
+  const [year, month] = d.split('-').map(Number);
+  return filterByYear(year)(record) && filterByMonth(month)({ date: itemDate });
 };
 
 export const numberToMonth = (n: number) => {

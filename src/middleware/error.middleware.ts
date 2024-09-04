@@ -11,12 +11,15 @@ const ErrorMiddleware = (
   let errResponse = {
     statusCode: 500,
     message: 'Unknown Error',
+    list: undefined as undefined | string[],
   };
   if (err instanceof ApiError) {
+    const messages = err.opt?.from?.map((e) => e.message);
     AppLogger.error({ err, 'id-req': req.id, message: err.message, endpoint: req.url });
     errResponse = {
       statusCode: err.code,
       message: err.message,
+      list: messages,
     };
   } else if (err instanceof ValidationError) {
     let message = 'Invalid Body';
@@ -30,11 +33,13 @@ const ErrorMiddleware = (
     errResponse = {
       statusCode: 400,
       message,
+      list: undefined,
     };
   } else if (err.name === 'UnauthorizedError') {
     errResponse = {
       statusCode: 401,
       message: 'Unauthorized',
+      list: undefined,
     };
   } else {
     AppLogger.fatal({ err, 'id-req': req.id, endpoint: req.url });

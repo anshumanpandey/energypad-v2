@@ -139,16 +139,12 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
 
       const recordId = ulid();
       await txr('UtilityConsumptions').insert({ ...data, id: recordId });
-      const usesData = fuelUses.map((fu) => ({ usedInId: fu, consumptionId: recordId }));
-      await txr('UtilityConsumptionsUse').insert(usesData);
     });
 
     const emissionsQueries = data.emissions.map(async (i) => {
       const { fuelUses, ...data } = i;
 
       const [recordId] = await txr('UtilityEmissions').insert(data).returning('id');
-      const usesData = fuelUses.map((fu) => ({ usedInId: fu, emissionId: recordId.id }));
-      await txr('UtilityEmissionsUse').insert(usesData);
     });
 
     const targetConsumptionQueries = data.targetConsumption.map(async (i) => {
@@ -227,6 +223,51 @@ export const getMonitoring = async (req: any) => {
   return consumptions;
 };
 
+const getDuplicatesForComsumption = (consumptions: any[]) => {
+  const table = new Map<string, any[]>();
+  for (let i = 0; i < consumptions.length; i++) {
+    const item = consumptions[i];
+    const uniqueIndex = `${item.date}-${item.siteId}-${item.fuelSourceId}-${item.usedInId}`;
+
+    let found = table.get(uniqueIndex);
+    if (found) {
+      found = found.concat([item]);
+      table.set(uniqueIndex, found);
+    } else {
+      table.set(uniqueIndex, [item]);
+    }
+  }
+
+  return Array.from(table.values())
+    .filter((i) => i.length > 1)
+    .flat();
+};
+
+const getDuplicatesForEmissionOrTargets = (consumptions: any[]) => {
+  const table = new Map<string, any[]>();
+  for (let i = 0; i < consumptions.length; i++) {
+    const item = consumptions[i];
+    const uniqueIndex = `${item.date}-${item.siteId}-${item.fuelSourceId}`;
+
+    let found = table.get(uniqueIndex);
+    if (found) {
+      found = found.concat([item]);
+      table.set(uniqueIndex, found);
+    } else {
+      table.set(uniqueIndex, [item]);
+    }
+  }
+
+  return Array.from(table.values())
+    .filter((i) => i.length > 1)
+    .flat();
+};
+
+const removeRowIdx = (c: any) => {
+  const { rowIdx, ...record } = c;
+  return record;
+};
+
 //TODO: generate types for this route
 export const importUtilityEmissionFromFile = async (req: any) => {
   const excelFile = req.file;
@@ -255,19 +296,33 @@ export const importUtilityEmissionFromFile = async (req: any) => {
 
   return DB.transaction(async (txr) => {
     try {
+      let duplicates = getDuplicatesForComsumption(consumptions);
+      if (duplicates.length > 0) {
+        return new ApiError(
+          `Duplicated values found on Consumption. Check rows ${duplicates.map((i) => i.rowIdx).join(', ')}`,
+        );
+      }
+      duplicates = getDuplicatesForEmissionOrTargets(emissions);
+      if (duplicates.length > 0) {
+        return new ApiError(
+          `Duplicated values found on Emissions. Check rows ${duplicates.map((i) => i.rowIdx).join(', ')}`,
+        );
+      }
+      duplicates = getDuplicatesForEmissionOrTargets(monitoring);
+      if (duplicates.length > 0) {
+        return new ApiError(
+          `Duplicated values found on Targets. Check rows ${duplicates.map((i) => i.rowIdx).join(', ')}`,
+        );
+      }
       await Promise.all([
-        UtilityService.upsertConsumptionToUtility(consumptions, { txr }),
-        UtilityService.upsertEmissions(emissions, { txr }),
-        UtilityService.upsertMonitoring(monitoring, { txr }),
+        UtilityService.upsertConsumptionToUtility(consumptions.map(removeRowIdx), { txr }),
+        UtilityService.upsertEmissions(emissions.map(removeRowIdx), { txr }),
+        UtilityService.upsertMonitoring(monitoring.map(removeRowIdx), { txr }),
       ]);
       return { success: true };
     } catch (e: unknown) {
       if (e instanceof Error) {
-        if (e.toString().includes('utilityconsumptions_date_siteid_fuelsourceid_unique')) {
-          return new ApiError(
-            'Duplicated values found on Consumption. There cannot be more than one row where (siteId + fuelSource + date) are the same',
-          );
-        } else if (e.toString().includes('utilitymonitoring_date_siteid_fuelsourceid_unique')) {
+        if (e.toString().includes('utilitymonitoring_date_siteid_fuelsourceid_unique')) {
           return new ApiError(
             'Duplicated values found on Target. There cannot be more than one row where (siteId + fuelSource + date) are the same',
           );
