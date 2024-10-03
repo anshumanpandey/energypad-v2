@@ -36,9 +36,12 @@ export const addConsumptionToUtility = async (params: AddConsumptionToUtilityPar
 };
 
 export const areConsumptionEqual =
-  (record: { siteId: number; fuelSourceId: number; date: string }) =>
-  (r: { siteId: number; fuelSourceId: number; date: string }) =>
-    r.date === record.date && r.siteId === record.siteId && r.fuelSourceId === record.fuelSourceId;
+  (record: { siteId: number; fuelSourceId: number; date: string; usedInId: number }) =>
+  (r: { siteId: number; fuelSourceId: number; date: string; usedInId: number }) =>
+    r.date === record.date &&
+    r.siteId === record.siteId &&
+    r.fuelSourceId === record.fuelSourceId &&
+    r.usedInId === record.usedInId;
 export const upsertConsumptionToUtility = async (
   params: Array<RequestBodyParams<'AddFuelSourceConsumption'>[0] & { id: null | undefined | number }>,
   opt: { txr: NonNullable<Transactionable['txr']> },
@@ -82,14 +85,10 @@ export const upsertConsumptionToUtility = async (
   }
   const upsertData = records.filter((r) => r.id !== null && r.id !== undefined);
   if (upsertData.length > 0) {
-    const u = upsertData.map((d) => {
-      const { usedInId, ...r } = d;
-      return r;
-    });
     await driver('UtilityConsumptions')
-      .insert(u)
+      .insert(upsertData)
       .onConflict('id')
-      .merge(['vat', 'totalCost', 'consumption', 'fuelUnit']);
+      .merge(['vat', 'totalCost', 'consumption', 'fuelUnit', 'usedInId']);
   }
 
   return [];
