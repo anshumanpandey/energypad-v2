@@ -231,6 +231,15 @@ export const importFile: AuthAppController<'FileImportBusiness', 'FileImportBusi
   if (data instanceof ApiError) return data;
   if (sites instanceof ApiError) return sites;
 
+  const emails: string[] = data.map((r) => r.email).filter((r) => r !== undefined && r !== null) as string[];
+  const query = DB('Businesses').select('Businesses.*');
+  query.whereIn('email', emails);
+  const found = await query;
+
+  if (found.length !== 0) {
+    return new ApiError('Email address already used');
+  }
+
   await DB.transaction(async (trx) => {
     try {
       const [r] = await DB('Businesses').insert(data[0]).transacting(trx).returning('id');
