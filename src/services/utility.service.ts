@@ -616,12 +616,15 @@ export const filterByFuelSource = (i: number) => (r: { fuelSourceId: number }) =
  **/
 const usedInCache = flatCache.load('usedIn');
 export const isOnUse = async (p: { usedInId: number | number[]; use: SupportedUses }) => {
+  if (p.usedInId === 0) {
+    return false;
+  }
   let usedInFound = [usedInCache.getKey(p.usedInId.toString())];
   if (Array.isArray(p.usedInId)) {
     usedInFound = p.usedInId.map((i) => usedInCache.getKey(i.toString()));
   }
 
-  if (usedInFound.some((i) => i === undefined || i === null)) {
+  if (usedInFound.some((i) => i === undefined)) {
     const usesIn = await DB<{ id: number; use: string }>('FuelUses').select();
     for (let i = 0; i < usesIn.length; i++) {
       const useIn = usesIn[i];

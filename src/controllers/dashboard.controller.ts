@@ -439,7 +439,7 @@ export const energyWaste: any = async (req: any) => {
   let projections: Awaited<ReturnType<typeof UtilityService.consumingProjection>> = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
-  if (allConsumptionAreProduced === false && currentConsumptionRecords.length > 0) {
+  if (allConsumptionAreProduced === false && currentConsumptionRecords.length > 0 && oldConsumptions.length > 0) {
     const consumptionToBreakdown = (r: typeof oldConsumptions[0]) => {
       const startDate = r.date;
 
