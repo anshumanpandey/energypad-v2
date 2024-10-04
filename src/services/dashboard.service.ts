@@ -568,10 +568,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
         consumptions: params.lightingAndPowerConsumptions,
         sites,
       }),
-      projectedTime: populateByDateFromSite('workinghours', {
-        consumptions: params.lightingAndPowerProjectedConsumptions,
-        sites,
-      }),
+      projectedTime: populateArrayByDateSite(8, { consumptions: params.lightingAndPowerConsumptions }),
 
       lightingAndPowerConsumptions: params.lightingAndPowerConsumptions,
       lightingAndPowerProjectedConsumptions: params.lightingAndPowerProjectedConsumptions,
