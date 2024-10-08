@@ -1199,7 +1199,7 @@ const calculateFinancialCost = (p: {
 };
 
 const calculateCarbonImpact = (p: {
-  consumptions: AppModels['UtilityConsumption'][];
+  consumptions: ( AppModels['UtilityConsumption'] & { produced?: boolean } )[];
   emissions: Awaited<ReturnType<typeof UtilityService.getEmissions>>;
   waste: Awaited<ReturnType<typeof calculateWaste>>;
 }) => {
@@ -1235,6 +1235,7 @@ const calculateCarbonImpact = (p: {
         .toNumber(),
       wasteCarbonImpact: new Decimal(waste.waste).times(emission.emissionFactor).toDP(8).toNumber(),
       wasteCost: wasteCost({ consumption, waste: waste.waste }),
+      produced: consumption.produced 
     });
   }
   return records;

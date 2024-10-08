@@ -749,7 +749,7 @@ export const reports: any = async (req: any) => {
           .filter(SitesService.filterBySiteId(c.siteId))
           .filter(UtilityService.filterByFuelSource(c.fuelSourceId))?.[0]?.waste,
       };
-    }),
+    }).filter(i => i.produced !== true),
     targetConsumptions: targetConsumptions
       .map((r) => r.filter(DashboardService.consumptionIsNotProduced))
       .filter((r) => r.length !== 0),
