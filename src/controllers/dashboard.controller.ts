@@ -586,9 +586,8 @@ export const energyWaste: any = async (req: any) => {
 
 export const reports: any = async (req: any) => {
   const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
-  const month = req.query.month !== undefined ? MathUtils.toInt(req.query.month) : new Date().getMonth();
   const fuelSourceId = req.query.fuelSourceId ? MathUtils.toInt(req.query.fuelSourceId) : undefined;
-  const selectedYear = new Date(year, month, 1);
+  const selectedYear = new Date(year, 0, 1);
   const siteId = req.query.siteId ? MathUtils.toInt(req.query.siteId) : undefined;
 
   const [fuelSources, emissions, patterns] = await Promise.all([
@@ -596,7 +595,7 @@ export const reports: any = async (req: any) => {
     UtilityService.getEmissions({
       businessId: req.user.id,
       siteId,
-      forYear: new Date(year, 0, 2),
+      forYear: new Date(year, 0, 1),
       fuelSourceId,
     }),
     UserService.getPatterns({ siteId: siteId, businessId: req.user.id }),
@@ -605,9 +604,8 @@ export const reports: any = async (req: any) => {
   const fuelSourceToUse = fuelSources.map(AppUtils.getRecordId);
   const oldParams = {
     businessId: req.user.id,
-    startDate: subYears(selectedYear, 1),
+    startDate: subYears(selectedYear, 2),
     endDate: endOfYear(subYears(selectedYear, 1)),
-    fuelSourceId: fuelSourceToUse,
     siteId,
   };
   const [oldConsumptions, currentConsumptionRecords, sites] = await Promise.all([
@@ -616,7 +614,6 @@ export const reports: any = async (req: any) => {
       businessId: req.user.id,
       startDate: subMonths(selectedYear, 1),
       endDate: endOfYear(selectedYear),
-      fuelSourceId: fuelSourceToUse,
       siteId,
     }),
     SitesService.findBy({ id: siteId }),
@@ -626,7 +623,7 @@ export const reports: any = async (req: any) => {
   let targetConsumptions: Awaited<ReturnType<typeof UtilityService.consumingProjection>> = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
-  if (allConsumptionAreProduced === false && currentConsumptionRecords.length > 0) {
+  if (allConsumptionAreProduced === false && currentConsumptionRecords.length > 0 && oldConsumptions.length > 0) {
     const consumptionToBreakdown = (r: typeof oldConsumptions[0]) => {
       const startDate = r.date;
 
@@ -679,6 +676,23 @@ export const reports: any = async (req: any) => {
     if (pastHdds instanceof ApiError) return pastHdds;
     if (currentHdd instanceof ApiError) return currentHdd;
 
+    const singleFuelConsumptions = await DashboardService.filterSingleConsumptionForHeatingOrCooling({
+      yearToFilterBy: year - 2,
+      consumptions: oldConsumptions.filter(DashboardService.consumptionIsNotProduced),
+    });
+    const singleFuelProjectedConsumptions = await DashboardService.filterSingleConsumptionForHeatingOrCooling({
+      yearToFilterBy: year - 1,
+      consumptions: currentConsumptionRecords.filter(DashboardService.consumptionIsNotProduced)
+    });
+    const lightingAndPowerConsumptions = await DashboardService.filterLightingAndPowerConsumption({
+      yearToFilterBy: year - 2,
+      consumptions: oldConsumptions.filter(DashboardService.consumptionIsNotProduced)
+    });
+    const lightingAndPowerProjectedConsumptions = await DashboardService.filterLightingAndPowerConsumption({
+      yearToFilterBy: year - 1,
+      consumptions: currentConsumptionRecords.filter(DashboardService.consumptionIsNotProduced)
+    });
+    
     const energyParams = {
       consumptions: oldConsumptions,
       hdd: pastHdds,
@@ -686,17 +700,17 @@ export const reports: any = async (req: any) => {
       nextHdd: currentHdd,
       year,
 
-      singleFuelConsumptions: [],
-      singleFuelHdd: [],
+      singleFuelConsumptions,
+      singleFuelHdd: pastHdds.filter(DbUtils.filterByYear(year - 2)),
 
-      singleFuelProjectedConsumptions: [],
-      singleFuelProjectedHdd: [],
+      singleFuelProjectedConsumptions,
+      singleFuelProjectedHdd: pastHdds.filter(DbUtils.filterByYear(year - 1)),
 
-      lightingAndPowerConsumptions: [],
-      lightingAndPowerProjectedConsumptions: [],
+      lightingAndPowerConsumptions,
+      lightingAndPowerProjectedConsumptions,
 
-      selectedYearConsumptions: [],
-      selectedYearHdd: [],
+      selectedYearConsumptions: currentConsumptionRecords,
+      selectedYearHdd: currentHdd.filter(DbUtils.filterByYear(year)),
     };
 
     statistics = await DashboardService.calculateWaste(energyParams);
