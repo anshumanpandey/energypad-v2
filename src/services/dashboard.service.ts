@@ -392,7 +392,7 @@ const wasteForSinglefuelFunction = (params: {
     const currentFuelSourceId = fuelSources[i];
     const currentFuelSourceConsumption = params.consumptions
       .filter(UtilityService.filterByFuelSource(currentFuelSourceId))
-      .filter(DbUtils.filterByYear(params.year - 1));
+      .filter(DbUtils.filterByYear(params.year - 1))
     const totalOfConsumption = currentFuelSourceConsumption.reduce(
       (total, next) => new Decimal(total).add(next.consumption).toNumber(),
       0,
@@ -418,7 +418,8 @@ const wasteForSinglefuelFunction = (params: {
     const sumYX = currentFuelSourceConsumption.reduce((total, next, idx) => {
       const c = next;
       const hdd = params.hdd[idx];
-      return new Decimal(total).plus(new Decimal(c.consumption).times(hdd.value)).toNumber();
+      //TODO: fix hdd below
+      return new Decimal(total).plus(new Decimal(c.consumption).times(hdd?.value || 1)).toNumber();
     }, 0);
 
     const NX = currentFuelSourceConsumption.length;
@@ -540,119 +541,8 @@ type EnergyWasteParams = {
   selectedYearHdd: WasteForPowerAndLightingAndCoolingV2Params['selectedYearHdd'];
 };
 const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> => {
-  const sites = await SitesService.findBy({
-    id: params.consumptions.concat(params.nextConsumptions).map((s) => s.siteId),
-  });
-
-  const isPowerAndLightingAndCooling =
-    params.singleFuelConsumptions.length !== 0 &&
-    params.singleFuelProjectedConsumptions.length !== 0 &&
-    params.lightingAndPowerConsumptions.length !== 0 &&
-    params.selectedYearConsumptions.length !== 0;
-  if (isPowerAndLightingAndCooling) {
-    const p: WasteForPowerAndLightingAndCoolingV2Params = {
-      singleFuelConsumptions: params.singleFuelConsumptions,
-      singleFuelHdd: params.singleFuelHdd,
-
-      singleFuelProjectedConsumptions: params.singleFuelProjectedConsumptions,
-      singleFuelProjectedHdd: params.singleFuelProjectedHdd,
-
-      baselineDaylight: populateArrayByDateSite(16, { consumptions: params.lightingAndPowerConsumptions }),
-      projectedDaylight: populateArrayByDateSite(18, { consumptions: params.lightingAndPowerProjectedConsumptions }),
-      baselinePopulation: populateByDateFromSite('population', {
-        consumptions: params.lightingAndPowerConsumptions,
-        sites,
-      }),
-      projectedPopulation: populateByDateFromSite('population', {
-        consumptions: params.lightingAndPowerProjectedConsumptions,
-        sites,
-      }),
-
-      baselineTime: populateByDateFromSite('workinghours', {
-        consumptions: params.lightingAndPowerConsumptions,
-        sites,
-      }),
-      projectedTime: populateByDateFromSite('workinghours', {
-        consumptions: params.lightingAndPowerProjectedConsumptions,
-        sites,
-      }),
-
-      lightingAndPowerConsumptions: params.lightingAndPowerConsumptions,
-      lightingAndPowerProjectedConsumptions: params.lightingAndPowerProjectedConsumptions,
-
-      selectedYearConsumptions: params.selectedYearConsumptions,
-      selectedYearHdd: params.selectedYearHdd,
-    };
-    const records = wasteForPowerAndLightingAndCoolingV2(p);
-    return records;
-  }
-
-  const isPowerAndLightingFn = async (c: AppModels['UtilityConsumption'][]) => {
-    const isLighting = (
-      await Promise.all(c.map((i) => UtilityService.isOnUse({ usedInId: i.usedInId, use: 'Lighting' })))
-    ).filter((i) => i === true);
-    const isPower = (
-      await Promise.all(c.map((i) => UtilityService.isOnUse({ usedInId: i.usedInId, use: 'Powering' })))
-    ).filter((i) => i === true);
-    return isLighting.length === isPower.length;
-  };
-
-  const nonProducedConsumptions = params.consumptions.filter(DashboardService.consumptionIsNotProduced);
-  const nonProducedNextConsumptions = params.nextConsumptions.filter(DashboardService.consumptionIsNotProduced);
-  const isPowerAndLighting = await isPowerAndLightingFn(nonProducedConsumptions);
-  if (isPowerAndLighting) {
-    const baselineConsumptions = (
-      await Promise.all(
-        nonProducedConsumptions.map(async (i) => ({
-          isUse: await UtilityService.isOnUse({ usedInId: i.usedInId, use: 'Lighting' }),
-          c: i,
-        })),
-      )
-    )
-      .filter((i) => i.isUse === true)
-      .map((i) => i.c);
-
-    const projectedConsumptions = (
-      await Promise.all(
-        nonProducedNextConsumptions.map(async (i) => ({
-          isUse: await UtilityService.isOnUse({ usedInId: i.usedInId, use: 'Powering' }),
-          c: i,
-        })),
-      )
-    )
-      .filter((i) => i.isUse === true)
-      .map((i) => i.c);
-    const p = {
-      baselineConsumptions,
-      projectedConsumptions,
-      baselineDaylight: populateArrayByDateSite(16, { consumptions: baselineConsumptions }),
-      projectedDaylight: populateArrayByDateSite(18, { consumptions: projectedConsumptions }),
-      baselinePopulation: populateByDateFromSite('population', { consumptions: baselineConsumptions, sites }),
-      projectedPopulation: populateByDateFromSite('population', { consumptions: projectedConsumptions, sites }),
-
-      baselineTime: populateArrayByDateSite(8, { consumptions: baselineConsumptions }),
-      projectedTime: populateArrayByDateSite(8, { consumptions: projectedConsumptions }),
-    };
-    const records = wasteForPowerAndLighting(p);
-    return records;
-  }
-
-  const isHeatingOrCoolingFn = async (c: AppModels['UtilityConsumption']) => {
-    const heating = await UtilityService.isOnUse({ usedInId: c.usedInId, use: 'Heating' });
-    const cooling = await UtilityService.isOnUse({ usedInId: c.usedInId, use: 'Cooling' });
-    return heating || cooling;
-  };
-
-  const promises = await Promise.all(
-    params.consumptions.filter(DashboardService.consumptionIsNotProduced).map(isHeatingOrCoolingFn),
-  );
-  const isSingleUse = promises.some((i) => i === true);
-  if (isSingleUse) {
     const records = wasteForSinglefuelFunction(params);
     return records;
-  }
-
-  return [];
 };
 
 type ValueByRecord = {
