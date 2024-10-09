@@ -240,8 +240,31 @@ export const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   return query;
 };
 
-export const mapEnergyTipToBusiness = (p: { businessId: number; tipId: number; month: number; use: string }) => {
+export const mapEnergyTipToBusiness = (p: {
+  businessId: number;
+  tipId: number;
+  month: number;
+  use: string | string[];
+}) => {
   const query = DB('EnergySavingTipsToBusiness').insert(p);
+  return query;
+};
+
+export const getBusinessTips = (p: { businessId: number; month?: number; use?: string }) => {
+  const query = DB('EnergySavingTipsToBusiness').select().where('businessId', p.businessId);
+
+  if (p.month !== undefined) {
+    query.where('month', p.month);
+  }
+
+  if (p.use !== undefined) {
+    if (Array.isArray(p.use)) {
+      query.whereIn('use', p.use);
+    } else {
+      query.where('use', p.use);
+    }
+  }
+
   return query;
 };
 

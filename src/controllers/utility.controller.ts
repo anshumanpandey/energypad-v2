@@ -342,3 +342,17 @@ export const importUtilityEmissionFromFile = async (req: any) => {
 export const saveTipsMapping: any = async (req: any) => {
   await UtilityService.mapEnergyTipToBusiness(req.body);
 };
+
+export const getBusinessTips: any = async (req: any) => {
+  if (req.query.businessId !== undefined) {
+    return new ApiError('Missing businessId params');
+  }
+
+  const [u] = await UserService.getUserBy({ id: req.query.businessId });
+  if (u === undefined) {
+    return new ApiError('User not found');
+  }
+
+  const tips = await UtilityService.getBusinessTips(req.query);
+  return tips;
+};

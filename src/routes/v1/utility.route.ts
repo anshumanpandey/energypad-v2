@@ -23,6 +23,7 @@ authRoutes.get('/fuelUse', GetUsedInPath, AuthMiddleware, ExpressAsync(UtilityCo
 authRoutes.get('/emissions', GetEmissionsPath, AuthMiddleware, ExpressAsync(UtilityController.getEmissions));
 authRoutes.get('/consumptions', GetConsumptionsPath, AuthMiddleware, ExpressAsync(UtilityController.getConsumptions));
 authRoutes.get('/monitoring', GetMonitoringPath, AuthMiddleware, ExpressAsync(UtilityController.getMonitoring));
+authRoutes.get('/businessTips', AuthMiddleware, ExpressAsync(UtilityController.getBusinessTips));
 
 authRoutes.post(
   '/addEmission',
