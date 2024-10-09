@@ -77,4 +77,10 @@ authRoutes.post(
   ExpressAsync(UtilityController.importUtilityEmissionFromFile),
 );
 
+authRoutes.post(
+  '/mapTipToBusiness',
+  AuthMiddleware,
+  ExpressAsync(UtilityController.saveTipsMapping),
+);
+
 export default authRoutes;

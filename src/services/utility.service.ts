@@ -240,6 +240,11 @@ export const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   return query;
 };
 
+export const mapEnergyTipToBusiness = (p: { businessId: number; tipId: number; month: number; use: string }) => {
+  const query = DB('EnergySavingTipsToBusiness').insert(p);
+  return query;
+};
+
 type DeleteEmissionByParams = {
   siteId?: number | number[];
   date?: string | string[];

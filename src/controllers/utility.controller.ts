@@ -338,3 +338,7 @@ export const importUtilityEmissionFromFile = async (req: any) => {
     }
   });
 };
+
+export const saveTipsMapping: any = async (req: any) => {
+  await UtilityService.mapEnergyTipToBusiness(req.body);
+};
