@@ -344,7 +344,7 @@ export const saveTipsMapping: any = async (req: any) => {
 };
 
 export const getBusinessTips: any = async (req: any) => {
-  if (req.query.businessId !== undefined) {
+  if (req.query.businessId === undefined) {
     return new ApiError('Missing businessId params');
   }
 
