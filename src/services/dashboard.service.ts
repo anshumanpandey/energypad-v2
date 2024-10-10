@@ -103,20 +103,6 @@ const getConsumptionStatistics = ({ consumptions, year }: { consumptions: Consum
   return consumptionStatistics;
 };
 
-function groupBy<T>(list: T[], keyGetter: (i: T) => T[keyof T]) {
-  const map = new Map<T[keyof T], T[]>();
-  list.forEach((item) => {
-    const key = keyGetter(item);
-    const collection = map.get(key);
-    if (!collection) {
-      map.set(key, [item]);
-    } else {
-      collection.push(item);
-    }
-  });
-  return Array.from(map.entries());
-}
-
 const generateConsumptionDetail = ({
   consumptions,
   year,
@@ -289,6 +275,7 @@ const findCarbonEmissions = (
     forYear?: Date;
     allConsumptions: AppModels['UtilityConsumption'][];
     emissions: AppModels['UtilityEmission'][];
+    monitoring: AppModels['ConsumptionTarget'][];
     fuels?: FuelSource[];
   },
   opt?: { ignoreFuelSource: boolean },
@@ -315,25 +302,13 @@ const findCarbonEmissions = (
     );
   };
 
-  const filterCarbonEmissionsForDate = (c: CarbonEmission) => (e: CarbonEmission) => {
-    return c.date.slice(5, 7) === e.date.slice(5, 7);
-  };
-
-  const getCarbonEmissionsAverage = (carbonEmissions: CarbonEmission[]) => {
-    let total = 0;
-    for (let i = 0, len = carbonEmissions.length; i < len; i++) {
-      const el = carbonEmissions[i];
-      total = total + el.carbonEmission;
-    }
-
-    return new Decimal(total).dividedBy(carbonEmissions.length).toNumber();
-  };
-
   const mapCarbonTarget = (carbon: CarbonEmission, idx: number, arr: CarbonEmission[]) => {
     const c = carbon;
     const previouseRecord = arr[idx - 1];
-    const emissionsForThisItem = carbonEmissions.filter(filterCarbonEmissionsForDate(c));
-    c.carbonTarget = getCarbonEmissionsAverage(emissionsForThisItem);
+    const [targetForThisItem] = params.monitoring
+      .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.stringDateToDate(c.date) }))
+      .filter(UtilityService.filterByFuelSource(c.fuelSourceId));
+    c.carbonTarget = targetForThisItem.carbon;
     c.increasedConsumptionPercentage = MathUtils.calculateIncreasePercentage({
       currentValue: c.carbonEmission,
       passValue: previouseRecord ? previouseRecord.carbonEmission : 0,
@@ -360,7 +335,7 @@ const findCarbonEmissions = (
       fuelSourceName: p.fuelSourceName,
       fuelSourceColorCode: params.fuels?.find((i) => i.id === p.fuelSourceId)?.colorCode || '#4989C6',
       carbonEmission: resolveConsumptionToKwh({
-        consumption: currentEmission.emissionFactor,
+        consumption: new Decimal(currentEmission.emissionFactor).times(p.consumption).toDP(2).toNumber(),
         fuelUnit: p.fuelUnit as ONE_OF_SUPPORTED_UNIT,
         conversionFactor: p.conversionFactor,
       }),
@@ -392,7 +367,7 @@ const wasteForSinglefuelFunction = (params: {
     const currentFuelSourceId = fuelSources[i];
     const currentFuelSourceConsumption = params.consumptions
       .filter(UtilityService.filterByFuelSource(currentFuelSourceId))
-      .filter(DbUtils.filterByYear(params.year - 1))
+      .filter(DbUtils.filterByYear(params.year - 1));
     const totalOfConsumption = currentFuelSourceConsumption.reduce(
       (total, next) => new Decimal(total).add(next.consumption).toNumber(),
       0,
@@ -541,8 +516,8 @@ type EnergyWasteParams = {
   selectedYearHdd: WasteForPowerAndLightingAndCoolingV2Params['selectedYearHdd'];
 };
 const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> => {
-    const records = wasteForSinglefuelFunction(params);
-    return records;
+  const records = wasteForSinglefuelFunction(params);
+  return records;
 };
 
 type ValueByRecord = {
@@ -1089,7 +1064,7 @@ const calculateFinancialCost = (p: {
 };
 
 const calculateCarbonImpact = (p: {
-  consumptions: ( AppModels['UtilityConsumption'] & { produced?: boolean } )[];
+  consumptions: (AppModels['UtilityConsumption'] & { produced?: boolean })[];
   emissions: Awaited<ReturnType<typeof UtilityService.getEmissions>>;
   waste: Awaited<ReturnType<typeof calculateWaste>>;
 }) => {
@@ -1125,7 +1100,7 @@ const calculateCarbonImpact = (p: {
         .toNumber(),
       wasteCarbonImpact: new Decimal(waste.waste).times(emission.emissionFactor).toDP(8).toNumber(),
       wasteCost: wasteCost({ consumption, waste: waste.waste }),
-      produced: consumption.produced 
+      produced: consumption.produced,
     });
   }
   return records;

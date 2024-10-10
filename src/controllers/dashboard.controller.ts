@@ -55,7 +55,9 @@ export const getDataByYear = async (req: any) => {
     allConsumptionAreProduced === true
       ? []
       : DashboardService.getConsumptionStatistics({
-          consumptions: currentConsumptionRecords.filter(DashboardService.consumptionIsNotProduced).sort(DbUtils.sortByStringDate),
+          consumptions: currentConsumptionRecords
+            .filter(DashboardService.consumptionIsNotProduced)
+            .sort(DbUtils.sortByStringDate),
           year: selectedYear,
         })
           .map((i) => i.filter((c) => c.consumption !== 0))
@@ -178,8 +180,14 @@ export const getReporData: any = async (req: any) => {
       fuelSourceId,
     });
 
+    const monitoring = await UtilityService.getMonitoring({
+      businessId: req.user.id,
+      siteId,
+    });
+
     carbonEmissions = DashboardService.findCarbonEmissions({
       forYear: selectedYear,
+      monitoring,
       emissions,
       allConsumptions: consumptionsForSelectedMonth,
     });
@@ -237,9 +245,15 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
         siteId,
       });
 
+      const monitoring = await UtilityService.getMonitoring({
+        businessId: req.user.id,
+        siteId,
+      });
+
       const [result1, result2] = await Promise.all([
         DashboardService.findCarbonEmissions(
           {
+            monitoring,
             forYear: selectedYear,
             emissions,
             allConsumptions: filteredConsumptions,
@@ -249,6 +263,7 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
         ),
         DashboardService.findCarbonEmissions(
           {
+            monitoring,
             emissions,
             allConsumptions: consumptionsForSelectedMonth,
             fuels: fuelSources,
@@ -300,7 +315,13 @@ export const getReportData: any = async (req: any) => {
     fuelSourceId,
   });
 
+  const monitoring = await UtilityService.getMonitoring({
+    businessId: req.user.id,
+    siteId: sitesId,
+  });
+
   const carbonEmissions = DashboardService.findCarbonEmissions({
+    monitoring,
     forYear: selectedYear,
     emissions,
     allConsumptions: consumptions,
@@ -547,8 +568,15 @@ export const energyWaste: any = async (req: any) => {
     siteId,
     fuelSourceId: req.query.fuelSourceId,
   });
+
+  const monitoring = await UtilityService.getMonitoring({
+    businessId: req.user.id,
+    siteId,
+  });
+
   const carbonEmissions = DashboardService.findCarbonEmissions(
     {
+      monitoring,
       emissions,
       allConsumptions: currentConsumptionRecords,
       fuels: fuelSources,
@@ -681,17 +709,17 @@ export const reports: any = async (req: any) => {
     });
     const singleFuelProjectedConsumptions = await DashboardService.filterSingleConsumptionForHeatingOrCooling({
       yearToFilterBy: year - 1,
-      consumptions: currentConsumptionRecords.filter(DashboardService.consumptionIsNotProduced)
+      consumptions: currentConsumptionRecords.filter(DashboardService.consumptionIsNotProduced),
     });
     const lightingAndPowerConsumptions = await DashboardService.filterLightingAndPowerConsumption({
       yearToFilterBy: year - 2,
-      consumptions: oldConsumptions.filter(DashboardService.consumptionIsNotProduced)
+      consumptions: oldConsumptions.filter(DashboardService.consumptionIsNotProduced),
     });
     const lightingAndPowerProjectedConsumptions = await DashboardService.filterLightingAndPowerConsumption({
       yearToFilterBy: year - 1,
-      consumptions: currentConsumptionRecords.filter(DashboardService.consumptionIsNotProduced)
+      consumptions: currentConsumptionRecords.filter(DashboardService.consumptionIsNotProduced),
     });
-    
+
     const energyParams = {
       consumptions: oldConsumptions,
       hdd: pastHdds,
@@ -726,8 +754,14 @@ export const reports: any = async (req: any) => {
     if (ErrorUtils.isErrorInstance(targetConsumptions)) return targetConsumptions;
   }
 
+  const monitoring = await UtilityService.getMonitoring({
+    businessId: req.user.id,
+    siteId,
+  });
+
   const carbonEmissions = DashboardService.findCarbonEmissions({
     forYear: selectedYear,
+    monitoring,
     emissions,
     allConsumptions: currentConsumptionRecords,
     fuels: fuelSources.filter((f) => fuelSourceToUse.includes(f.id)),
@@ -740,15 +774,17 @@ export const reports: any = async (req: any) => {
   });
 
   return {
-    reports: carbonImpact.map((c) => {
-      return {
-        ...c,
-        waste: statistics
-          .filter(filterByYearAndMonth)
-          .filter(SitesService.filterBySiteId(c.siteId))
-          .filter(UtilityService.filterByFuelSource(c.fuelSourceId))?.[0]?.waste,
-      };
-    }).filter(i => i.produced !== true),
+    reports: carbonImpact
+      .map((c) => {
+        return {
+          ...c,
+          waste: statistics
+            .filter(filterByYearAndMonth)
+            .filter(SitesService.filterBySiteId(c.siteId))
+            .filter(UtilityService.filterByFuelSource(c.fuelSourceId))?.[0]?.waste,
+        };
+      })
+      .filter((i) => i.produced !== true),
     targetConsumptions: targetConsumptions
       .map((r) => r.filter(DashboardService.consumptionIsNotProduced))
       .filter((r) => r.length !== 0),
