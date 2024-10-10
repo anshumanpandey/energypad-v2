@@ -360,7 +360,7 @@ const findCarbonEmissions = (
       fuelSourceName: p.fuelSourceName,
       fuelSourceColorCode: params.fuels?.find((i) => i.id === p.fuelSourceId)?.colorCode || '#4989C6',
       carbonEmission: resolveConsumptionToKwh({
-        consumption: p.consumption,
+        consumption: currentEmission.emissionFactor,
         fuelUnit: p.fuelUnit as ONE_OF_SUPPORTED_UNIT,
         conversionFactor: p.conversionFactor,
       }),
