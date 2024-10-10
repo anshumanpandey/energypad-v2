@@ -348,7 +348,7 @@ export const getBusinessTips: any = async (req: any) => {
     return new ApiError('Missing businessId params');
   }
 
-  const [u] = await UserService.getUserBy({ id: req.query.businessId });
+  const u = await UserService.getUserBy({ id: req.query.businessId });
   if (u === undefined) {
     return new ApiError('User not found');
   }
