@@ -240,7 +240,13 @@ export const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   return query;
 };
 
-export const mapEnergyTipToBusiness = (p: { businessId: number; tipId: number[]; month: number; use: string }) => {
+export const mapEnergyTipToBusiness = (p: {
+  businessId: number;
+  tipId: number[];
+  month: number;
+  use: string;
+  siteId: number;
+}) => {
   const query = DB('EnergySavingTipsToBusiness').insert(p.tipId.map((i) => ({ ...p, tipId: i })));
   return query;
 };
