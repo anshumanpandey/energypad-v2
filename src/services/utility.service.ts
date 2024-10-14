@@ -240,21 +240,20 @@ export const getSavingTips = (): Promise<AppModels['SavingTip'][]> => {
   return query;
 };
 
-export const mapEnergyTipToBusiness = (p: {
-  businessId: number;
-  tipId: number[];
-  month: number;
-  use: string;
-}) => {
-  const query = DB('EnergySavingTipsToBusiness').insert(p.tipId.map((i) => ({ ...p, tipId: i, })));
+export const mapEnergyTipToBusiness = (p: { businessId: number; tipId: number[]; month: number; use: string }) => {
+  const query = DB('EnergySavingTipsToBusiness').insert(p.tipId.map((i) => ({ ...p, tipId: i })));
   return query;
 };
 
-export const getBusinessTips = (p: { businessId: number; month?: number; use?: string }) => {
+export const getBusinessTips = (p: { businessId: number; month?: number; use?: string; siteId: number }) => {
   const query = DB('EnergySavingTipsToBusiness').select().where('businessId', p.businessId);
 
   if (p.month !== undefined) {
     query.where('month', p.month);
+  }
+
+  if (p.siteId !== undefined) {
+    query.where('siteId', p.month);
   }
 
   if (p.use !== undefined) {
