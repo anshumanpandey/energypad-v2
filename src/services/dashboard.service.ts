@@ -1083,9 +1083,7 @@ const calculateCarbonImpact = (p: {
       .filter(DbUtils.filterByYearAndMonth(consumption))
       .filter(SitesService.filterBySiteId(consumption.siteId))
       .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId));
-    if (!waste) {
-      continue;
-    }
+
     records.push({
       date: consumption.date,
       siteId: consumption.siteId,
@@ -1098,8 +1096,8 @@ const calculateCarbonImpact = (p: {
         .times(consumption.consumption)
         .toDP(8)
         .toNumber(),
-      wasteCarbonImpact: new Decimal(waste.waste).times(emission.emissionFactor).toDP(8).toNumber(),
-      wasteCost: wasteCost({ consumption, waste: waste.waste }),
+      wasteCarbonImpact: waste ? new Decimal(waste.waste).times(emission.emissionFactor).toDP(8).toNumber() : undefined,
+      wasteCost: waste ? wasteCost({ consumption, waste: waste.waste }) : undefined,
       produced: consumption.produced,
     });
   }
