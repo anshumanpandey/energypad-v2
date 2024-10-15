@@ -779,7 +779,7 @@ export const reports: any = async (req: any) => {
         return {
           ...c,
           waste: statistics
-            .filter(filterByYearAndMonth)
+            .filter(filterByYearAndMonth(c))
             .filter(SitesService.filterBySiteId(c.siteId))
             .filter(UtilityService.filterByFuelSource(c.fuelSourceId))?.[0]?.waste,
         };
