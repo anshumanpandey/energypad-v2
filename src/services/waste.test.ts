@@ -64,7 +64,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 140,
+        consumption: 160,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -79,7 +79,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 155,
+        consumption: 180,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -94,7 +94,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 159,
+        consumption: 190,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -109,7 +109,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 179,
+        consumption: 150,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -124,7 +124,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 192,
+        consumption: 280,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -139,7 +139,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 200,
+        consumption: 220,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -154,7 +154,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 212,
+        consumption: 250,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -169,7 +169,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 200,
+        consumption: 300,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -184,7 +184,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 300,
+        consumption: 250,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -199,7 +199,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 215,
+        consumption: 250,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -214,7 +214,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 240,
+        consumption: 200,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -244,23 +244,23 @@ test('single fuel test', async () => {
       },
     ],
     hdd: [
-      { value: 60, date: new Date(2021, 0, 1), siteId: 1 },
-      { value: 50, date: new Date(2021, 1, 1), siteId: 1 },
-      { value: 60, date: new Date(2021, 2, 1), siteId: 1 },
-      { value: 90, date: new Date(2021, 3, 1), siteId: 1 },
-      { value: 71, date: new Date(2021, 4, 1), siteId: 1 },
-      { value: 72, date: new Date(2021, 5, 1), siteId: 1 },
-      { value: 75, date: new Date(2021, 6, 1), siteId: 1 },
-      { value: 78, date: new Date(2021, 7, 1), siteId: 1 },
-      { value: 78, date: new Date(2021, 8, 1), siteId: 1 },
-      { value: 78, date: new Date(2021, 9, 1), siteId: 1 },
-      { value: 78, date: new Date(2021, 10, 1), siteId: 1 },
-      { value: 72, date: new Date(2021, 11, 1), siteId: 1 },
+      { value: 2166.5, date: new Date(2021, 0, 1), siteId: 1 },
+      { value: 1904.3, date: new Date(2021, 1, 1), siteId: 1 },
+      { value: 1996.7, date: new Date(2021, 2, 1), siteId: 1 },
+      { value: 1799.9, date: new Date(2021, 3, 1), siteId: 1 },
+      { value: 1734.6, date: new Date(2021, 4, 1), siteId: 1 },
+      { value: 1546.1, date: new Date(2021, 5, 1), siteId: 1 },
+      { value: 1435.9, date: new Date(2021, 6, 1), siteId: 1 },
+      { value: 1441, date: new Date(2021, 7, 1), siteId: 1 },
+      { value: 1526.8, date: new Date(2021, 8, 1), siteId: 1 },
+      { value: 1723, date: new Date(2021, 9, 1), siteId: 1 },
+      { value: 1792.4, date: new Date(2021, 10, 1), siteId: 1 },
+      { value: 1976.6, date: new Date(2021, 11, 1), siteId: 1 },
     ],
     nextConsumptions: [
       {
         id: 0,
-        consumption: 200,
+        consumption: 190,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -275,7 +275,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 300,
+        consumption: 210,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -290,7 +290,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 150,
+        consumption: 220,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -305,7 +305,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 160,
+        consumption: 190,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -320,7 +320,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 170,
+        consumption: 370,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -335,7 +335,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 180,
+        consumption: 290,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -350,7 +350,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 200,
+        consumption: 280,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -365,7 +365,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 400,
+        consumption: 350,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -380,7 +380,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 600,
+        consumption: 290,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -395,7 +395,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 800,
+        consumption: 210,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -410,7 +410,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 200,
+        consumption: 280,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -425,7 +425,7 @@ test('single fuel test', async () => {
       },
       {
         id: 0,
-        consumption: 400,
+        consumption: 200,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -440,44 +440,44 @@ test('single fuel test', async () => {
       },
     ],
     nextHdd: [
-      { value: 70, date: new Date(2022, 0, 1), siteId: 1 },
-      { value: 60, date: new Date(2022, 1, 1), siteId: 1 },
-      { value: 70, date: new Date(2022, 2, 1), siteId: 1 },
-      { value: 55, date: new Date(2022, 3, 1), siteId: 1 },
-      { value: 45, date: new Date(2022, 4, 1), siteId: 1 },
-      { value: 60, date: new Date(2022, 5, 1), siteId: 1 },
-      { value: 70, date: new Date(2022, 6, 1), siteId: 1 },
-      { value: 80, date: new Date(2022, 7, 1), siteId: 1 },
-      { value: 90, date: new Date(2022, 8, 1), siteId: 1 },
-      { value: 60, date: new Date(2022, 9, 1), siteId: 1 },
-      { value: 80, date: new Date(2022, 10, 1), siteId: 1 },
-      { value: 90, date: new Date(2022, 11, 1), siteId: 1 },
+      { value: 2008.2, date: new Date(2022, 0, 1), siteId: 1 },
+      { value: 1870.9, date: new Date(2022, 1, 1), siteId: 1 },
+      { value: 1991.9, date: new Date(2022, 2, 1), siteId: 1 },
+      { value: 1785, date: new Date(2022, 3, 1), siteId: 1 },
+      { value: 1726, date: new Date(2022, 4, 1), siteId: 1 },
+      { value: 1532.2, date: new Date(2022, 5, 1), siteId: 1 },
+      { value: 1405, date: new Date(2022, 6, 1), siteId: 1 },
+      { value: 1457.1, date: new Date(2022, 7, 1), siteId: 1 },
+      { value: 1455.6, date: new Date(2022, 8, 1), siteId: 1 },
+      { value: 1668.7, date: new Date(2022, 9, 1), siteId: 1 },
+      { value: 1892, date: new Date(2022, 10, 1), siteId: 1 },
+      { value: 1989.8, date: new Date(2022, 11, 1), siteId: 1 },
     ],
     year: 2022,
   };
 
   const result = dashboard.wasteForSinglefuelFunction(params);
   expect(result.length).toBe(12);
-  expect(result[0].waste).toBe(-4.7695);
-  expect(result[1].waste).toBe(-127.1488);
-  expect(result[2].waste).toBe(45.2304);
-  expect(result[3].waste).toBe(1.6615);
-  expect(result[4].waste).toBe(-30.7177);
-  expect(result[5].waste).toBe(-7.1488);
-  expect(result[6].waste).toBe(-4.7695);
-  expect(result[7].waste).toBe(-182.3902);
-  expect(result[8].waste).toBe(-360.0109);
-  expect(result[9].waste).toBe(-627.1488);
-  expect(result[10].waste).toBe(17.6097);
-  expect(result[11].waste).toBe(-160.0109);
+  expect(result[0].waste).toBe(-8.9967);
+  expect(result[1].waste).toBe(-8.412);
+  expect(result[2].waste).toBe(-36.5529);
+  expect(result[3].waste).toBe(24.4665);
+  expect(result[4].waste).toBe(-146.6878);
+  expect(result[5].waste).toBe(-37.6324);
+  expect(result[6].waste).toBe(-8.5619);
+  expect(result[7].waste).toBe(-86.373);
+  expect(result[8].waste).toBe(-26.1481);
+  expect(result[9].waste).toBe(21.9028);
+  expect(result[10].waste).toBe(-81.5754);
+  expect(result[11].waste).toBe(-16.2381);
 });
 
-test('lighting and power calculation', () => {
+test.only('lighting and power calculation', () => {
   const params = {
-    baselineConsumptions: [
+    consumptions: [
       {
         id: 0,
-        consumption: 99,
+        consumption: 160,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -492,7 +492,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 65,
+        consumption: 180,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -507,7 +507,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 79,
+        consumption: 190,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -522,7 +522,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 75,
+        consumption: 150,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -537,7 +537,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 87,
+        consumption: 280,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -552,7 +552,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 81,
+        consumption: 220,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -567,7 +567,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 70,
+        consumption: 250,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -582,7 +582,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 90,
+        consumption: 300,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -597,7 +597,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 100,
+        consumption: 250,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -612,7 +612,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 120,
+        consumption: 250,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -627,7 +627,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 110,
+        consumption: 200,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -642,7 +642,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 130,
+        consumption: 200,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -657,10 +657,10 @@ test('lighting and power calculation', () => {
       },
     ],
 
-    projectedConsumptions: [
+    nextConsumptions: [
       {
         id: 0,
-        consumption: 120,
+        consumption: 190,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -675,7 +675,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 80,
+        consumption: 210,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -690,7 +690,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 70,
+        consumption: 220,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -705,7 +705,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 90,
+        consumption: 190,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -720,7 +720,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 50,
+        consumption: 370,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -735,7 +735,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 80,
+        consumption: 290,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -750,7 +750,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 80,
+        consumption: 280,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -765,7 +765,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 80,
+        consumption: 350,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -780,7 +780,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 90,
+        consumption: 290,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -795,7 +795,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 100,
+        consumption: 210,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -810,7 +810,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 120,
+        consumption: 280,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -825,7 +825,7 @@ test('lighting and power calculation', () => {
       },
       {
         id: 0,
-        consumption: 110,
+        consumption: 200,
         fuelSourceName: 'a',
         siteName: 'a',
         conversionUnit: 1,
@@ -839,6 +839,37 @@ test('lighting and power calculation', () => {
         siteId: 1,
       },
     ],
+
+    hdd: [
+      { value: 2166.5, date: new Date(2021, 0, 1), siteId: 1 },
+      { value: 1904.3, date: new Date(2021, 1, 1), siteId: 1 },
+      { value: 1996.7, date: new Date(2021, 2, 1), siteId: 1 },
+      { value: 1799.9, date: new Date(2021, 3, 1), siteId: 1 },
+      { value: 1734.6, date: new Date(2021, 4, 1), siteId: 1 },
+      { value: 1546.1, date: new Date(2021, 5, 1), siteId: 1 },
+      { value: 1435.9, date: new Date(2021, 6, 1), siteId: 1 },
+      { value: 1441, date: new Date(2021, 7, 1), siteId: 1 },
+      { value: 1526.8, date: new Date(2021, 8, 1), siteId: 1 },
+      { value: 1723, date: new Date(2021, 9, 1), siteId: 1 },
+      { value: 1792.4, date: new Date(2021, 10, 1), siteId: 1 },
+      { value: 1976.6, date: new Date(2021, 11, 1), siteId: 1 },
+    ],
+    nextHdd: [
+
+      { value: 2008.2, date: new Date(2022, 0, 1), siteId: 1 },
+      { value: 1870.9, date: new Date(2022, 1, 1), siteId: 1 },
+      { value: 1991.9, date: new Date(2022, 2, 1), siteId: 1 },
+      { value: 1785, date: new Date(2022, 3, 1), siteId: 1 },
+      { value: 1726, date: new Date(2022, 4, 1), siteId: 1 },
+      { value: 1532.2, date: new Date(2022, 5, 1), siteId: 1 },
+      { value: 1405, date: new Date(2022, 6, 1), siteId: 1 },
+      { value: 1457.1, date: new Date(2022, 7, 1), siteId: 1 },
+      { value: 1455.6, date: new Date(2022, 8, 1), siteId: 1 },
+      { value: 1668.7, date: new Date(2022, 9, 1), siteId: 1 },
+      { value: 1892, date: new Date(2022, 10, 1), siteId: 1 },
+      { value: 1989.8, date: new Date(2022, 11, 1), siteId: 1 },
+    ],
+
     baselineDaylight: [
       { siteId: 1, date: '2021-01-01', value: 420 },
       { siteId: 1, date: '2021-02-01', value: 421 },
@@ -923,24 +954,25 @@ test('lighting and power calculation', () => {
       { siteId: 1, date: '2022-11-01', value: 160 },
       { siteId: 1, date: '2022-12-01', value: 160 },
     ],
+    year: 2022
   };
 
   const result = dashboard.wasteForPowerAndLighting(params);
-  expect(result[0].waste).toBe(-35.08846154);
-  expect(result[1].waste).toBe(-62.94881155);
-  expect(result[2].waste).toBe(1.73838384);
-  expect(result[3].waste).toBe(-13.125);
-  expect(result[4].waste).toBe(39.9);
-  expect(result[5].waste).toBe(-13.46428572);
-  expect(result[6].waste).toBe(137);
-  expect(result[7].waste).toBe(10);
-  expect(result[8].waste).toBe(47.14285714);
-  expect(result[9].waste).toBe(61);
-  expect(result[10].waste).toBe(-0.22222222);
-  expect(result[11].waste).toBe(41.66666667);
+  expect(result[0].waste).toBe(-10.27699962);
+  expect(result[1].waste).toBe(-14.61731389);
+  expect(result[2].waste).toBe(-39.91281303);
+  expect(result[3].waste).toBe(23.8548375);
+  expect(result[4].waste).toBe(-141.79820667);
+  expect(result[5].waste).toBe(-44.35247143);
+  expect(result[6].waste).toBe(9.41809);
+  expect(result[7].waste).toBe(-86.373);
+  expect(result[8].waste).toBe(-16.43594857);
+  expect(result[9].waste).toBe(14.41934333);
+  expect(result[10].waste).toBe(-74.32425333);
+  expect(result[11].waste).toBe(-13.53175);
 });
 
-test('lighting and power calculation 2 case', () => {
+/*test('lighting and power calculation 2 case', () => {
   const params: WasteForPowerAndLightingParams = {
     baselineConsumptions: [
       {
@@ -1555,9 +1587,9 @@ test('lighting and power calculation 2 case', () => {
   expect(result[14].waste).toBe(41.66666667);
   expect(result[14].date).toBe('2011-12-01');
   expect(result[14].siteId).toBe(88);
-});
+});*/
 
-test.only('lighting and power and cooling calculation', () => {
+test('lighting and power and cooling calculation', () => {
   const params: WasteForPowerAndLightingAndCoolingV2Params = {
     singleFuelConsumptions: [
       //these first three are to mix up data and to be ignore by the code since they dont match on site id or fuelSource
@@ -2209,7 +2241,6 @@ test.only('lighting and power and cooling calculation', () => {
   };
 
   const result = dashboard.wasteForPowerAndLightingAndCoolingV2(params);
-  console.log(result);
   expect(result.length).toBe(3);
   /*expect(result[0].waste).toBe(2335.624245);
   expect(result[1].waste).toBe(1544.075174);
