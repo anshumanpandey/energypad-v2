@@ -526,7 +526,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
   const formulaMap = () => {
     const prevYearConsumptions = params.consumptions
       .filter(DashboardService.consumptionIsNotProduced)
-      .filter(DbUtils.filterByYear(params.year));
+      .filter(DbUtils.filterByYear(params.year - 1));
     const thisYearConsumptions = params.nextConsumptions
       .filter(DashboardService.consumptionIsNotProduced)
       .filter(DbUtils.filterByYear(params.year));
