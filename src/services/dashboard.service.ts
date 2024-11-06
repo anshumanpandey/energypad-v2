@@ -523,37 +523,34 @@ type EnergyWasteParams = {
   selectedYearHdd: WasteForPowerAndLightingAndCoolingV2Params['selectedYearHdd'];
 };
 const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> => {
-  const formulaMap = () => {
-    const prevYearConsumptions = params.consumptions
-      .filter(DashboardService.consumptionIsNotProduced)
-      .filter(DbUtils.filterByYear(params.year - 1));
-    const thisYearConsumptions = params.nextConsumptions
-      .filter(DashboardService.consumptionIsNotProduced)
-      .filter(DbUtils.filterByYear(params.year));
-    const map = new Map<SupportedUses, number>();
-    const fuels = getFuelSourcesFromConsumptionCollection(thisYearConsumptions);
-    const usesToSearchOn: SupportedUses[] = ['Heating', 'Cooling', 'Powering'];
-    for (let i = 0; i < usesToSearchOn.length; i++) {
-      for (let f = 0; f < fuels.length; f++) {
-        const use = usesToSearchOn[i];
-        const fuel = fuels[f];
+  const uses = await UtilityService.findFuelUseBy();
+  const prevYearConsumptions = params.consumptions
+    .filter(DashboardService.consumptionIsNotProduced)
+    .filter(DbUtils.filterByYear(params.year - 1));
+  const thisYearConsumptions = params.nextConsumptions
+    .filter(DashboardService.consumptionIsNotProduced)
+    .filter(DbUtils.filterByYear(params.year));
+  const map = new Map<SupportedUses, number>();
+  const fuels = getFuelSourcesFromConsumptionCollection(thisYearConsumptions);
+  const usesToSearchOn: SupportedUses[] = ['Heating', 'Cooling', 'Powering'];
+  for (let i = 0; i < usesToSearchOn.length; i++) {
+    for (let f = 0; f < fuels.length; f++) {
+      const [use] = uses.filter((u) => u.use === usesToSearchOn[i]);
+      const fuel = fuels[f];
 
-        const currentYear = thisYearConsumptions.every((c) => c.fuelSourceId === fuel);
-        const prevYear = prevYearConsumptions.every((c) => c.fuelSourceId === fuel);
+      const currentYear = thisYearConsumptions.every((c) => c.fuelSourceId === fuel && c.usedInId === use.id);
+      const prevYear = prevYearConsumptions.every((c) => c.fuelSourceId === fuel && c.usedInId === use.id);
 
-        const match = currentYear === prevYear;
-        if (match) {
-          map.set(use, fuel);
-        }
+      const match = currentYear === prevYear;
+      if (match) {
+        map.set(use.use as SupportedUses, fuel);
       }
     }
-    return map;
-  };
-  const m = formulaMap();
+  }
 
-  const heating = m.get('Heating');
-  const cooling = m.get('Cooling');
-  const powering = m.get('Powering');
+  const heating = map.get('Heating');
+  const cooling = map.get('Cooling');
+  const powering = map.get('Powering');
 
   if (powering !== undefined && (heating !== undefined || cooling !== undefined)) {
     const sites = await SitesService.findBy({
