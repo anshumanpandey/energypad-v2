@@ -23,7 +23,7 @@ export const getAverage = (vals: number[], total?: number) => {
 };
 
 export const totalOf = (vals: number[]) => {
-  return vals.reduce((a, b) => new Decimal(a).add(b).toNumber());
+  return vals.reduce((a, b) => new Decimal(a).add(b).toNumber(), 0);
 };
 
 export const sumProduct = (vector1: number[], vector2: number[]) => {

@@ -50,30 +50,53 @@ const handleResponse =
   ({ data }: { data: GreenData }): HDDRecord[] | ApiError => {
     const response = data.response;
     if (response.type === 'Failure') {
-      return a.map((_) => ({
-        date: DbUtils.stringDateToDate(_.first),
-        value: Math.floor(Math.random() * 60) + 10,
-        siteId,
-      }));
+      const kinds = ['CDD', 'HDD'] as const;
+
+      const records: HDDRecord[] = [];
+      for (let k = 0; k < kinds.length; k++) {
+        for (let i = 0; i < a.length; i++) {
+          const kind = kinds[k];
+          const _ = a[i];
+          records.push({
+            date: DbUtils.stringDateToDate(_.first),
+            //value: Math.floor(Math.random() * 60) + 10,
+            value: 1000 + (i + 1) * 100,
+            siteId,
+            kind,
+          });
+        }
+      }
+      return records;
       //TODO: remove line below when deploy
       //return new ApiError(response.message);
     }
 
     const reducedData: HDDRecord[] = [];
 
-    const mapFn = (v: Value) => {
-      const dateUnits = v.d.split('-').map(MathUtils.toInt);
-      const item = { date: new Date(dateUnits[0], dateUnits[1] - 1, 1), value: v.v, siteId };
-      reducedData.push(item);
-    };
     const hddData = response.dataSets.myHDD;
+    const cddData = response.dataSets.myCDD;
 
     if (hddData.type === 'Failure') {
       return new ApiError(hddData.message);
     } else {
-      hddData.values.map(mapFn);
+      for (let i = 0; i < hddData.values.length; i++) {
+        const v = hddData.values[i];
+        const dateUnits = v.d.split('-').map(MathUtils.toInt);
+        const item = { date: new Date(dateUnits[0], dateUnits[1] - 1, 1), value: v.v, siteId, kind: 'HDD' as const };
+        reducedData.push(item);
+      }
     }
 
+    if (cddData.type === 'Failure') {
+      return new ApiError(cddData.message);
+    } else {
+      for (let i = 0; i < cddData.values.length; i++) {
+        const v = cddData.values[i];
+        const dateUnits = v.d.split('-').map(MathUtils.toInt);
+        const item = { date: new Date(dateUnits[0], dateUnits[1] - 1, 1), value: v.v, siteId, kind: 'CDD' as const };
+        reducedData.push(item);
+      }
+    }
     return reducedData;
   };
 
@@ -100,6 +123,15 @@ export type HDDRecord = {
   date: Date;
   value: number;
   siteId: number;
+  kind: 'HDD' | 'CDD';
+};
+
+export const isHdd = (r: HDDRecord) => {
+  return r.kind === 'HDD';
+};
+
+export const isCdd = (r: HDDRecord) => {
+  return r.kind === 'CDD';
 };
 
 const getHdds = (p: GetHddsParams) => {

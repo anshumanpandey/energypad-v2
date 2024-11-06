@@ -244,18 +244,18 @@ test('single fuel test', async () => {
       },
     ],
     hdd: [
-      { value: 2166.5, date: new Date(2021, 0, 1), siteId: 1 },
-      { value: 1904.3, date: new Date(2021, 1, 1), siteId: 1 },
-      { value: 1996.7, date: new Date(2021, 2, 1), siteId: 1 },
-      { value: 1799.9, date: new Date(2021, 3, 1), siteId: 1 },
-      { value: 1734.6, date: new Date(2021, 4, 1), siteId: 1 },
-      { value: 1546.1, date: new Date(2021, 5, 1), siteId: 1 },
-      { value: 1435.9, date: new Date(2021, 6, 1), siteId: 1 },
-      { value: 1441, date: new Date(2021, 7, 1), siteId: 1 },
-      { value: 1526.8, date: new Date(2021, 8, 1), siteId: 1 },
-      { value: 1723, date: new Date(2021, 9, 1), siteId: 1 },
-      { value: 1792.4, date: new Date(2021, 10, 1), siteId: 1 },
-      { value: 1976.6, date: new Date(2021, 11, 1), siteId: 1 },
+      { value: 2166.5, date: new Date(2021, 0, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1904.3, date: new Date(2021, 1, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1996.7, date: new Date(2021, 2, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1799.9, date: new Date(2021, 3, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1734.6, date: new Date(2021, 4, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1546.1, date: new Date(2021, 5, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1435.9, date: new Date(2021, 6, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1441, date: new Date(2021, 7, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1526.8, date: new Date(2021, 8, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1723, date: new Date(2021, 9, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1792.4, date: new Date(2021, 10, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1976.6, date: new Date(2021, 11, 1), siteId: 1, kind: 'HDD' as const },
     ],
     nextConsumptions: [
       {
@@ -440,18 +440,18 @@ test('single fuel test', async () => {
       },
     ],
     nextHdd: [
-      { value: 2008.2, date: new Date(2022, 0, 1), siteId: 1 },
-      { value: 1870.9, date: new Date(2022, 1, 1), siteId: 1 },
-      { value: 1991.9, date: new Date(2022, 2, 1), siteId: 1 },
-      { value: 1785, date: new Date(2022, 3, 1), siteId: 1 },
-      { value: 1726, date: new Date(2022, 4, 1), siteId: 1 },
-      { value: 1532.2, date: new Date(2022, 5, 1), siteId: 1 },
-      { value: 1405, date: new Date(2022, 6, 1), siteId: 1 },
-      { value: 1457.1, date: new Date(2022, 7, 1), siteId: 1 },
-      { value: 1455.6, date: new Date(2022, 8, 1), siteId: 1 },
-      { value: 1668.7, date: new Date(2022, 9, 1), siteId: 1 },
-      { value: 1892, date: new Date(2022, 10, 1), siteId: 1 },
-      { value: 1989.8, date: new Date(2022, 11, 1), siteId: 1 },
+      { value: 2008.2, date: new Date(2022, 0, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1870.9, date: new Date(2022, 1, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1991.9, date: new Date(2022, 2, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1785, date: new Date(2022, 3, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1726, date: new Date(2022, 4, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1532.2, date: new Date(2022, 5, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1405, date: new Date(2022, 6, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1457.1, date: new Date(2022, 7, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1455.6, date: new Date(2022, 8, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1668.7, date: new Date(2022, 9, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1892, date: new Date(2022, 10, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1989.8, date: new Date(2022, 11, 1), siteId: 1, kind: 'HDD' as const },
     ],
     year: 2022,
   };
@@ -472,8 +472,8 @@ test('single fuel test', async () => {
   expect(result[11].waste).toBe(-16.2381);
 });
 
-test.only('lighting and power calculation', () => {
-  const params = {
+test('lighting and power calculation', () => {
+  const params: Parameters<typeof dashboard.wasteForPowerAndLighting>[0] = {
     consumptions: [
       {
         id: 0,
@@ -841,33 +841,32 @@ test.only('lighting and power calculation', () => {
     ],
 
     hdd: [
-      { value: 2166.5, date: new Date(2021, 0, 1), siteId: 1 },
-      { value: 1904.3, date: new Date(2021, 1, 1), siteId: 1 },
-      { value: 1996.7, date: new Date(2021, 2, 1), siteId: 1 },
-      { value: 1799.9, date: new Date(2021, 3, 1), siteId: 1 },
-      { value: 1734.6, date: new Date(2021, 4, 1), siteId: 1 },
-      { value: 1546.1, date: new Date(2021, 5, 1), siteId: 1 },
-      { value: 1435.9, date: new Date(2021, 6, 1), siteId: 1 },
-      { value: 1441, date: new Date(2021, 7, 1), siteId: 1 },
-      { value: 1526.8, date: new Date(2021, 8, 1), siteId: 1 },
-      { value: 1723, date: new Date(2021, 9, 1), siteId: 1 },
-      { value: 1792.4, date: new Date(2021, 10, 1), siteId: 1 },
-      { value: 1976.6, date: new Date(2021, 11, 1), siteId: 1 },
+      { value: 2166.5, date: new Date(2021, 0, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1904.3, date: new Date(2021, 1, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1996.7, date: new Date(2021, 2, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1799.9, date: new Date(2021, 3, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1734.6, date: new Date(2021, 4, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1546.1, date: new Date(2021, 5, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1435.9, date: new Date(2021, 6, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1441, date: new Date(2021, 7, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1526.8, date: new Date(2021, 8, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1723, date: new Date(2021, 9, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1792.4, date: new Date(2021, 10, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1976.6, date: new Date(2021, 11, 1), siteId: 1, kind: 'HDD' as const },
     ],
     nextHdd: [
-
-      { value: 2008.2, date: new Date(2022, 0, 1), siteId: 1 },
-      { value: 1870.9, date: new Date(2022, 1, 1), siteId: 1 },
-      { value: 1991.9, date: new Date(2022, 2, 1), siteId: 1 },
-      { value: 1785, date: new Date(2022, 3, 1), siteId: 1 },
-      { value: 1726, date: new Date(2022, 4, 1), siteId: 1 },
-      { value: 1532.2, date: new Date(2022, 5, 1), siteId: 1 },
-      { value: 1405, date: new Date(2022, 6, 1), siteId: 1 },
-      { value: 1457.1, date: new Date(2022, 7, 1), siteId: 1 },
-      { value: 1455.6, date: new Date(2022, 8, 1), siteId: 1 },
-      { value: 1668.7, date: new Date(2022, 9, 1), siteId: 1 },
-      { value: 1892, date: new Date(2022, 10, 1), siteId: 1 },
-      { value: 1989.8, date: new Date(2022, 11, 1), siteId: 1 },
+      { value: 2008.2, date: new Date(2022, 0, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1870.9, date: new Date(2022, 1, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1991.9, date: new Date(2022, 2, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1785, date: new Date(2022, 3, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1726, date: new Date(2022, 4, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1532.2, date: new Date(2022, 5, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1405, date: new Date(2022, 6, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1457.1, date: new Date(2022, 7, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1455.6, date: new Date(2022, 8, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1668.7, date: new Date(2022, 9, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1892, date: new Date(2022, 10, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1989.8, date: new Date(2022, 11, 1), siteId: 1, kind: 'HDD' as const },
     ],
 
     baselineDaylight: [
@@ -954,7 +953,7 @@ test.only('lighting and power calculation', () => {
       { siteId: 1, date: '2022-11-01', value: 160 },
       { siteId: 1, date: '2022-12-01', value: 160 },
     ],
-    year: 2022
+    year: 2022,
   };
 
   const result = dashboard.wasteForPowerAndLighting(params);
@@ -1589,6 +1588,263 @@ test.only('lighting and power calculation', () => {
   expect(result[14].siteId).toBe(88);
 });*/
 
+test.only('multiple heating cooling and lighting', async () => {
+  const params: Parameters<typeof dashboard.wasteForPowerAndLightingAndCooling>[0] = {
+    consumptions: [
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-01-01',
+        consumption: 45,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-02-01',
+        consumption: 44,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-03-01',
+        consumption: 50,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-04-01',
+        consumption: 43,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-05-01',
+        consumption: 45,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-06-01',
+        consumption: 44,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-07-01',
+        consumption: 40,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-08-01',
+        consumption: 43,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-09-01',
+        consumption: 39,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-10-01',
+        consumption: 40,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-11-01',
+        consumption: 45,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+      buildFakeConsumption({
+        id: 1,
+        date: '2013-12-01',
+        consumption: 40,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+    ],
+
+    coolingDegrees: [
+      { value: 4, date: new Date(2013, 0, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 5, date: new Date(2013, 1, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 6, date: new Date(2013, 2, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 6, date: new Date(2013, 3, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 5, date: new Date(2013, 4, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 3, date: new Date(2013, 5, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 4, date: new Date(2013, 6, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 5, date: new Date(2013, 7, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 7, date: new Date(2013, 8, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 8, date: new Date(2013, 9, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 9, date: new Date(2013, 10, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 10, date: new Date(2013, 11, 1), siteId: 2, kind: 'CDD' as const },
+    ],
+    heatingDegrees: [
+      { value: 8, date: new Date(2013, 0, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 7, date: new Date(2013, 1, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 8, date: new Date(2013, 2, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 6, date: new Date(2013, 3, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 9, date: new Date(2013, 4, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 8, date: new Date(2013, 5, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 9, date: new Date(2013, 6, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 6, date: new Date(2013, 7, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 8, date: new Date(2013, 8, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 10, date: new Date(2013, 9, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 12, date: new Date(2013, 10, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 14, date: new Date(2013, 11, 1), siteId: 2, kind: 'HDD' as const },
+    ],
+    nextConsumptions: [
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-01-01',
+        consumption: 48,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-02-01',
+        consumption: 42,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-03-01',
+        consumption: 54,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-04-01',
+        consumption: 70,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-05-01',
+        consumption: 68,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-06-01',
+        consumption: 89,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-07-01',
+        consumption: 65,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-08-01',
+        consumption: 78,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-09-01',
+        consumption: 57,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-10-01',
+        consumption: 76,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-11-01',
+        consumption: 68,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+      buildFakeConsumption({
+        id: 1,
+        date: '2014-12-01',
+        consumption: 65,
+        siteId: 2,
+        fuelSourceId: 1,
+      }),
+    ],
+    nextCoolingDegrees: [
+      { value: 5, date: new Date(2014, 0, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 7, date: new Date(2014, 1, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 8, date: new Date(2014, 2, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 5, date: new Date(2014, 3, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 6, date: new Date(2014, 4, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 7, date: new Date(2014, 5, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 8, date: new Date(2014, 6, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 11, date: new Date(2014, 7, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 12, date: new Date(2014, 8, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 13, date: new Date(2014, 9, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 8, date: new Date(2014, 10, 1), siteId: 2, kind: 'CDD' as const },
+      { value: 10, date: new Date(2014, 11, 1), siteId: 2, kind: 'CDD' as const },
+    ],
+    nextHeatingDegrees: [
+      { value: 10, date: new Date(2014, 0, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 6, date: new Date(2014, 1, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 20, date: new Date(2014, 2, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 30, date: new Date(2014, 3, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 15, date: new Date(2014, 4, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 26, date: new Date(2014, 5, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 28, date: new Date(2014, 6, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 29, date: new Date(2014, 7, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 26, date: new Date(2014, 8, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 32, date: new Date(2014, 9, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 21, date: new Date(2014, 10, 1), siteId: 2, kind: 'HDD' as const },
+      { value: 20, date: new Date(2014, 11, 1), siteId: 2, kind: 'HDD' as const },
+    ],
+  };
+
+  const results = dashboard.wasteForPowerAndLightingAndCooling(params);
+
+  expect(results.length).toBe(12);
+  expect(results[0].waste).toBe(-50.74336283);
+  expect(results[1].waste).toBe(-44.84955752);
+  expect(results[2].waste).toBe(-58.88495575);
+  expect(results[3].waste).toBe(-75.22123894);
+
+});
+
 test('lighting and power and cooling calculation', () => {
   const params: WasteForPowerAndLightingAndCoolingV2Params = {
     singleFuelConsumptions: [
@@ -1701,20 +1957,20 @@ test('lighting and power and cooling calculation', () => {
       }),
     ],
     singleFuelHdd: [
-      { value: 1200, date: new Date(2022, 1, 1), siteId: 1 },
-      { value: 1300, date: new Date(2022, 2, 1), siteId: 1 },
-      { value: 1100, date: new Date(2022, 0, 1), siteId: 1 },
-      { value: 1500, date: new Date(2022, 4, 1), siteId: 1 },
-      { value: 1600, date: new Date(2022, 5, 1), siteId: 1 },
-      { value: 1400, date: new Date(2022, 3, 1), siteId: 1 },
-      { value: 1700, date: new Date(2022, 6, 1), siteId: 1 },
-      { value: 1800, date: new Date(2022, 7, 1), siteId: 1 },
-      { value: 2200, date: new Date(2022, 11, 1), siteId: 1 },
-      { value: 1900, date: new Date(2022, 8, 1), siteId: 1 },
-      { value: 2000, date: new Date(2022, 9, 1), siteId: 1 },
-      { value: 2100, date: new Date(2022, 10, 1), siteId: 1 },
+      { value: 1200, date: new Date(2022, 1, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1300, date: new Date(2022, 2, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1100, date: new Date(2022, 0, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1500, date: new Date(2022, 4, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1600, date: new Date(2022, 5, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1400, date: new Date(2022, 3, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1700, date: new Date(2022, 6, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1800, date: new Date(2022, 7, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 2200, date: new Date(2022, 11, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1900, date: new Date(2022, 8, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 2000, date: new Date(2022, 9, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 2100, date: new Date(2022, 10, 1), siteId: 1, kind: 'HDD' as const },
 
-      { value: 72, date: new Date(2011, 2, 1), siteId: 2 },
+      { value: 72, date: new Date(2011, 2, 1), siteId: 2, kind: 'HDD' as const },
     ],
 
     singleFuelProjectedConsumptions: [
@@ -1818,20 +2074,20 @@ test('lighting and power and cooling calculation', () => {
       }),
     ],
     singleFuelProjectedHdd: [
-      { value: 1300, date: new Date(2023, 1, 1), siteId: 1 },
-      { value: 1400, date: new Date(2023, 2, 1), siteId: 1 },
-      { value: 1200, date: new Date(2023, 0, 1), siteId: 1 },
-      { value: 1600, date: new Date(2023, 4, 1), siteId: 1 },
-      { value: 1700, date: new Date(2023, 5, 1), siteId: 1 },
-      { value: 1500, date: new Date(2023, 3, 1), siteId: 1 },
-      { value: 1800, date: new Date(2023, 6, 1), siteId: 1 },
-      { value: 1900, date: new Date(2023, 7, 1), siteId: 1 },
-      { value: 2300, date: new Date(2023, 11, 1), siteId: 1 },
-      { value: 2000, date: new Date(2023, 8, 1), siteId: 1 },
-      { value: 2100, date: new Date(2023, 9, 1), siteId: 1 },
-      { value: 2200, date: new Date(2023, 10, 1), siteId: 1 },
+      { value: 1300, date: new Date(2023, 1, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1400, date: new Date(2023, 2, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1200, date: new Date(2023, 0, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1600, date: new Date(2023, 4, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1700, date: new Date(2023, 5, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1500, date: new Date(2023, 3, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1800, date: new Date(2023, 6, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1900, date: new Date(2023, 7, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 2300, date: new Date(2023, 11, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 2000, date: new Date(2023, 8, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 2100, date: new Date(2023, 9, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 2200, date: new Date(2023, 10, 1), siteId: 1, kind: 'HDD' as const },
 
-      { value: 72, date: new Date(2012, 2, 1), siteId: 2 },
+      { value: 72, date: new Date(2012, 2, 1), siteId: 2, kind: 'HDD' as const },
     ],
 
     lightingAndPowerConsumptions: [
@@ -2234,9 +2490,9 @@ test('lighting and power and cooling calculation', () => {
     selectedYearHdd: [
       //{ value: 60, date: new Date(2024, 1, 1), siteId: 2 },
 
-      { value: 1200, date: new Date(2024, 0, 1), siteId: 1 },
-      { value: 1400, date: new Date(2024, 2, 1), siteId: 1 },
-      { value: 1300, date: new Date(2024, 1, 1), siteId: 1 },
+      { value: 1200, date: new Date(2024, 0, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1400, date: new Date(2024, 2, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1300, date: new Date(2024, 1, 1), siteId: 1, kind: 'HDD' as const },
     ],
   };
 

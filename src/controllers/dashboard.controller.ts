@@ -483,7 +483,7 @@ export const energyWaste: any = async (req: any) => {
           postalCode: s.postCode,
           siteId: s.id,
           breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(consumptionToBreakdown),
-          valuesToGet: ['HDD'],
+          valuesToGet: ['HDD', 'CDD'],
         });
       }
 
@@ -502,7 +502,7 @@ export const energyWaste: any = async (req: any) => {
           postalCode: s.postCode,
           siteId: s.id,
           breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(consumptionToBreakdown),
-          valuesToGet: ['HDD'],
+          valuesToGet: ['HDD', 'CDD'],
         });
       }
       promises.push(GreenDaysServices.getHdds2(params));

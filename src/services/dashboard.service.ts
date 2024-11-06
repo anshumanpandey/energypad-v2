@@ -5,7 +5,7 @@ import { DbUtils, MathUtils } from '@utils';
 import { DashboardService, SitesService, UtilityService } from '@services';
 import formatISO from 'date-fns/formatISO';
 import { FuelSource, GetConsumptionsParams, SupportedUses } from './utility.service';
-import { HDDRecord } from './greenDays.service';
+import { HDDRecord, isCdd, isHdd } from './greenDays.service';
 import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUtils';
 
 const uniqueElements = (a: any) => {
@@ -21,6 +21,48 @@ const uniqueElements = (a: any) => {
     }
   }
   return out;
+};
+
+type KeysWithValsOfType<T, V> = keyof { [P in keyof T as T[P] extends V ? P : never]: P };
+const populateByDateFromSite = (
+  propertyVal: KeysWithValsOfType<AppModels['Site'], number>,
+  p: { consumptions: AppModels['UtilityConsumption'][]; sites: AppModels['Site'][] },
+): ValueByRecord[] => {
+  const uniqueSites = Array.from(new Map(p.sites.map((s) => [s.id, s])).values());
+  const uniqueDates = Array.from(new Set(p.consumptions.map((c) => c.date)).values());
+  const filledArr: ValueByRecord[] = [];
+  for (let i = 0; i < uniqueSites.length; i++) {
+    const site = uniqueSites[i];
+    for (let j = 0; j < uniqueDates.length; j++) {
+      const date = uniqueDates[j];
+      filledArr.push({
+        siteId: site.id as number,
+        date,
+        value: site[propertyVal],
+      });
+    }
+  }
+  return filledArr;
+};
+const populateArrayByDateSite = (
+  populateVal: number,
+  p: { consumptions: AppModels['UtilityConsumption'][] },
+): ValueByRecord[] => {
+  const uniqueSites = Array.from(new Set(p.consumptions.map((c) => c.siteId)).values());
+  const uniqueDates = Array.from(new Set(p.consumptions.map((c) => c.date)).values());
+  const filledArr: ValueByRecord[] = [];
+  for (let i = 0; i < uniqueSites.length; i++) {
+    const siteId = uniqueSites[i];
+    for (let j = 0; j < uniqueDates.length; j++) {
+      const date = uniqueDates[j];
+      filledArr.push({
+        siteId,
+        date,
+        value: populateVal,
+      });
+    }
+  }
+  return filledArr;
 };
 
 type ConsumptionForStatistic = Pick<
@@ -368,7 +410,8 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
     const currentFuelSourceId = fuelSources[i];
     const currentFuelSourceConsumption = params.consumptions
       .filter(UtilityService.filterByFuelSource(currentFuelSourceId))
-      .filter(DbUtils.filterByYear(params.year - 1));
+      .filter(DbUtils.filterByYear(params.year - 1))
+      .filter(DashboardService.consumptionIsNotProduced);
     const totalOfConsumption = currentFuelSourceConsumption.reduce(
       (total, next) => new Decimal(total).add(next.consumption).toNumber(),
       0,
@@ -446,46 +489,9 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
   return results;
 };
 
-type KeysWithValsOfType<T, V> = keyof { [P in keyof T as T[P] extends V ? P : never]: P };
-const populateByDateFromSite = (
-  propertyVal: KeysWithValsOfType<AppModels['Site'], number>,
-  p: { consumptions: AppModels['UtilityConsumption'][]; sites: AppModels['Site'][] },
-): ValueByRecord[] => {
-  const uniqueSites = Array.from(new Map(p.sites.map((s) => [s.id, s])).values());
-  const uniqueDates = Array.from(new Set(p.consumptions.map((c) => c.date)).values());
-  const filledArr: ValueByRecord[] = [];
-  for (let i = 0; i < uniqueSites.length; i++) {
-    const site = uniqueSites[i];
-    for (let j = 0; j < uniqueDates.length; j++) {
-      const date = uniqueDates[j];
-      filledArr.push({
-        siteId: site.id as number,
-        date,
-        value: site[propertyVal],
-      });
-    }
-  }
-  return filledArr;
-};
-const populateArrayByDateSite = (
-  populateVal: number,
-  p: { consumptions: AppModels['UtilityConsumption'][] },
-): ValueByRecord[] => {
-  const uniqueSites = Array.from(new Set(p.consumptions.map((c) => c.siteId)).values());
-  const uniqueDates = Array.from(new Set(p.consumptions.map((c) => c.date)).values());
-  const filledArr: ValueByRecord[] = [];
-  for (let i = 0; i < uniqueSites.length; i++) {
-    const siteId = uniqueSites[i];
-    for (let j = 0; j < uniqueDates.length; j++) {
-      const date = uniqueDates[j];
-      filledArr.push({
-        siteId,
-        date,
-        value: populateVal,
-      });
-    }
-  }
-  return filledArr;
+const getFuelSourcesFromConsumptionCollection = (collection: AppModels['UtilityConsumption'][]) => {
+  const fuels = Array.from(new Set(collection.map((c) => c.fuelSourceId)).values());
+  return fuels;
 };
 type WasteValue = {
   waste: number;
@@ -517,7 +523,68 @@ type EnergyWasteParams = {
   selectedYearHdd: WasteForPowerAndLightingAndCoolingV2Params['selectedYearHdd'];
 };
 const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> => {
-  const records = wasteForSinglefuelFunction(params);
+  const formulaMap = () => {
+    const prevYearConsumptions = params.consumptions
+      .filter(DashboardService.consumptionIsNotProduced)
+      .filter(DbUtils.filterByYear(params.year));
+    const thisYearConsumptions = params.nextConsumptions
+      .filter(DashboardService.consumptionIsNotProduced)
+      .filter(DbUtils.filterByYear(params.year));
+    const map = new Map<SupportedUses, number>();
+    const fuels = getFuelSourcesFromConsumptionCollection(thisYearConsumptions);
+    const usesToSearchOn: SupportedUses[] = ['Heating', 'Cooling', 'Powering'];
+    for (let i = 0; i < usesToSearchOn.length; i++) {
+      for (let f = 0; f < fuels.length; f++) {
+        const use = usesToSearchOn[i];
+        const fuel = fuels[f];
+
+        const currentYear = thisYearConsumptions.every((c) => c.fuelSourceId === fuel);
+        const prevYear = prevYearConsumptions.every((c) => c.fuelSourceId === fuel);
+
+        const match = currentYear === prevYear;
+        if (match) {
+          map.set(use, fuel);
+        }
+      }
+    }
+    return map;
+  };
+  const m = formulaMap();
+
+  const heating = m.get('Heating');
+  const cooling = m.get('Cooling');
+  const powering = m.get('Powering');
+
+  if (powering !== undefined && (heating !== undefined || cooling !== undefined)) {
+    const sites = await SitesService.findBy({
+      id: Array.from(new Set(params.consumptions.concat(params.nextConsumptions).map((c) => c.siteId)).values()),
+    });
+    const records = wasteForPowerAndLighting({
+      baselineDaylight: populateArrayByDateSite(16, { consumptions: params.consumptions }),
+      projectedDaylight: populateArrayByDateSite(18, { consumptions: params.nextConsumptions }),
+      baselinePopulation: populateByDateFromSite('population', { consumptions: params.consumptions, sites }),
+      projectedPopulation: populateByDateFromSite('population', { consumptions: params.nextConsumptions, sites }),
+
+      baselineTime: populateArrayByDateSite(8, { consumptions: params.consumptions }),
+      projectedTime: populateArrayByDateSite(8, { consumptions: params.nextConsumptions }),
+      ...params,
+    });
+    return records;
+  }
+
+  if (heating !== undefined && cooling !== undefined) {
+    const records = wasteForSinglefuelFunction(params);
+    return records;
+  }
+
+  const records = wasteForPowerAndLightingAndCooling({
+    consumptions: params.consumptions,
+    heatingDegrees: params.hdd.filter(isHdd),
+    coolingDegrees: params.hdd.filter(isCdd),
+    nextHeatingDegrees: params.nextHdd.filter(isHdd),
+    nextCoolingDegrees: params.nextHdd.filter(isCdd),
+    nextConsumptions: params.nextConsumptions,
+  });
   return records;
 };
 
@@ -623,7 +690,7 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
 
   for (let i = 0; i < singleFuelData.length; i++) {
     const singleFuelWaste = singleFuelData[i];
-    const [ consumption ] = p.nextConsumptions
+    const [consumption] = p.nextConsumptions
       .filter(DbUtils.filterByYearAndMonth({ date: singleFuelWaste.date }))
       .filter(SitesService.filterBySiteId(singleFuelWaste.siteId));
 
@@ -636,7 +703,7 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
 
     records.push({
       waste,
-      wasteCost: consumption ? wasteCost({ consumption, waste }): 0,
+      wasteCost: consumption ? wasteCost({ consumption, waste }) : 0,
       consumption: singleFuelWaste.consumption,
       siteId: singleFuelWaste.siteId,
       date: singleFuelWaste.date,
@@ -649,54 +716,138 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
   return records;
 };
 
-const wasteForPowerAndLightingAndCooling = (
-  p: WasteForPowerAndLightingParams & EnergyWasteParams & { lightingPowerCoolingHdd: HDDRecord[] },
-) => {
-  const powerAndLighting = wasteForPowerAndLighting(p);
-  const oneEnergy = wasteForSinglefuelFunction(p);
+type WasteForPowerAndLightingAndCoolingParams = {
+  coolingDegrees: HDDRecord[];
+  heatingDegrees: HDDRecord[];
+  consumptions: ProducedConsumption[];
 
+  nextConsumptions: ProducedConsumption[];
+  nextCoolingDegrees: HDDRecord[];
+  nextHeatingDegrees: HDDRecord[];
+};
+const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolingParams) => {
   const records: WasteValue[] = [];
-  for (let i = 0; i < p.nextConsumptions.length; i++) {
-    const consumption = p.nextConsumptions[i];
-    const [singlePowerAndLighting] = powerAndLighting
-      .filter(SitesService.filterBySiteId(consumption.siteId))
-      .filter(DbUtils.filterByYearAndMonth(consumption));
-    if (!singlePowerAndLighting) {
-      continue;
+  const consumptions = p.consumptions.filter(DashboardService.consumptionIsNotProduced);
+  const nextConsumptions = p.nextConsumptions.filter(DashboardService.consumptionIsNotProduced);
+  const sites = Array.from(new Set(consumptions.map((i) => i.siteId)).values());
+
+  for (let s = 0; s < sites.length; s++) {
+    const site = sites[s];
+    const cooling = p.coolingDegrees.filter(SitesService.filterBySiteId(site));
+    const heating = p.heatingDegrees.filter(SitesService.filterBySiteId(site));
+    const theseConsumptions = p.consumptions.filter(SitesService.filterBySiteId(site));
+
+    const totalOfCooling = MathUtils.totalOf(cooling.map((i) => i.value));
+    const powerTotalCooling = new Decimal(totalOfCooling).times(totalOfCooling).toNumber();
+    const coolingSquared = cooling.map((i) => ({ ...i, value: new Decimal(i.value).times(i.value).toNumber() }));
+    const coolingSquredTotal = MathUtils.totalOf(coolingSquared.map((i) => i.value));
+
+    const totalOfHeating = MathUtils.totalOf(heating.map((i) => i.value));
+    const powerTotalHeating = new Decimal(totalOfHeating).times(totalOfHeating).toNumber();
+    const heatingSquared = heating.map((i) => ({ ...i, value: new Decimal(i.value).times(i.value).toNumber() }));
+    const heatingSquaredTotal = MathUtils.totalOf(heatingSquared.map((i) => i.value));
+
+    const totalOfConsumption = MathUtils.totalOf(theseConsumptions.map((c) => c.consumption));
+
+    const heatingTimesConsumptions: HDDRecord[] = [];
+    for (let h = 0; h < heating.length; h++) {
+      const hdd = heating[h];
+      const c = theseConsumptions.find((c) => c.date === DbUtils.dateToStringDate(hdd.date));
+      if (!c) {
+        continue;
+      }
+      heatingTimesConsumptions.push({
+        date: hdd.date,
+        value: new Decimal(hdd.value).times(c.consumption).toNumber(),
+        siteId: site,
+        kind: 'HDD',
+      });
     }
+    const totalHeatingTimesConsumptions = MathUtils.totalOf(heatingTimesConsumptions.map((i) => i.value));
 
-    const [singleProjectedEnergy] = oneEnergy
-      .filter(SitesService.filterBySiteId(consumption.siteId))
-      .filter(DbUtils.filterByYearAndMonth(consumption));
-    if (!singleProjectedEnergy) {
-      continue;
+    const coolingTimesConsumptions: HDDRecord[] = [];
+    for (let c = 0; c < cooling.length; c++) {
+      const cdd = cooling[c];
+      const consumption = theseConsumptions.find((c) => c.date === DbUtils.dateToStringDate(cdd.date));
+      if (!consumption) {
+        continue;
+      }
+      coolingTimesConsumptions.push({
+        date: cdd.date,
+        value: new Decimal(cdd.value).times(consumption.consumption).toNumber(),
+        siteId: site,
+        kind: 'CDD',
+      });
     }
-    const hddToUse = p.lightingPowerCoolingHdd[i];
-    if (!hddToUse) {
-      continue;
+    const totalCoolingTimesConsumptions = MathUtils.totalOf(coolingTimesConsumptions.map((i) => i.value));
+
+    const heatingTimesCooling: Omit<HDDRecord, 'kind'>[] = [];
+    for (let c = 0; c < heating.length; c++) {
+      const hdd = heating[c];
+      const cdd = cooling.find((c) => DbUtils.dateToStringDate(c.date) === DbUtils.dateToStringDate(hdd.date));
+      if (!cdd) {
+        continue;
+      }
+      heatingTimesCooling.push({
+        date: hdd.date,
+        value: new Decimal(hdd.value).times(cdd.value).toNumber(),
+        siteId: site,
+      });
     }
+    const totalHeatingTimesCooling = MathUtils.totalOf(heatingTimesCooling.map((i) => i.value));
 
-    const weather = new Decimal(hddToUse.value).times(p.nextConsumptions[i].consumption);
-    const projected = new Decimal(singleProjectedEnergy.cIntercept).add(weather);
-    const adjustedProjectedEnergyPtdl = new Decimal(singlePowerAndLighting.percentageVariable)
-      .div(100)
-      .times(projected);
+    const NX = theseConsumptions.length; //42b
+    const totalHddByNX = new Decimal(totalOfHeating).div(NX); //43b
+    const totalCddByNX = new Decimal(totalOfCooling).div(NX); //44b
+    const hdd1 = new Decimal(new Decimal(totalOfHeating).times(totalOfHeating).div(NX)).minus(heatingSquaredTotal); //45b
+    const cdd1 = new Decimal(new Decimal(totalOfCooling).times(totalOfCooling).div(NX)).minus(coolingSquredTotal); //46b
+    const hdd2 = new Decimal(new Decimal(totalOfHeating).times(totalOfConsumption).div(NX)).minus(
+      totalHeatingTimesConsumptions,
+    ); //47b
+    const cdd2 = new Decimal(new Decimal(totalOfCooling).times(totalOfConsumption).div(NX)).minus(
+      totalCoolingTimesConsumptions,
+    ); //48b
+    const cddHdd = new Decimal(new Decimal(totalOfHeating).times(totalOfCooling).div(NX)).minus(
+      totalHeatingTimesCooling,
+    ); //49b
 
-    const waste = new Decimal(new Decimal(adjustedProjectedEnergyPtdl).add(projected))
-      .minus(consumption.consumption)
-      .toDP(6, Decimal.ROUND_HALF_UP)
-      .toNumber();
+    const b1Top = new Decimal(new Decimal(cdd1).times(hdd2)).minus(new Decimal(cddHdd).times(cdd2));
+    const b1Below = new Decimal(new Decimal(hdd1).times(cdd1)).minus(new Decimal(cddHdd).times(cddHdd));
+    const B1 = new Decimal(b1Top).div(b1Below);
+    const b2Top = new Decimal(new Decimal(hdd1).times(cdd2)).minus(new Decimal(cddHdd).times(hdd2));
+    const b2Below = new Decimal(new Decimal(hdd1).times(cdd1)).minus(new Decimal(cddHdd).times(cddHdd));
+    const B2 = new Decimal(b2Top).div(b2Below);
+    const yAverage = new Decimal(totalOfConsumption).div(NX);
+    const cIntercept = new Decimal(new Decimal(yAverage).minus(new Decimal(B1).times(totalHddByNX))).minus(
+      new Decimal(B2).minus(totalCddByNX),
+    );
 
-    records.push({
-      waste,
-      wasteCost: wasteCost({ consumption, waste }),
-      consumption: consumption.consumption,
-      siteId: singleProjectedEnergy.siteId,
-      date: singleProjectedEnergy.date,
-      fuelSourceId: singleProjectedEnergy.fuelSourceId,
-      fuelSourceName: consumption.fuelSourceName,
-      siteName: consumption.siteName,
-    });
+    const theseNextConsumptions = nextConsumptions.filter(SitesService.filterBySiteId(site));
+    for (let c = 0; c < theseNextConsumptions.length; c++) {
+      const consumption = theseNextConsumptions[c];
+      const [hdd] = p.nextHeatingDegrees
+        .filter(DbUtils.filterByYearAndMonth(consumption))
+        .filter(SitesService.filterBySiteId(consumption.siteId));
+      const [cdd] = p.nextCoolingDegrees
+        .filter(DbUtils.filterByYearAndMonth(consumption))
+        .filter(SitesService.filterBySiteId(consumption.siteId));
+
+      const projectedHeating = new Decimal(hdd.value).times(B1);
+      const projectedCooling = new Decimal(cdd.value).times(B2);
+      const totalProjected = new Decimal(projectedHeating).plus(projectedCooling);
+      const waste = new Decimal(totalProjected).minus(consumption.consumption).toDP(8).toNumber();
+
+      records.push({
+        waste,
+        wasteCost: wasteCost({ consumption, waste }),
+        consumption: consumption.consumption,
+        siteId: consumption.siteId,
+        date: consumption.date,
+        fuelSourceId: consumption.fuelSourceId,
+        fuelSourceName: consumption.fuelSourceName,
+        siteName: consumption.siteName,
+      });
+    }
   }
   return records;
 };
