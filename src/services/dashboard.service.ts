@@ -552,6 +552,11 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
   const cooling = map.get('Cooling');
   const powering = map.get('Powering');
 
+  if (heating !== undefined && cooling !== undefined) {
+    const records = wasteForSinglefuelFunction(params);
+    return records;
+  }
+
   if (powering !== undefined && (heating !== undefined || cooling !== undefined)) {
     const sites = await SitesService.findBy({
       id: Array.from(new Set(params.consumptions.concat(params.nextConsumptions).map((c) => c.siteId)).values()),
@@ -566,11 +571,6 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       projectedTime: populateArrayByDateSite(8, { consumptions: params.nextConsumptions }),
       ...params,
     });
-    return records;
-  }
-
-  if (heating !== undefined && cooling !== undefined) {
-    const records = wasteForSinglefuelFunction(params);
     return records;
   }
 
