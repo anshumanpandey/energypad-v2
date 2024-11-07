@@ -23,6 +23,7 @@ export const buildFakeConsumption = (p: {
     siteId: p.siteId,
     fuelSourceId: p.fuelSourceId,
     usedInId: p.usedInId || 2,
+    usedIn: "",
     fuelSourceName: '',
     siteName: '',
     conversionUnit: 1,
@@ -45,6 +46,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -60,6 +62,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 3,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -75,6 +78,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -90,6 +94,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -105,6 +110,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -120,6 +126,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -135,6 +142,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -150,6 +158,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -165,6 +174,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -180,6 +190,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -195,6 +206,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -210,6 +222,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -225,6 +238,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -240,6 +254,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
     ],
@@ -271,6 +286,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -286,6 +302,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -301,6 +318,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -316,6 +334,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -331,6 +350,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -346,6 +366,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -361,6 +382,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -376,6 +398,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -391,6 +414,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -406,6 +430,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -421,6 +446,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -436,6 +462,7 @@ test('single fuel test', async () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
     ],
@@ -488,6 +515,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -503,6 +531,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -518,6 +547,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -533,6 +563,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -548,6 +579,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -563,6 +595,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -578,6 +611,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -593,6 +627,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -608,6 +643,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -623,6 +659,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -638,6 +675,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -653,6 +691,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
     ],
@@ -671,6 +710,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -686,6 +726,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -701,6 +742,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -716,6 +758,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -731,6 +774,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -746,6 +790,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -761,6 +806,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -776,6 +822,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -791,6 +838,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -806,6 +854,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -821,6 +870,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -836,6 +886,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
     ],
@@ -987,6 +1038,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1002,6 +1054,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1017,6 +1070,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1032,6 +1086,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1047,6 +1102,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1062,6 +1118,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1077,6 +1134,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1092,6 +1150,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1107,6 +1166,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1122,6 +1182,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1137,6 +1198,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1152,6 +1214,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
 
@@ -1168,6 +1231,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1183,6 +1247,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 44,
       },
       {
@@ -1198,6 +1263,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 88,
       },
       {
@@ -1213,6 +1279,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 222,
       },
     ],
@@ -1231,6 +1298,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1246,6 +1314,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1261,6 +1330,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1276,6 +1346,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1291,6 +1362,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1306,6 +1378,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1321,6 +1394,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1336,6 +1410,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1351,6 +1426,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1366,6 +1442,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1381,6 +1458,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1396,6 +1474,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
 
@@ -1412,6 +1491,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 1,
       },
       {
@@ -1427,6 +1507,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 44,
       },
       {
@@ -1442,6 +1523,7 @@ test('lighting and power calculation', () => {
         vat: 0,
         fuelSourceId: 1,
         usedInId: 1,
+        usedIn: "",
         siteId: 88,
       },
     ],
