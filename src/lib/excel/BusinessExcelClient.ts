@@ -19,6 +19,24 @@ export const getSitesData = async (file: string | Buffer) => {
   const siteWorksheet = workbook.worksheets[1];
   const sites = await getSitesRecords(siteWorksheet);
 
+  const map = new Map<string, number>();
+  const errs = [];
+  for (let s = 0; s < sites.length; s++) {
+    const site = sites[s];
+    let found = map.get(site.code);
+    if (found) {
+      found = found + 1;
+      map.set(site.code, found);
+      errs.push(new ApiError(`Site Code duplicated: ${site.code}`));
+    } else {
+      map.set(site.code, 1);
+    }
+  }
+
+  if (errs.length !== 0) {
+    return new ApiError('Err error', 400, { from: errs });
+  }
+
   const rows = [];
 
   for (let i = 0; i < sites.length; i++) {
