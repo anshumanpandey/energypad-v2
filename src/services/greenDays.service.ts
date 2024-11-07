@@ -45,7 +45,11 @@ const makeRequest = (locationDataRequest: any, siteId: number) => {
     })
     .then(handleResponse(fullRequest.request.dataSpecs.myHDD.breakdown.dayRanges, siteId));
 };
-let IDX = 0;
+let SEED = 1;
+function random() {
+    const x = Math.sin(SEED ++) * 10000;
+    return Math.trunc((x - Math.floor(x)) * 10000);
+}
 const handleResponse =
   (a: any[], siteId: number) =>
   ({ data }: { data: GreenData }): HDDRecord[] | ApiError => {
@@ -61,7 +65,7 @@ const handleResponse =
           records.push({
             date: DbUtils.stringDateToDate(_.first),
             //value: Math.floor(Math.random() * 60) + 10,
-            value: 1000 + (IDX + 1) * 100,
+            value: random(),
             siteId,
             kind,
           });
@@ -281,7 +285,7 @@ const getHdds2 = async (params: GetHddsParams2[]) => {
     }
     promises.push(makeRequest(locationDataRequest, p.siteId));
   }
-  IDX = 0;
+  SEED = 1;
   return Promise.all(promises).then((results) => {
     const errorFound = results.find(ErrorUtils.isErrorInstance);
     if (errorFound) {
