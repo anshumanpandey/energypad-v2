@@ -69,7 +69,6 @@ const handleResponse =
             siteId,
             kind,
           });
-          IDX++;
         }
       }
       return records;
