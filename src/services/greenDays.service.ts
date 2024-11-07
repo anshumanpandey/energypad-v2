@@ -53,6 +53,7 @@ const handleResponse =
       const kinds = ['CDD', 'HDD'] as const;
 
       const records: HDDRecord[] = [];
+      let idx = 1;
       for (let k = 0; k < kinds.length; k++) {
         for (let i = 0; i < a.length; i++) {
           const kind = kinds[k];
@@ -60,10 +61,11 @@ const handleResponse =
           records.push({
             date: DbUtils.stringDateToDate(_.first),
             //value: Math.floor(Math.random() * 60) + 10,
-            value: 1000 + (i + 1) * 100,
+            value: 1000 + (idx) * 100,
             siteId,
             kind,
           });
+          idx++;
         }
       }
       return records;
