@@ -45,6 +45,7 @@ const makeRequest = (locationDataRequest: any, siteId: number) => {
     })
     .then(handleResponse(fullRequest.request.dataSpecs.myHDD.breakdown.dayRanges, siteId));
 };
+      let idx = 1;
 const handleResponse =
   (a: any[], siteId: number) =>
   ({ data }: { data: GreenData }): HDDRecord[] | ApiError => {
@@ -53,7 +54,6 @@ const handleResponse =
       const kinds = ['CDD', 'HDD'] as const;
 
       const records: HDDRecord[] = [];
-      let idx = 1;
       for (let k = 0; k < kinds.length; k++) {
         for (let i = 0; i < a.length; i++) {
           const kind = kinds[k];
@@ -68,6 +68,7 @@ const handleResponse =
           idx++;
         }
       }
+      idx = 0;
       return records;
       //TODO: remove line below when deploy
       //return new ApiError(response.message);
