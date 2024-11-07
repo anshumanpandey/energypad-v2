@@ -45,7 +45,7 @@ const makeRequest = (locationDataRequest: any, siteId: number) => {
     })
     .then(handleResponse(fullRequest.request.dataSpecs.myHDD.breakdown.dayRanges, siteId));
 };
-      let idx = 1;
+let IDX = 0;
 const handleResponse =
   (a: any[], siteId: number) =>
   ({ data }: { data: GreenData }): HDDRecord[] | ApiError => {
@@ -61,14 +61,13 @@ const handleResponse =
           records.push({
             date: DbUtils.stringDateToDate(_.first),
             //value: Math.floor(Math.random() * 60) + 10,
-            value: 1000 + (idx) * 100,
+            value: 1000 + (IDX + 1) * 100,
             siteId,
             kind,
           });
-          idx++;
+          IDX++;
         }
       }
-      idx = 0;
       return records;
       //TODO: remove line below when deploy
       //return new ApiError(response.message);
@@ -282,6 +281,7 @@ const getHdds2 = async (params: GetHddsParams2[]) => {
     }
     promises.push(makeRequest(locationDataRequest, p.siteId));
   }
+  IDX = 0;
   return Promise.all(promises).then((results) => {
     const errorFound = results.find(ErrorUtils.isErrorInstance);
     if (errorFound) {
