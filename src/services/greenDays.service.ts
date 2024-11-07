@@ -284,8 +284,8 @@ const getHdds2 = async (params: GetHddsParams2[]) => {
     }
     promises.push(makeRequest(locationDataRequest, p.siteId));
   }
-  SEED = 1;
   return Promise.all(promises).then((results) => {
+    SEED = 1;
     const errorFound = results.find(ErrorUtils.isErrorInstance);
     if (errorFound) {
       return errorFound;
