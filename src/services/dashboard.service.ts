@@ -212,6 +212,7 @@ const generateMockConsumption = (p: { date: string; siteId: number; fuelSourceId
     fuelSourceId: p.fuelSourceId,
     produced: true,
     conversionUnit: 'm3' as const,
+    usedIn: '',
   };
 };
 type ProduceYearConsumptionsParams = {
@@ -483,6 +484,7 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
         fuelSourceName: consumption.fuelSourceName,
         siteName: consumption.siteName,
         cIntercept,
+      usedIn: consumption.usedIn,
       });
     }
   }
@@ -495,6 +497,7 @@ const getFuelSourcesFromConsumptionCollection = (collection: AppModels['UtilityC
 };
 type WasteValue = {
   waste: number;
+  usedIn: string;
   date: string;
   siteId: number;
   fuelSourceId: number;
@@ -552,16 +555,11 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
   const cooling = map.get('Cooling');
   const powering = map.get('Powering');
 
-  if (heating !== undefined && cooling !== undefined) {
-    const records = wasteForSinglefuelFunction(params);
-    return records;
-  }
-
   if (powering !== undefined && (heating !== undefined || cooling !== undefined)) {
     const sites = await SitesService.findBy({
       id: Array.from(new Set(params.consumptions.concat(params.nextConsumptions).map((c) => c.siteId)).values()),
     });
-    const records = wasteForPowerAndLighting({
+    const p: WasteForPowerAndLightingParams = {
       baselineDaylight: populateArrayByDateSite(16, { consumptions: params.consumptions }),
       projectedDaylight: populateArrayByDateSite(18, { consumptions: params.nextConsumptions }),
       baselinePopulation: populateByDateFromSite('population', { consumptions: params.consumptions, sites }),
@@ -569,8 +567,25 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
 
       baselineTime: populateArrayByDateSite(8, { consumptions: params.consumptions }),
       projectedTime: populateArrayByDateSite(8, { consumptions: params.nextConsumptions }),
+
       ...params,
-    });
+
+      hdd: params.hdd.filter(isHdd),
+      nextHdd: params.nextHdd.filter(isHdd),
+    };
+    const records = wasteForPowerAndLighting(p);
+    return records;
+  }
+
+  if (heating !== undefined && cooling !== undefined) {
+    const p = {
+      consumptions: params.consumptions,
+      nextConsumptions: params.nextConsumptions,
+      hdd: params.hdd.filter(isHdd),
+      nextHdd: params.nextHdd.filter(isHdd),
+      year: params.year,
+    };
+    const records = wasteForSinglefuelFunction(p);
     return records;
   }
 
@@ -685,12 +700,16 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
 
   const records: (WasteValue & { percentageVariable: number })[] = [];
 
-  for (let i = 0; i < singleFuelData.length; i++) {
-    const singleFuelWaste = singleFuelData[i];
-    const [consumption] = p.nextConsumptions
-      .filter(DbUtils.filterByYearAndMonth({ date: singleFuelWaste.date }))
-      .filter(SitesService.filterBySiteId(singleFuelWaste.siteId));
+  const theseNextConsumptions = p.nextConsumptions
+    .filter(DashboardService.consumptionIsNotProduced)
+    .filter(DbUtils.filterByYear(p.year));
 
+  for (let i = 0; i < theseNextConsumptions.length; i++) {
+    const consumption = theseNextConsumptions[i];
+    const [singleFuelWaste] = singleFuelData
+      .filter(DbUtils.filterByYearAndMonth(consumption))
+      .filter(SitesService.filterBySiteId(consumption.siteId))
+      .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId));
     const [percentageVariable] = percentageTotalVariable
       .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear(singleFuelWaste, 1) }))
       .filter(SitesService.filterBySiteId(singleFuelWaste.siteId));
@@ -708,6 +727,7 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
       fuelSourceId: singleFuelWaste.fuelSourceId,
       fuelSourceName: singleFuelWaste.fuelSourceName,
       siteName: singleFuelWaste.siteName,
+      usedIn: singleFuelWaste.usedIn,
     });
   }
   return records;
@@ -843,6 +863,7 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
         fuelSourceId: consumption.fuelSourceId,
         fuelSourceName: consumption.fuelSourceName,
         siteName: consumption.siteName,
+        usedIn: consumption.usedIn
       });
     }
   }
@@ -1163,6 +1184,7 @@ const wasteForPowerAndLightingAndCoolingV2 = (p: WasteForPowerAndLightingAndCool
           wasteCost: wasteCost({ consumption: selectedYearConsumption, waste: waste }),
           siteName: selectedYearConsumption.siteName,
           fuelSourceName: selectedYearConsumption.fuelSourceName,
+          usedIn: selectedYearConsumption.usedIn
         });
       }
     }

@@ -404,12 +404,14 @@ export const getConsumptions = async (params: GetConsumptionsParams): Promise<Ap
     { fuelSourceName: 'FuelSources.source' },
     { siteId: 'S.id' },
     { siteName: 'S.name' },
+    { usedIn: 'U.use' },
   ];
 
   const query = DB('UtilityConsumptions')
     .select(fields)
     .innerJoin('FuelSources', 'UtilityConsumptions.fuelSourceId', 'FuelSources.id')
     .innerJoin({ S: 'Sites' }, 'UtilityConsumptions.siteId', 'S.id')
+    .innerJoin({ U: 'FuelUses' }, 'UtilityConsumptions.usedInId', 'U.id')
     .innerJoin({ B: 'Businesses' }, 'S.businessId', 'B.id')
     .where('B.id', params.businessId);
 
