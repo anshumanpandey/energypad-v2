@@ -406,7 +406,7 @@ type WasteSingleFuelParams = {
 };
 const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
   const results: (WasteValue & { projectedEnergy: number; cIntercept: number })[] = [];
-  const fuelSources = Array.from(new Set(params.consumptions.map((i) => i.fuelSourceId)).values());
+  const fuelSources = Array.from(new Set(params.consumptions.concat(params.nextConsumptions).map((i) => i.fuelSourceId)).values());
   for (let i = 0; i < fuelSources.length; i++) {
     const currentFuelSourceId = fuelSources[i];
     const currentFuelSourceConsumption = params.consumptions
