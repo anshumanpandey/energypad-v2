@@ -37,6 +37,11 @@ export const getSitesData = async (file: string | Buffer) => {
     return new ApiError('Err error', 400, { from: errs });
   }
 
+  const sitesOnDB = await SitesService.findBy({ codes: sites.map((s) => s.code) });
+  if (sitesOnDB.length !== 0) {
+    const errors = sitesOnDB.map((s) => new ApiError(`Site Code already on DB: ${s.code}`));
+    return new ApiError('Err error', 400, { from: errors });
+  }
   const rows = [];
 
   for (let i = 0; i < sites.length; i++) {
