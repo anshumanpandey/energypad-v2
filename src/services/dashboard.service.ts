@@ -597,7 +597,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     coolingDegrees: params.hdd.filter(isCdd),
     nextHeatingDegrees: params.nextHdd.filter(isHdd),
     nextCoolingDegrees: params.nextHdd.filter(isCdd),
-    nextConsumptions: params.nextConsumptions,
+    nextConsumptions: params.nextConsumptions.filter(DbUtils.filterByYear(params.year)),
   };
   console.log(JSON.stringify(p));
   const records = wasteForPowerAndLightingAndCooling(p);
