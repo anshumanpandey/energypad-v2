@@ -47,8 +47,8 @@ const makeRequest = (locationDataRequest: any, siteId: number) => {
 };
 let SEED = 1;
 function random() {
-    const x = Math.sin(SEED ++) * 10000;
-    return Math.trunc((x - Math.floor(x)) * 10000);
+  const x = Math.sin(SEED++) * 10000;
+  return Math.trunc((x - Math.floor(x)) * 10000);
 }
 const handleResponse =
   (a: any[], siteId: number) =>
@@ -284,14 +284,25 @@ const getHdds2 = async (params: GetHddsParams2[]) => {
     }
     promises.push(makeRequest(locationDataRequest, p.siteId));
   }
-  return Promise.all(promises).then((results) => {
-    SEED = 1;
+  const results = [];
+  for (let i = 0; i < promises.length; i++) {
+    const p = promises[i];
+    results.push(await p);
+  }
+  SEED = 1;
+  const errorFound = results.find(ErrorUtils.isErrorInstance);
+  if (errorFound) {
+    return errorFound;
+  }
+  return results.flatMap((f) => (ErrorUtils.isErrorInstance(f) ? [] : f));
+
+  /*return Promise.all(promises).then((results) => {
     const errorFound = results.find(ErrorUtils.isErrorInstance);
     if (errorFound) {
       return errorFound;
     }
     return results.flatMap((f) => (ErrorUtils.isErrorInstance(f) ? [] : f));
-  });
+  });*/
 };
 
 export default { getHdds, getHdds2 };
