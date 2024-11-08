@@ -406,7 +406,9 @@ type WasteSingleFuelParams = {
 };
 const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
   const results: (WasteValue & { projectedEnergy: number; cIntercept: number })[] = [];
-  const fuelSources = Array.from(new Set(params.consumptions.concat(params.nextConsumptions).map((i) => i.fuelSourceId)).values());
+  const fuelSources = Array.from(
+    new Set(params.consumptions.concat(params.nextConsumptions).map((i) => i.fuelSourceId)).values(),
+  );
   for (let i = 0; i < fuelSources.length; i++) {
     const currentFuelSourceId = fuelSources[i];
     const currentFuelSourceConsumption = params.consumptions
@@ -484,7 +486,7 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
         fuelSourceName: consumption.fuelSourceName,
         siteName: consumption.siteName,
         cIntercept,
-      usedIn: consumption.usedIn,
+        usedIn: consumption.usedIn,
       });
     }
   }
@@ -544,7 +546,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       const currentYear = thisYearConsumptions.every((c) => c.fuelSourceId === fuel && c.usedInId === use.id);
       const prevYear = prevYearConsumptions.every((c) => c.fuelSourceId === fuel && c.usedInId === use.id);
 
-      const match = currentYear === prevYear;
+      const match = currentYear === true && prevYear === true;
       if (match) {
         map.set(use.use as SupportedUses, fuel);
       }
@@ -589,14 +591,16 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     return records;
   }
 
-  const records = wasteForPowerAndLightingAndCooling({
+  const p = {
     consumptions: params.consumptions,
     heatingDegrees: params.hdd.filter(isHdd),
     coolingDegrees: params.hdd.filter(isCdd),
     nextHeatingDegrees: params.nextHdd.filter(isHdd),
     nextCoolingDegrees: params.nextHdd.filter(isCdd),
     nextConsumptions: params.nextConsumptions,
-  });
+  };
+  console.log(JSON.stringify(p));
+  const records = wasteForPowerAndLightingAndCooling(p);
   return records;
 };
 
@@ -747,12 +751,14 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
   const consumptions = p.consumptions.filter(DashboardService.consumptionIsNotProduced);
   const nextConsumptions = p.nextConsumptions.filter(DashboardService.consumptionIsNotProduced);
   const sites = Array.from(new Set(consumptions.map((i) => i.siteId)).values());
+  const fuels = Array.from(new Set(consumptions.concat(nextConsumptions).map((i) => i.fuelSourceId)).values());
 
   for (let s = 0; s < sites.length; s++) {
     const site = sites[s];
+
     const cooling = p.coolingDegrees.filter(SitesService.filterBySiteId(site));
     const heating = p.heatingDegrees.filter(SitesService.filterBySiteId(site));
-    const theseConsumptions = p.consumptions.filter(SitesService.filterBySiteId(site));
+    const theseConsumptions = consumptions.filter(SitesService.filterBySiteId(site));
 
     const totalOfCooling = MathUtils.totalOf(cooling.map((i) => i.value));
     const powerTotalCooling = new Decimal(totalOfCooling).times(totalOfCooling).toNumber();
@@ -816,17 +822,33 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
     const NX = theseConsumptions.length; //42b
     const totalHddByNX = new Decimal(totalOfHeating).div(NX); //43b
     const totalCddByNX = new Decimal(totalOfCooling).div(NX); //44b
-    const hdd1 = new Decimal(new Decimal(totalOfHeating).times(totalOfHeating).div(NX)).minus(heatingSquaredTotal); //45b
-    const cdd1 = new Decimal(new Decimal(totalOfCooling).times(totalOfCooling).div(NX)).minus(coolingSquredTotal); //46b
-    const hdd2 = new Decimal(new Decimal(totalOfHeating).times(totalOfConsumption).div(NX)).minus(
-      totalHeatingTimesConsumptions,
+    const hdd1 = new Decimal(heatingSquaredTotal).minus(new Decimal(totalOfHeating).times(totalOfHeating).div(NX)); //45b
+    const cdd1 = new Decimal(coolingSquredTotal).minus(new Decimal(totalOfCooling).times(totalOfCooling).div(NX)); //46b
+    const hdd2 = new Decimal(totalHeatingTimesConsumptions).minus(
+      new Decimal(totalOfHeating).times(totalOfConsumption).div(NX),
     ); //47b
-    const cdd2 = new Decimal(new Decimal(totalOfCooling).times(totalOfConsumption).div(NX)).minus(
-      totalCoolingTimesConsumptions,
+    const cdd2 = new Decimal(totalCoolingTimesConsumptions).minus(
+      new Decimal(totalOfCooling).times(totalOfConsumption).div(NX),
     ); //48b
-    const cddHdd = new Decimal(new Decimal(totalOfHeating).times(totalOfCooling).div(NX)).minus(
-      totalHeatingTimesCooling,
+    const cddHdd = new Decimal(totalHeatingTimesCooling).minus(
+      new Decimal(totalOfHeating).times(totalOfCooling).div(NX),
     ); //49b
+
+    console.log({
+      b9: totalOfHeating,
+      b14: heatingSquaredTotal,
+      b19: totalOfCooling,
+      b24: coolingSquredTotal,
+      b29: totalOfConsumption,
+      b33: totalHeatingTimesConsumptions,
+      b40: totalHeatingTimesCooling,
+      b42: NX,
+      b45: hdd1,
+      b46: cdd1,
+      b47: hdd2,
+      b48: cdd2,
+      b49: cddHdd,
+    });
 
     const b1Top = new Decimal(new Decimal(cdd1).times(hdd2)).minus(new Decimal(cddHdd).times(cdd2));
     const b1Below = new Decimal(new Decimal(hdd1).times(cdd1)).minus(new Decimal(cddHdd).times(cddHdd));
@@ -839,6 +861,17 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
       new Decimal(B2).minus(totalCddByNX),
     );
 
+    console.log({
+      site,
+      b51: b1Top,
+      b52: b1Below,
+      b53: B1,
+      b54: b2Top,
+      b55: b2Below,
+      b56: B2,
+      b58: yAverage,
+    });
+
     const theseNextConsumptions = nextConsumptions.filter(SitesService.filterBySiteId(site));
     for (let c = 0; c < theseNextConsumptions.length; c++) {
       const consumption = theseNextConsumptions[c];
@@ -849,6 +882,12 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
         .filter(DbUtils.filterByYearAndMonth(consumption))
         .filter(SitesService.filterBySiteId(consumption.siteId));
 
+      console.log({
+        B1,
+        B2,
+        hdd,
+        cdd,
+      });
       const projectedHeating = new Decimal(hdd.value).times(B1);
       const projectedCooling = new Decimal(cdd.value).times(B2);
       const totalProjected = new Decimal(projectedHeating).plus(projectedCooling);
@@ -863,7 +902,7 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
         fuelSourceId: consumption.fuelSourceId,
         fuelSourceName: consumption.fuelSourceName,
         siteName: consumption.siteName,
-        usedIn: consumption.usedIn
+        usedIn: consumption.usedIn,
       });
     }
   }
@@ -1184,7 +1223,7 @@ const wasteForPowerAndLightingAndCoolingV2 = (p: WasteForPowerAndLightingAndCool
           wasteCost: wasteCost({ consumption: selectedYearConsumption, waste: waste }),
           siteName: selectedYearConsumption.siteName,
           fuelSourceName: selectedYearConsumption.fuelSourceName,
-          usedIn: selectedYearConsumption.usedIn
+          usedIn: selectedYearConsumption.usedIn,
         });
       }
     }
