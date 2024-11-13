@@ -48,7 +48,7 @@ const makeRequest = (locationDataRequest: any, siteId: number) => {
 let SEED = 1;
 function random() {
   const x = Math.sin(SEED++) * 10000;
-  return Math.trunc((x - Math.floor(x)) * 10000);
+  return Number.parseFloat(((x - Math.floor(x)) * 10).toFixed(2));
 }
 const handleResponse =
   (a: any[], siteId: number) =>

@@ -538,6 +538,10 @@ export const findFuelUseBy = async (p?: FindFuelUseByParams): Promise<AppModels[
   return records;
 };
 
+export const filterByUse = (usedInId: number) => (p: { usedInId: number }) => {
+  return usedInId === p.usedInId;
+};
+
 export const addUtilityEmissions = (p: Omit<AppModels['UtilityEmission'], 'id'>[], opt?: Transactionable) => {
   const driver = opt?.txr || DB;
   const promises = p.map(async (i) => {

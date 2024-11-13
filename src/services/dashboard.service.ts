@@ -457,6 +457,8 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
     const aBelow = new Decimal(new Decimal(NX).times(totalPowerOfHdd)).minus(new Decimal(totalOfHdd).times(totalOfHdd));
     const cIntercept = new Decimal(aTop).div(aBelow).toDP(7).toNumber();
 
+    console.log({ NX, bSlope, aTop, aBelow, totalOfConsumption, totalOfHdd });
+
     const currentFuelSourceNextConsumption = params.nextConsumptions
       .filter(UtilityService.filterByFuelSource(currentFuelSourceId))
       .filter(DbUtils.filterByYear(params.year));
@@ -535,6 +537,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
   const thisYearConsumptions = params.nextConsumptions
     .filter(DashboardService.consumptionIsNotProduced)
     .filter(DbUtils.filterByYear(params.year));
+
   const map = new Map<SupportedUses, number>();
   const fuels = getFuelSourcesFromConsumptionCollection(thisYearConsumptions);
   const usesToSearchOn: SupportedUses[] = ['Heating', 'Cooling', 'Powering'];
@@ -543,10 +546,18 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       const [use] = uses.filter((u) => u.use === usesToSearchOn[i]);
       const fuel = fuels[f];
 
-      const currentYear = thisYearConsumptions.every((c) => c.fuelSourceId === fuel && c.usedInId === use.id);
-      const prevYear = prevYearConsumptions.every((c) => c.fuelSourceId === fuel && c.usedInId === use.id);
+      const thisConsumptions = thisYearConsumptions
+        .filter(UtilityService.filterByFuelSource(fuel))
+        .filter(UtilityService.filterByUse(use.id));
+      const oldConsumptions = prevYearConsumptions
+        .filter(UtilityService.filterByFuelSource(fuel))
+        .filter(UtilityService.filterByUse(use.id));
 
-      const match = currentYear === true && prevYear === true;
+      const currentYear = thisConsumptions.every((c) => c.fuelSourceId === fuel && c.usedInId === use.id);
+      const prevYear = oldConsumptions.every((c) => c.fuelSourceId === fuel && c.usedInId === use.id);
+
+      const match =
+        thisConsumptions.length !== 0 && currentYear === true && oldConsumptions.length !== 0 && prevYear === true;
       if (match) {
         map.set(use.use as SupportedUses, fuel);
       }
@@ -575,6 +586,12 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       hdd: params.hdd.filter(isHdd),
       nextHdd: params.nextHdd.filter(isHdd),
     };
+    console.log(
+      JSON.stringify({
+        hdd: params.hdd.filter(isHdd),
+        nextHdd: params.nextHdd.filter(isHdd),
+      }),
+    );
     const records = wasteForPowerAndLighting(p);
     return records;
   }
