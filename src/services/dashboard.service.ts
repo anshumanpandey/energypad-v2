@@ -569,6 +569,34 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
   const cooling = map.get('Cooling');
   const powering = map.get('Powering');
 
+  if (powering !== undefined && heating !== undefined && cooling !== undefined) {
+    const sites = await SitesService.findBy({
+      id: Array.from(new Set(params.consumptions.concat(params.nextConsumptions).map((c) => c.siteId)).values()),
+    });
+    const p = {
+      ...params,
+      consumptions: params.consumptions,
+      heatingDegrees: params.hdd.filter(isHdd),
+      coolingDegrees: params.hdd.filter(isCdd),
+      nextHeatingDegrees: params.nextHdd.filter(isHdd),
+      nextCoolingDegrees: params.nextHdd.filter(isCdd),
+      nextConsumptions: params.nextConsumptions.filter(DbUtils.filterByYear(params.year)),
+
+      baselineDaylight: populateArrayByDateSite(16, { consumptions: params.consumptions }),
+      projectedDaylight: populateArrayByDateSite(18, { consumptions: params.nextConsumptions }),
+      baselinePopulation: populateByDateFromSite('population', { consumptions: params.consumptions, sites }),
+      projectedPopulation: populateByDateFromSite('population', { consumptions: params.nextConsumptions, sites }),
+
+      baselineTime: populateArrayByDateSite(8, { consumptions: params.consumptions }),
+      projectedTime: populateArrayByDateSite(8, { consumptions: params.nextConsumptions }),
+
+      hdd: params.hdd.filter(isHdd),
+      nextHdd: params.nextHdd.filter(isHdd),
+    };
+    const records = wasteForHeatingCoolingAndPower(p);
+    return records;
+  }
+
   if (powering !== undefined && (heating !== undefined || cooling !== undefined)) {
     const sites = await SitesService.findBy({
       id: Array.from(new Set(params.consumptions.concat(params.nextConsumptions).map((c) => c.siteId)).values()),
@@ -611,34 +639,6 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     return records;
   }
 
-  if (heating !== undefined && cooling !== undefined) {
-    const sites = await SitesService.findBy({
-      id: Array.from(new Set(params.consumptions.concat(params.nextConsumptions).map((c) => c.siteId)).values()),
-    });
-    const p = {
-      ...params,
-      consumptions: params.consumptions,
-      heatingDegrees: params.hdd.filter(isHdd),
-      coolingDegrees: params.hdd.filter(isCdd),
-      nextHeatingDegrees: params.nextHdd.filter(isHdd),
-      nextCoolingDegrees: params.nextHdd.filter(isCdd),
-      nextConsumptions: params.nextConsumptions.filter(DbUtils.filterByYear(params.year)),
-
-      baselineDaylight: populateArrayByDateSite(16, { consumptions: params.consumptions }),
-      projectedDaylight: populateArrayByDateSite(18, { consumptions: params.nextConsumptions }),
-      baselinePopulation: populateByDateFromSite('population', { consumptions: params.consumptions, sites }),
-      projectedPopulation: populateByDateFromSite('population', { consumptions: params.nextConsumptions, sites }),
-
-      baselineTime: populateArrayByDateSite(8, { consumptions: params.consumptions }),
-      projectedTime: populateArrayByDateSite(8, { consumptions: params.nextConsumptions }),
-
-      hdd: params.hdd.filter(isHdd),
-      nextHdd: params.nextHdd.filter(isHdd),
-    };
-    const records = wasteForHeatingCoolingAndPower(p);
-    return records;
-  }
-
   if (heating !== undefined || cooling !== undefined) {
     const p = {
       consumptions: params.consumptions,
@@ -651,9 +651,9 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     return records;
   }
 
-  console.log('no formulate to apply found')
+  console.log('no formulate to apply found');
 
-  return []
+  return [];
 };
 
 type ValueByRecord = {
