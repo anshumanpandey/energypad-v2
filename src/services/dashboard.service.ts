@@ -540,7 +540,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
 
   const map = new Map<SupportedUses, number>();
   const fuels = getFuelSourcesFromConsumptionCollection(thisYearConsumptions);
-  const usesToSearchOn: SupportedUses[] = ['Heating', 'Cooling', 'Powering'];
+  const usesToSearchOn: SupportedUses[] = ['Heating', 'Cooling', 'Powering', 'Lighting'];
   for (let i = 0; i < usesToSearchOn.length; i++) {
     for (let f = 0; f < fuels.length; f++) {
       const [use] = uses.filter((u) => u.use === usesToSearchOn[i]);
@@ -568,6 +568,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
   const heating = map.get('Heating');
   const cooling = map.get('Cooling');
   const powering = map.get('Powering');
+  const lighting = map.get('Lighting');
 
   if (powering !== undefined && heating !== undefined && cooling !== undefined) {
     const sites = await SitesService.findBy({
@@ -608,7 +609,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     const sites = await SitesService.findBy({
       id: Array.from(new Set(params.consumptions.concat(params.nextConsumptions).map((c) => c.siteId)).values()),
     });
-    const p: WasteForPowerAndLightingParams = {
+    const p: Parameters<typeof wasteForHeatingOrCoolingAndPowerAndLighting>[0] = {
       baselineDaylight: populateArrayByDateSite(16, { consumptions: params.consumptions }),
       projectedDaylight: populateArrayByDateSite(18, { consumptions: params.nextConsumptions }),
       baselinePopulation: populateByDateFromSite('population', { consumptions: params.consumptions, sites }),
@@ -622,13 +623,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       hdd: params.hdd.filter(isHdd),
       nextHdd: params.nextHdd.filter(isHdd),
     };
-    console.log(
-      JSON.stringify({
-        hdd: params.hdd.filter(isHdd),
-        nextHdd: params.nextHdd.filter(isHdd),
-      }),
-    );
-    const records = wasteForPowerAndLighting(p);
+    const records = wasteForHeatingOrCoolingAndPowerAndLighting(p);
     return records;
   }
 
@@ -641,7 +636,6 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       nextCoolingDegrees: params.nextHdd.filter(isCdd),
       nextConsumptions: params.nextConsumptions.filter(DbUtils.filterByYear(params.year)),
     };
-    console.log(JSON.stringify(p));
     const records = wasteForPowerAndLightingAndCooling(p);
     return records;
   }
@@ -655,6 +649,26 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       year: params.year,
     };
     const records = wasteForSinglefuelFunction(p);
+    return records;
+  }
+
+  if (lighting !== undefined && powering !== undefined) {
+    const sites = await SitesService.findBy({
+      id: Array.from(new Set(params.consumptions.concat(params.nextConsumptions).map((c) => c.siteId)).values()),
+    });
+
+    const p: WasteForPowerAndLightingParams = {
+      baselineDaylight: populateArrayByDateSite(16, { consumptions: params.consumptions }),
+      projectedDaylight: populateArrayByDateSite(18, { consumptions: params.nextConsumptions }),
+      baselinePopulation: populateByDateFromSite('population', { consumptions: params.consumptions, sites }),
+      projectedPopulation: populateByDateFromSite('population', { consumptions: params.nextConsumptions, sites }),
+
+      baselineTime: populateArrayByDateSite(8, { consumptions: params.consumptions }),
+      projectedTime: populateArrayByDateSite(8, { consumptions: params.nextConsumptions }),
+
+      ...params,
+    };
+    const records = wasteForPowerAndLighting(p);
     return records;
   }
 
@@ -681,8 +695,128 @@ export type WasteForPowerAndLightingParams = {
   //use site FTP hours for all months
   baselineTime: ValueByRecord[];
   projectedTime: ValueByRecord[];
-} & WasteSingleFuelParams;
+
+  consumptions: AppModels['UtilityConsumption'][];
+  nextConsumptions: AppModels['UtilityConsumption'][];
+
+  year: number;
+};
 const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
+  const daylightPercentageChange: ValueByRecord[] = [];
+  for (let i = 0; i < p.baselineDaylight.length; i++) {
+    const item = p.baselineDaylight[i];
+    const [projectedValue] = p.projectedDaylight
+      .filter(SitesService.filterBySiteId(item.siteId))
+      .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.increaseYear(item, 1) }));
+    const value = new Decimal(new Decimal(projectedValue.value).minus(item.value).div(100))
+      .times(100)
+      .toDP(9)
+      .toNumber();
+
+    daylightPercentageChange.push({
+      value,
+      siteId: item.siteId,
+      date: item.date,
+    });
+  }
+
+  const baselinePopulationMultipliedByTime: ValueByRecord[] = [];
+  for (let i = 0; i < p.baselineTime.length; i++) {
+    const item = p.baselineTime[i];
+    const [baselinePopulation] = p.baselinePopulation.filter(DbUtils.filterByYearAndMonth(item));
+
+    if (!baselinePopulation) {
+      continue;
+    }
+
+    baselinePopulationMultipliedByTime.push({
+      value: new Decimal(item.value).times(baselinePopulation.value).toDP(9).toNumber(),
+      siteId: item.siteId,
+      date: item.date,
+    });
+  }
+  const projectedPopulationMultipliedByTime: ValueByRecord[] = []; // projected PT
+  for (let i = 0; i < p.projectedPopulation.length; i++) {
+    const item = p.projectedPopulation[i];
+    const [projectedTime] = p.projectedTime
+      .filter(SitesService.filterBySiteId(item.siteId))
+      .filter(DbUtils.filterByYearAndMonth(item));
+    if (!projectedTime) {
+      continue;
+    }
+    projectedPopulationMultipliedByTime.push({
+      value: new Decimal(item.value).times(projectedTime.value).toDP(9).toNumber(),
+      siteId: item.siteId,
+      date: item.date,
+    });
+  }
+
+  const projectedPopulationMultipliedByTimePercentageChange = baselinePopulationMultipliedByTime.map((_) => {
+    const [projectedByTime] = projectedPopulationMultipliedByTime
+      .filter(SitesService.filterBySiteId(_.siteId))
+      .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.increaseYear(_, 1) }));
+    const [baselineValue] = baselinePopulationMultipliedByTime
+      .filter(SitesService.filterBySiteId(_.siteId))
+      .filter(DbUtils.filterByYearAndMonth(_));
+    return {
+      value: new Decimal(new Decimal(projectedByTime.value).minus(baselineValue.value).div(baselineValue.value))
+        .times(100)
+        .toDP(9),
+      siteId: baselineValue.siteId,
+      date: baselineValue.date,
+    };
+  });
+
+  const percentageTotalVariable = projectedPopulationMultipliedByTimePercentageChange.map((_) => {
+    const [daylightValue] = daylightPercentageChange
+      .filter(SitesService.filterBySiteId(_.siteId))
+      .filter(DbUtils.filterByYearAndMonth(_));
+    return {
+      value: new Decimal(_.value).add(daylightValue.value).toDP(8).toNumber(),
+      siteId: _.siteId,
+      date: daylightValue.date,
+    };
+  });
+
+  const records: (WasteValue & { percentageVariable: number })[] = [];
+
+  const theseNextConsumptions = p.nextConsumptions
+    .filter(DashboardService.consumptionIsNotProduced)
+    .filter(DbUtils.filterByYear(p.year));
+
+  for (let i = 0; i < theseNextConsumptions.length; i++) {
+    const nextConsumption = theseNextConsumptions[i];
+    const [consumption] = p.consumptions
+      .filter(consumptionIsNotProduced)
+      .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear(nextConsumption, 1) }));
+    const [percentageVariable] = percentageTotalVariable
+      .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear(nextConsumption, 1) }))
+      .filter(SitesService.filterBySiteId(consumption.siteId));
+    const waste = new Decimal(
+      new Decimal(new Decimal(percentageVariable.value).div(100)).times(consumption.consumption),
+    )
+      .plus(new Decimal(consumption.consumption).minus(nextConsumption.consumption))
+      .toDP(8)
+      .toNumber();
+
+    records.push({
+      waste,
+      wasteCost: consumption ? wasteCost({ consumption, waste }) : 0,
+      consumption: nextConsumption.consumption,
+      siteId: nextConsumption.siteId,
+      date: nextConsumption.date,
+      percentageVariable: percentageVariable.value,
+      fuelSourceId: nextConsumption.fuelSourceId,
+      fuelSourceName: nextConsumption.fuelSourceName,
+      siteName: nextConsumption.siteName,
+      usedIn: nextConsumption.usedIn,
+    });
+  }
+  return records;
+};
+
+export type WasteForHeatingOrCoolingAndPowerAndLightingParams = WasteForPowerAndLightingParams & WasteSingleFuelParams;
+const wasteForHeatingOrCoolingAndPowerAndLighting = (p: WasteForHeatingOrCoolingAndPowerAndLightingParams) => {
   const singleFuelData = wasteForSinglefuelFunction(p);
 
   const daylightPercentageChange: ValueByRecord[] = [];
@@ -993,10 +1127,12 @@ const wasteForHeatingCoolingAndPower = async (params: WasteForHeatingCoolingAndP
         consumptions,
         nextConsumptions,
       });
-      const wastePL = wasteForPowerAndLighting({
+      const wastePL = wasteForHeatingOrCoolingAndPowerAndLighting({
         ...params,
         consumptions,
         nextConsumptions,
+        hdd: params.heatingDegrees,
+        nextHdd: params.nextHeatingDegrees,
       });
 
       const theseNextConsumptions = nextConsumptions.filter(consumptionIsNotProduced);
@@ -1023,7 +1159,7 @@ const wasteForHeatingCoolingAndPower = async (params: WasteForHeatingCoolingAndP
         const totalProjected = new Decimal(projectedHeating).plus(projectedCooling);
         const waste = new Decimal(totalProjected).minus(consumption.consumption).toDP(8).toNumber();
         const adjusted = new Decimal(waste).minus(
-          new Decimal(new Decimal(thisWastePl.percentageVariable).div(new Decimal(100))).times(waste)
+          new Decimal(new Decimal(thisWastePl.percentageVariable).div(new Decimal(100))).times(waste),
         );
 
         records.push({
@@ -1442,10 +1578,10 @@ export default {
   consumptionIsNotProduced,
   findCarbonEmissions,
   calculateWaste,
-  wasteForPowerAndLighting,
+  wasteForHeatingOrCoolingAndPowerAndLighting,
   wasteForSinglefuelFunction,
   wasteForPowerAndLightingAndCooling,
-  wasteForPowerAndLightingAndCoolingV2: wasteForSigleHeatOrCoolingAndPower,
+  wasteForSigleHeatOrCoolingAndPower,
   calculateFinancialCost,
   calculateCarbonImpact,
   filterSingleConsumptionForHeatingOrCooling,

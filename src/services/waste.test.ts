@@ -497,7 +497,7 @@ test('single fuel test', async () => {
 });
 
 test('lighting and power calculation', () => {
-  const params: Parameters<typeof dashboard.wasteForPowerAndLighting>[0] = {
+  const params: Parameters<typeof dashboard.wasteForHeatingOrCoolingAndPowerAndLighting>[0] = {
     consumptions: [
       {
         id: 0,
@@ -1004,7 +1004,7 @@ test('lighting and power calculation', () => {
     year: 2022,
   };
 
-  const result = dashboard.wasteForPowerAndLighting(params);
+  const result = dashboard.wasteForHeatingOrCoolingAndPowerAndLighting(params);
   expect(result[0].waste).toBe(-10.27699962);
   expect(result[1].waste).toBe(-14.61731389);
   expect(result[2].waste).toBe(-39.91281303);
@@ -1924,7 +1924,7 @@ test.only('multiple heating cooling and lighting', async () => {
 });
 
 test('lighting and power and cooling calculation', () => {
-  const params: Parameters<typeof dashboard.wasteForPowerAndLightingAndCoolingV2>[0] = {
+  const params: Parameters<typeof dashboard.wasteForSigleHeatOrCoolingAndPower>[0] = {
     singleFuelConsumptions: [
       //these first three are to mix up data and to be ignore by the code since they dont match on site id or fuelSource
       buildFakeConsumption({
@@ -2574,7 +2574,7 @@ test('lighting and power and cooling calculation', () => {
     ],
   };
 
-  const result = dashboard.wasteForPowerAndLightingAndCoolingV2(params);
+  const result = dashboard.wasteForSigleHeatOrCoolingAndPower(params);
   expect(result.length).toBe(3);
   /*expect(result[0].waste).toBe(2335.624245);
   expect(result[1].waste).toBe(1544.075174);
