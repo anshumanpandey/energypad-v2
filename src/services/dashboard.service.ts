@@ -593,6 +593,13 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       hdd: params.hdd.filter(isHdd),
       nextHdd: params.nextHdd.filter(isHdd),
     };
+
+    console.log(
+      JSON.stringify({
+        consumptions: p.consumptions,
+        nextConsumptions: p.nextConsumptions,
+      }),
+    );
     const records = wasteForHeatingCoolingAndPower(p);
     return records;
   }
@@ -964,54 +971,73 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
 
 type WasteForHeatingCoolingAndPower = WasteForPowerAndLightingAndCoolingParams & WasteForPowerAndLightingParams;
 const wasteForHeatingCoolingAndPower = async (params: WasteForHeatingCoolingAndPower) => {
-  const wastePLC = wasteForPowerAndLightingAndCooling(params);
-  const wastePL = wasteForPowerAndLighting(params);
-
   const records: WasteValue[] = [];
 
   const sites = Array.from(new Set(params.consumptions.map((i) => i.siteId)).values());
+  const fuels = getFuelSourcesFromConsumptionCollection(params.consumptions.concat(params.nextConsumptions));
 
   for (let s = 0; s < sites.length; s++) {
-    const site = sites[s];
+    for (let f = 0; f < fuels.length; f++) {
+      const site = sites[s];
+      const fuel = fuels[f];
 
-    const theseNextConsumptions = params.nextConsumptions
-      .filter(SitesService.filterBySiteId(site))
-      .filter(consumptionIsNotProduced);
-    for (let c = 0; c < theseNextConsumptions.length; c++) {
-      const consumption = theseNextConsumptions[c];
-      const [thisWastePLC] = wastePLC
-        .filter(SitesService.filterBySiteId(consumption.siteId))
-        .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId));
-      const [thisWastePl] = wastePL
-        .filter(SitesService.filterBySiteId(consumption.siteId))
-        .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId));
+      const consumptions = params.consumptions
+        .filter(UtilityService.filterByFuelSource(fuel))
+        .filter(SitesService.filterBySiteId(site));
+      const nextConsumptions = params.nextConsumptions
+        .filter(UtilityService.filterByFuelSource(fuel))
+        .filter(SitesService.filterBySiteId(site));
 
-      const [hdd] = params.nextHeatingDegrees
-        .filter(DbUtils.filterByYearAndMonth(consumption))
-        .filter(SitesService.filterBySiteId(consumption.siteId));
-      const [cdd] = params.nextCoolingDegrees
-        .filter(DbUtils.filterByYearAndMonth(consumption))
-        .filter(SitesService.filterBySiteId(consumption.siteId));
-
-      const projectedHeating = new Decimal(hdd.value).times(thisWastePLC.B1);
-      const projectedCooling = new Decimal(cdd.value).times(thisWastePLC.B2);
-      const totalProjected = new Decimal(projectedHeating).plus(projectedCooling);
-      const waste = new Decimal(totalProjected).minus(consumption.consumption).toDP(8).toNumber();
-      const adjusted = new Decimal(thisWastePl.waste).minus(
-        new Decimal(thisWastePl.percentageVariable).div(new Decimal(100).times(thisWastePl.waste)),
-      );
-
-      records.push({
-        waste: adjusted.toNumber(),
-        wasteCost: wasteCost({ consumption, waste }),
-        consumption: consumption.consumption,
-        siteId: consumption.siteId,
-        date: consumption.date,
-        fuelSourceId: consumption.fuelSourceId,
-        fuelSourceName: consumption.fuelSourceName,
-        siteName: consumption.siteName,
-        usedIn: consumption.usedIn,
+      const wastePLC = wasteForPowerAndLightingAndCooling({
+        ...params,
+        consumptions,
+        nextConsumptions,
       });
+      const wastePL = wasteForPowerAndLighting({
+        ...params,
+        consumptions,
+        nextConsumptions,
+      });
+
+      const theseNextConsumptions = nextConsumptions.filter(consumptionIsNotProduced);
+      for (let c = 0; c < theseNextConsumptions.length; c++) {
+        const consumption = theseNextConsumptions[c];
+        const [thisWastePLC] = wastePLC
+          .filter(DbUtils.filterByYearAndMonth(consumption))
+          .filter(SitesService.filterBySiteId(consumption.siteId))
+          .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId));
+        const [thisWastePl] = wastePL
+          .filter(DbUtils.filterByYearAndMonth(consumption))
+          .filter(SitesService.filterBySiteId(consumption.siteId))
+          .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId));
+
+        const [hdd] = params.nextHeatingDegrees
+          .filter(DbUtils.filterByYearAndMonth(consumption))
+          .filter(SitesService.filterBySiteId(consumption.siteId));
+        const [cdd] = params.nextCoolingDegrees
+          .filter(DbUtils.filterByYearAndMonth(consumption))
+          .filter(SitesService.filterBySiteId(consumption.siteId));
+
+        const projectedHeating = new Decimal(hdd.value).times(thisWastePLC.B1);
+        const projectedCooling = new Decimal(cdd.value).times(thisWastePLC.B2);
+        const totalProjected = new Decimal(projectedHeating).plus(projectedCooling);
+        const waste = new Decimal(totalProjected).minus(consumption.consumption).toDP(8).toNumber();
+        const adjusted = new Decimal(waste).minus(
+          new Decimal(new Decimal(thisWastePl.percentageVariable).div(new Decimal(100))).times(waste)
+        );
+
+        records.push({
+          waste: adjusted.toNumber(),
+          wasteCost: wasteCost({ consumption, waste }),
+          consumption: consumption.consumption,
+          siteId: consumption.siteId,
+          date: consumption.date,
+          fuelSourceId: consumption.fuelSourceId,
+          fuelSourceName: consumption.fuelSourceName,
+          siteName: consumption.siteName,
+          usedIn: consumption.usedIn,
+        });
+      }
     }
   }
 
