@@ -650,6 +650,10 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     const records = wasteForSinglefuelFunction(p);
     return records;
   }
+
+  console.log('no formulate to apply found')
+
+  return []
 };
 
 type ValueByRecord = {
