@@ -788,7 +788,8 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
     const nextConsumption = theseNextConsumptions[i];
     const [consumption] = p.consumptions
       .filter(consumptionIsNotProduced)
-      .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear(nextConsumption, 1) }));
+      .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear(nextConsumption, 1) }))
+      .filter(UtilityService.filterByFuelSource(nextConsumption.fuelSourceId));
     const [percentageVariable] = percentageTotalVariable
       .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear(nextConsumption, 1) }))
       .filter(SitesService.filterBySiteId(consumption.siteId));
