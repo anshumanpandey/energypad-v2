@@ -974,7 +974,9 @@ const wasteForHeatingCoolingAndPower = async (params: WasteForHeatingCoolingAndP
   for (let s = 0; s < sites.length; s++) {
     const site = sites[s];
 
-    const theseNextConsumptions = params.nextConsumptions.filter(SitesService.filterBySiteId(site));
+    const theseNextConsumptions = params.nextConsumptions
+      .filter(SitesService.filterBySiteId(site))
+      .filter(consumptionIsNotProduced);
     for (let c = 0; c < theseNextConsumptions.length; c++) {
       const consumption = theseNextConsumptions[c];
       const [thisWastePLC] = wastePLC
