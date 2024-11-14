@@ -34,7 +34,7 @@ export const extractConsumptionData = async (
   const workbook = await readExcelFile(file);
 
   const consumptions: any[] = [];
-  const sheet = workbook.worksheets[0];
+  const [sheet] = workbook.worksheets.filter(w => w.name.toLowerCase() === "consumption");
 
   const errors: ApiError[] = [];
   for (let r = 2; r <= sheet.actualRowCount; r++) {
@@ -102,7 +102,7 @@ export const extractEmissionsData = async (
   const workbook = await readExcelFile(file);
 
   const consumptions: any[] = [];
-  const sheet = workbook.worksheets[1];
+  const [sheet] = workbook.worksheets.filter(w => w.name.toLowerCase() === "emissions");
 
   const errors: ApiError[] = [];
   for (let r = 2; r <= sheet.actualRowCount; r++) {
@@ -169,7 +169,7 @@ export const extractTargetData = async (
   const workbook = await readExcelFile(file);
 
   const monitoring: any[] = [];
-  const sheet = workbook.worksheets[2];
+  const [sheet] = workbook.worksheets.filter(w => w.name.toLowerCase() === "targets");
 
   const errors: ApiError[] = [];
   for (let r = 2; r <= sheet.actualRowCount; r++) {
