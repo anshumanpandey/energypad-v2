@@ -12,6 +12,7 @@ const schema: CreateSchemaParams = {
           fuelSourceName: { type: 'string' },
           siteName: { type: 'string' },
           usedIn: { type: 'string' },
+          totalVatCost: { type: 'number' },
         },
       },
     ],

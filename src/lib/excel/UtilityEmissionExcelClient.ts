@@ -34,7 +34,7 @@ export const extractConsumptionData = async (
   const workbook = await readExcelFile(file);
 
   const consumptions: any[] = [];
-  const [sheet] = workbook.worksheets.filter(w => w.name.toLowerCase() === "consumption");
+  const [sheet] = workbook.worksheets.filter((w) => w.name.toLowerCase() === 'consumption');
 
   const errors: ApiError[] = [];
   for (let r = 2; r <= sheet.actualRowCount; r++) {
@@ -68,9 +68,10 @@ export const extractConsumptionData = async (
 
     const date = `${year}-${month}-01`;
 
-    const conversionFactor = new Decimal(currentRow.getCell('I').text).toNumber();
+    const conversionFactor = new Decimal(currentRow.getCell('J').text).toNumber();
     const consumption = new Decimal(currentRow.getCell('F').text).toDP(2).toNumber();
     const totalCost = new Decimal(currentRow.getCell('H').text).toDP(2).toNumber();
+    const vatCost = new Decimal(currentRow.getCell('I').text).toDP(2).toNumber();
 
     const fuelUnit = currentRow.getCell('G').text as typeof SupportedUnits[0];
     const record = {
@@ -84,6 +85,7 @@ export const extractConsumptionData = async (
       consumption: resolveConsumptionToKwh({ consumption, conversionFactor, fuelUnit }),
       conversionFactor: conversionFactor,
       usedInId: opt.uses.find((u) => currentRow.getCell('D').text === u.use)?.id,
+      vatCost,
     };
     consumptions.push(record);
   }
@@ -102,7 +104,7 @@ export const extractEmissionsData = async (
   const workbook = await readExcelFile(file);
 
   const consumptions: any[] = [];
-  const [sheet] = workbook.worksheets.filter(w => w.name.toLowerCase() === "emissions");
+  const [sheet] = workbook.worksheets.filter((w) => w.name.toLowerCase() === 'emissions');
 
   const errors: ApiError[] = [];
   for (let r = 2; r <= sheet.actualRowCount; r++) {
@@ -169,7 +171,7 @@ export const extractTargetData = async (
   const workbook = await readExcelFile(file);
 
   const monitoring: any[] = [];
-  const [sheet] = workbook.worksheets.filter(w => w.name.toLowerCase() === "targets");
+  const [sheet] = workbook.worksheets.filter((w) => w.name.toLowerCase() === 'targets');
 
   const errors: ApiError[] = [];
   for (let r = 2; r <= sheet.actualRowCount; r++) {

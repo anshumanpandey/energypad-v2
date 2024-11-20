@@ -294,8 +294,8 @@ const consumptionIsNotProduced = (i: any) => {
   return i.produced === undefined || i.produced === false;
 };
 
-const wasteCost = (p: { consumption: AppModels['UtilityConsumption']; waste: number }) => {
-  return new Decimal(new Decimal(p.consumption.totalCost).div(p.consumption.consumption))
+const wasteCost = (p: { consumptionCost: number; waste: number }) => {
+  return new Decimal(new Decimal(p.consumptionCost).div(p.consumptionCost))
     .times(p.waste)
     .toDP(2)
     .absoluteValue()
@@ -479,7 +479,8 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
 
       results.push({
         waste,
-        wasteCost: wasteCost({ consumption, waste }),
+        wasteCost: wasteCost({ consumptionCost: consumption.totalCost, waste }),
+        wasteVatCost: consumption.totalVatCost ? wasteCost({ consumptionCost: consumption.totalVatCost, waste }) : null,
         date: consumption.date,
         consumption: consumption.consumption,
         projectedEnergy,
@@ -508,6 +509,7 @@ type WasteValue = {
   siteName: string;
   fuelSourceName: string;
   wasteCost: number;
+  wasteVatCost: number | null;
   consumption: number;
 };
 type EnergyWasteParams = {
@@ -595,12 +597,6 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
       nextHdd: params.nextHdd.filter(isHdd),
     };
 
-    console.log(
-      JSON.stringify({
-        consumptions: p.consumptions,
-        nextConsumptions: p.nextConsumptions,
-      }),
-    );
     const records = wasteForHeatingCoolingAndPower(p);
     return records;
   }
@@ -802,7 +798,8 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
 
     records.push({
       waste,
-      wasteCost: consumption ? wasteCost({ consumption, waste }) : 0,
+      wasteCost: consumption ? wasteCost({ consumptionCost: consumption.totalCost, waste }) : 0,
+      wasteVatCost: consumption.totalVatCost ? wasteCost({ consumptionCost: consumption.totalVatCost, waste }) : null,
       consumption: nextConsumption.consumption,
       siteId: nextConsumption.siteId,
       date: nextConsumption.date,
@@ -917,7 +914,8 @@ const wasteForHeatingOrCoolingAndPowerAndLighting = (p: WasteForHeatingOrCooling
 
     records.push({
       waste,
-      wasteCost: consumption ? wasteCost({ consumption, waste }) : 0,
+      wasteCost: consumption ? wasteCost({ consumptionCost: consumption.totalCost, waste }) : 0,
+      wasteVatCost: consumption.totalVatCost ? wasteCost({ consumptionCost: consumption.totalVatCost, waste }) : null,
       consumption: singleFuelWaste.consumption,
       siteId: singleFuelWaste.siteId,
       date: singleFuelWaste.date,
@@ -945,160 +943,171 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
   const consumptions = p.consumptions.filter(DashboardService.consumptionIsNotProduced);
   const nextConsumptions = p.nextConsumptions.filter(DashboardService.consumptionIsNotProduced);
   const sites = Array.from(new Set(consumptions.map((i) => i.siteId)).values());
+  const fuels = getFuelSourcesFromConsumptionCollection(p.consumptions.concat(p.nextConsumptions));
 
   for (let s = 0; s < sites.length; s++) {
-    const site = sites[s];
+    for (let f = 0; f < fuels.length; f++) {
+      const site = sites[s];
+      const fuel = fuels[f];
 
-    const cooling = p.coolingDegrees.filter(SitesService.filterBySiteId(site));
-    const heating = p.heatingDegrees.filter(SitesService.filterBySiteId(site));
-    const theseConsumptions = consumptions.filter(SitesService.filterBySiteId(site));
+      const cooling = p.coolingDegrees.filter(SitesService.filterBySiteId(site));
+      const heating = p.heatingDegrees.filter(SitesService.filterBySiteId(site));
+      const theseConsumptions = consumptions
+        .filter(SitesService.filterBySiteId(site))
+        .filter(UtilityService.filterByFuelSource(fuel));
 
-    const totalOfCooling = MathUtils.totalOf(cooling.map((i) => i.value));
-    const powerTotalCooling = new Decimal(totalOfCooling).times(totalOfCooling).toNumber();
-    const coolingSquared = cooling.map((i) => ({ ...i, value: new Decimal(i.value).times(i.value).toNumber() }));
-    const coolingSquredTotal = MathUtils.totalOf(coolingSquared.map((i) => i.value));
+      const totalOfCooling = MathUtils.totalOf(cooling.map((i) => i.value));
+      const powerTotalCooling = new Decimal(totalOfCooling).times(totalOfCooling).toNumber();
+      const coolingSquared = cooling.map((i) => ({ ...i, value: new Decimal(i.value).times(i.value).toNumber() }));
+      const coolingSquredTotal = MathUtils.totalOf(coolingSquared.map((i) => i.value));
 
-    const totalOfHeating = MathUtils.totalOf(heating.map((i) => i.value));
-    const powerTotalHeating = new Decimal(totalOfHeating).times(totalOfHeating).toNumber();
-    const heatingSquared = heating.map((i) => ({ ...i, value: new Decimal(i.value).times(i.value).toNumber() }));
-    const heatingSquaredTotal = MathUtils.totalOf(heatingSquared.map((i) => i.value));
+      const totalOfHeating = MathUtils.totalOf(heating.map((i) => i.value));
+      const powerTotalHeating = new Decimal(totalOfHeating).times(totalOfHeating).toNumber();
+      const heatingSquared = heating.map((i) => ({ ...i, value: new Decimal(i.value).times(i.value).toNumber() }));
+      const heatingSquaredTotal = MathUtils.totalOf(heatingSquared.map((i) => i.value));
 
-    const totalOfConsumption = MathUtils.totalOf(theseConsumptions.map((c) => c.consumption));
+      const totalOfConsumption = MathUtils.totalOf(theseConsumptions.map((c) => c.consumption));
 
-    const heatingTimesConsumptions: HDDRecord[] = [];
-    for (let h = 0; h < heating.length; h++) {
-      const hdd = heating[h];
-      const c = theseConsumptions.find((c) => c.date === DbUtils.dateToStringDate(hdd.date));
-      if (!c) {
-        continue;
+      const heatingTimesConsumptions: HDDRecord[] = [];
+      for (let h = 0; h < heating.length; h++) {
+        const hdd = heating[h];
+        const c = theseConsumptions.find((c) => c.date === DbUtils.dateToStringDate(hdd.date));
+        if (!c) {
+          continue;
+        }
+        heatingTimesConsumptions.push({
+          date: hdd.date,
+          value: new Decimal(hdd.value).times(c.consumption).toNumber(),
+          siteId: site,
+          kind: 'HDD',
+        });
       }
-      heatingTimesConsumptions.push({
-        date: hdd.date,
-        value: new Decimal(hdd.value).times(c.consumption).toNumber(),
-        siteId: site,
-        kind: 'HDD',
-      });
-    }
-    const totalHeatingTimesConsumptions = MathUtils.totalOf(heatingTimesConsumptions.map((i) => i.value));
+      const totalHeatingTimesConsumptions = MathUtils.totalOf(heatingTimesConsumptions.map((i) => i.value));
 
-    const coolingTimesConsumptions: HDDRecord[] = [];
-    for (let c = 0; c < cooling.length; c++) {
-      const cdd = cooling[c];
-      const consumption = theseConsumptions.find((c) => c.date === DbUtils.dateToStringDate(cdd.date));
-      if (!consumption) {
-        continue;
+      const coolingTimesConsumptions: HDDRecord[] = [];
+      for (let c = 0; c < cooling.length; c++) {
+        const cdd = cooling[c];
+        const consumption = theseConsumptions.find((c) => c.date === DbUtils.dateToStringDate(cdd.date));
+        if (!consumption) {
+          continue;
+        }
+        coolingTimesConsumptions.push({
+          date: cdd.date,
+          value: new Decimal(cdd.value).times(consumption.consumption).toNumber(),
+          siteId: site,
+          kind: 'CDD',
+        });
       }
-      coolingTimesConsumptions.push({
-        date: cdd.date,
-        value: new Decimal(cdd.value).times(consumption.consumption).toNumber(),
-        siteId: site,
-        kind: 'CDD',
-      });
-    }
-    const totalCoolingTimesConsumptions = MathUtils.totalOf(coolingTimesConsumptions.map((i) => i.value));
+      const totalCoolingTimesConsumptions = MathUtils.totalOf(coolingTimesConsumptions.map((i) => i.value));
 
-    const heatingTimesCooling: Omit<HDDRecord, 'kind'>[] = [];
-    for (let c = 0; c < heating.length; c++) {
-      const hdd = heating[c];
-      const cdd = cooling.find((c) => DbUtils.dateToStringDate(c.date) === DbUtils.dateToStringDate(hdd.date));
-      if (!cdd) {
-        continue;
+      const heatingTimesCooling: Omit<HDDRecord, 'kind'>[] = [];
+      for (let c = 0; c < heating.length; c++) {
+        const hdd = heating[c];
+        const cdd = cooling.find((c) => DbUtils.dateToStringDate(c.date) === DbUtils.dateToStringDate(hdd.date));
+        if (!cdd) {
+          continue;
+        }
+        heatingTimesCooling.push({
+          date: hdd.date,
+          value: new Decimal(hdd.value).times(cdd.value).toNumber(),
+          siteId: site,
+        });
       }
-      heatingTimesCooling.push({
-        date: hdd.date,
-        value: new Decimal(hdd.value).times(cdd.value).toNumber(),
-        siteId: site,
-      });
-    }
-    const totalHeatingTimesCooling = MathUtils.totalOf(heatingTimesCooling.map((i) => i.value));
+      const totalHeatingTimesCooling = MathUtils.totalOf(heatingTimesCooling.map((i) => i.value));
 
-    const NX = theseConsumptions.length; //42b
-    const totalHddByNX = new Decimal(totalOfHeating).div(NX); //43b
-    const totalCddByNX = new Decimal(totalOfCooling).div(NX); //44b
-    const hdd1 = new Decimal(heatingSquaredTotal).minus(new Decimal(totalOfHeating).times(totalOfHeating).div(NX)); //45b
-    const cdd1 = new Decimal(coolingSquredTotal).minus(new Decimal(totalOfCooling).times(totalOfCooling).div(NX)); //46b
-    const hdd2 = new Decimal(totalHeatingTimesConsumptions).minus(
-      new Decimal(totalOfHeating).times(totalOfConsumption).div(NX),
-    ); //47b
-    const cdd2 = new Decimal(totalCoolingTimesConsumptions).minus(
-      new Decimal(totalOfCooling).times(totalOfConsumption).div(NX),
-    ); //48b
-    const cddHdd = new Decimal(totalHeatingTimesCooling).minus(
-      new Decimal(totalOfHeating).times(totalOfCooling).div(NX),
-    ); //49b
-
-    console.log({
-      b9: totalOfHeating,
-      b14: heatingSquaredTotal,
-      b19: totalOfCooling,
-      b24: coolingSquredTotal,
-      b29: totalOfConsumption,
-      b33: totalHeatingTimesConsumptions,
-      b40: totalHeatingTimesCooling,
-      b42: NX,
-      b45: hdd1,
-      b46: cdd1,
-      b47: hdd2,
-      b48: cdd2,
-      b49: cddHdd,
-    });
-
-    const b1Top = new Decimal(new Decimal(cdd1).times(hdd2)).minus(new Decimal(cddHdd).times(cdd2));
-    const b1Below = new Decimal(new Decimal(hdd1).times(cdd1)).minus(new Decimal(cddHdd).times(cddHdd));
-    const B1 = new Decimal(b1Top).div(b1Below);
-    const b2Top = new Decimal(new Decimal(hdd1).times(cdd2)).minus(new Decimal(cddHdd).times(hdd2));
-    const b2Below = new Decimal(new Decimal(hdd1).times(cdd1)).minus(new Decimal(cddHdd).times(cddHdd));
-    const B2 = new Decimal(b2Top).div(b2Below);
-    const yAverage = new Decimal(totalOfConsumption).div(NX);
-    const cIntercept = new Decimal(new Decimal(yAverage).minus(new Decimal(B1).times(totalHddByNX))).minus(
-      new Decimal(B2).minus(totalCddByNX),
-    );
-
-    console.log({
-      site,
-      b51: b1Top,
-      b52: b1Below,
-      b53: B1,
-      b54: b2Top,
-      b55: b2Below,
-      b56: B2,
-      b58: yAverage,
-    });
-
-    const theseNextConsumptions = nextConsumptions.filter(SitesService.filterBySiteId(site));
-    for (let c = 0; c < theseNextConsumptions.length; c++) {
-      const consumption = theseNextConsumptions[c];
-      const [hdd] = p.nextHeatingDegrees
-        .filter(DbUtils.filterByYearAndMonth(consumption))
-        .filter(SitesService.filterBySiteId(consumption.siteId));
-      const [cdd] = p.nextCoolingDegrees
-        .filter(DbUtils.filterByYearAndMonth(consumption))
-        .filter(SitesService.filterBySiteId(consumption.siteId));
+      const NX = theseConsumptions.length; //42b
+      const totalHddByNX = new Decimal(totalOfHeating).div(NX); //43b
+      const totalCddByNX = new Decimal(totalOfCooling).div(NX); //44b
+      const hdd1 = new Decimal(heatingSquaredTotal).minus(new Decimal(totalOfHeating).times(totalOfHeating).div(NX)); //45b
+      const cdd1 = new Decimal(coolingSquredTotal).minus(new Decimal(totalOfCooling).times(totalOfCooling).div(NX)); //46b
+      const hdd2 = new Decimal(totalHeatingTimesConsumptions).minus(
+        new Decimal(totalOfHeating).times(totalOfConsumption).div(NX),
+      ); //47b
+      const cdd2 = new Decimal(totalCoolingTimesConsumptions).minus(
+        new Decimal(totalOfCooling).times(totalOfConsumption).div(NX),
+      ); //48b
+      const cddHdd = new Decimal(totalHeatingTimesCooling).minus(
+        new Decimal(totalOfHeating).times(totalOfCooling).div(NX),
+      ); //49b
 
       console.log({
-        B1,
-        B2,
-        hdd,
-        cdd,
+        b9: totalOfHeating,
+        b14: heatingSquaredTotal,
+        b19: totalOfCooling,
+        b24: coolingSquredTotal,
+        b29: totalOfConsumption,
+        b33: totalHeatingTimesConsumptions,
+        b40: totalHeatingTimesCooling,
+        b42: NX,
+        b45: hdd1,
+        b46: cdd1,
+        b47: hdd2,
+        b48: cdd2,
+        b49: cddHdd,
       });
-      const projectedHeating = new Decimal(hdd.value).times(B1);
-      const projectedCooling = new Decimal(cdd.value).times(B2);
-      const totalProjected = new Decimal(projectedHeating).plus(projectedCooling);
-      const waste = new Decimal(totalProjected).minus(consumption.consumption).toDP(8).toNumber();
 
-      records.push({
-        waste,
-        wasteCost: wasteCost({ consumption, waste }),
-        consumption: consumption.consumption,
-        siteId: consumption.siteId,
-        date: consumption.date,
-        fuelSourceId: consumption.fuelSourceId,
-        fuelSourceName: consumption.fuelSourceName,
-        siteName: consumption.siteName,
-        usedIn: consumption.usedIn,
-        B1: B1.toNumber(),
-        B2: B2.toNumber(),
+      const b1Top = new Decimal(new Decimal(cdd1).times(hdd2)).minus(new Decimal(cddHdd).times(cdd2));
+      const b1Below = new Decimal(new Decimal(hdd1).times(cdd1)).minus(new Decimal(cddHdd).times(cddHdd));
+      const B1 = new Decimal(b1Top).div(b1Below);
+      const b2Top = new Decimal(new Decimal(hdd1).times(cdd2)).minus(new Decimal(cddHdd).times(hdd2));
+      const b2Below = new Decimal(new Decimal(hdd1).times(cdd1)).minus(new Decimal(cddHdd).times(cddHdd));
+      const B2 = new Decimal(b2Top).div(b2Below);
+      const yAverage = new Decimal(totalOfConsumption).div(NX);
+      const cIntercept = new Decimal(new Decimal(yAverage).minus(new Decimal(B1).times(totalHddByNX))).minus(
+        new Decimal(B2).minus(totalCddByNX),
+      );
+
+      console.log({
+        site,
+        b51: b1Top,
+        b52: b1Below,
+        b53: B1,
+        b54: b2Top,
+        b55: b2Below,
+        b56: B2,
+        b58: yAverage,
       });
+
+      const theseNextConsumptions = nextConsumptions
+        .filter(SitesService.filterBySiteId(site))
+        .filter(UtilityService.filterByFuelSource(fuel));
+      for (let c = 0; c < theseNextConsumptions.length; c++) {
+        const consumption = theseNextConsumptions[c];
+        const [hdd] = p.nextHeatingDegrees
+          .filter(DbUtils.filterByYearAndMonth(consumption))
+          .filter(SitesService.filterBySiteId(consumption.siteId));
+        const [cdd] = p.nextCoolingDegrees
+          .filter(DbUtils.filterByYearAndMonth(consumption))
+          .filter(SitesService.filterBySiteId(consumption.siteId));
+
+        console.log({
+          B1,
+          B2,
+          hdd,
+          cdd,
+        });
+        const projectedHeating = new Decimal(hdd.value).times(B1);
+        const projectedCooling = new Decimal(cdd.value).times(B2);
+        const totalProjected = new Decimal(projectedHeating).plus(projectedCooling);
+        const waste = new Decimal(totalProjected).minus(consumption.consumption).toDP(8).toNumber();
+
+        records.push({
+          waste,
+          wasteCost: consumption ? wasteCost({ consumptionCost: consumption.totalCost, waste }) : 0,
+          wasteVatCost: consumption.totalVatCost
+            ? wasteCost({ consumptionCost: consumption.totalVatCost, waste })
+            : null,
+          consumption: consumption.consumption,
+          siteId: consumption.siteId,
+          date: consumption.date,
+          fuelSourceId: consumption.fuelSourceId,
+          fuelSourceName: consumption.fuelSourceName,
+          siteName: consumption.siteName,
+          usedIn: consumption.usedIn,
+          B1: B1.toNumber(),
+          B2: B2.toNumber(),
+        });
+      }
     }
   }
   return records;
@@ -1165,7 +1174,10 @@ const wasteForHeatingCoolingAndPower = async (params: WasteForHeatingCoolingAndP
 
         records.push({
           waste: adjusted.toNumber(),
-          wasteCost: wasteCost({ consumption, waste }),
+          wasteCost: consumption ? wasteCost({ consumptionCost: consumption.totalCost, waste }) : 0,
+          wasteVatCost: consumption.totalVatCost
+            ? wasteCost({ consumptionCost: consumption.totalVatCost, waste })
+            : null,
           consumption: consumption.consumption,
           siteId: consumption.siteId,
           date: consumption.date,
@@ -1492,7 +1504,12 @@ const wasteForSigleHeatOrCoolingAndPower = (p: WasteForSingleHeatOrCoolAndPower)
           fuelSourceId: selectedYearConsumption.fuelSourceId,
           siteId: selectedYearConsumption.siteId,
           consumption: selectedYearConsumption.consumption,
-          wasteCost: wasteCost({ consumption: selectedYearConsumption, waste: waste }),
+          wasteCost: selectedYearConsumption
+            ? wasteCost({ consumptionCost: selectedYearConsumption.totalCost, waste })
+            : 0,
+          wasteVatCost: selectedYearConsumption.totalVatCost
+            ? wasteCost({ consumptionCost: selectedYearConsumption.totalVatCost, waste })
+            : null,
           siteName: selectedYearConsumption.siteName,
           fuelSourceName: selectedYearConsumption.fuelSourceName,
           usedIn: selectedYearConsumption.usedIn,
@@ -1564,7 +1581,10 @@ const calculateCarbonImpact = (p: {
         .toDP(8)
         .toNumber(),
       wasteCarbonImpact: waste ? new Decimal(waste.waste).times(emission.emissionFactor).toDP(8).toNumber() : undefined,
-      wasteCost: waste ? wasteCost({ consumption, waste: waste.waste }) : undefined,
+      wasteCost: consumption ? wasteCost({ consumptionCost: consumption.totalCost, waste: waste.waste }) : 0,
+      wasteVatCost: consumption.totalVatCost
+        ? wasteCost({ consumptionCost: consumption.totalVatCost, waste: waste.waste })
+        : null,
       produced: consumption.produced,
     });
   }

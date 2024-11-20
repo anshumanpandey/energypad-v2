@@ -712,6 +712,7 @@ export interface components {
         fuelSourceName: string;
         siteName: string;
         usedIn: string;
+        totalVatCost?: number;
       } & {
         conversionUnit: unknown;
       });
