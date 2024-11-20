@@ -294,8 +294,8 @@ const consumptionIsNotProduced = (i: any) => {
   return i.produced === undefined || i.produced === false;
 };
 
-const wasteCost = (p: { consumptionCost: number; waste: number }) => {
-  return new Decimal(new Decimal(p.consumptionCost).div(p.consumptionCost))
+const wasteCost = (p: { consumption: number; consumptionCost: number; waste: number }) => {
+  return new Decimal(new Decimal(p.consumption).div(p.consumptionCost))
     .times(p.waste)
     .toDP(2)
     .absoluteValue()
@@ -479,8 +479,10 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
 
       results.push({
         waste,
-        wasteCost: wasteCost({ consumptionCost: consumption.totalCost, waste }),
-        wasteVatCost: consumption.vatCost ? wasteCost({ consumptionCost: consumption.vatCost , waste }) : null,
+        wasteCost: wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.totalCost, waste }),
+        wasteVatCost: consumption.vatCost
+          ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.vatCost, waste })
+          : null,
         date: consumption.date,
         consumption: consumption.consumption,
         projectedEnergy,
@@ -798,8 +800,12 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
 
     records.push({
       waste,
-      wasteCost: consumption ? wasteCost({ consumptionCost: consumption.totalCost, waste }) : 0,
-      wasteVatCost: consumption.vatCost  ? wasteCost({ consumptionCost: consumption.vatCost , waste }) : null,
+      wasteCost: consumption
+        ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.totalCost, waste })
+        : 0,
+      wasteVatCost: consumption.vatCost
+        ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.vatCost, waste })
+        : null,
       consumption: nextConsumption.consumption,
       siteId: nextConsumption.siteId,
       date: nextConsumption.date,
@@ -914,8 +920,12 @@ const wasteForHeatingOrCoolingAndPowerAndLighting = (p: WasteForHeatingOrCooling
 
     records.push({
       waste,
-      wasteCost: consumption ? wasteCost({ consumptionCost: consumption.totalCost, waste }) : 0,
-      wasteVatCost: consumption.vatCost  ? wasteCost({ consumptionCost: consumption.vatCost , waste }) : null,
+      wasteCost: consumption
+        ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.totalCost, waste })
+        : 0,
+      wasteVatCost: consumption.vatCost
+        ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.vatCost, waste })
+        : null,
       consumption: singleFuelWaste.consumption,
       siteId: singleFuelWaste.siteId,
       date: singleFuelWaste.date,
@@ -1093,9 +1103,11 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
 
         records.push({
           waste,
-          wasteCost: consumption ? wasteCost({ consumptionCost: consumption.totalCost, waste }) : 0,
-          wasteVatCost: consumption.vatCost 
-            ? wasteCost({ consumptionCost: consumption.vatCost , waste })
+          wasteCost: consumption
+            ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.totalCost, waste })
+            : 0,
+          wasteVatCost: consumption.vatCost
+            ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.vatCost, waste })
             : null,
           consumption: consumption.consumption,
           siteId: consumption.siteId,
@@ -1174,9 +1186,11 @@ const wasteForHeatingCoolingAndPower = async (params: WasteForHeatingCoolingAndP
 
         records.push({
           waste: adjusted.toNumber(),
-          wasteCost: consumption ? wasteCost({ consumptionCost: consumption.totalCost, waste }) : 0,
-          wasteVatCost: consumption.vatCost 
-            ? wasteCost({ consumptionCost: consumption.vatCost , waste })
+          wasteCost: consumption
+            ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.totalCost, waste })
+            : 0,
+          wasteVatCost: consumption.vatCost
+            ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.vatCost, waste })
             : null,
           consumption: consumption.consumption,
           siteId: consumption.siteId,
@@ -1505,10 +1519,18 @@ const wasteForSigleHeatOrCoolingAndPower = (p: WasteForSingleHeatOrCoolAndPower)
           siteId: selectedYearConsumption.siteId,
           consumption: selectedYearConsumption.consumption,
           wasteCost: selectedYearConsumption
-            ? wasteCost({ consumptionCost: selectedYearConsumption.totalCost, waste })
+            ? wasteCost({
+                consumption: selectedYearConsumption.consumption,
+                consumptionCost: selectedYearConsumption.totalCost,
+                waste,
+              })
             : 0,
-          wasteVatCost: selectedYearConsumption.vatCost 
-            ? wasteCost({ consumptionCost: selectedYearConsumption.vatCost , waste })
+          wasteVatCost: selectedYearConsumption.vatCost
+            ? wasteCost({
+                consumption: selectedYearConsumption.consumption,
+                consumptionCost: selectedYearConsumption.vatCost,
+                waste,
+              })
             : null,
           siteName: selectedYearConsumption.siteName,
           fuelSourceName: selectedYearConsumption.fuelSourceName,
@@ -1581,9 +1603,15 @@ const calculateCarbonImpact = (p: {
         .toDP(8)
         .toNumber(),
       wasteCarbonImpact: waste ? new Decimal(waste.waste).times(emission.emissionFactor).toDP(8).toNumber() : undefined,
-      wasteCost: consumption ? wasteCost({ consumptionCost: consumption.totalCost, waste: waste.waste }) : 0,
-      wasteVatCost: consumption.vatCost 
-        ? wasteCost({ consumptionCost: consumption.vatCost , waste: waste.waste })
+      wasteCost: consumption
+        ? wasteCost({
+            consumption: consumption.consumption,
+            consumptionCost: consumption.totalCost,
+            waste: waste.waste,
+          })
+        : 0,
+      wasteVatCost: consumption.vatCost
+        ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.vatCost, waste: waste.waste })
         : null,
       produced: consumption.produced,
     });
