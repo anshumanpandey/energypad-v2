@@ -67,7 +67,7 @@ const populateArrayByDateSite = (
 
 type ConsumptionForStatistic = Pick<
   AppModels['UtilityConsumption'],
-  'date' | 'consumption' | 'totalCost' | 'conversionFactor' | 'siteId' | 'fuelSourceId' | 'fuelSourceName' | 'siteName'
+  'date' | 'consumption' | 'totalCost' | 'conversionFactor' | 'siteId' | 'fuelSourceId' | 'fuelSourceName' | 'siteName' | 'vatCost'
 >;
 const getConsumptionStatistics = ({ consumptions, year }: { consumptions: ConsumptionForStatistic[]; year: Date }) => {
   const getAverage = (record: ConsumptionForStatistic, of: 'totalCost' | 'consumption') => {
@@ -121,6 +121,7 @@ const getConsumptionStatistics = ({ consumptions, year }: { consumptions: Consum
           averageConsumption: getAverage(consumptionOfMonth, 'consumption'),
           averageCost: getAverage(consumptionOfMonth, 'totalCost'),
           cost: consumptionOfMonth.totalCost,
+          wasteVatCost: consumptionOfMonth.vatCost,
           consumption: consumptionOfMonth.consumption,
           increasedConsumptionPercentage:
             !previouseRecord || previouseRecord?.consumption === 0
