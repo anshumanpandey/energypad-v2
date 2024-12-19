@@ -160,7 +160,12 @@ export type FindByParams = {
   includeUse?: boolean;
 };
 const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], 'id'> & { id: number })[]> => {
-  const query = DB('Sites').select('Sites.*');
+  const includeUse = params?.fuelSourceIdUsedInConsumption && params.includeUse === true;
+  const fields: ( string | Record<string, string> )[] = ['Sites.*'];
+  if (includeUse) {
+    fields.push({ 'FU.id': 'useId' });
+  }
+  const query = DB('Sites').select(fields);
   if (params?.id) {
     Array.isArray(params.id) ? query.whereIn('id', params.id) : query.where('id', params.id);
   }
@@ -185,7 +190,7 @@ const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], '
       .groupBy('Sites.id');
   }
 
-  if (params?.fuelSourceIdUsedInConsumption && params.includeUse === true) {
+  if (includeUse) {
     query.leftJoin({ FU: 'FuelUse' }, 'UC.usedInId', 'FU.id');
   }
 
