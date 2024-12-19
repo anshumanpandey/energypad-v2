@@ -178,11 +178,8 @@ const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], '
   if (params?.fuelSourceIdUsedInConsumption) {
     const fsi = params.fuelSourceIdUsedInConsumption;
     query
-      .leftJoin({ BP: 'BusinessFuelsPricing' }, 'Sites.id', 'BP.siteId')
-      .leftJoin({ BF: 'BusinessFuelsSize' }, 'Sites.id', 'BF.siteId')
-      .leftJoin({ BB: 'BusinessBrands' }, 'Sites.id', 'BB.siteId')
-      .where((builder) => {
-        builder.where('BP.fuelSourceId', fsi).orWhere('BF.fuelSourceId', fsi).orWhere('BB.fuelSourceId', fsi);
+      .leftJoin({ UC: 'UtilityConsumptions' }, function () {
+        this.on( 'Sites.id', '=' ,'UC.siteId').andOn("UC.fuelSourceId", '=', fsi.toString())
       })
       .groupBy('Sites.id');
   }
