@@ -161,11 +161,14 @@ export type FindByParams = {
 };
 const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], 'id'> & { id: number })[]> => {
   const includeUse = params?.fuelSourceIdUsedInConsumption && params.includeUse === true;
-  const fields: ( string | Record<string, string> )[] = ['Sites.*'];
+  const fields: (string | Record<string, string>)[] = ['Sites.*'];
   if (includeUse) {
-    fields.push({ 'FU.id': 'useId' });
+    fields.push({ useId: 'FU.id' });
+    fields.push({ fuelId: 'UC.fuelSourceId' });
   }
-  const query = DB('Sites').select(fields);
+  const query = DB('Sites')
+    .columns(...fields)
+    .select();
   if (params?.id) {
     Array.isArray(params.id) ? query.whereIn('id', params.id) : query.where('id', params.id);
   }
@@ -183,18 +186,35 @@ const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], '
 
   if (params?.fuelSourceIdUsedInConsumption) {
     const fsi = params.fuelSourceIdUsedInConsumption;
-    query
-      .leftJoin({ UC: 'UtilityConsumptions' }, function () {
-        this.on('Sites.id', '=', 'UC.siteId').onVal('UC.fuelSourceId', '=', fsi);
-      })
-      .groupBy('Sites.id');
+    query.leftJoin({ UC: 'UtilityConsumptions' }, function () {
+      this.on('Sites.id', '=', 'UC.siteId').onVal('UC.fuelSourceId', '=', fsi);
+    });
   }
 
   if (includeUse) {
-    query.leftJoin({ FU: 'FuelUse' }, 'UC.usedInId', 'FU.id');
+    query.leftJoin({ FU: 'FuelUses' }, 'UC.usedInId', 'FU.id');
   }
 
-  return query;
+  const rows = await query;
+  const results = new Map();
+  for (let i = 0; i < rows.length; i++) {
+    const { useId, fuelId, ...row } = rows[i];
+
+    const found = results.get(row.id);
+    if (found) {
+      found.uses = Array.from(new Set(found.uses.concat(useId ? [useId]: [])).values());
+      found.fuels = Array.from(new Set(found.fuels.concat(fuelId ? [fuelId]: [])).values());
+      results.set(row.id, found);
+    } else {
+      results.set(row.id, {
+        ...row,
+        uses: useId ? [useId] : [],
+        fuels: fuelId ? [fuelId] : [],
+      });
+    }
+  }
+
+  return Array.from(results.values());
 };
 
 const deleteById = async (params: { id: number }) => {
