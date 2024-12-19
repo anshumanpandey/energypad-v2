@@ -297,9 +297,8 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
 //export const getReportData: AuthGetAppController<'GetDashboardPortfolio', '/api/dashboard/portfolio'> = async (req) => {
 export const getPortfolioData: any = async (req: any) => {
   const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
-  const month = req.query.month !== undefined ? MathUtils.toInt(req.query.month) : new Date().getMonth();
   const fuelSourceId = MathUtils.toInt(req.query.fuelSourceId);
-  const selectedYear = new Date(year, month, 1);
+  const selectedYear = new Date(year, 0, 1);
 
   const [sites] = await Promise.all([
     SitesService.findBy({ businessId: req.user.id, fuelSourceIdUsedInConsumption: fuelSourceId, includeUse: true }),
@@ -364,15 +363,6 @@ export const getPortfolioData: any = async (req: any) => {
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
   if (allConsumptionAreProduced === false && oldConsumptions.length > 0 && currentConsumptionRecords.length > 0) {
-    const mapRecords = (r: typeof oldConsumptions[0]) => {
-      const startDate = r.date;
-
-      const date = DbUtils.stringDateToDate(r.date);
-      const endOfMonthDate = endOfMonth(date);
-      const endDate = formatISO(endOfMonthDate, { representation: 'date' }).split('T')[0];
-      return { startDate, endDate, siteId: r.siteId };
-    };
-
     const promises: Promise<ApiError | HDDRecord[]>[] = [];
     if (oldConsumptions.length !== 0) {
       const params: GetHddsParams2[] = [];
@@ -429,10 +419,6 @@ export const getPortfolioData: any = async (req: any) => {
     if (ErrorUtils.isErrorInstance(statistics)) return statistics;
   }
 
-  const filterByParamMonth = (i: typeof carbonEmissions[0]) => {
-    return DbUtils.stringDateToDate(i.date).getMonth() === month;
-  };
-
   const findSiteById = (i: number) => (s: typeof sites[0]) => {
     return s.id === i;
   };
@@ -445,7 +431,7 @@ export const getPortfolioData: any = async (req: any) => {
   };
 
   return {
-    carbonEmissions: carbonEmissions.filter(filterByParamMonth).map(addSitesData),
+    carbonEmissions: carbonEmissions.map(addSitesData),
     energyTargets: statistics.map(addSitesData),
     sites,
   };
