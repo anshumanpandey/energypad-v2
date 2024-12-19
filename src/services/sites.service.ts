@@ -179,7 +179,7 @@ const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], '
     const fsi = params.fuelSourceIdUsedInConsumption;
     query
       .leftJoin({ UC: 'UtilityConsumptions' }, function () {
-        this.on( 'Sites.id', '=' ,'UC.siteId').andOn("UC.fuelSourceId", '=', fsi.toString())
+        this.on( 'Sites.id', '=' ,'UC.siteId').onVal("UC.fuelSourceId", '=', fsi)
       })
       .groupBy('Sites.id');
   }
