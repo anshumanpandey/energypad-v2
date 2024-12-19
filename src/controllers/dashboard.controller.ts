@@ -301,9 +301,8 @@ export const getPortfolioData: any = async (req: any) => {
   const fuelSourceId = MathUtils.toInt(req.query.fuelSourceId);
   const selectedYear = new Date(year, month, 1);
 
-  const [sites, business] = await Promise.all([
-    SitesService.findBy({ businessId: req.user.id, fuelSourceIdUsedInConsumption: fuelSourceId }),
-    UserService.getUserBy({ id: req.user.id }),
+  const [sites] = await Promise.all([
+    SitesService.findBy({ businessId: req.user.id, fuelSourceIdUsedInConsumption: fuelSourceId, includeUse: true }),
   ]);
   const sitesId = sites.map((i) => i.id);
 

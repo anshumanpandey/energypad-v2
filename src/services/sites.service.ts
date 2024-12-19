@@ -157,6 +157,7 @@ export type FindByParams = {
   codes?: string | string[];
   businessId?: number;
   fuelSourceIdUsedInConsumption?: number;
+  includeUse?: boolean;
 };
 const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], 'id'> & { id: number })[]> => {
   const query = DB('Sites').select('Sites.*');
@@ -179,9 +180,13 @@ const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], '
     const fsi = params.fuelSourceIdUsedInConsumption;
     query
       .leftJoin({ UC: 'UtilityConsumptions' }, function () {
-        this.on( 'Sites.id', '=' ,'UC.siteId').onVal("UC.fuelSourceId", '=', fsi)
+        this.on('Sites.id', '=', 'UC.siteId').onVal('UC.fuelSourceId', '=', fsi);
       })
       .groupBy('Sites.id');
+  }
+
+  if (params?.fuelSourceIdUsedInConsumption && params.includeUse === true) {
+    query.leftJoin({ FU: 'FuelUse' }, 'UC.usedInId', 'FU.id');
   }
 
   return query;
