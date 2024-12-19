@@ -24,7 +24,7 @@ authRoutes.get(
   '/portfolio',
   GetDashboardPortfolioPath,
   AuthMiddleware,
-  ExpressAsync(DashboardController.getReportData),
+  ExpressAsync(DashboardController.getPortfolioData),
 );
 
 authRoutes.get(

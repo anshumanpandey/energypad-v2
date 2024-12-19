@@ -286,14 +286,14 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
 
 //TODO:  fix this enpoint definition
 //export const getReportData: AuthGetAppController<'GetDashboardPortfolio', '/api/dashboard/portfolio'> = async (req) => {
-export const getReportData: any = async (req: any) => {
+export const getPortfolioData: any = async (req: any) => {
   const year = MathUtils.toInt(req.query.year) || new Date().getFullYear();
   const month = req.query.month !== undefined ? MathUtils.toInt(req.query.month) : new Date().getMonth();
   const fuelSourceId = MathUtils.toInt(req.query.fuelSourceId);
   const selectedYear = new Date(year, month, 1);
 
   const [sites, business] = await Promise.all([
-    SitesService.findBy({ businessId: req.user.id }),
+    SitesService.findBy({ businessId: req.user.id, fuelSourceIdUsedInConsumption: fuelSourceId  }),
     UserService.getUserBy({ id: req.user.id }),
   ]);
   const sitesId = sites.map((i) => i.id);
@@ -309,16 +309,17 @@ export const getReportData: any = async (req: any) => {
     UtilityService.getFuelSources(),
   ]);
 
-  const emissions = await UtilityService.getEmissions({
-    businessId: req.user.id,
-    siteId: sitesId,
-    fuelSourceId,
-  });
-
-  const monitoring = await UtilityService.getMonitoring({
-    businessId: req.user.id,
-    siteId: sitesId,
-  });
+  const [emissions, monitoring] = await Promise.all([
+    UtilityService.getEmissions({
+      businessId: req.user.id,
+      siteId: sitesId,
+      fuelSourceId,
+    }),
+    UtilityService.getMonitoring({
+      businessId: req.user.id,
+      siteId: sitesId,
+    }),
+  ]);
 
   const carbonEmissions = DashboardService.findCarbonEmissions({
     monitoring,
@@ -416,6 +417,7 @@ export const getReportData: any = async (req: any) => {
   return {
     carbonEmissions: carbonEmissions.filter(filterByParamMonth).map(addSitesData),
     energyTargets: statistics.map(addSitesData),
+    sites
   };
 };
 
