@@ -7,6 +7,7 @@ import formatISO from 'date-fns/formatISO';
 import { FuelSource, GetConsumptionsParams, SupportedUses } from './utility.service';
 import { HDDRecord, isCdd, isHdd } from './greenDays.service';
 import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUtils';
+import { calculateIncreasePercentage } from '../utils/mathUtils';
 
 const uniqueElements = (a: any) => {
   const seen: Record<number, any> = {};
@@ -67,7 +68,15 @@ const populateArrayByDateSite = (
 
 type ConsumptionForStatistic = Pick<
   AppModels['UtilityConsumption'],
-  'date' | 'consumption' | 'totalCost' | 'conversionFactor' | 'siteId' | 'fuelSourceId' | 'fuelSourceName' | 'siteName' | 'vatCost'
+  | 'date'
+  | 'consumption'
+  | 'totalCost'
+  | 'conversionFactor'
+  | 'siteId'
+  | 'fuelSourceId'
+  | 'fuelSourceName'
+  | 'siteName'
+  | 'vatCost'
 >;
 const getConsumptionStatistics = ({ consumptions, year }: { consumptions: ConsumptionForStatistic[]; year: Date }) => {
   const getAverage = (record: ConsumptionForStatistic, of: 'totalCost' | 'consumption') => {
@@ -478,6 +487,14 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
       const projectedEnergy = new Decimal(cIntercept).add(weather).toNumber();
       const waste = new Decimal(projectedEnergy).minus(consumption.consumption).toDP(4, Decimal.ROUND_DOWN).toNumber();
 
+      const pastValue = results.find(
+        (r) =>
+          r.siteId === consumption.siteId &&
+          r.fuelSourceId === consumption.fuelSourceId &&
+          r.usedIn === consumption.usedIn &&
+          r.date === DbUtils.decreaseMonth({ date: consumption.date }, 1),
+      );
+
       results.push({
         waste,
         wasteCost: wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.totalCost, waste }),
@@ -493,6 +510,9 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
         siteName: consumption.siteName,
         cIntercept,
         usedIn: consumption.usedIn,
+        increasedPercentage: pastValue
+          ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: waste })
+          : 0,
       });
     }
   }
@@ -514,6 +534,7 @@ type WasteValue = {
   wasteCost: number;
   wasteVatCost: number | null;
   consumption: number;
+  increasedPercentage: number;
 };
 type EnergyWasteParams = {
   consumptions: ProducedConsumption[];
@@ -799,6 +820,14 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
       .toDP(8)
       .toNumber();
 
+    const pastValue = records.find(
+      (r) =>
+        r.siteId === consumption.siteId &&
+        r.fuelSourceId === consumption.fuelSourceId &&
+        r.usedIn === consumption.usedIn &&
+        r.date === DbUtils.decreaseMonth({ date: consumption.date }, 1),
+    );
+
     records.push({
       waste,
       wasteCost: consumption
@@ -815,6 +844,9 @@ const wasteForPowerAndLighting = (p: WasteForPowerAndLightingParams) => {
       fuelSourceName: nextConsumption.fuelSourceName,
       siteName: nextConsumption.siteName,
       usedIn: nextConsumption.usedIn,
+      increasedPercentage: pastValue
+        ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: waste })
+        : 0,
     });
   }
   return records;
@@ -919,6 +951,14 @@ const wasteForHeatingOrCoolingAndPowerAndLighting = (p: WasteForHeatingOrCooling
     const times = new Decimal(div).times(singleFuelWaste.waste);
     const waste = new Decimal(singleFuelWaste.waste).minus(times).toDP(8).toNumber();
 
+    const pastValue = records.find(
+      (r) =>
+        r.siteId === consumption.siteId &&
+        r.fuelSourceId === consumption.fuelSourceId &&
+        r.usedIn === consumption.usedIn &&
+        r.date === DbUtils.decreaseMonth({ date: consumption.date }, 1),
+    );
+
     records.push({
       waste,
       wasteCost: consumption
@@ -935,6 +975,9 @@ const wasteForHeatingOrCoolingAndPowerAndLighting = (p: WasteForHeatingOrCooling
       fuelSourceName: singleFuelWaste.fuelSourceName,
       siteName: singleFuelWaste.siteName,
       usedIn: singleFuelWaste.usedIn,
+      increasedPercentage: pastValue
+        ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: waste })
+        : 0,
     });
   }
   return records;
@@ -1102,6 +1145,14 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
         const totalProjected = new Decimal(projectedHeating).plus(projectedCooling);
         const waste = new Decimal(totalProjected).minus(consumption.consumption).toDP(8).toNumber();
 
+        const pastValue = records.find(
+          (r) =>
+            r.siteId === consumption.siteId &&
+            r.fuelSourceId === consumption.fuelSourceId &&
+            r.usedIn === consumption.usedIn &&
+            r.date === DbUtils.decreaseMonth({ date: consumption.date }, 1),
+        );
+
         records.push({
           waste,
           wasteCost: consumption
@@ -1119,6 +1170,9 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
           usedIn: consumption.usedIn,
           B1: B1.toNumber(),
           B2: B2.toNumber(),
+          increasedPercentage: pastValue
+            ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: waste })
+            : 0,
         });
       }
     }
@@ -1185,6 +1239,13 @@ const wasteForHeatingCoolingAndPower = async (params: WasteForHeatingCoolingAndP
           new Decimal(new Decimal(thisWastePl.percentageVariable).div(new Decimal(100))).times(waste),
         );
 
+        const pastValue = records.find(
+          (r) =>
+            r.siteId === consumption.siteId &&
+            r.fuelSourceId === consumption.fuelSourceId &&
+            r.usedIn === consumption.usedIn &&
+            r.date === DbUtils.decreaseMonth({ date: consumption.date }, 1),
+        );
         records.push({
           waste: adjusted.toNumber(),
           wasteCost: consumption
@@ -1200,6 +1261,9 @@ const wasteForHeatingCoolingAndPower = async (params: WasteForHeatingCoolingAndP
           fuelSourceName: consumption.fuelSourceName,
           siteName: consumption.siteName,
           usedIn: consumption.usedIn,
+          increasedPercentage: pastValue
+            ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: waste })
+            : 0,
         });
       }
     }
@@ -1513,6 +1577,15 @@ const wasteForSigleHeatOrCoolingAndPower = (p: WasteForSingleHeatOrCoolAndPower)
           .minus(selectedYearConsumption.consumption)
           .toDP(4)
           .toNumber();
+
+        const pastValue = wasteRecords.find(
+          (r) =>
+            r.siteId === selectedYearConsumption.siteId &&
+            r.fuelSourceId === selectedYearConsumption.fuelSourceId &&
+            r.usedIn === selectedYearConsumption.usedIn &&
+            r.date === DbUtils.decreaseMonth({ date: selectedYearConsumption.date }, 1),
+        );
+
         wasteRecords.push({
           waste,
           date: selectedYearConsumption.date,
@@ -1536,6 +1609,9 @@ const wasteForSigleHeatOrCoolingAndPower = (p: WasteForSingleHeatOrCoolAndPower)
           siteName: selectedYearConsumption.siteName,
           fuelSourceName: selectedYearConsumption.fuelSourceName,
           usedIn: selectedYearConsumption.usedIn,
+          increasedPercentage: pastValue
+            ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: waste })
+            : 0,
         });
       }
     }

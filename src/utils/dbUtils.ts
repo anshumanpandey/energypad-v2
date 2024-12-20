@@ -76,8 +76,7 @@ export const decreaseYear = (p: { date: string }, amount: number) => {
 export const decreaseMonth = (p: { date: string }, amount: number) => {
   const [year, month] = p.date.split('-').map(Number);
   const date = new Date(year, month, 1);
-  return subMonths(date, amount + 1)
-    .toISOString()
+  return formatISO(subMonths(date, amount + 1))
     .split('T')[0];
 };
 export const createTransaction = () => {
