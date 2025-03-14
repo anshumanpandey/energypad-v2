@@ -8,7 +8,7 @@ export const config = {
     client: 'pg',
     connection: {
       host: '127.0.0.1',
-      port: 5432,
+      port: 4381,
       user: 'energypad',
       password: 'energypad',
       database: 'energypad',
@@ -30,7 +30,7 @@ export const config = {
     client: 'pg',
     connection: {
       host: '127.0.0.1',
-      port: 5432,
+      port: 4381,
       user: 'energypad',
       password: 'energypad',
       database: 'energypad',

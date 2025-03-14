@@ -1,0 +1,14 @@
+# Use postgres/example user/password credentials
+version: '3.7'
+
+services:
+  project_db:
+    container_name: project_db
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=energypad
+      - POSTGRES_USER=energypad
+      - POSTGRES_DB=energypad
+    ports:
+      - '4381:5432'

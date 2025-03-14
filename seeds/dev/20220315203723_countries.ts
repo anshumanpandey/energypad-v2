@@ -11,12 +11,12 @@ const reduceData = () => {
     states: [],
   };
 
-  const countryFn = ({ country, states }, idx) => {
+  const countryFn: (i: { country: string, states: string[] }, idx: number) => void = ({ country, states }, idx) => {
     const countryId = idx + 1;
     data.countries.push({ id: countryId, name: country });
 
-    const stateFn = (state, stateIdx) => {
-      data.states.push({ id: countryId + (stateIdx + 1), name: state, countryId });
+    const stateFn = (state: string) => {
+      data.states.push({ name: state, countryId });
     };
     states.forEach(stateFn);
   };

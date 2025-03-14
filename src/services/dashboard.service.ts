@@ -8,6 +8,7 @@ import { FuelSource, GetConsumptionsParams, SupportedUses } from './utility.serv
 import { HDDRecord, isCdd, isHdd } from './greenDays.service';
 import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUtils';
 import { calculateIncreasePercentage } from '../utils/mathUtils';
+import { WasteCalculationV2 } from './waste/waste.service';
 
 const uniqueElements = (a: any) => {
   const seen: Record<number, any> = {};
@@ -304,7 +305,7 @@ const consumptionIsNotProduced = (i: any) => {
   return i.produced === undefined || i.produced === false;
 };
 
-const wasteCost = (p: { consumption: number; consumptionCost: number; waste: number }) => {
+export const wasteCost = (p: { consumption: number; consumptionCost: number; waste: number }) => {
   return new Decimal(new Decimal(p.consumption).div(p.consumptionCost))
     .times(p.waste)
     .toDP(2)
@@ -523,7 +524,7 @@ const getFuelSourcesFromConsumptionCollection = (collection: AppModels['UtilityC
   const fuels = Array.from(new Set(collection.map((c) => c.fuelSourceId)).values());
   return fuels;
 };
-type WasteValue = {
+export type WasteValue = {
   waste: number;
   usedIn: string;
   date: string;
@@ -590,11 +591,12 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     }
   }
 
-  console.log('used on', map);
   const heating = map.get('Heating');
   const cooling = map.get('Cooling');
   const powering = map.get('Powering');
   const lighting = map.get('Lighting');
+
+  console.log(map.entries())
 
   if (powering !== undefined && heating !== undefined && cooling !== undefined) {
     const sites = await SitesService.findBy({
@@ -661,14 +663,24 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
   }
 
   if (heating !== undefined || cooling !== undefined) {
+    const population = [120,	190,	110,	100,	60,	140,	60,	220,	280,	240,	180,	190]
+    const nextPopulation = [0, 110,	180,	100,	100,	50,	150,	180,	220,	300,	250,	180,	190]
+    const time = [130,	155,	90,	80,	100,	120,	70,	100,	100,	160,	180,	150]
+    const nextTime = [0, 150,	110,	80,	90,	100,	120,	70,	80,	100,	160,	160,	160]
     const p = {
       consumptions: params.consumptions,
       nextConsumptions: params.nextConsumptions,
       hdd: params.hdd.filter(isHdd),
       nextHdd: params.nextHdd.filter(isHdd),
       year: params.year,
+
+      population: params.consumptions.map((c, idx) => ({ date: c.date, siteId: c.siteId, value: population[idx] })),
+      time: params.consumptions.map((c, idx) => ({ date: c.date, siteId: c.siteId, value: time[idx] })),
+      nextPopulation: params.nextConsumptions.map((c, idx) => ({ date: c.date, siteId: c.siteId, value: nextPopulation[idx] })),
+      nextTime: params.nextConsumptions.map((c, idx) => ({ date: c.date, siteId: c.siteId, value: nextTime[idx] }))
     };
-    const records = wasteForSinglefuelFunction(p);
+    console.log(p);
+    const records = WasteCalculationV2.wasteForSinglefuelFunction(p);
     return records;
   }
 
@@ -697,7 +709,7 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
   return [];
 };
 
-type ValueByRecord = {
+export type ValueByRecord = {
   siteId: number;
   value: number;
   date: string;

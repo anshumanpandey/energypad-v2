@@ -1,4 +1,4 @@
-import dashboard from './dashboard.service';
+import dashboard from '../../dashboard.service';
 
 export const buildFakeConsumption = (p: {
   id: number;
@@ -1667,7 +1667,7 @@ test('lighting and power calculation', () => {
   expect(result[14].siteId).toBe(88);
 });*/
 
-test.only('multiple heating cooling and lighting', async () => {
+test('multiple heating cooling and lighting', async () => {
   const params: Parameters<typeof dashboard.wasteForPowerAndLightingAndCooling>[0] = {
     consumptions: [
       buildFakeConsumption({
