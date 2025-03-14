@@ -631,23 +631,25 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     const time = [130,	155,	90,	80,	100,	120,	70,	100,	100,	160,	180,	150]
     const nextTime = [0, 150,	110,	80,	90,	100,	120,	70,	80,	100,	160,	160,	160]
     const daylight = [420,	421,	440,	420,	430,	445,	450,	500,	450,	460,	480,	490]
-    const nextDaylight = [400, 380,	450,	410,	450,	420,	460,	520,	480,	490,	500,	500]
+    const nextDaylight = [0, 400, 380,	450,	410,	450,	420,	460,	520,	480,	490,	500,	500]
+
+    const consumptions = params.consumptions.filter(DashboardService.consumptionIsNotProduced);
+    const nextConsumptions = params.nextConsumptions.filter(DashboardService.consumptionIsNotProduced);
     const p = {
-      consumptions: params.consumptions,
-      nextConsumptions: params.nextConsumptions,
+      consumptions,
+      nextConsumptions,
       hdd: params.hdd.filter(isHdd),
       nextHdd: params.nextHdd.filter(isHdd),
       year: params.year,
 
-      population: params.consumptions.map((c, idx) => ({ date: c.date, siteId: c.siteId, value: population[idx] })),
-      time: params.consumptions.map((c, idx) => ({ date: c.date, siteId: c.siteId, value: time[idx] })),
-      nextPopulation: params.nextConsumptions.map((c, idx) => ({ date: c.date, siteId: c.siteId, value: nextPopulation[idx] })),
-      nextTime: params.nextConsumptions.map((c, idx) => ({ date: c.date, siteId: c.siteId, value: nextTime[idx] })),
+      population: consumptions.sort((a,b) => a.date.localeCompare(b.date)).filter((_, idx) => idx % 2 === 1).map((c, idx) => ({ date: c.date, siteId: c.siteId, value: population[idx] })),
+      time: consumptions.sort((a,b) => a.date.localeCompare(b.date)).filter((_, idx) => idx % 2 === 1).map((c, idx) => ({ date: c.date, siteId: c.siteId, value: time[idx] })),
+      nextPopulation: nextConsumptions.sort((a,b) => a.date.localeCompare(b.date)).filter((_, idx) => idx % 2 === 1).map((c, idx) => ({ date: c.date, siteId: c.siteId, value: nextPopulation[idx] })),
+      nextTime: nextConsumptions.sort((a,b) => a.date.localeCompare(b.date)).filter((_, idx) => idx % 2 === 1).map((c, idx) => ({ date: c.date, siteId: c.siteId, value: nextTime[idx] })),
 
-      daylight: params.nextConsumptions.map((c, idx) => ({ date: c.date, siteId: c.siteId, value: daylight[idx] })),
-      nextDaylight: params.nextConsumptions.map((c, idx) => ({ date: c.date, siteId: c.siteId, value: nextDaylight[idx] })),
+      daylight: consumptions.sort((a,b) => a.date.localeCompare(b.date)).filter((_, idx) => idx % 2 === 1).map((c, idx) => ({ date: c.date, siteId: c.siteId, value: daylight[idx] })),
+      nextDaylight: nextConsumptions.sort((a,b) => a.date.localeCompare(b.date)).filter((_, idx) => idx % 2 === 1).map((c, idx) => ({ date: c.date, siteId: c.siteId, value: nextDaylight[idx] })),
     }
-
     const records = WasteCalculationV2.wasteForHeatingOrCoolingAndPower(p);
     return records;
   }
