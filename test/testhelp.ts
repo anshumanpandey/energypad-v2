@@ -86,8 +86,6 @@ export const buildFakeSite = (p: { id: number; businessId: number; name?: string
   postCode: '484 sd8',
   town: 'some town',
 
-  population: 15000,
-  workinghours: 2,
   size: 15,
   vat: p.vat || 1,
   businessId: p.businessId,
@@ -130,6 +128,8 @@ export const buildFakeConsumption = (p: {
     siteId: p.siteId,
     fuelSourceId: p.fuelSourceId,
     usedInId: 2,
+    population: 0,
+    workingHours: 0
   };
 };
 

@@ -61,7 +61,6 @@ const isValidSiteRow = (recordToInsert: Record<string, string>) => {
     recordToInsert.address &&
     recordToInsert.postCode &&
     recordToInsert.town &&
-    recordToInsert.population &&
     recordToInsert.size
   );
 };
@@ -78,11 +77,9 @@ const getSitesRecords = async (Worksheet: Worksheet) => {
   const addressCol = Worksheet.getColumn('D');
   const postCodeCol = Worksheet.getColumn('F');
   const townCol = Worksheet.getColumn('E');
-  const populationCol = Worksheet.getColumn('I');
+  const vat = Worksheet.getColumn('I');
   const sizeCol = Worksheet.getColumn('H');
-  const workinghours = Worksheet.getColumn('J');
   const countryName = Worksheet.getColumn('G');
-  const vat = Worksheet.getColumn('K');
 
   for (let a = 2; a <= rowCount; a++) {
     const row: any = {
@@ -92,9 +89,7 @@ const getSitesRecords = async (Worksheet: Worksheet) => {
       [`address`]: addressCol.values?.[a],
       [`postCode`]: postCodeCol.values?.[a],
       [`town`]: townCol.values?.[a],
-      [`population`]: populationCol.values?.[a],
       [`size`]: sizeCol.values?.[a],
-      [`workinghours`]: workinghours.values?.[a],
       [`vat`]: vat.values?.[a],
       [`countryId`]: countries.find((c) => c.name === countryName.values?.[a])?.id,
     };

@@ -224,6 +224,8 @@ const generateMockConsumption = (p: { date: string; siteId: number; fuelSourceId
     produced: true,
     conversionUnit: 'm3' as const,
     usedIn: '',
+    population: 0,
+    workingHours: 0
   };
 };
 type ProduceYearConsumptionsParams = {
@@ -468,8 +470,6 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
     const aBelow = new Decimal(new Decimal(NX).times(totalPowerOfHdd)).minus(new Decimal(totalOfHdd).times(totalOfHdd));
     const cIntercept = new Decimal(aTop).div(aBelow).toDP(7).toNumber();
 
-    console.log({ NX, bSlope, aTop, aBelow, totalOfConsumption, totalOfHdd });
-
     const currentFuelSourceNextConsumption = params.nextConsumptions
       .filter(UtilityService.filterByFuelSource(currentFuelSourceId))
       .filter(DbUtils.filterByYear(params.year));
@@ -520,7 +520,7 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams) => {
   return results;
 };
 
-const getFuelSourcesFromConsumptionCollection = (collection: AppModels['UtilityConsumption'][]) => {
+export const getFuelSourcesFromConsumptionCollection = (collection: AppModels['UtilityConsumption'][]) => {
   const fuels = Array.from(new Set(collection.map((c) => c.fuelSourceId)).values());
   return fuels;
 };

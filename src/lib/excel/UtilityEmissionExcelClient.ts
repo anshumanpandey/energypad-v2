@@ -72,6 +72,8 @@ export const extractConsumptionData = async (
     const consumption = new Decimal(currentRow.getCell('F').text).toDP(2).toNumber();
     const totalCost = new Decimal(currentRow.getCell('H').text).toDP(2).toNumber();
     const vatCost = new Decimal(currentRow.getCell('I').text).toDP(2).toNumber();
+    const population = new Decimal(currentRow.getCell('K').text || 0).toDP(2).toNumber();
+    const workingHours = new Decimal(currentRow.getCell('L').text || 0).toDP(2).toNumber();
 
     const fuelUnit = currentRow.getCell('G').text as typeof SupportedUnits[0];
     const record = {
@@ -86,6 +88,8 @@ export const extractConsumptionData = async (
       conversionFactor: conversionFactor,
       usedInId: opt.uses.find((u) => currentRow.getCell('D').text === u.use)?.id,
       vatCost,
+      population,
+      workingHours
     };
     consumptions.push(record);
   }

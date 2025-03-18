@@ -3,12 +3,13 @@ import { UtilityService, DashboardService, UserService, GreenDaysServices, Sites
 import { AuthGetAppController, AppModels } from '@types';
 import { DbUtils, MathUtils, ErrorUtils, AppUtils } from '@utils';
 import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYears } from 'date-fns';
-import { CarbonEmission } from '../services/dashboard.service';
-import { GetHddsParams2, HDDRecord } from '../services/greenDays.service';
+import { CarbonEmission, WasteValue } from '../services/dashboard.service';
+import { GetHddsParams2, HDDRecord, isCdd, isHdd } from '../services/greenDays.service';
 import { ConsummingStaticsticsParams, GetConsumptionsParams, Projection } from '../services/utility.service';
 import { filterByYearAndMonth } from '../utils/dbUtils';
 import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUtils';
 import { agroupBy } from '../utils/appUtils';
+import { WasteCalculationV2 } from '../services/waste/waste.service';
 
 const consumptionToBreakdown = (r: AppModels['UtilityConsumption']) => {
   const startDate = r.date;
@@ -453,7 +454,7 @@ export const energyWaste: any = async (req: any) => {
   const [fuelSources, patterns, sites] = await Promise.all([
     UtilityService.getFuelSources({ id: fuelSource }),
     UserService.getPatterns({ siteId: siteId, businessId: req.user.id }),
-    SitesService.findBy({ id: siteId }),
+    SitesService.findBy({ id: siteId, businessId: req.user.id }),
   ]);
 
   const oldParams = {
@@ -473,7 +474,7 @@ export const energyWaste: any = async (req: any) => {
     DashboardService.produceYearConsumptions(newParams),
   ]);
 
-  let wasteData: Awaited<ReturnType<typeof DashboardService.calculateWaste>> = [];
+  let wasteData: Awaited<ReturnType<typeof WasteCalculationV2.calculateWaste>> = [];
   let projections: Awaited<ReturnType<typeof UtilityService.consumingProjection>> = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
@@ -540,10 +541,49 @@ export const energyWaste: any = async (req: any) => {
 
     const energyParams = {
       consumptions: oldConsumptions,
-      hdd: pastHdds,
+      hdd: pastHdds.filter(isHdd),
+      cdd: pastHdds.filter(isCdd),
       nextConsumptions: currentConsumptionRecords,
       nextHdd: currentHdd,
+      nextCdd: currentHdd,
       year,
+
+      population: oldConsumptions.map((c) => ({
+        siteId: c.siteId,
+        value: c.population,
+        date: c.date,
+      })),
+      nextPopulation: currentConsumptionRecords.map((c) => ({
+        siteId: c.siteId,
+        value: c.population,
+        date: c.date,
+      })),
+
+      time: oldConsumptions.map((c) => ({
+        siteId: c.siteId,
+        value: c.workingHours,
+        date: c.date,
+      })),
+      nextTime: currentConsumptionRecords.map((c) => ({
+        siteId: c.siteId,
+        value: c.workingHours,
+        date: c.date,
+      })),
+
+      daylight: sites.map((s) => {
+        return Array(12).fill(0).map((_, idx) => ({
+          siteId: s.id,
+          value: 110.0,
+          date: `${year-1}-${(idx+1).toString().padStart(2, "0")}-01`,
+        }))
+      }).flat(),
+      nextDaylight: sites.map((s) => {
+        return Array(12).fill(0).map((_, idx) => ({
+          siteId: s.id,
+          value: 110.0,
+          date: `${year}-${(idx+1).toString().padStart(2, "0")}-01`,
+        }))
+      }).flat(),
 
       singleFuelConsumptions: singleFuelConsumptions,
       singleFuelHdd: pastHdds.filter(DbUtils.filterByYear(year - 2)),
@@ -558,8 +598,10 @@ export const energyWaste: any = async (req: any) => {
       selectedYearHdd: currentHdd.filter(DbUtils.filterByYear(year)),
     };
 
-    wasteData = await DashboardService.calculateWaste(energyParams);
-    if (ErrorUtils.isErrorInstance(wasteData)) return wasteData;
+    wasteData = await WasteCalculationV2.calculateWaste(energyParams);
+    if (ErrorUtils.isErrorInstance(wasteData)) {
+      return wasteData;
+    }
 
     const projectionParams = {
       pastConsumptionRecords: oldConsumptions,
@@ -598,7 +640,14 @@ export const energyWaste: any = async (req: any) => {
     consumptions: currentConsumptionRecords,
     targetConsumptions: projections,
     carbonEmissions: carbonEmissions.map((i) => {
-      const waste = wasteData.filter(filterByYearAndMonth(i)).filter(SitesService.filterBySiteId(i.siteId))?.[0]?.waste;
+      const waste = (
+        wasteData as (WasteValue & {
+          projectedEnergy: number;
+          cIntercept: number;
+        })[]
+      )
+        .filter(filterByYearAndMonth(i))
+        .filter(SitesService.filterBySiteId(i.siteId))?.[0]?.waste;
       let carbonEmission = 0;
       if (waste) {
         carbonEmission = resolveConsumptionToKwh({

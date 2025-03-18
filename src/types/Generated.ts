@@ -713,6 +713,8 @@ export interface components {
         siteName: string;
         usedIn: string;
         vatCost?: number;
+        population: number;
+        workingHours: number;
       } & {
         conversionUnit: unknown;
       });

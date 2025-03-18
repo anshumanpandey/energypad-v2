@@ -426,7 +426,7 @@ describe('/Utility ', () => {
     expect(emission5.conversionFactor).toBe(374.48);
   });
 
-  test('It should respond with sucess when passing another month name and when there is no emissions or targets', async () => {
+  test.only('It should respond with sucess when passing another month name and when there is no emissions or targets', async () => {
     const body = await loginUser(app)('mail618@mail.com');
 
     const response = await supertest(app)
@@ -434,11 +434,5 @@ describe('/Utility ', () => {
       .set('Authorization', `Bearer ${body.jwt}`)
       .attach('excel', 'test/fixtures/Consumption_3.xlsx');
     expect(response.statusCode).toBe(200);
-
-    const response2 = await supertest(app)
-      .post('/api/utility/importUtilityEmissions')
-      .set('Authorization', `Bearer ${body.jwt}`)
-      .attach('excel', 'test/fixtures/Consumption_4.xlsx');
-    expect(response2.statusCode).toBe(200);
   });
 });

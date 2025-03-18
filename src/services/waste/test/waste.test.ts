@@ -24,6 +24,8 @@ export const buildFakeConsumption = (p: {
     fuelSourceName: '',
     siteName: '',
     conversionUnit: 1,
+    population: 0,
+    workingHours: 0
   };
 };
 
@@ -45,6 +47,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -61,6 +65,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -77,6 +83,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -93,6 +101,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -109,6 +119,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -125,6 +137,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -141,6 +155,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -157,6 +173,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -173,6 +191,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -189,6 +209,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -205,6 +227,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -221,6 +245,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -237,6 +263,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -253,6 +281,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
     ],
     hdd: [
@@ -285,6 +315,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -301,6 +333,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -317,6 +351,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -333,6 +369,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -349,6 +387,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -365,6 +405,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -381,6 +423,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -397,6 +441,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -413,6 +459,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -429,6 +477,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -445,6 +495,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -461,6 +513,8 @@ test('single fuel test', async () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
     ],
     nextHdd: [
@@ -514,6 +568,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -530,6 +586,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -546,6 +604,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -562,6 +622,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -578,6 +640,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -594,6 +658,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -610,6 +676,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -626,6 +694,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -642,6 +712,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -658,6 +730,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -674,6 +748,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -690,6 +766,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
     ],
 
@@ -709,6 +787,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -725,6 +805,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -741,6 +823,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -757,6 +841,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -773,6 +859,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -789,6 +877,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -805,6 +895,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -821,6 +913,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -837,6 +931,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -853,6 +949,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -869,6 +967,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -885,6 +985,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: '',
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
     ],
 
@@ -1037,6 +1139,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1053,6 +1157,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1069,6 +1175,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1085,6 +1193,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1101,6 +1211,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1117,6 +1229,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1133,6 +1247,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1149,6 +1265,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1165,6 +1283,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1181,6 +1301,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1197,6 +1319,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1213,6 +1337,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
 
       {
@@ -1230,6 +1356,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1246,6 +1374,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 44,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1262,6 +1392,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 88,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1278,6 +1410,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 222,
+        population: 0,
+        workingHours: 0
       },
     ],
 
@@ -1297,6 +1431,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1313,6 +1449,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1329,6 +1467,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1345,6 +1485,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1361,6 +1503,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1377,6 +1521,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1393,6 +1539,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1409,6 +1557,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1425,6 +1575,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1441,6 +1593,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1457,6 +1611,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1473,6 +1629,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
 
       {
@@ -1490,6 +1648,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 1,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1506,6 +1666,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 44,
+        population: 0,
+        workingHours: 0
       },
       {
         id: 0,
@@ -1522,6 +1684,8 @@ test('lighting and power calculation', () => {
         usedInId: 1,
         usedIn: "",
         siteId: 88,
+        population: 0,
+        workingHours: 0
       },
     ],
     baselineDaylight: [

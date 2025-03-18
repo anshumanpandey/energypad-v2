@@ -19,7 +19,7 @@
     "app:deploy": "npm run app:upgrade && sudo docker system prune -f && sudo docker-compose build && sudo docker-compose up -d",
     "lint": "eslint src/",
     "format": "eslint src/**/*.ts --fix",
-    "pretest": "rm -f testdb.db && npm run predev",
+    "pretest": "sudo docker compose -f docker-compose-test.yml down && sudo docker compose -f docker-compose-test.yml up -d && npm run predev",
     "test": "NODE_ENV=test jest --runInBand --detectOpenHandles",
     "test:unit": "jest --config=jest.unit.config.ts",
     "test:simple": "NODE_ENV=test jest --runInBand --detectOpenHandles --colors --verbose",
