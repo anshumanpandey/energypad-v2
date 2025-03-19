@@ -10,7 +10,7 @@ import {
   wasteCost,
   WasteValue,
 } from '../dashboard.service';
-import { HDDRecord } from '../greenDays.service';
+import { HDDRecord, isCdd, isHdd } from '../greenDays.service';
 import { filterByIsOnUse } from '../utility.service';
 import { ApiError } from '@lib';
 import { filterByYear } from '../../utils/dbUtils';
@@ -370,6 +370,8 @@ const wasteForHeatingAndCooling = (params: WasteSingleFuelParams & HddParams & C
         .times(normalisedPopulation)
         .times(normalisedTime);
 
+        //console.log(consumption.date, { normalisedHdd, normalisedCdd, normalisedPopulation, normalisedTime})
+
       const pastValue = results.find(
         (r) =>
           r.siteId === consumption.siteId &&
@@ -667,8 +669,9 @@ const Resolvers = {
   isSecondSheet: (oldData: ProducedConsumption[], newData: ProducedConsumption[]) => {
     const oldPowering = oldData.filter((c) => c.usedIn === 'Powering');
     const newPowering = newData.filter((c) => c.usedIn === 'Powering');
+    const allPowering = oldPowering.concat(newPowering);
   
-    if (oldPowering.length === 0 || newPowering.length === 0) {
+    if (oldPowering.length === 0 || newPowering.length === 0 || Array.from(new Set(allPowering.map(r => r.fuelSourceId))).length !== 1) {
       return false;
     }
   
@@ -682,6 +685,24 @@ const Resolvers = {
       }
     }
     return false;
+  },
+  isThirdSheet: (oldData: ProducedConsumption[], newData: ProducedConsumption[]) => {
+    const allData = oldData.concat(newData)
+    if (Array.from(new Set(allData.map(r => r.fuelSourceId))).length !== 1) {
+      return false
+    }
+
+    const validUses = ['Heating', 'Cooling'];
+    let counter = 0;
+    for (let i = 0; i < validUses.length; i++) {
+      const use = validUses[i];
+      const oldRecords = oldData.filter((c) => c.usedIn === use);
+      const newRecords = newData.filter((c) => c.usedIn === use);
+      if (oldRecords.length !== 0 && newRecords.length !== 0) {
+        counter++;
+      }
+    }
+    return counter === 2
   }
 }
 
@@ -697,8 +718,19 @@ const calculateWaste = async (params: WasteSingleFuelParams & HddParams & CddPar
     return waste;
   }
 
-  if (false) {
-    const waste = wasteForHeatingAndCooling(params);
+  if (Resolvers.isThirdSheet(params.consumptions, params.nextConsumptions)) {
+    const consumptions = await filterByIsOnUse(params.consumptions.filter(filterByYear(params.year - 1)), "Heating");
+    consumptions.push(...await filterByIsOnUse(params.consumptions.filter(filterByYear(params.year - 1)), "Cooling"))
+    const nextConsumptions = await filterByIsOnUse(params.nextConsumptions.filter(filterByYear(params.year)), "Heating");
+    nextConsumptions.push(...await filterByIsOnUse(params.nextConsumptions.filter(filterByYear(params.year)), "Cooling"))
+
+    console.log(JSON.stringify(params))
+
+    const waste = wasteForHeatingAndCooling({
+      ...params,
+      nextHdd: params.nextHdd.filter(isHdd),
+      nextCdd: params.nextCdd.filter(isCdd)
+    });
     return waste;
   }
 
@@ -719,7 +751,6 @@ const calculateWaste = async (params: WasteSingleFuelParams & HddParams & CddPar
 
   if (Resolvers.isFirstSheet(params.consumptions, params.nextConsumptions)) {
     const waste = wasteForSinglefuelFunction(params);
-    console.log(1)
     return waste;
   }
 
