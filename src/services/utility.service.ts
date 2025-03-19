@@ -682,3 +682,21 @@ export const isOnUse = async (p: { usedInId: number | number[]; use: SupportedUs
   }
   return usedInFound.some((i) => i.use === p.use);
 };
+
+export const filterByIsOnUse = async (collection: ProducedConsumption[], use: SupportedUses) => {
+  const result: typeof collection = [];
+  const promises = [];
+  for (let i = 0; i < collection.length; i++) {
+    const item = collection[i];
+
+    promises.push(
+      isOnUse({ usedInId: item.usedInId, use }).then((match) => {
+        if (match === true) {
+          result.push(item);
+        }
+      }),
+    );
+  }
+  await Promise.all(promises);
+  return result;
+};

@@ -11,8 +11,9 @@ import {
   WasteValue,
 } from '../dashboard.service';
 import { HDDRecord } from '../greenDays.service';
-import { SupportedUses } from '../utility.service';
+import { filterByIsOnUse } from '../utility.service';
 import { ApiError } from '@lib';
+import { filterByYear } from '../../utils/dbUtils';
 
 type DaylightParams = {
   daylight: ValueByRecord[];
@@ -116,8 +117,6 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams & HddParams) =
         .times(normalisedHdd)
         .times(normalisedPopulation)
         .times(normalisedTime);
-
-        console.log(consumption.date, {c:passConsumption.consumption, normalisedHdd,normalisedPopulation,normalisedTime, initialWaste})
 
       const pastValue = results.find(
         (r) =>
@@ -650,70 +649,77 @@ const wasteForLightingAndPower = (params: WasteSingleFuelParams & DaylightParams
   return results;
 };
 
-const calculateWaste = async (params: WasteSingleFuelParams & HddParams & CddParams & DaylightParams) => {
-  const uses = await UtilityService.findFuelUseBy();
-  const prevYearConsumptions = params.consumptions
-    .filter(DashboardService.consumptionIsNotProduced)
-    .filter(DbUtils.filterByYear(params.year - 1));
-  const thisYearConsumptions = params.nextConsumptions
-    .filter(DashboardService.consumptionIsNotProduced)
-    .filter(DbUtils.filterByYear(params.year));
-
-  const map = new Map<SupportedUses, 'old' | 'new'>();
-  const fuels = getFuelSourcesFromConsumptionCollection(thisYearConsumptions);
-  const usesToSearchOn: SupportedUses[] = ['Heating', 'Cooling', 'Powering', 'Lighting'];
-  for (let i = 0; i < usesToSearchOn.length; i++) {
-    for (let f = 0; f < fuels.length; f++) {
-      const [use] = uses.filter((u) => u.use === usesToSearchOn[i]);
-      const fuel = fuels[f];
-
-      const thisConsumptions = thisYearConsumptions
-        .filter(UtilityService.filterByFuelSource(fuel))
-        .filter(UtilityService.filterByUse(use.id));
-      const oldConsumptions = prevYearConsumptions
-        .filter(UtilityService.filterByFuelSource(fuel))
-        .filter(UtilityService.filterByUse(use.id));
-
-      const currentYear = thisConsumptions.every((c) => c.fuelSourceId === fuel && c.usedInId === use.id);
-      const prevYear = oldConsumptions.every((c) => c.fuelSourceId === fuel && c.usedInId === use.id);
-
-      if (thisConsumptions.length !== 0 && currentYear === true) {
-        map.set(use.use as SupportedUses, 'old');
-      }
-
-      if (oldConsumptions.length !== 0 && prevYear === true) {
-        map.set(use.use as SupportedUses, 'new');
+const Resolvers = {
+  isFirstSheet: (oldData: ProducedConsumption[], newData: ProducedConsumption[]) => {
+    const all = oldData.concat(newData);
+  
+    const fuels = Array.from(new Set(all.map((i) => i.fuelSourceId)));
+    if (
+      all.length !== 0 &&
+      fuels.length === 1 &&
+      (all.every((c) => c.usedIn === 'Heating') || all.every((c) => c.usedIn === 'Cooling'))
+    ) {
+      return true;
+    }
+  
+    return false;
+  },
+  isSecondSheet: (oldData: ProducedConsumption[], newData: ProducedConsumption[]) => {
+    const oldPowering = oldData.filter((c) => c.usedIn === 'Powering');
+    const newPowering = newData.filter((c) => c.usedIn === 'Powering');
+  
+    if (oldPowering.length === 0 || newPowering.length === 0) {
+      return false;
+    }
+  
+    const validUses = ['Heating', 'Cooling'];
+    for (let i = 0; i < validUses.length; i++) {
+      const use = validUses[i];
+      const oldRecords = oldData.filter((c) => c.usedIn === use);
+      const newRecords = newData.filter((c) => c.usedIn === use);
+      if (oldRecords.length !== 0 && newRecords.length !== 0) {
+        return true;
       }
     }
+    return false;
   }
+}
 
-  const heating = map.get('Heating');
-  const cooling = map.get('Cooling');
-  const powering = map.get('Powering');
-  const lighting = map.get('Lighting');
+const calculateWaste = async (params: WasteSingleFuelParams & HddParams & CddParams & DaylightParams) => {
 
-  if ((lighting === 'old' && powering === 'new') || (powering === 'old' && lighting === 'new')) {
+  if (false) {
     const waste = wasteForLightingAndPower(params);
     return waste;
   }
 
-  if (heating === 'old' && cooling === 'old' && powering === 'new') {
+  if (false) {
     const waste = wasteForHeatingAndCoolingAndPower(params);
     return waste;
   }
 
-  if (heating === 'old' && cooling === 'new') {
+  if (false) {
     const waste = wasteForHeatingAndCooling(params);
     return waste;
   }
 
-  if ((heating === 'old' || cooling === 'old') && powering === 'new') {
-    const waste = wasteForHeatingOrCoolingAndPower(params);
+  if (Resolvers.isSecondSheet(params.consumptions, params.nextConsumptions)) {
+    const consumptions = await filterByIsOnUse(params.consumptions.filter(filterByYear(params.year - 1)), "Heating");
+    consumptions.push(...await filterByIsOnUse(params.consumptions.filter(filterByYear(params.year - 1)), "Cooling"))
+    const nextConsumptions = await filterByIsOnUse(params.nextConsumptions.filter(filterByYear(params.year)), "Powering");
+
+    const p = {
+      ...params,
+      consumptions,
+      nextConsumptions
+    };
+
+    const waste = wasteForHeatingOrCoolingAndPower(p);
     return waste;
   }
 
-  if ((heating === 'old' || heating === 'new') || (cooling === 'old' || cooling === 'new')) {
+  if (Resolvers.isFirstSheet(params.consumptions, params.nextConsumptions)) {
     const waste = wasteForSinglefuelFunction(params);
+    console.log(1)
     return waste;
   }
 

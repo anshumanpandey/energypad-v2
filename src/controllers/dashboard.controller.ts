@@ -10,6 +10,7 @@ import { filterByYearAndMonth } from '../utils/dbUtils';
 import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUtils';
 import { agroupBy } from '../utils/appUtils';
 import { WasteCalculationV2 } from '../services/waste/waste.service';
+import Rand from 'rand-seed';
 
 const consumptionToBreakdown = (r: AppModels['UtilityConsumption']) => {
   const startDate = r.date;
@@ -571,16 +572,18 @@ export const energyWaste: any = async (req: any) => {
       })),
 
       daylight: sites.map((s) => {
+        const gen = new Rand('6345323');
         return Array(12).fill(0).map((_, idx) => ({
           siteId: s.id,
-          value: 110.0,
+          value: Number.parseFloat((gen.next() * 100).toFixed(2)),
           date: `${year-1}-${(idx+1).toString().padStart(2, "0")}-01`,
         }))
       }).flat(),
       nextDaylight: sites.map((s) => {
+        const gen = new Rand('546725442');
         return Array(12).fill(0).map((_, idx) => ({
           siteId: s.id,
-          value: 110.0,
+          value: Number.parseFloat((gen.next() * 100).toFixed(2)),
           date: `${year}-${(idx+1).toString().padStart(2, "0")}-01`,
         }))
       }).flat(),

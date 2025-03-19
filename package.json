@@ -91,6 +91,7 @@
     "openapi-typescript": "^4.4.0",
     "pg": "^8.8.0",
     "pino": "^7.1.0",
+    "rand-seed": "^2.1.7",
     "ulid": "^2.3.0"
   },
   "_moduleAliases": {
