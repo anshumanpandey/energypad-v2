@@ -452,7 +452,7 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('UtilityEmissions').insert([
     buildFakeEmission({
-      id: 200,
+      id: 2000,
       date: `2020-01-01`,
       fuelSourceId: 2,
       usedInId: 2,
@@ -460,7 +460,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: site2.id,
     }),
     buildFakeEmission({
-      id: 202,
+      id: 2002,
       date: `2020-01-01`,
       fuelSourceId: 3,
       usedInId: 2,

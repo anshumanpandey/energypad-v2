@@ -741,8 +741,19 @@ const Resolvers = {
 
 const calculateWaste = async (params: WasteSingleFuelParams & HddParams & CddParams & DaylightParams) => {
 
-  if (false) {
-    const waste = wasteForLightingAndPower(params);
+  if (Resolvers.isFifthSheet(params.consumptions, params.nextConsumptions)) {
+    const consumptions = await filterByIsOnUse(params.consumptions.filter(filterByYear(params.year - 1)), "Lighting");
+    const nextConsumptions = await filterByIsOnUse(params.nextConsumptions.filter(filterByYear(params.year)), "Powering");
+
+    const p = {
+      ...params,
+      nextHdd: params.nextHdd.filter(isHdd),
+      nextCdd: params.nextCdd.filter(isCdd),
+      consumptions,
+      nextConsumptions
+    }
+
+    const waste = wasteForLightingAndPower(p);
     return waste;
   }
 

@@ -144,7 +144,7 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
     const emissionsQueries = data.emissions.map(async (i) => {
       const { fuelUses, ...data } = i;
 
-      const [recordId] = await txr('UtilityEmissions').insert(data).returning('id');
+      await txr('UtilityEmissions').insert(data);
     });
 
     const targetConsumptionQueries = data.targetConsumption.map(async (i) => {
