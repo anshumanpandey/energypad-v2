@@ -783,19 +783,60 @@ export const reports: any = async (req: any) => {
 
     const energyParams = {
       consumptions: oldConsumptions,
-      hdd: pastHdds,
+      hdd: pastHdds.filter(isHdd),
+      cdd: pastHdds.filter(isCdd),
       nextConsumptions: currentConsumptionRecords,
       nextHdd: currentHdd,
+      nextCdd: currentHdd,
       year,
 
-      singleFuelConsumptions,
+      population: oldConsumptions.map((c) => ({
+        siteId: c.siteId,
+        value: c.population,
+        date: c.date,
+      })),
+      nextPopulation: currentConsumptionRecords.map((c) => ({
+        siteId: c.siteId,
+        value: c.population,
+        date: c.date,
+      })),
+
+      time: oldConsumptions.map((c) => ({
+        siteId: c.siteId,
+        value: c.workingHours,
+        date: c.date,
+      })),
+      nextTime: currentConsumptionRecords.map((c) => ({
+        siteId: c.siteId,
+        value: c.workingHours,
+        date: c.date,
+      })),
+
+      daylight: sites.map((s) => {
+        const gen = new Rand('6345323');
+        return Array(12).fill(0).map((_, idx) => ({
+          siteId: s.id,
+          value: Number.parseFloat((gen.next() * 100).toFixed(2)),
+          date: `${year-1}-${(idx+1).toString().padStart(2, "0")}-01`,
+        }))
+      }).flat(),
+      nextDaylight: sites.map((s) => {
+        const gen = new Rand('546725442');
+        return Array(12).fill(0).map((_, idx) => ({
+          siteId: s.id,
+          value: Number.parseFloat((gen.next() * 100).toFixed(2)),
+          date: `${year}-${(idx+1).toString().padStart(2, "0")}-01`,
+        }))
+      }).flat(),
+
+      singleFuelConsumptions: singleFuelConsumptions,
       singleFuelHdd: pastHdds.filter(DbUtils.filterByYear(year - 2)),
 
-      singleFuelProjectedConsumptions,
+      singleFuelProjectedConsumptions: singleFuelProjectedConsumptions,
       singleFuelProjectedHdd: pastHdds.filter(DbUtils.filterByYear(year - 1)),
 
-      lightingAndPowerConsumptions,
-      lightingAndPowerProjectedConsumptions,
+      lightingAndPowerConsumptions: lightingAndPowerConsumptions,
+      lightingAndPowerProjectedConsumptions: lightingAndPowerProjectedConsumptions,
 
       selectedYearConsumptions: currentConsumptionRecords,
       selectedYearHdd: currentHdd.filter(DbUtils.filterByYear(year)),
