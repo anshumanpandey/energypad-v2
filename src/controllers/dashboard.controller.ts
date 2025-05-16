@@ -571,22 +571,30 @@ export const energyWaste: any = async (req: any) => {
         date: c.date,
       })),
 
-      daylight: sites.map((s) => {
-        const gen = new Rand('6345323');
-        return Array(12).fill(0).map((_, idx) => ({
-          siteId: s.id,
-          value: Number.parseFloat((gen.next() * 100).toFixed(2)),
-          date: `${year-1}-${(idx+1).toString().padStart(2, "0")}-01`,
-        }))
-      }).flat(),
-      nextDaylight: sites.map((s) => {
-        const gen = new Rand('546725442');
-        return Array(12).fill(0).map((_, idx) => ({
-          siteId: s.id,
-          value: Number.parseFloat((gen.next() * 100).toFixed(2)),
-          date: `${year}-${(idx+1).toString().padStart(2, "0")}-01`,
-        }))
-      }).flat(),
+      daylight: sites
+        .map((s) => {
+          const gen = new Rand('6345323');
+          return Array(12)
+            .fill(0)
+            .map((_, idx) => ({
+              siteId: s.id,
+              value: Number.parseFloat((gen.next() * 100).toFixed(2)),
+              date: `${year - 1}-${(idx + 1).toString().padStart(2, '0')}-01`,
+            }));
+        })
+        .flat(),
+      nextDaylight: sites
+        .map((s) => {
+          const gen = new Rand('546725442');
+          return Array(12)
+            .fill(0)
+            .map((_, idx) => ({
+              siteId: s.id,
+              value: Number.parseFloat((gen.next() * 100).toFixed(2)),
+              date: `${year}-${(idx + 1).toString().padStart(2, '0')}-01`,
+            }));
+        })
+        .flat(),
 
       singleFuelConsumptions: singleFuelConsumptions,
       singleFuelHdd: pastHdds.filter(DbUtils.filterByYear(year - 2)),
@@ -766,19 +774,19 @@ export const reports: any = async (req: any) => {
 
     const singleFuelConsumptions = await DashboardService.filterSingleConsumptionForHeatingOrCooling({
       yearToFilterBy: year - 2,
-      consumptions: oldConsumptions.filter(DashboardService.consumptionIsNotProduced),
+      consumptions: oldConsumptions,
     });
     const singleFuelProjectedConsumptions = await DashboardService.filterSingleConsumptionForHeatingOrCooling({
       yearToFilterBy: year - 1,
-      consumptions: currentConsumptionRecords.filter(DashboardService.consumptionIsNotProduced),
+      consumptions: oldConsumptions,
     });
     const lightingAndPowerConsumptions = await DashboardService.filterLightingAndPowerConsumption({
       yearToFilterBy: year - 2,
-      consumptions: oldConsumptions.filter(DashboardService.consumptionIsNotProduced),
+      consumptions: oldConsumptions,
     });
     const lightingAndPowerProjectedConsumptions = await DashboardService.filterLightingAndPowerConsumption({
       yearToFilterBy: year - 1,
-      consumptions: currentConsumptionRecords.filter(DashboardService.consumptionIsNotProduced),
+      consumptions: oldConsumptions,
     });
 
     const energyParams = {
@@ -812,22 +820,30 @@ export const reports: any = async (req: any) => {
         date: c.date,
       })),
 
-      daylight: sites.map((s) => {
-        const gen = new Rand('6345323');
-        return Array(12).fill(0).map((_, idx) => ({
-          siteId: s.id,
-          value: Number.parseFloat((gen.next() * 100).toFixed(2)),
-          date: `${year-1}-${(idx+1).toString().padStart(2, "0")}-01`,
-        }))
-      }).flat(),
-      nextDaylight: sites.map((s) => {
-        const gen = new Rand('546725442');
-        return Array(12).fill(0).map((_, idx) => ({
-          siteId: s.id,
-          value: Number.parseFloat((gen.next() * 100).toFixed(2)),
-          date: `${year}-${(idx+1).toString().padStart(2, "0")}-01`,
-        }))
-      }).flat(),
+      daylight: sites
+        .map((s) => {
+          const gen = new Rand('6345323');
+          return Array(12)
+            .fill(0)
+            .map((_, idx) => ({
+              siteId: s.id,
+              value: Number.parseFloat((gen.next() * 100).toFixed(2)),
+              date: `${year - 1}-${(idx + 1).toString().padStart(2, '0')}-01`,
+            }));
+        })
+        .flat(),
+      nextDaylight: sites
+        .map((s) => {
+          const gen = new Rand('546725442');
+          return Array(12)
+            .fill(0)
+            .map((_, idx) => ({
+              siteId: s.id,
+              value: Number.parseFloat((gen.next() * 100).toFixed(2)),
+              date: `${year}-${(idx + 1).toString().padStart(2, '0')}-01`,
+            }));
+        })
+        .flat(),
 
       singleFuelConsumptions: singleFuelConsumptions,
       singleFuelHdd: pastHdds.filter(DbUtils.filterByYear(year - 2)),
@@ -878,12 +894,14 @@ export const reports: any = async (req: any) => {
   return {
     reports: carbonImpact
       .map((c) => {
+        const found = statistics
+          .filter(filterByYearAndMonth(c))
+          .filter(SitesService.filterBySiteId(c.siteId))
+          .filter(UtilityService.filterByFuelSource(c.fuelSourceId))?.[0];
         return {
           ...c,
-          waste: statistics
-            .filter(filterByYearAndMonth(c))
-            .filter(SitesService.filterBySiteId(c.siteId))
-            .filter(UtilityService.filterByFuelSource(c.fuelSourceId))?.[0]?.waste,
+          wasteCost: found?.wasteCost,
+          waste: found?.waste,
         };
       })
       .filter((i) => i.produced !== true),
