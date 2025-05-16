@@ -715,7 +715,7 @@ export const reports: any = async (req: any) => {
     SitesService.findBy({ id: siteId }),
   ]);
 
-  let statistics: Awaited<ReturnType<typeof DashboardService.calculateWaste>> = [];
+  let statistics: Awaited<ReturnType<typeof WasteCalculationV2.calculateWaste>> = [];
   let targetConsumptions: Awaited<ReturnType<typeof UtilityService.consumingProjection>> = [];
 
   const allConsumptionAreProduced = currentConsumptionRecords.every(DashboardService.consumptionIsProduced);
@@ -743,7 +743,7 @@ export const reports: any = async (req: any) => {
           postalCode: s.postCode,
           siteId: s.id,
           breakDowns: oldConsumptions.sort(DbUtils.sortByStringDate).map(consumptionToBreakdown),
-          valuesToGet: ['HDD'],
+          valuesToGet: ['HDD', 'CDD'],
         });
       }
 
@@ -762,7 +762,7 @@ export const reports: any = async (req: any) => {
           postalCode: s.postCode,
           siteId: s.id,
           breakDowns: currentConsumptionRecords.sort(DbUtils.sortByStringDate).map(consumptionToBreakdown),
-          valuesToGet: ['HDD'],
+          valuesToGet: ['HDD', 'CDD'],
         });
       }
       promises.push(GreenDaysServices.getHdds2(params));
@@ -858,9 +858,10 @@ export const reports: any = async (req: any) => {
       selectedYearHdd: currentHdd.filter(DbUtils.filterByYear(year)),
     };
 
-    statistics = await DashboardService.calculateWaste(energyParams);
-    if (ErrorUtils.isErrorInstance(statistics)) return statistics;
-
+    statistics = await WasteCalculationV2.calculateWaste(energyParams);
+    if (statistics instanceof ApiError) {
+      return statistics;
+    }
     const projectionParams = {
       pastConsumptionRecords: oldConsumptions,
       pastHdds,
@@ -894,7 +895,12 @@ export const reports: any = async (req: any) => {
   return {
     reports: carbonImpact
       .map((c) => {
-        const found = statistics
+        const found = (
+          statistics as (WasteValue & {
+            projectedEnergy: number;
+            cIntercept: number;
+          })[]
+        )
           .filter(filterByYearAndMonth(c))
           .filter(SitesService.filterBySiteId(c.siteId))
           .filter(UtilityService.filterByFuelSource(c.fuelSourceId))?.[0];
