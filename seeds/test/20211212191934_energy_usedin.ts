@@ -26,7 +26,13 @@ export async function seed(knex: Knex): Promise<void> {
     .onConflict('id')
     .ignore();
 
-  await knex('Businesses').insert([buildFakeBusiness({ id: 148, email: 'mail482@mail.com' })]);
+  await knex('Businesses')
+    .insert([buildFakeBusiness({ id: 148, email: 'mail482@mail.com' })])
+    .onConflict('id')
+    .ignore();
 
-  await knex('Sites').insert([buildFakeSite({ id: 101, businessId: 148 })]);
+  await knex('Sites')
+    .insert([buildFakeSite({ id: 101, businessId: 148 })])
+    .onConflict('id')
+    .ignore();
 }
