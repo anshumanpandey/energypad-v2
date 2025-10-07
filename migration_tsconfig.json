@@ -21,5 +21,14 @@
     "strict": false,
     "skipLibCheck": true,
     "inlineSourceMap": true
-  }
+  },
+  "exclude": [
+    "test/**/*.ts",
+    "migrations/**/*.ts",
+    "seeds/**/*.ts",
+    "Energiepad/**/*",
+    "src/scripts/**/*.ts",
+    "jest.setup.ts",
+    "jest.unit.config.ts"
+  ]
 }
