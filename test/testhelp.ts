@@ -1,10 +1,19 @@
 import supertest from 'supertest';
 import { faker } from '@faker-js/faker';
-import { int32Format } from '../src/middleware/requestValidator.middleware';
 import { matchersWithOptions } from 'jest-json-schema';
 import { ulid } from 'ulid';
 
 export type Json = Record<string, string | number>;
+
+export const int32Format = {
+  type: 'number' as const,
+  validate: (val: number) => {
+    if (val < 0) return false;
+    if (Number.isInteger(val) === false) return false;
+    return true;
+  },
+};
+
 
 export const matcher = matchersWithOptions({
   formats: {
