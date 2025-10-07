@@ -11,7 +11,7 @@ const reduceData = () => {
     const countryId = idx + 1;
     data.countries.push({ id: countryId, name: country });
 
-    const stateFn = (state: string) => {
+    const stateFn = (state: string, stateIdx: number) => {
       data.states.push({ name: state, countryId });
     };
     states.forEach(stateFn);
@@ -24,11 +24,14 @@ const reduceData = () => {
 export async function seed(knex: Knex): Promise<void> {
   const data = reduceData();
 
-  await knex('Countries').insert(data.countries);
+  // Inserts seed entries
+  await knex('Countries').insert(data.countries).onConflict('id').merge();
 
   const size = 500;
   for (let i = 0; i < data.states.length; i += size) {
-    const r = data.states.slice(i, i + size);
-    await knex('States').insert(r);
+    await knex('States')
+      .insert(data.states.slice(i, i + size))
+      .onConflict('id')
+      .merge(['name', 'countryId']);
   }
 }
