@@ -886,11 +886,14 @@ export const reports: any = async (req: any) => {
     fuels: fuelSources.filter((f) => fuelSourceToUse.includes(f.id)),
   });
 
-  const carbonImpact = DashboardService.calculateCarbonImpact({
-    consumptions: currentConsumptionRecords,
-    emissions,
-    waste: statistics,
-  });
+  let carbonImpact: ReturnType<typeof DashboardService.calculateCarbonImpact> = [];
+  if (statistics.length !== 0) {
+    carbonImpact = DashboardService.calculateCarbonImpact({
+      consumptions: currentConsumptionRecords,
+      emissions,
+      waste: statistics,
+    });
+  }
 
   return {
     reports: carbonImpact
