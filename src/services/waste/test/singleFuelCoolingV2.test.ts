@@ -5,114 +5,201 @@ test('main', async () => {
   const params = {
     consumptions: [
       buildFakeConsumption({
-        id: 1,
-        date: '2013-01-01',
-        consumption: 22160.0,
-        siteId: 1,
+        id: 4700,
+        date: '2001-01-01',
+        consumption: 160,
         fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4702,
+        date: '2001-02-01',
+        consumption: 170,
+        fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4704,
+        date: '2001-03-01',
+        consumption: 180,
+        fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4706,
+        date: '2001-04-01',
+        consumption: 190,
+        fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4708,
+        date: '2001-05-01',
+        consumption: 130,
+        fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4710,
+        date: '2001-06-01',
+        consumption: 125,
+        fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4712,
+        date: '2001-07-01',
+        consumption: 120,
+        fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4714,
+        date: '2001-08-01',
+        consumption: 115,
+        fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4716,
+        date: '2001-09-01',
+        consumption: 115,
+        fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4718,
+        date: '2001-10-01',
+        consumption: 140,
+        fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4720,
+        date: '2001-11-01',
+        consumption: 150,
+        fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4722,
+        date: '2001-12-01',
+        consumption: 160,
+        fuelSourceId: 1,
+        siteId: 1,
       }),
 
       buildFakeConsumption({
-        id: 1,
-        date: '2013-02-01',
-        consumption: 22180,
-        siteId: 1,
+        id: 4724,
+        date: '2002-01-01',
+        consumption: 160,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2013-03-01',
-        consumption: 22190,
-        siteId: 1,
+        id: 4726,
+        date: '2002-02-01',
+        consumption: 180,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2013-04-01',
-        consumption: 22150,
-        siteId: 1,
+        id: 4728,
+        date: '2002-03-01',
+        consumption: 190,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2013-05-01',
-        consumption: 22280,
-        siteId: 1,
+        id: 4730,
+        date: '2002-04-01',
+        consumption: 150,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2013-06-01',
-        consumption: 22220,
-        siteId: 1,
+        id: 4732,
+        date: '2002-05-01',
+        consumption: 280,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2013-07-01',
-        consumption: 22250,
-        siteId: 1,
+        id: 4734,
+        date: '2002-06-01',
+        consumption: 220,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2013-08-01',
-        consumption: 22300,
-        siteId: 1,
+        id: 4736,
+        date: '2002-07-01',
+        consumption: 250,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2013-09-01',
-        consumption: 22250,
-        siteId: 1,
+        id: 4738,
+        date: '2002-08-01',
+        consumption: 300,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2013-10-01',
-        consumption: 22250,
-        siteId: 1,
+        id: 4740,
+        date: '2002-09-01',
+        consumption: 250,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2013-11-01',
-        consumption: 22200,
-        siteId: 1,
+        id: 4742,
+        date: '2002-10-01',
+        consumption: 250,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2013-12-01',
-        consumption: 22200,
-        siteId: 1,
+        id: 4744,
+        date: '2002-11-01',
+        consumption: 200,
         fuelSourceId: 1,
+        siteId: 1,
+      }),
+      buildFakeConsumption({
+        id: 4746,
+        date: '2002-12-01',
+        consumption: 200,
+        fuelSourceId: 1,
+        siteId: 1,
       }),
     ],
     hdd: [
-      { value: 2166.5, date: new Date(2013, 0, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1904.3, date: new Date(2013, 1, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1996.7, date: new Date(2013, 2, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1799.9, date: new Date(2013, 3, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1734.6, date: new Date(2013, 4, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1546.1, date: new Date(2013, 5, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1435.9, date: new Date(2013, 6, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1441, date: new Date(2013, 7, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1526.8, date: new Date(2013, 8, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1723, date: new Date(2013, 9, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1792.4, date: new Date(2013, 10, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1976.6, date: new Date(2013, 11, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1940.1, date: new Date(2001, 0, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 2150.1, date: new Date(2001, 1, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1340.1, date: new Date(2001, 2, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1700.1, date: new Date(2001, 3, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1800.1, date: new Date(2001, 4, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1700.1, date: new Date(2001, 5, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1982.1, date: new Date(2001, 6, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1880.1, date: new Date(2001, 7, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1742.1, date: new Date(2001, 8, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1980.1, date: new Date(2001, 9, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1955.1, date: new Date(2001, 10, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1987.1, date: new Date(2001, 11, 1), siteId: 1, kind: 'HDD' as const },
+
+      { value: 2167.1, date: new Date(2002, 0, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1904.1, date: new Date(2002, 1, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1997.1, date: new Date(2002, 2, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1800.1, date: new Date(2002, 3, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1735.1, date: new Date(2002, 4, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1546.1, date: new Date(2002, 5, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1436.1, date: new Date(2002, 6, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1441.1, date: new Date(2002, 7, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1527.1, date: new Date(2002, 8, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1723.1, date: new Date(2002, 9, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1792.1, date: new Date(2002, 10, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1977.1, date: new Date(2002, 11, 1), siteId: 1, kind: 'HDD' as const },
     ],
     population: [
       { siteId: 1, value: 120.0, date: '2013-01-01' },
@@ -146,114 +233,103 @@ test('main', async () => {
 
     nextConsumptions: [
       buildFakeConsumption({
-        id: 1,
-        date: '2014-01-01',
-        consumption: 22190.0,
-        siteId: 1,
+        id: 4748,
+        date: '2003-01-01',
+        consumption: 190,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-02-01',
-        consumption: 22210,
-        siteId: 1,
+        id: 4750,
+        date: '2003-02-01',
+        consumption: 210,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-03-01',
-        consumption: 22220,
-        siteId: 1,
+        id: 4752,
+        date: '2003-03-01',
+        consumption: 220,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-04-01',
-        consumption: 22190,
-        siteId: 1,
+        id: 4754,
+        date: '2003-04-01',
+        consumption: 190,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-05-01',
-        consumption: 22370,
-        siteId: 1,
+        id: 4756,
+        date: '2003-05-01',
+        consumption: 370,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-06-01',
-        consumption: 22290,
-        siteId: 1,
+        id: 4758,
+        date: '2003-06-01',
+        consumption: 290,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-07-01',
-        consumption: 22280,
-        siteId: 1,
+        id: 4760,
+        date: '2003-07-01',
+        consumption: 280,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-08-01',
-        consumption: 22350,
-        siteId: 1,
+        id: 4762,
+        date: '2003-08-01',
+        consumption: 350,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-09-01',
-        consumption: 22290,
-        siteId: 1,
+        id: 4764,
+        date: '2003-09-01',
+        consumption: 290,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-10-01',
-        consumption: 22210,
-        siteId: 1,
+        id: 4766,
+        date: '2003-10-01',
+        consumption: 210,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-11-01',
-        consumption: 22280,
-        siteId: 1,
+        id: 4768,
+        date: '2003-11-01',
+        consumption: 280,
         fuelSourceId: 1,
+        siteId: 1,
       }),
-
       buildFakeConsumption({
-        id: 1,
-        date: '2014-12-01',
-        consumption: 22200,
-        siteId: 1,
+        id: 4770,
+        date: '2003-12-01',
+        consumption: 200,
         fuelSourceId: 1,
+        siteId: 1,
       }),
     ],
     nextHdd: [
-      { value: 2008.2, date: new Date(2014, 0, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1870.9, date: new Date(2014, 1, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1991.9, date: new Date(2014, 2, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1785, date: new Date(2014, 3, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1726, date: new Date(2014, 4, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1532.2, date: new Date(2014, 5, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1405, date: new Date(2014, 6, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1457.1, date: new Date(2014, 7, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1455.6, date: new Date(2014, 8, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1668.7, date: new Date(2014, 9, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1892, date: new Date(2014, 10, 1), siteId: 1, kind: 'HDD' as const },
-      { value: 1989.8, date: new Date(2014, 11, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 2008.2, date: new Date(2003, 0, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1871.1, date: new Date(2003, 1, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1992.1, date: new Date(2003, 2, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1785.1, date: new Date(2003, 3, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1726.1, date: new Date(2003, 4, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1532.1, date: new Date(2003, 5, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1405.1, date: new Date(2003, 6, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1457.1, date: new Date(2003, 7, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1456.1, date: new Date(2003, 8, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1669.1, date: new Date(2003, 9, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1892.1, date: new Date(2003, 10, 1), siteId: 1, kind: 'HDD' as const },
+      { value: 1990.1, date: new Date(2003, 11, 1), siteId: 1, kind: 'HDD' as const },
     ],
     nextPopulation: [
       { siteId: 1, value: 110.0, date: '2014-01-01' },
@@ -283,21 +359,21 @@ test('main', async () => {
       { siteId: 1, value: 160, date: '2014-11-01' },
       { siteId: 1, value: 160, date: '2014-12-01' },
     ],
-    year: 2014,
+    year: 2003,
   };
 
   const result = WasteCalculationV2.wasteForSinglefuelFunction(params);
   expect(result.length).toBe(12);
-  expect(result[0].waste).toBe(-464.12);
-  expect(result[1].waste).toBe(-7559.36);
-  expect(result[2].waste).toBe(-4331.79);
-  expect(result[3].waste).toBe(2522.47);
-  expect(result[4].waste).toBe(-3895.39);
-  expect(result[5].waste).toBe(1303.11);
-  expect(result[6].waste).toBe(43033.57);
-  expect(result[7].waste).toBe(-4310.68);
-  expect(result[8].waste).toBe(437.58);
-  expect(result[9].waste).toBe(236.66);
-  expect(result[10].waste).toBe(-1450.13);
-  expect(result[11].waste).toBe(1638.14);
+  expect(result[0].waste).toBe(33.24);
+  expect(result[1].waste).toBe(36.14);
+  expect(result[2].waste).toBe(61.23);
+  expect(result[3].waste).toBe(5.42);
+  expect(result[4].waste).toBe(178.06);
+  expect(result[5].waste).toBe(73.86);
+  expect(result[6].waste).toBe(48.03);
+  expect(result[7].waste).toBe(124.51);
+  expect(result[8].waste).toBe(64.39);
+  expect(result[9].waste).toBe(10.95);
+  expect(result[10].waste).toBe(108.76);
+  expect(result[11].waste).toBe(40.98);
 });

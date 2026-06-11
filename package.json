@@ -9,6 +9,7 @@
   "scripts": {
     "predev": "npm run generate:definitions && NODE_ENV=development npm run build",
     "dev": "ts-node ./src/index.ts --project ./tsconfig.json",
+    "dev:win": "set node_env=development&&npm run generate:types && set node_env=development&&npm run generate:schema && set node_env=development&&npm run build && ts-node ./src/index.ts --project ./tsconfig.json",
     "prestart": "npm run generate:definitions && NODE_ENV=development npm run build",
     "start": "node dist/index.js",
     "build": "tsc --project ./tsconfig.json",
@@ -22,7 +23,9 @@
     "pretest": "sudo docker compose -f docker-compose-test.yml down && sudo docker compose -f docker-compose-test.yml up -d && npm run predev",
     "test": "NODE_ENV=test jest --runInBand --detectOpenHandles",
     "test:unit": "jest --config=jest.unit.config.ts",
+    "test:unit:win": "set node_env=test&&jest singleFuelCoolingV2.test.ts --config=jest.unit.config.ts",
     "test:simple": "NODE_ENV=test jest --runInBand --detectOpenHandles --colors --verbose",
+    "test:simple:win": "set node_env=development&&npm run migration:execute&&set node_env=test&&npm run seed:execute&&set node_env=test&&jest dashboard.test.ts --runInBand --detectOpenHandles --colors --verbose",
     "test:debug": "NODE_ENV=test node --nolazy --inspect-brk ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --colors --verbose",
     "migration:execute": "knex migrate:latest --knexfile ./src/lib/db/knexfile.ts",
     "migration:generate": "NODE_ENV=development knex migrate:make --knexfile ./src/lib/db/knexfile.ts",

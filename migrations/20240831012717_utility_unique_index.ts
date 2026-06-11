@@ -17,7 +17,7 @@ export async function up(knex: Knex): Promise<void> {
 
 export async function down(knex: Knex): Promise<void> {
   await knex.schema.alterTable('UtilityConsumptions', function (table) {
-    table.unique(['date', 'siteId', 'fuelSourceId', '']);
+    table.unique(['date', 'siteId', 'fuelSourceId']);
   });
 
   await knex.schema.alterTable('UtilityConsumptionsUse', function (table) {

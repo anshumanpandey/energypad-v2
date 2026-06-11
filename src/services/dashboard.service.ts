@@ -1100,22 +1100,6 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
         new Decimal(totalOfHeating).times(totalOfCooling).div(NX),
       ); //49b
 
-      console.log({
-        b9: totalOfHeating,
-        b14: heatingSquaredTotal,
-        b19: totalOfCooling,
-        b24: coolingSquredTotal,
-        b29: totalOfConsumption,
-        b33: totalHeatingTimesConsumptions,
-        b40: totalHeatingTimesCooling,
-        b42: NX,
-        b45: hdd1,
-        b46: cdd1,
-        b47: hdd2,
-        b48: cdd2,
-        b49: cddHdd,
-      });
-
       const b1Top = new Decimal(new Decimal(cdd1).times(hdd2)).minus(new Decimal(cddHdd).times(cdd2));
       const b1Below = new Decimal(new Decimal(hdd1).times(cdd1)).minus(new Decimal(cddHdd).times(cddHdd));
       const B1 = new Decimal(b1Top).div(b1Below);
@@ -1127,16 +1111,6 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
         new Decimal(B2).minus(totalCddByNX),
       );
 
-      console.log({
-        site,
-        b51: b1Top,
-        b52: b1Below,
-        b53: B1,
-        b54: b2Top,
-        b55: b2Below,
-        b56: B2,
-        b58: yAverage,
-      });
 
       const theseNextConsumptions = nextConsumptions
         .filter(SitesService.filterBySiteId(site))
@@ -1150,12 +1124,6 @@ const wasteForPowerAndLightingAndCooling = (p: WasteForPowerAndLightingAndCoolin
           .filter(DbUtils.filterByYearAndMonth(consumption))
           .filter(SitesService.filterBySiteId(consumption.siteId));
 
-        console.log({
-          B1,
-          B2,
-          hdd,
-          cdd,
-        });
         const projectedHeating = new Decimal(hdd.value).times(B1);
         const projectedCooling = new Decimal(cdd.value).times(B2);
         const totalProjected = new Decimal(projectedHeating).plus(projectedCooling);

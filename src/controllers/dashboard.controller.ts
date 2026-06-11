@@ -461,7 +461,7 @@ export const energyWaste: any = async (req: any) => {
   const oldParams = {
     businessId: req.user.id,
     startDate: subYears(selectedYear, 2),
-    endDate: endOfYear(subYears(selectedYear, 1)),
+    endDate: endOfYear(selectedYear),
     siteId,
   };
   const newParams = {
