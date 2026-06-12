@@ -204,19 +204,22 @@ const wasteForSinglefuelFunction = (params: WasteSingleFuelParams & HddParams) =
   return results;
 };
 
-function linest3Variable(hdd: number[], cdd: number[], daylighting: number[], consumption: number[]) {
+function linest3Variable(consumption: number[], hdd: number[], cdd: number[], daylighting?: number[]) {
   const rows = consumption.length;
 
   // Build X matrix
   const X: number[][] = [];
 
   for (let i = 0; i < rows; i++) {
-    X.push([
+    const data = [
       1, // Intercept
       hdd[i],
       cdd[i],
-      daylighting[i],
-    ]);
+    ];
+    if (daylighting) {
+      data.push(daylighting[i]);
+    }
+    X.push(data);
   }
 
   const Xmat = new Matrix(X);
@@ -230,11 +233,13 @@ function linest3Variable(hdd: number[], cdd: number[], daylighting: number[], co
   // FIX: Pass the matrices directly into the standalone solve() function
   const beta = solve(XtX, XtY);
 
+  const plain = beta.toJSON();
+
   return {
-    baseload: beta.get(0, 0),
-    hddSlope: beta.get(1, 0),
-    cddSlope: beta.get(2, 0),
-    daylightingSlope: beta.get(3, 0),
+    baseload: plain[0][0],
+    hddSlope: plain[1][0],
+    cddSlope: plain[2][0],
+    daylightingSlope: plain?.[3]?.[0],
   };
 }
 
@@ -343,10 +348,10 @@ const wasteForHeatingOrCoolingAndPower = (params: WasteSingleFuelParams & HddPar
     const totalOfCddDaylight = cddTimesDaylight.reduce((total, c) => total.plus(c.value), new Decimal(0)).toNumber();
 
     const sample = linest3Variable(
+      params.consumptions.map((c) => c.consumption),
       params.hdd.filter((h) => h.kind === 'HDD').map((h) => h.value),
       params.hdd.filter((h) => h.kind === 'CDD').map((h) => h.value),
       params.daylight.map((h) => h.value),
-      params.consumptions.map((c) => c.consumption),
     );
 
     const residualPow2: { date: string; value: number }[] = [];
@@ -430,14 +435,14 @@ const wasteForHeatingOrCoolingAndPower = (params: WasteSingleFuelParams & HddPar
         .plus(new Decimal(sample.cddSlope).times(currentCdd.value))
         .plus(new Decimal(sample.daylightingSlope).times(currentDaylight.value));
 
-        // row 59
+      // row 59
       expectedWaste.push({ date: consumption.date, value: expectedConsumption.toNumber() });
 
       const saved = expectedConsumption.minus(consumption.consumption);
       waste.push({ date: consumption.date, value: saved.toNumber() });
     }
 
-    const nraWaste: { date: string, value: number }[] = []
+    const nraWaste: { date: string; value: number }[] = [];
     for (let i = 0; i < params.nextTime.length; i++) {
       const currentTime = params.nextTime[i];
       const passTime = params.time.find(
@@ -463,10 +468,11 @@ const wasteForHeatingOrCoolingAndPower = (params: WasteSingleFuelParams & HddPar
         .div(passPopulation.value)
         .times(100);
 
-      const nraFactor = new Decimal(new Decimal(currentTime.value).div(passTime.value))
-        .times(new Decimal(currentPopulation.value).div(passPopulation.value))
+      const nraFactor = new Decimal(new Decimal(currentTime.value).div(passTime.value)).times(
+        new Decimal(currentPopulation.value).div(passPopulation.value),
+      );
 
-        const expectedSaving = expectedWaste.find((t) => t.date === currentTime.date);
+      const expectedSaving = expectedWaste.find((t) => t.date === currentTime.date);
       if (!expectedSaving) continue;
 
       const nraAdjusted = new Decimal(expectedSaving.value).times(nraFactor);
@@ -474,20 +480,20 @@ const wasteForHeatingOrCoolingAndPower = (params: WasteSingleFuelParams & HddPar
       const currentConsumption = params.nextConsumptions.find((t) => t.date === currentTime.date);
       if (!currentConsumption) continue;
 
-      const waste = new Decimal(nraAdjusted).minus(currentConsumption.consumption)
+      const waste = new Decimal(nraAdjusted).minus(currentConsumption.consumption);
 
       // row 80
-      nraWaste.push({ date: currentConsumption.date, value: waste.toNumber() })
+      nraWaste.push({ date: currentConsumption.date, value: waste.toNumber() });
     }
 
-    const IPMVPThreshold = new Decimal(2).times(regresion)
+    const IPMVPThreshold = new Decimal(2).times(regresion);
     for (let i = 0; i < nraWaste.length; i++) {
       const waste = nraWaste[i];
 
       const consumption = params.nextConsumptions.find((t) => t.date === waste.date);
       if (!consumption) continue;
 
-      const significant = new Decimal(waste.value).abs().greaterThanOrEqualTo(IPMVPThreshold)
+      const significant = new Decimal(waste.value).abs().greaterThanOrEqualTo(IPMVPThreshold);
 
       const pastValue = results.find(
         (r) =>
@@ -500,9 +506,17 @@ const wasteForHeatingOrCoolingAndPower = (params: WasteSingleFuelParams & HddPar
       results.push({
         waste: new Decimal(waste.value).toDP(2).toNumber(),
         significant,
-        wasteCost: wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.totalCost, waste: waste.value }),
+        wasteCost: wasteCost({
+          consumption: consumption.consumption,
+          consumptionCost: consumption.totalCost,
+          waste: waste.value,
+        }),
         wasteVatCost: consumption.vatCost
-          ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.vatCost, waste: waste.value })
+          ? wasteCost({
+              consumption: consumption.consumption,
+              consumptionCost: consumption.vatCost,
+              waste: waste.value,
+            })
           : null,
         date: waste.date,
         consumption: consumption.consumption,
@@ -517,104 +531,95 @@ const wasteForHeatingOrCoolingAndPower = (params: WasteSingleFuelParams & HddPar
           ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: waste.value })
           : 0,
       });
-    }    
+    }
   }
   return results;
 };
 
-const wasteForHeatingAndCooling = (params: WasteSingleFuelParams & HddParams & CddParams) => {
-  const results: (WasteValue & { projectedEnergy: number; cIntercept: number })[] = [];
+const wasteForHeatingAndCooling = (params: WasteSingleFuelParams & HddParams) => {
+  const results: (WasteValue & { projectedEnergy: number; cIntercept: number; significant: boolean })[] = [];
   const fuelSources = Array.from(
     new Set(params.consumptions.concat(params.nextConsumptions).map((i) => i.fuelSourceId)).values(),
   );
+
   for (let i = 0; i < fuelSources.length; i++) {
     const currentFuelSourceId = fuelSources[i];
-    const passConsumptions = params.consumptions
-      .filter(UtilityService.filterByFuelSource(currentFuelSourceId))
-      .filter(DbUtils.filterByYear(params.year - 1))
-      .filter(DashboardService.consumptionIsNotProduced);
-    const passHdds = params.hdd
-      .filter(DbUtils.filterByYear(params.year - 1))
-      .filter(DashboardService.consumptionIsNotProduced);
+    const passConsumptions = params.consumptions.filter(
+      (c) =>
+        UtilityService.filterByFuelSource(currentFuelSourceId)(c) &&
+        DbUtils.filterByYear(params.year - 1)(c) &&
+        DashboardService.consumptionIsNotProduced(c),
+    );
+    const passHdds = params.hdd.filter(
+      (h) => DbUtils.filterByYear(params.year - 1)(h) && DashboardService.consumptionIsNotProduced(h),
+    );
 
-    const currentFuelSourceNextConsumption = params.nextConsumptions
-      .filter(UtilityService.filterByFuelSource(currentFuelSourceId))
-      .filter(DbUtils.filterByYear(params.year));
+    const linearRegresion = linest3Variable(
+      params.consumptions.map((c) => c.consumption),
+      passHdds.filter((h) => h.kind === 'HDD').map((h) => h.value),
+      passHdds.filter((h) => h.kind === 'CDD').map((h) => h.value),
+    );
 
-    for (let i = 0; i < currentFuelSourceNextConsumption.length; i++) {
-      const consumption = currentFuelSourceNextConsumption[i];
-      if (DashboardService.consumptionIsProduced(consumption)) {
-        continue;
-      }
+    let ssResidual = 0;
+    for (let i = 0; i < passConsumptions.length; i++) {
+      const consumption = passConsumptions[i];
+      if (DashboardService.consumptionIsProduced(consumption)) continue;
 
-      const [passConsumption] = passConsumptions
-        .filter(UtilityService.filterByFuelSource(consumption.fuelSourceId))
-        .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.decreaseYear({ date: consumption.date }, 1) }))
-        .filter(SitesService.filterBySiteId(consumption.siteId));
-
-      const passHdd = passHdds.find(
+      const currentHdd = params.hdd.find(
         (h) =>
-          h.siteId === consumption.siteId &&
-          DbUtils.decreaseYear({ date: consumption.date }, 1) === DbUtils.dateToStringDate(h.date),
+          h.kind === 'HDD' && h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date),
       );
-      if (!passHdd) {
-        continue;
-      }
-      const hdd = params.nextHdd.find(
-        (h) => h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date),
-      );
-      if (!hdd) {
-        continue;
-      }
-      const normalisedHdd = new Decimal(hdd.value).div(passHdd.value).toNumber();
+      if (!currentHdd) continue;
 
-      const passPopulation = params.population.find(
-        (h) => h.siteId === consumption.siteId && DbUtils.decreaseYear({ date: consumption.date }, 1) === h.date,
-      );
-      if (!passPopulation) {
-        continue;
-      }
-      const population = params.nextPopulation.find(
-        (h) => h.siteId === consumption.siteId && consumption.date === h.date,
-      );
-      if (!population) {
-        continue;
-      }
-      const normalisedPopulation = new Decimal(population.value).div(passPopulation.value).toNumber();
-
-      const passTime = params.time.find(
-        (h) => h.siteId === consumption.siteId && DbUtils.decreaseYear({ date: consumption.date }, 1) === h.date,
-      );
-      if (!passTime) {
-        continue;
-      }
-      const time = params.nextTime.find((h) => h.siteId === consumption.siteId && consumption.date === h.date);
-      if (!time) {
-        continue;
-      }
-      const normalisedTime = new Decimal(time.value).div(passTime.value).toNumber();
-
-      const passCdd = params.cdd.find(
+      const currentCdd = params.hdd.find(
         (h) =>
-          h.siteId === consumption.siteId &&
-          DbUtils.decreaseYear({ date: consumption.date }, 1) === DbUtils.dateToStringDate(h.date),
+          h.kind === 'CDD' && h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date),
       );
-      if (!passCdd) {
-        continue;
-      }
-      const cdd = params.nextCdd.find(
-        (h) => h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date),
-      );
-      if (!cdd) {
-        continue;
-      }
-      const normalisedCdd = new Decimal(cdd.value).div(passCdd.value).toNumber();
+      if (!currentCdd) continue;
 
-      const initialWaste = new Decimal(passConsumption.consumption)
-        .times(normalisedHdd)
-        .times(normalisedCdd)
-        .times(normalisedPopulation)
-        .times(normalisedTime);
+      const hddTimesConsumption = new Decimal(currentHdd.value).times(consumption.consumption);
+      const hddPow2 = new Decimal(currentHdd.value).pow(2);
+      const cddTimesConsumption = new Decimal(currentCdd.value).times(consumption.consumption);
+      const cddPow2 = new Decimal(currentCdd.value).pow(2);
+      const cddTimesHdd = new Decimal(currentHdd.value).times(currentCdd.value);
+
+      const fitted = new Decimal(linearRegresion.baseload)
+        .plus(new Decimal(linearRegresion.hddSlope).times(currentHdd.value))
+        .plus(new Decimal(linearRegresion.cddSlope).times(currentCdd.value));
+
+      const residual = new Decimal(consumption.consumption).minus(fitted);
+      const residualPow2 = residual.pow(2);
+
+      ssResidual = new Decimal(ssResidual).plus(residualPow2).toNumber();
+    }
+
+    const regretion = new Decimal(ssResidual).div(9).squareRoot();
+    const IPMVPThreshold = new Decimal(regretion).times(2);
+    for (let i = 0; i < params.nextConsumptions.length; i++) {
+      const consumption = params.nextConsumptions[i];
+      if (DashboardService.consumptionIsProduced(consumption)) continue;
+
+      const currentHdd = params.nextHdd.find(
+        (h) =>
+          h.kind === 'HDD' && h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date),
+      );
+      if (!currentHdd) continue;
+
+      const currentCdd = params.nextHdd.find(
+        (h) =>
+          h.kind === 'CDD' && h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date),
+      );
+      if (!currentCdd) continue;
+
+      const expected = new Decimal(linearRegresion.baseload)
+        .plus(new Decimal(linearRegresion.hddSlope).times(currentHdd.value))
+        .plus(new Decimal(linearRegresion.cddSlope).times(currentCdd.value));
+
+      const waste = expected.minus(consumption.consumption);
+
+      const significant = new Decimal(waste).abs().greaterThanOrEqualTo(IPMVPThreshold);
+
+      const wasteVal = waste.toDP(2).toNumber();
 
       const pastValue = results.find(
         (r) =>
@@ -624,13 +629,20 @@ const wasteForHeatingAndCooling = (params: WasteSingleFuelParams & HddParams & C
           r.date === DbUtils.decreaseMonth({ date: consumption.date }, 1),
       );
 
-      const waste = new Decimal(initialWaste).minus(consumption.consumption).toDP(6).toNumber();
-
       results.push({
-        waste,
-        wasteCost: wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.totalCost, waste }),
+        waste: wasteVal,
+        significant,
+        wasteCost: wasteCost({
+          consumption: consumption.consumption,
+          consumptionCost: consumption.totalCost,
+          waste: wasteVal,
+        }),
         wasteVatCost: consumption.vatCost
-          ? wasteCost({ consumption: consumption.consumption, consumptionCost: consumption.vatCost, waste })
+          ? wasteCost({
+              consumption: consumption.consumption,
+              consumptionCost: consumption.vatCost,
+              waste: wasteVal,
+            })
           : null,
         date: consumption.date,
         consumption: consumption.consumption,
@@ -642,11 +654,12 @@ const wasteForHeatingAndCooling = (params: WasteSingleFuelParams & HddParams & C
         cIntercept: 0,
         usedIn: consumption.usedIn,
         increasedPercentage: pastValue
-          ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: waste })
+          ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: wasteVal })
           : 0,
       });
     }
   }
+
   return results;
 };
 
@@ -1034,7 +1047,6 @@ const calculateWaste = async (params: WasteSingleFuelParams & HddParams & CddPar
     const waste = wasteForHeatingAndCooling({
       ...params,
       nextHdd: params.nextHdd.filter(isHdd),
-      nextCdd: params.nextCdd.filter(isCdd),
     });
     return waste;
   }
