@@ -5,9 +5,11 @@ import { addPrefix } from '../utils/dbUtils';
 const findBy = (p: { names: string | string[] }) => {
   if (p?.names) {
     if (Array.isArray(p.names)) {
-      return UnitsUtil.SupportedUnits.filter((unit) => p.names.includes(unit));
+      const names = p.names;
+      return UnitsUtil.SupportedUnits.filter((unit) => names.map(u => u.toLowerCase()).includes(unit.toLowerCase()));
     } else {
-      return UnitsUtil.SupportedUnits.filter((unit) => unit === p.names);
+      const names = p.names;
+      return UnitsUtil.SupportedUnits.filter((unit) => unit.toLowerCase() === names.toLowerCase());
     }
   }
   return UnitsUtil.SupportedUnits;

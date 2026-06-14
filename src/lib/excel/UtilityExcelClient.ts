@@ -12,52 +12,63 @@ export const getUtilityData = async (file: string | Buffer) => {
   const rawConsumptions = getConsumptions(workbook.worksheets[0]);
   const rawEmissions = getEmissions(workbook.worksheets[1]);
   const rawTarget = getTargedData(workbook.worksheets[2]);
+  const drivers = getDriversData(workbook.worksheets[4]);
 
-  const sitesNames = rawConsumptions
-    .map((i: any) => i.siteName)
-    .concat(rawEmissions.map((i: any) => i.siteName))
-    .concat(rawTarget.map((i: any) => i.siteName));
-  const fuelUsesName = rawConsumptions
-    .map((i: any) => i.fuelUses)
-    .concat(rawEmissions.map((i: any) => i.fuelUses))
-    .flat();
-  const fuelSourceNames = rawConsumptions
-    .map((i: any) => i.fuelType)
-    .concat(rawEmissions.map((i: any) => i.fuelType))
-    .concat(rawTarget.map((i: any) => i.fuelType));
-  const conversionUnitsNames = rawConsumptions
-    .map((i: any) => i.fuelUnit)
-    .concat(rawEmissions.map((i: any) => i.fuelUnit))
-    .concat(rawTarget.map((i: any) => i.fuelUnit));
+  const sitesNames = Array.from(
+    new Set(
+      rawConsumptions
+        .map((i: any) => i.siteName)
+        .concat(rawEmissions.map((i: any) => i.siteName))
+        .concat(rawTarget.map((i: any) => i.siteName)),
+    ).values(),
+  ).map((s) => s.trim());
+
+  const fuelUsesName = Array.from(
+    new Set(
+      rawConsumptions
+        .map((i: any) => i.fuelUses)
+        .concat(rawEmissions.map((i: any) => i.fuelUses))
+        .flat(),
+    ),
+  );
+  const fuelSourceNames = Array.from(
+    new Set(
+      rawConsumptions
+        .map((i: any) => i.fuelType)
+        .concat(rawEmissions.map((i: any) => i.fuelType))
+        .concat(rawTarget.map((i: any) => i.fuelType)),
+    ).values(),
+  );
+  const conversionUnitsNames = Array.from(
+    new Set(
+      rawConsumptions
+        .map((i: any) => i.fuelUnit)
+        .concat(rawEmissions.map((i: any) => i.fuelUnit))
+        .concat(rawTarget.map((i: any) => i.fuelUnit)),
+    ).values(),
+  );
 
   const [sites, fuelUses, fuelTypes, conversionUnits] = await Promise.all([
     SitesService.findBy({ name: sitesNames }),
     UtilityService.findFuelUseBy({ names: fuelUsesName }),
     UtilityService.findFuelBy({ names: fuelSourceNames }),
-    ConversionUnitService.findBy({ names: conversionUnitsNames }),
+    ConversionUnitService.findBy({ names: Array.from(new Set(conversionUnitsNames).values()) }),
   ]);
 
   const consumptions = [];
   for (let i = 0; i < rawConsumptions.length; i++) {
     const consumption = rawConsumptions[i];
 
-    const site = sites.find((s) => s.name === consumption.siteName);
+    const site = sites.find((s) => s.name.trim() === consumption.siteName.trim());
     if (site === undefined) {
       error = new ApiError(`Site not found ${consumption.siteName}`);
     }
     const foundFuelUses = fuelUses.filter((fu) => consumption.fuelUses.includes(fu.use));
-    if (foundFuelUses.length !== consumption.fuelUses.length) {
-      error = new ApiError(
-        `Invalid one fuel use: ${
-          Array.isArray(consumption.fuelUses) ? consumption.fuelUses.join(', ') : consumption.fuelUses
-        }`,
-      );
-    }
     const fuelSource = fuelTypes.find((ft) => ft.source === consumption.fuelType);
     if (fuelSource === undefined) {
       error = new ApiError(`Fuel type not found ${consumption.fuelType}`);
     }
-    const fuelUnit = conversionUnits.find((s: any) => s === consumption.fuelUnit);
+    const fuelUnit = conversionUnits.find((s) => s.toLowerCase() === consumption.fuelUnit.toLowerCase());
     if (fuelUnit === undefined) {
       error = new ApiError(`Invalid fuel unit ${consumption.fuelUnit}`);
     }
@@ -73,8 +84,8 @@ export const getUtilityData = async (file: string | Buffer) => {
       fuelUnit: fuelUnit,
       fuelUses: foundFuelUses.map((i) => i.id),
       population: consumption.population,
-      buidingExtension: consumption.buidingExtension,
-      changeBuildingLocation: consumption.changeBuildingLocation,
+      //TODO: hardcoded for now while figure out where to take it from
+      usedInId: 2,
     });
   }
 
@@ -82,18 +93,11 @@ export const getUtilityData = async (file: string | Buffer) => {
   for (let i = 0; i < rawEmissions.length; i++) {
     const consumption = rawEmissions[i];
 
-    const site = sites.find((s) => s.name === consumption.siteName);
+    const site = sites.find((s) => s.name.trim() === consumption.siteName.toString().trim());
     if (site === undefined) {
       error = new ApiError(`Site not found ${consumption.siteName}`);
     }
     const foundFuelUses = fuelUses.filter((fu) => consumption.fuelUses.includes(fu.use));
-    if (foundFuelUses.length !== consumption.fuelUses.length) {
-      error = new ApiError(
-        `Invalid one fuel use: ${
-          Array.isArray(consumption.fuelUses) ? consumption.fuelUses.join(', ') : consumption.fuelUses
-        }`,
-      );
-    }
     const fuelSource = fuelTypes.find((ft) => ft.source === consumption.fuelType);
     if (fuelSource === undefined) {
       error = new ApiError(`Fuel type not found ${consumption.fuelType}`);
@@ -130,10 +134,31 @@ export const getUtilityData = async (file: string | Buffer) => {
     });
   }
 
+  const driversData = [];
+  for (let i = 0; i < drivers.length; i++) {
+    const driver = drivers[i];
+    const site = sites.find((s) => s.name.trim() === driver.siteName.toString().trim());
+    if (site === undefined) {
+      error = new ApiError(`Site not found ${driver.siteName}`);
+    }
+
+    driversData.push({
+      heating: driver.heating,
+      cooling: driver.cooling,
+      population: driver.population,
+      operatingHours: driver.operatingHours,
+      daylight: driver.daylight,
+      buildingSize: driver.buildingSize,
+
+      siteId: site?.id,
+    });
+  }
+
   const result = {
     consumptions,
     emissions,
     targetConsumption,
+    drivers: driversData,
   };
 
   if (error !== null) {
@@ -147,24 +172,22 @@ const getConsumptions = (w: Worksheet) => {
     siteName: 'A',
     year: 'B',
     month: 'C',
-    fuelType: 'D',
-    fuelUnit: 'E',
-    conversionFactor: 'F',
+    fuelUses: 'D',
+    fuelType: 'E',
+    conversionFactor: 'K',
+    vat: 'J',
     consumptionValue: 'G',
-    vat: 'H',
+    fuelUnit: 'H',
     totalCost: 'I',
-    fuelUses: 'J',
     population: 'K',
     fullTimeEmployeeHours: 'L',
-    buildingExtension: 'M',
-    changeBuildingLocation: 'N',
   };
   const records: Record<string, any>[] = [];
   for (let i = 2; i <= w.actualRowCount; i++) {
     const row = w.getRow(i);
 
     const r = {
-      siteName: row.getCell(columnMap.siteName).toString(),
+      siteName: row.getCell(columnMap.siteName).toString().trim(),
       year: row.getCell(columnMap.year).toString(),
       month: row.getCell(columnMap.month).toString(),
       fuelType: row.getCell(columnMap.fuelType).toString(),
@@ -176,13 +199,11 @@ const getConsumptions = (w: Worksheet) => {
       fuelUses: row
         .getCell(columnMap.fuelUses)
         .toString()
-        .split(';')
+        .split(', ')
         .flat()
         .map((i) => capitalizeFirstLetter(i.trim())),
       population: row.getCell(columnMap.population).toString(),
       fullTimeEmployeeHours: row.getCell(columnMap.fullTimeEmployeeHours).toString(),
-      buidingExtension: row.getCell(columnMap.buildingExtension).toString() === 'Yes',
-      changeBuildingLocation: row.getCell(columnMap.changeBuildingLocation).toString() === 'Yes',
     };
     records.push(r);
   }
@@ -196,21 +217,20 @@ const getEmissions = (w: Worksheet) => {
     month: 'C',
     fuelType: 'D',
     fuelUnit: 'E',
-    conversionFactor: 'F',
     fuelUses: 'G',
-    emissionFactor: 'H',
+    emissionFactor: 'F',
   };
   const records: Record<string, string | string[]>[] = [];
   for (let i = 2; i <= w.actualRowCount; i++) {
     const row = w.getRow(i);
 
     const r = {
-      siteName: row.getCell(columnMap.siteName).toString(),
+      siteName: row.getCell(columnMap.siteName).toString().trim(),
       year: row.getCell(columnMap.year).toString(),
       month: row.getCell(columnMap.month).toString(),
       fuelType: row.getCell(columnMap.fuelType).toString(),
       fuelUnit: row.getCell(columnMap.fuelUnit).toString().split('-').pop() || '',
-      conversionFactor: row.getCell(columnMap.conversionFactor).toString(),
+      //conversionFactor: row.getCell(columnMap.conversionFactor).toString(),
       emissionFactor: row.getCell(columnMap.emissionFactor).toString(),
       fuelUses: row
         .getCell(columnMap.fuelUses)
@@ -238,12 +258,43 @@ const getTargedData = (w: Worksheet) => {
     const row = w.getRow(i);
 
     const r = {
-      siteName: row.getCell(columnMap.siteName).toString(),
+      siteName: row.getCell(columnMap.siteName).toString().trim(),
       year: row.getCell(columnMap.year).toString(),
       month: row.getCell(columnMap.month).toString(),
       fuelType: row.getCell(columnMap.fuelType).toString(),
       fuelUnit: row.getCell(columnMap.fuelUnit).toString().split('-').pop() || '',
       value: row.getCell(columnMap.value).toString() || '',
+    };
+    records.push(r);
+  }
+  return records;
+};
+
+const getDriversData = (w: Worksheet) => {
+  const columnMap = {
+    siteName: 'A',
+    year: 'B',
+    heating: 'C',
+    cooling: 'D',
+    population: 'E',
+    operatingHours: 'F',
+    daylight: 'G',
+    buildingSize: 'H',
+  };
+  const records: Record<string, string | string[]>[] = [];
+  const max = w.actualRowCount + 1;
+  for (let i = 7; i <= max; i++) {
+    const row = w.getRow(i);
+
+    const r = {
+      siteName: row.getCell(columnMap.siteName).toString().trim(),
+      year: row.getCell(columnMap.year).toString(),
+      heating: row.getCell(columnMap.heating).toString(),
+      cooling: row.getCell(columnMap.cooling).toString(),
+      population: row.getCell(columnMap.population).toString().split('-').pop() || '',
+      operatingHours: row.getCell(columnMap.operatingHours).toString() || '',
+      daylight: row.getCell(columnMap.daylight).toString() || '',
+      buildingSize: row.getCell(columnMap.buildingSize).toString() || '',
     };
     records.push(r);
   }

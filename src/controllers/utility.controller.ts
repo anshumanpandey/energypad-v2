@@ -132,7 +132,7 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
   const data = await ExcelClient.getUtilityData(excelFile.buffer);
 
   if (data instanceof ApiError) return data;
-
+  
   return DB.transaction(async (txr) => {
     const consumptionQuries = data.consumptions.map(async (i) => {
       const { fuelUses, ...data } = i;
@@ -153,7 +153,48 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
       const [recordId] = await txr('TargetConsumption').insert(data).returning('id');
       await txr('TargetConsumptionFuelConversion').insert({ targetValue, fuelUnit, targetConsumptionId: recordId.id });
     });
-    await Promise.all(consumptionQuries.concat(emissionsQueries).concat(targetConsumptionQueries));
+
+    const driverEnums = ['R', 'NR'];
+
+    const driverData = data.drivers
+      .reduce((list, next) => {
+        const consumptionList = [];
+
+        const heating = next.heating.toString().toUpperCase();
+        if (driverEnums.includes(heating)) {
+          consumptionList.push({ driver: heating, category: 'Heating', siteId: next.siteId });
+        }
+        const cooling = next.cooling.toString().toUpperCase();
+        if (driverEnums.includes(cooling)) {
+          consumptionList.push({ driver: cooling, category: 'Cooling', siteId: next.siteId });
+        }
+        const population = next.population.toString().toUpperCase();
+        if (driverEnums.includes(population)) {
+          consumptionList.push({ driver: population, category: 'Population', siteId: next.siteId });
+        }
+        const operatingHours = next.operatingHours.toString().toUpperCase();
+        if (driverEnums.includes(operatingHours)) {
+          consumptionList.push({ driver: operatingHours, category: 'OperatingHours', siteId: next.siteId });
+        }
+        const daylight = next.daylight.toString().toUpperCase();
+        if (driverEnums.includes(daylight)) {
+          consumptionList.push({ driver: daylight, category: 'Daylight', siteId: next.siteId });
+        }
+        const buildingSize = next.buildingSize.toString().toUpperCase();
+        if (driverEnums.includes(buildingSize)) {
+          consumptionList.push({ driver: buildingSize, category: 'BuildingSize', siteId: next.siteId });
+        }
+
+        return list.concat(consumptionList);
+      }, [] as { driver: string; category: string; siteId: number | undefined }[])
+      .flat();
+
+    await Promise.all(
+      consumptionQuries
+        .concat(emissionsQueries)
+        .concat(targetConsumptionQueries)
+        .concat([txr('UtilityToDriver').insert(driverData)]),
+    );
 
     return { success: true };
   });
