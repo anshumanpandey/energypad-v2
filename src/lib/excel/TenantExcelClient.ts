@@ -1,6 +1,6 @@
 import { ApiError } from '@lib';
 import { SitesService } from '@services';
-import { DbUtils, ExcelUtils } from '@utils';
+import { ExcelUtils } from '@utils';
 import { formatISO } from 'date-fns';
 import { Workbook, Worksheet } from 'exceljs';
 import { findFuelUseBy } from '../../services/utility.service';

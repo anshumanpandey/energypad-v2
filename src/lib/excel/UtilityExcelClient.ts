@@ -1,5 +1,5 @@
 import { ApiError } from '@lib';
-import parse from 'date-fns/parse';
+import { parse } from 'date-fns';
 import { ConversionUnitService, SitesService, UtilityService } from '@services';
 import { Workbook, Worksheet } from 'exceljs';
 import { capitalizeFirstLetter } from '../../utils/appUtils';
@@ -12,6 +12,7 @@ export const getUtilityData = async (file: string | Buffer) => {
   const rawConsumptions = getConsumptions(workbook.worksheets[0]);
   const rawEmissions = getEmissions(workbook.worksheets[1]);
   const rawTarget = getTargedData(workbook.worksheets[2]);
+  const patterns = getSetpointsData(workbook.worksheets[3])
   const drivers = getDriversData(workbook.worksheets[4]);
 
   const sitesNames = Array.from(
@@ -28,6 +29,7 @@ export const getUtilityData = async (file: string | Buffer) => {
       rawConsumptions
         .map((i: any) => i.fuelUses)
         .concat(rawEmissions.map((i: any) => i.fuelUses))
+        .concat(patterns.map((i: any) => i.fuelUses))
         .flat(),
     ),
   );
@@ -154,11 +156,33 @@ export const getUtilityData = async (file: string | Buffer) => {
     });
   }
 
+  const patternsData = [];
+  for (let i = 0; i < patterns.length; i++) {
+    const pattern = patterns[i];
+    const site = sites.find((s) => s.name.trim() === pattern.siteName.toString().trim());
+    if (site === undefined) {
+      error = new ApiError(`Site not found ${pattern.siteName}`);
+    }
+
+    const foundFuelUses = fuelUses.filter((fu) => pattern.fuelUses.includes(fu.use));
+
+    patternsData.push({
+      startDate: pattern.startDate,
+      endDate: pattern.endDate,
+      daysOnYear: pattern.daysOnYear || 0,
+      temperature: pattern.temperature ? Number.parseInt(pattern.temperature.toString()): null,
+      usedInId: foundFuelUses.find(u => u.id)?.id || null,      
+
+      siteId: site?.id,
+    });
+  }
+
   const result = {
     consumptions,
     emissions,
     targetConsumption,
-    drivers: driversData,
+    driversData,
+    patternsData
   };
 
   if (error !== null) {
@@ -179,8 +203,8 @@ const getConsumptions = (w: Worksheet) => {
     consumptionValue: 'G',
     fuelUnit: 'H',
     totalCost: 'I',
-    population: 'K',
-    fullTimeEmployeeHours: 'L',
+    population: 'L',
+    fullTimeEmployeeHours: 'M',
   };
   const records: Record<string, any>[] = [];
   for (let i = 2; i <= w.actualRowCount; i++) {
@@ -295,6 +319,40 @@ const getDriversData = (w: Worksheet) => {
       operatingHours: row.getCell(columnMap.operatingHours).toString() || '',
       daylight: row.getCell(columnMap.daylight).toString() || '',
       buildingSize: row.getCell(columnMap.buildingSize).toString() || '',
+    };
+    records.push(r);
+  }
+  return records;
+};
+
+const getSetpointsData = (w: Worksheet) => {
+  const columnMap = {
+    siteName: 'A',
+    fuelUses: 'B',
+    fuel: 'C',
+    startDate: 'D',
+    endDate: 'E',
+    temperature: 'F',
+    daysOnYear: 'G',
+  };
+  const records: Record<string, string | string[]>[] = [];
+  const max = w.actualRowCount;
+  for (let i = 7; i <= max; i++) {
+    const row = w.getRow(i);
+
+    //@ts-expect-error row can be undefined or date `2020-01-01`
+    const startDate = row.getCell(columnMap.startDate).value.result;
+    //@ts-expect-error row can be undefined or date `2020-01-01`
+    const endDate = row.getCell(columnMap.endDate).value.result;
+
+    const r = {
+      siteName: row.getCell(columnMap.siteName).toString().trim(),
+      fuelUses: row.getCell(columnMap.fuelUses).toString() || '',
+      fuel: row.getCell(columnMap.fuel).toString() || '',
+      startDate: startDate?.toISOString().split("T")[0] || '',
+      endDate: endDate?.toISOString()?.split("T")[0] || '',
+      temperature: row.getCell(columnMap.temperature).toString() || '',
+      daysOnYear: row.getCell(columnMap.daysOnYear).toString() || '',
     };
     records.push(r);
   }

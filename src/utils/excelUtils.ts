@@ -1,4 +1,4 @@
-import parse from 'date-fns/parse';
+import { parse } from 'date-fns';
 
 export const excelDateToDate = (d: string) => {
   //Fri Jan 31 2020 20:00:00 GMT-0400 (COUNTRY Time)

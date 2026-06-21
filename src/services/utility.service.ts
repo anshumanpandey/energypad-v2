@@ -1,6 +1,5 @@
 import { DB } from '@lib';
 import Decimal from 'decimal.js';
-import { formatISO, setDate, setMonth, subMonths } from 'date-fns';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 import { DbUtils, MathUtils, UnitsUtil } from '@utils';
 import SiteService from './sites.service';
@@ -9,6 +8,7 @@ import { capitalizeFirstLetter } from '../utils/appUtils';
 import { ulid } from 'ulid';
 import * as flatCache from 'flat-cache';
 import { UtilityService } from '@services';
+import { setMonth, setDate, subMonths, formatISO } from 'date-fns';
 
 export type SupportedUses = 'Heating' | 'Cooling' | 'Powering' | 'Lighting';
 
@@ -607,7 +607,6 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
           : undefined;
 
         const projectedEnergy = projetion ? projetion.energy : 0;
-
         const r = {
           produced: thisConsumption.produced,
           fuelSourceName: thisConsumption.fuelSourceName,

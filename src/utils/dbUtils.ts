@@ -1,7 +1,6 @@
 import { DB } from '@lib';
 import { MathUtils } from '@utils';
-import formatISO from 'date-fns/formatISO';
-import subMonths from 'date-fns/subMonths';
+import { formatISO, subMonths } from 'date-fns';
 
 /**
  * Converts default DB date string to Date object

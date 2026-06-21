@@ -132,31 +132,37 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
   const data = await ExcelClient.getUtilityData(excelFile.buffer);
 
   if (data instanceof ApiError) return data;
-  
+
   return DB.transaction(async (txr) => {
-    const consumptionQuries = data.consumptions.map(async (i) => {
+    const consumptionQuries = data.consumptions.map((i) => {
       const { fuelUses, ...data } = i;
 
       const recordId = ulid();
-      await txr('UtilityConsumptions').insert({ ...data, id: recordId });
+      return { ...data, id: recordId };
     });
 
-    const emissionsQueries = data.emissions.map(async (i) => {
+    const emissionsQueries = data.emissions.map((i) => {
       const { fuelUses, ...data } = i;
 
-      await txr('UtilityEmissions').insert(data);
+      return data;
     });
 
-    const targetConsumptionQueries = data.targetConsumption.map(async (i) => {
-      const { fuelUnit, targetValue, ...data } = i;
+    const targetConsumptionQueries = data.targetConsumption.reduce(
+      (json, next) => {
+        const { fuelUnit, targetValue, ...data } = next;
 
-      const [recordId] = await txr('TargetConsumption').insert(data).returning('id');
-      await txr('TargetConsumptionFuelConversion').insert({ targetValue, fuelUnit, targetConsumptionId: recordId.id });
-    });
+        const recordId = ulid();
+        const row = { id: recordId, ...data };
+        json.consumption.push(row);
+        json.fuelConversion.push({ targetValue, fuelUnit, targetConsumptionId: recordId });
+        return json;
+      },
+      { consumption: [] as any[], fuelConversion: [] as any[] },
+    );
 
     const driverEnums = ['R', 'NR'];
 
-    const driverData = data.drivers
+    const driverData = data.driversData
       .reduce((list, next) => {
         const consumptionList = [];
 
@@ -189,12 +195,19 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
       }, [] as { driver: string; category: string; siteId: number | undefined }[])
       .flat();
 
-    await Promise.all(
-      consumptionQuries
-        .concat(emissionsQueries)
-        .concat(targetConsumptionQueries)
-        .concat([txr('UtilityToDriver').insert(driverData)]),
-    );
+    const queries = [
+      txr('UtilityConsumptions').insert(consumptionQuries),
+      txr('TargetConsumption').insert(targetConsumptionQueries.consumption),
+      txr('TargetConsumptionFuelConversion').insert(targetConsumptionQueries.fuelConversion),
+      txr('UtilityEmissions').insert(emissionsQueries).onConflict(['siteId', 'fuelSourceId', 'date']).merge(),
+      txr('UtilityToDriver').insert(driverData).onConflict(['driver', 'category', 'siteId']).merge(),
+      txr('BusinessPatterns')
+        .insert(data.patternsData)
+        .onConflict(['usedInId', 'siteId', 'startDate', 'endDate'])
+        .merge(),
+    ];
+
+    await Promise.all(queries);
 
     return { success: true };
   });
