@@ -8,7 +8,8 @@ const createSite = async (params: RequestBodyParams<'SiteUpdate'> | RequestBodyP
     const r = vals;
     return DB('Sites').update(r).where('id', id).returning('*');
   } else {
-    return (await DB('Sites').insert(vals).returning('id'))[0].id;
+    const { population, workinghours, ...v } = vals;
+    return (await DB('Sites').insert(v).returning('id'))[0].id;
   }
 };
 

@@ -8,14 +8,14 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('UtilityEmissions').insert([
     buildFakeEmission({
-      id: 1000,
+      id: 9000,
       date: '2016-08-01',
       fuelSourceId: 1,
       usedInId: 2,
       siteId: 640,
     }),
     buildFakeEmission({
-      id: 1002,
+      id: 9002,
       date: '2019-08-01',
       fuelSourceId: 1,
       usedInId: 2,

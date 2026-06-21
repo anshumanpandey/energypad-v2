@@ -426,21 +426,21 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('UtilityEmissions').insert([
     buildFakeEmission({
-      id: 1004,
+      id: 9004,
       date: `2020-01-01`,
       fuelSourceId: 1,
       usedInId: 2,
       siteId: site.id,
     }),
     buildFakeEmission({
-      id: 1006,
+      id: 9006,
       date: `2019-01-01`,
       fuelSourceId: 1,
       usedInId: 2,
       siteId: site.id,
     }),
     buildFakeEmission({
-      id: 1008,
+      id: 9008,
       date: `2020-01-01`,
       fuelSourceId: 2,
       usedInId: 2,
@@ -449,14 +449,14 @@ export async function seed(knex: Knex): Promise<void> {
 
     //site2
     buildFakeEmission({
-      id: 1010,
+      id: 9010,
       date: `2019-01-01`,
       fuelSourceId: 1,
       usedInId: 2,
       siteId: site2.id,
     }),
     buildFakeEmission({
-      id: 1012,
+      id: 9012,
       date: `2020-02-01`,
       fuelSourceId: 1,
       usedInId: 2,
@@ -464,21 +464,21 @@ export async function seed(knex: Knex): Promise<void> {
     }),
 
     buildFakeEmission({
-      id: 1014,
+      id: 9014,
       date: `2020-03-01`,
       fuelSourceId: 1,
       usedInId: 2,
       siteId: site2.id,
     }),
     buildFakeEmission({
-      id: 1016,
+      id: 9016,
       date: `2020-04-01`,
       fuelSourceId: 4,
       usedInId: 2,
       siteId: site2.id,
     }),
     buildFakeEmission({
-      id: 1018,
+      id: 9018,
       date: `2020-05-01`,
       fuelSourceId: 5,
       usedInId: 2,
@@ -486,7 +486,7 @@ export async function seed(knex: Knex): Promise<void> {
     }),
 
     buildFakeEmission({
-      id: 1020,
+      id: 9020,
       date: `2020-06-01`,
       fuelSourceId: 2,
       usedInId: 2,

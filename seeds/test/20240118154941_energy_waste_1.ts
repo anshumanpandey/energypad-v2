@@ -309,7 +309,7 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('UtilityEmissions').insert([
     buildFakeEmission({
-      id: 350,
+      id: 3050,
       date: `2002-01-01`,
       fuelSourceId: 2,
       usedInId: 2,
@@ -317,7 +317,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: 609,
     }),
     buildFakeEmission({
-      id: 352,
+      id: 3052,
       date: `2002-02-01`,
       fuelSourceId: 2,
       usedInId: 2,
@@ -325,7 +325,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: 609,
     }),
     buildFakeEmission({
-      id: 354,
+      id: 3054,
       date: `2002-03-01`,
       fuelSourceId: 2,
       usedInId: 2,
@@ -334,7 +334,7 @@ export async function seed(knex: Knex): Promise<void> {
     }),
 
     buildFakeEmission({
-      id: 356,
+      id: 3056,
       date: `2008-06-01`,
       fuelSourceId: 1,
       usedInId: 2,
@@ -342,7 +342,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: 609,
     }),
     buildFakeEmission({
-      id: 358,
+      id: 3058,
       date: `2008-06-01`,
       fuelSourceId: 2,
       usedInId: 2,
@@ -350,7 +350,7 @@ export async function seed(knex: Knex): Promise<void> {
       siteId: 609,
     }),
     buildFakeEmission({
-      id: 360,
+      id: 3060,
       date: `2008-04-01`,
       fuelSourceId: 2,
       usedInId: 2,
