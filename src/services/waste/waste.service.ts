@@ -5,7 +5,7 @@ import Decimal from 'decimal.js';
 import { Matrix, solve } from 'ml-matrix';
 import { calculateIncreasePercentage } from '../../utils/mathUtils';
 import { ProducedConsumption, ValueByRecord, wasteCost, WasteValue } from '../dashboard.service';
-import { HDDRecord } from '../greenDays.service';
+import { HDDRecord, isHdd } from '../greenDays.service';
 
 function linest3Variable(consumption: number[], hdd: number[], cdd: number[], daylighting?: number[]) {
   const rows = consumption.length;
@@ -97,6 +97,7 @@ const wasteSingleNrv = (params: WasteSingleFuelParams & HddParams) => {
     const passHdds = params.hdd.filter(
       (c) =>
         //TODO: add site id to filter
+        isHdd(c) &&
         DashboardService.consumptionIsNotProduced(c) &&
         (DbUtils.filterByYear(params.year - 1) || DbUtils.filterByYear(params.year - 2)),
     );
@@ -189,7 +190,7 @@ const wasteSingleNrv = (params: WasteSingleFuelParams & HddParams) => {
       }
 
       const currentHdd = params.nextHdd.find(
-        (h) => h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date),
+        (h) => h.siteId === consumption.siteId && consumption.date === DbUtils.dateToStringDate(h.date) && isHdd(h),
       );
       if (!currentHdd) {
         continue;
@@ -399,7 +400,6 @@ const wasteMultiNrv = (params: WasteSingleFuelParams & HddParams & DaylightParam
       const net = new Decimal(consumption.consumption).minus(new Decimal(consumptionAvg)).pow(2);
       residualNet.push({ date: DbUtils.increaseYear({ date: consumption.date }, 1), value: net.toNumber() });
     }
-
     const residualTotal = residualPow2.reduce((total, next) => total.plus(next.value), new Decimal(0));
     const netTotal = residualNet.reduce((total, next) => total.plus(next.value), new Decimal(0));
     const R2 = new Decimal(1).minus(new Decimal(residualTotal).div(netTotal));
@@ -694,6 +694,9 @@ const calculateWaste = async (params: WasteSingleFuelParams & HddParams & Daylig
   const isSingleRoutine = rArray.length === 1 && params.drivers.length === 1;
   const isMultipleRoutine = rArray.length > 1 && params.drivers.length === rArray.length;
   const isMultipleNr = params.drivers.filter((i) => i.driver === 'NR').length >= 1;
+
+  const waste = wasteMultiNrv(params);
+  return waste;
 
   if (isSingleRoutine === true) {
     const waste = wasteSingleNrv(params);
