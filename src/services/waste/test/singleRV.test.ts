@@ -362,7 +362,7 @@ test('main', async () => {
     year: 2003,
   };
 
-  const result = WasteCalculationV2.wasteForSinglefuelFunction(params);
+  const result = WasteCalculationV2.wasteSingleNrv(params);
   expect(result.length).toBe(12);
   expect(result[0].waste).toBe(33.24);
   expect(result[1].waste).toBe(36.14);

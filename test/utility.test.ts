@@ -52,7 +52,7 @@ describe('/Utility ', () => {
     expect(second.consumption).toBe(685.18);
   });
 
-  test('It should respond with success message when importing utilities from file', async () => {
+  test.only('It should respond with success message when importing utilities from file', async () => {
     const body = await loginUser(app)('mail212@mail.com');
 
     await supertest(app).post('/api/utility').set('Authorization', `Bearer ${body.jwt}`).send({
@@ -63,7 +63,7 @@ describe('/Utility ', () => {
       .post('/api/utility/importUtility')
       .set('Authorization', `Bearer ${body.jwt}`)
       .field('fuelSource', '1')
-      .attach('excel', 'test/fixtures/utility_sample_good.xlsx');
+      .attach('excel', 'test/fixtures/historic_data_1.xlsx');
     expect(response.statusCode).toBe(200);
     expect(response.body).toMatchSchema(
       schema.components.responses.UtilityFileImport.content['application/json'].schema,
@@ -426,7 +426,7 @@ describe('/Utility ', () => {
     expect(emission5.conversionFactor).toBe(374.48);
   });
 
-  test.only('It should respond with sucess when passing another month name and when there is no emissions or targets', async () => {
+  test('It should respond with sucess when passing another month name and when there is no emissions or targets', async () => {
     const body = await loginUser(app)('mail618@mail.com');
 
     const response = await supertest(app)

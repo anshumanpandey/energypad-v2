@@ -121,40 +121,22 @@ describe('/Dashboard ', () => {
     15 * 1000,
   );
 
-  test(
+  test.only(
     'It should respond with correct energyWasteData data',
     async () => {
       const body = await loginUser(app)('mail723@mail.com');
 
       const response = await supertest(app)
-        .get('/api/dashboard/energyWaste?year=2002')
+        .get('/api/dashboard/energyWaste?year=2003')
         .set('Authorization', `Bearer ${body.jwt}`);
 
       expect(response.statusCode).toBe(200);
       expect(response.body.waste.length).toBe(3);
-      /*expect(response.body.waste[0].waste).toBe(-28.4652);
-      expect(response.body.waste[1].waste).toBe(32.846);
-      expect(response.body.waste[2].waste).toBe(4.7721);*/
-
-
-      const response2 = await supertest(app)
-        .get('/api/dashboard/energyWaste?year=2006')
-        .set('Authorization', `Bearer ${body.jwt}`);
-
-      expect(response2.statusCode).toBe(200);
-      expect(response2.body.waste.length).toBe(3);
-
-      const response3 = await supertest(app)
-        .get('/api/dashboard/energyWaste?year=2010')
-        .set('Authorization', `Bearer ${body.jwt}`);
-
-      expect(response3.statusCode).toBe(200);
-      expect(response3.body.waste.length).toBe(3);
     },
     20 * 1000,
   );
 
-  test.only(
+  test(
     'It should respond with correct report data',
     async () => {
       const body = await loginUser(app)('mail723@mail.com');

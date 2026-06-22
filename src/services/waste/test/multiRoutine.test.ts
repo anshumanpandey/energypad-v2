@@ -270,7 +270,7 @@ test.only('main', async () => {
     year: 2023,
   };
 
-  const result = WasteCalculationV2.wasteForHeatingAndCooling(params);
+  const result = WasteCalculationV2.wasteMultiAdjustment(params);
   expect(result.length).toBe(12);
   expect(result[0].waste).toBe(-1.62);
   expect(result[1].waste).toBe(4.92);

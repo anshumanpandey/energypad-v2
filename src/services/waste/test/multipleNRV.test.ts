@@ -456,7 +456,7 @@ test.only('main', async () => {
     year: 2023,
   };
 
-  const result = WasteCalculationV2.wasteForHeatingOrCoolingAndPower(params);
+  const result = WasteCalculationV2.wasteMultiNrv(params);
   expect(result.length).toBe(12);
   expect(result[0].waste).toBe(14.71);
   expect(result[1].waste).toBe(11.35);
