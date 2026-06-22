@@ -8,8 +8,8 @@ const createSite = async (params: RequestBodyParams<'SiteUpdate'> | RequestBodyP
     const r = vals;
     return DB('Sites').update(r).where('id', id).returning('*');
   } else {
-    const { population, workinghours, ...v } = vals;
-    return (await DB('Sites').insert(v).returning('id'))[0].id;
+    const { population, workinghours, name, ...v } = vals;
+    return (await DB('Sites').insert({ ...v, name: name.trim()}).returning('id'))[0].id;
   }
 };
 
@@ -175,7 +175,7 @@ const findBy = async (params?: FindByParams): Promise<(Omit<AppModels['Site'], '
   }
 
   if (params?.name) {
-    Array.isArray(params.name) ? query.whereIn('name', params.name) : query.where('name', params.name);
+    Array.isArray(params.name) ? query.whereIn('name', params.name.map(n => n.trim())) : query.where('name', params.name.trim());
   }
   if (params?.codes) {
     Array.isArray(params.codes) ? query.whereIn('code', params.codes) : query.where('code', params.codes);
