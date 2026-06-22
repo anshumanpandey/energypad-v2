@@ -277,6 +277,11 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
+"@babel/runtime@^7.21.0":
+  version "7.29.7"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.29.7.tgz#12022450c45a4da6d8d8287b18a4ff2ddb23f768"
+  integrity sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==
+
 "@babel/template@^7.16.0", "@babel/template@^7.3.3":
   version "7.16.0"
   resolved "https://registry.yarnpkg.com/@babel/template/-/template-7.16.0.tgz#d16a35ebf4cd74e202083356fab21dd89363ddd6"
@@ -2117,9 +2122,11 @@ date-fns-tz@^2.0.0:
   integrity sha512-OAtcLdB9vxSXTWHdT8b398ARImVwQMyjfYGkKD2zaGpHseG2UPHbHjXELReErZFxWdSLph3c2zOaaTyHfOhERQ==
 
 date-fns@^2.28.0:
-  version "2.28.0"
-  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.28.0.tgz#9570d656f5fc13143e50c975a3b6bbeb46cd08b2"
-  integrity sha512-8d35hViGYx/QH0icHYCeLmsLmMUheMmTyV9Fcm6gvNwdw31yXXH+O85sOBJ+OLnLQMKZowvpKb6FgMIQjcpvQw==
+  version "2.30.0"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.30.0.tgz#f367e644839ff57894ec6ac480de40cae4b0f4d0"
+  integrity sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==
+  dependencies:
+    "@babel/runtime" "^7.21.0"
 
 dayjs@^1.8.34:
   version "1.10.7"
@@ -3412,6 +3419,11 @@ ipaddr.js@1.9.1:
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/ipaddr.js/-/ipaddr.js-1.9.1.tgz#bff38543eeb8984825079ff3a2a8e6cbd46781b3"
   integrity sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==
+
+is-any-array@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/is-any-array/-/is-any-array-3.0.0.tgz#19364d7bd888ad6c79ce169b949a6d4bd9f44f2d"
+  integrity sha512-o4h+tylWykC4BD1vaejp6gDxoM13bwW8FGuNs4yIKpj8xbBJcRxJx8vZpq0dCr7ZDEfeKjmsi/euolKhX6f/ww==
 
 is-arrayish@^0.2.1:
   version "0.2.1"
@@ -4748,6 +4760,37 @@ mkdirp@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
+
+ml-array-max@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ml-array-max/-/ml-array-max-2.0.0.tgz#263ce6f371d80c37914941a7d4e413b83c5cb722"
+  integrity sha512-QQZ4kENwpWmyNb98UXRDFXrmtIXuXtt1+bSbda/2KA85+F+rrJP8hZk6QOkCQXM2Th9mUDYdq/PNByPdT9ID4A==
+  dependencies:
+    is-any-array "^3.0.0"
+
+ml-array-min@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ml-array-min/-/ml-array-min-2.0.0.tgz#d3268e62dcd8607d77fd9d4489fced151c76311f"
+  integrity sha512-GRj6Ky6sW9vGL6yIjgsHmXZ9YgrdmcQ8nCxPqEGeKc6dkfYg1XDYxGFxADUjNuZyoCd5PUscWAS4N+cFaX6hFg==
+  dependencies:
+    is-any-array "^3.0.0"
+
+ml-array-rescale@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ml-array-rescale/-/ml-array-rescale-2.0.0.tgz#6fcaa3010863a7eac339bb6072618ba7fa17eefe"
+  integrity sha512-2GGtKfSno94/kIloWGvpp/U5Q5vLvLrza+SAaGsLeo6Xj4mEbA6Gqx+oTfZFkxnd1grT2X007HfJNs3T5BsiVg==
+  dependencies:
+    is-any-array "^3.0.0"
+    ml-array-max "^2.0.0"
+    ml-array-min "^2.0.0"
+
+ml-matrix@^6.12.2:
+  version "6.12.2"
+  resolved "https://registry.yarnpkg.com/ml-matrix/-/ml-matrix-6.12.2.tgz#f7e6b388838fbcbc43fcdaf184c8f55029f466d6"
+  integrity sha512-GC+BnW+pBh8Auap8goAxY0senAmF0IEoc3HNVSfnfbvGw0buuDIYb9kAKMS1l+GiwJ1rfK2bzJ8IHhwjzATSFA==
+  dependencies:
+    is-any-array "^3.0.0"
+    ml-array-rescale "^2.0.0"
 
 mobx-react-lite@^3.2.0:
   version "3.2.2"
