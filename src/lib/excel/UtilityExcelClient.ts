@@ -84,10 +84,9 @@ export const getUtilityData = async (file: string | Buffer) => {
       siteId: site?.id,
       fuelSourceId: fuelSource?.id,
       fuelUnit: fuelUnit,
-      fuelUses: foundFuelUses.map((i) => i.id),
       population: consumption.population,
       //TODO: hardcoded for now while figure out where to take it from
-      usedInId: 2,
+      usedInId: foundFuelUses[0].id,
     });
   }
 

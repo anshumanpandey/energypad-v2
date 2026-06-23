@@ -135,10 +135,8 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
 
   return DB.transaction(async (txr) => {
     const consumptionQuries = data.consumptions.map((i) => {
-      const { fuelUses, ...data } = i;
-
       const recordId = ulid();
-      return { ...data, id: recordId };
+      return { ...i, id: recordId };
     });
 
     const emissionsQueries = data.emissions.map((i) => {
@@ -196,7 +194,10 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
       .flat();
 
     const queries = [
-      txr('UtilityConsumptions').insert(consumptionQuries),
+      txr('UtilityConsumptions')
+        .insert(consumptionQuries)
+        .onConflict(['date', 'fuelSourceId', 'siteId'])
+        .merge(['consumption', 'conversionFactor', 'fuelUnit', 'vat', 'usedInId', 'population', 'workingHours']),
       txr('TargetConsumption').insert(targetConsumptionQueries.consumption),
       txr('TargetConsumptionFuelConversion').insert(targetConsumptionQueries.fuelConversion),
       txr('UtilityEmissions').insert(emissionsQueries).onConflict(['siteId', 'fuelSourceId', 'date']).merge(),

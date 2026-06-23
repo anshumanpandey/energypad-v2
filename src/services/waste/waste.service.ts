@@ -573,12 +573,10 @@ const wasteMultiAdjustment = (params: WasteSingleFuelParams & HddParams) => {
         DbUtils.filterByYear(params.year - 1)(c) &&
         DashboardService.consumptionIsNotProduced(c),
     );
-    const passHdds = params.hdd.filter(
-      (h) => DbUtils.filterByYear(params.year - 1)(h) && DashboardService.consumptionIsNotProduced(h),
-    );
+    const passHdds = params.hdd.filter(DbUtils.filterByYear(params.year - 1));
 
     const linearRegresion = linest3Variable(
-      params.consumptions.map((c) => c.consumption),
+      passConsumptions.map(c => c.consumption),
       passHdds.filter((h) => h.kind === 'HDD').map((h) => h.value),
       passHdds.filter((h) => h.kind === 'CDD').map((h) => h.value),
     );
@@ -694,9 +692,6 @@ const calculateWaste = async (params: WasteSingleFuelParams & HddParams & Daylig
   const isSingleRoutine = rArray.length === 1 && params.drivers.length === 1;
   const isMultipleRoutine = rArray.length > 1 && params.drivers.length === rArray.length;
   const isMultipleNr = params.drivers.filter((i) => i.driver === 'NR').length >= 1;
-
-  const waste = wasteMultiNrv(params);
-  return waste;
 
   if (isSingleRoutine === true) {
     const waste = wasteSingleNrv(params);
