@@ -364,7 +364,7 @@ const findCarbonEmissions = (
     const [targetForThisItem] = params.monitoring
       .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.stringDateToDate(c.date) }))
       .filter(UtilityService.filterByFuelSource(c.fuelSourceId));
-    c.carbonTarget = targetForThisItem.carbon;
+    c.carbonTarget = targetForThisItem?.carbon;
     c.increasedConsumptionPercentage = MathUtils.calculateIncreasePercentage({
       currentValue: c.carbonEmission,
       passValue: previouseRecord ? previouseRecord.carbonEmission : 0,
