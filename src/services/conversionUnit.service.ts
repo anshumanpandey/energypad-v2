@@ -15,12 +15,12 @@ const findBy = (p: { names: string | string[] }) => {
   return UnitsUtil.SupportedUnits;
 };
 
-type TargetConsumption = {
+export type TargetConsumption = {
   id: number;
   date: string;
   fuelSourceId: number;
   siteId: number;
-  factorUnits: { targetValue: number; fuelUnit: string }[];
+  factorUnits: { targetCarbon: number; targetValue: number; fuelUnit: string }[];
 };
 const getTargetConsumption = async (p: {
   date?: string | string[];
@@ -29,7 +29,7 @@ const getTargetConsumption = async (p: {
   year?: Date;
 }): Promise<TargetConsumption[]> => {
   const query = DB('TargetConsumption')
-    .select(['TargetConsumption.*', ...addPrefix('TCFC')(['targetValue', 'fuelUnit'])])
+    .select(['TargetConsumption.*', ...addPrefix('TCFC')(['targetValue', 'fuelUnit', 'targetCarbon'])])
     .innerJoin({ TCFC: 'TargetConsumptionFuelConversion' }, 'TargetConsumption.id', 'TCFC.targetConsumptionId');
 
   if (p.year) {
@@ -79,6 +79,7 @@ const getTargetConsumption = async (p: {
     if (foundRecord) {
       foundRecord.factorUnits.push({
         targetValue: record['TCFC-targetValue'],
+        targetCarbon: record['TCFC-targetCarbon'],
         fuelUnit: record['TCFC-fuelUnit'],
       });
       records.set(record.id, foundRecord);
@@ -91,6 +92,7 @@ const getTargetConsumption = async (p: {
         factorUnits: [
           {
             targetValue: record['TCFC-targetValue'],
+            targetCarbon: record['TCFC-targetCarbon'],
             fuelUnit: record['TCFC-fuelUnit'],
           },
         ],

@@ -9,6 +9,7 @@ import { ONE_OF_SUPPORTED_UNIT, resolveConsumptionToKwh } from '../utils/unitsUt
 import { calculateIncreasePercentage } from '../utils/mathUtils';
 import { WasteCalculationV2 } from './waste/waste.service';
 import { DB } from '@lib';
+import { TargetConsumption } from './conversionUnit.service';
 
 const uniqueElements = (a: any) => {
   const seen: Record<number, any> = {};
@@ -331,7 +332,7 @@ const findCarbonEmissions = (
     forYear?: Date;
     allConsumptions: AppModels['UtilityConsumption'][];
     emissions: AppModels['UtilityEmission'][];
-    monitoring: AppModels['ConsumptionTarget'][];
+    targets: TargetConsumption[];
     fuels?: FuelSource[];
   },
   opt?: { ignoreFuelSource: boolean },
@@ -361,10 +362,10 @@ const findCarbonEmissions = (
   const mapCarbonTarget = (carbon: CarbonEmission, idx: number, arr: CarbonEmission[]) => {
     const c = carbon;
     const previouseRecord = arr[idx - 1];
-    const [targetForThisItem] = params.monitoring
+    const [targetForThisItem] = params.targets
       .filter(DbUtils.filterByYearAndMonth({ date: DbUtils.stringDateToDate(c.date) }))
       .filter(UtilityService.filterByFuelSource(c.fuelSourceId));
-    c.carbonTarget = targetForThisItem?.carbon;
+    c.carbonTarget = targetForThisItem?.factorUnits[0].targetCarbon;
     c.increasedConsumptionPercentage = MathUtils.calculateIncreasePercentage({
       currentValue: c.carbonEmission,
       passValue: previouseRecord ? previouseRecord.carbonEmission : 0,

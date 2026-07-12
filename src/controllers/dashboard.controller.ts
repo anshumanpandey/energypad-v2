@@ -1,5 +1,5 @@
 import { ApiError } from '@lib';
-import { UtilityService, DashboardService, UserService, GreenDaysServices, SitesService } from '@services';
+import { UtilityService, DashboardService, UserService, GreenDaysServices, SitesService, ConversionUnitService } from '@services';
 import { AuthGetAppController, AppModels } from '@types';
 import { DbUtils, MathUtils, ErrorUtils, AppUtils } from '@utils';
 import { endOfMonth, formatISO, addYears, endOfYear, subMonths, setMonth, subYears } from 'date-fns';
@@ -194,14 +194,13 @@ export const getReporData: any = async (req: any) => {
       fuelSourceId,
     });
 
-    const monitoring = await UtilityService.getMonitoring({
-      businessId: req.user.id,
+    const targets = await ConversionUnitService.getTargetConsumption({
       siteId,
     });
 
     carbonEmissions = DashboardService.findCarbonEmissions({
       forYear: selectedYear,
-      monitoring,
+      targets,
       emissions,
       allConsumptions: consumptionsForSelectedMonth,
     });
@@ -259,15 +258,14 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
         siteId,
       });
 
-      const monitoring = await UtilityService.getMonitoring({
-        businessId: req.user.id,
+      const targets = await ConversionUnitService.getTargetConsumption({
         siteId,
       });
 
       const [result1, result2] = await Promise.all([
         DashboardService.findCarbonEmissions(
           {
-            monitoring: monitoring,
+            targets: targets,
             forYear: selectedYear,
             emissions,
             allConsumptions: filteredConsumptions,
@@ -277,7 +275,7 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
         ),
         DashboardService.findCarbonEmissions(
           {
-            monitoring: monitoring,
+            targets: targets,
             emissions,
             allConsumptions: consumptionsForSelectedMonth,
             fuels: fuelSources,
@@ -322,20 +320,19 @@ export const getPortfolioData: any = async (req: any) => {
     UserService.getPatterns({ siteId: sitesId, businessId: req.user.id }),
   ]);
 
-  const [emissions, monitoring] = await Promise.all([
+  const [emissions, targets] = await Promise.all([
     UtilityService.getEmissions({
       businessId: req.user.id,
       siteId: sitesId,
       fuelSourceId,
     }),
-    UtilityService.getMonitoring({
-      businessId: req.user.id,
+    ConversionUnitService.getTargetConsumption({
       siteId: sitesId,
     }),
   ]);
 
   const carbonEmissions = DashboardService.findCarbonEmissions({
-    monitoring,
+    targets,
     forYear: selectedYear,
     emissions,
     allConsumptions: consumptions,
@@ -583,14 +580,13 @@ export const energyWaste: any = async (req: any) => {
     fuelSourceId: req.query.fuelSourceId,
   });
 
-  const monitoring = await UtilityService.getMonitoring({
-    businessId: req.user.id,
+  const targets = await ConversionUnitService.getTargetConsumption({
     siteId,
   });
 
   const carbonEmissions = DashboardService.findCarbonEmissions(
     {
-      monitoring,
+      targets ,
       emissions,
       allConsumptions: currentConsumptionRecords,
       fuels: fuelSources,
@@ -826,14 +822,13 @@ export const reports: any = async (req: any) => {
     if (ErrorUtils.isErrorInstance(targetConsumptions)) return targetConsumptions;
   }
 
-  const monitoring = await UtilityService.getMonitoring({
-    businessId: req.user.id,
+  const targets = await ConversionUnitService.getTargetConsumption({
     siteId,
   });
 
   const carbonEmissions = DashboardService.findCarbonEmissions({
     forYear: selectedYear,
-    monitoring,
+    targets,
     emissions,
     allConsumptions: currentConsumptionRecords,
     fuels: fuelSources.filter((f) => fuelSourceToUse.includes(f.id)),

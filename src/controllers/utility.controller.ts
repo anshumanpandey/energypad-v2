@@ -147,12 +147,12 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
 
     const targetConsumptionQueries = data.targetConsumption.reduce(
       (json, next) => {
-        const { fuelUnit, targetValue, ...data } = next;
+        const { fuelUnit, targetValue, targetCarbon, ...data } = next;
 
         const recordId = ulid();
         const row = { id: recordId, ...data };
         json.consumption.push(row);
-        json.fuelConversion.push({ targetValue, fuelUnit, targetConsumptionId: recordId });
+        json.fuelConversion.push({ targetValue, targetCarbon:  fuelUnit, targetConsumptionId: recordId });
         return json;
       },
       { consumption: [] as any[], fuelConversion: [] as any[] },

@@ -132,6 +132,7 @@ export const getUtilityData = async (file: string | Buffer) => {
       fuelSourceId: fuelSource?.id,
       fuelUnit: fuelUnit,
       targetValue: target.value,
+      targetCarbon: target.targetCarbon,
     });
   }
 
@@ -275,6 +276,7 @@ const getTargedData = (w: Worksheet) => {
     fuelType: 'D',
     fuelUnit: 'E',
     value: 'F',
+    targetCarbon: 'G',
   };
   const records: Record<string, string | string[]>[] = [];
   for (let i = 2; i <= w.actualRowCount; i++) {
