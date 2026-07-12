@@ -570,9 +570,7 @@ export type Projection = {
 export const consumingProjection = async (p: ConsummingStaticsticsParams): Promise<Projection[][]> => {
   const sitesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.siteId)).values());
   const fuelSourcesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.fuelSourceId)).values());
-  const year = new Date()
-  year.setFullYear(p.year)
-  const targetData = await ConversionUnitService.getTargetConsumption({ siteId: sitesId, year });
+  const targetData = await ConversionUnitService.getTargetConsumption({ siteId: sitesId });
 
   const mapMonthRecord = new Map();
   for (let fuelIdx = 0; fuelIdx < fuelSourcesId.length; fuelIdx++) {

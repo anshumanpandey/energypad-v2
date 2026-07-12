@@ -26,7 +26,7 @@ const getTargetConsumption = async (p: {
   date?: string | string[];
   fuelSource?: number | number[];
   siteId?: number | number[];
-  year: Date;
+  year?: Date;
 }): Promise<TargetConsumption[]> => {
   const query = DB('TargetConsumption')
     .select(['TargetConsumption.*', ...addPrefix('TCFC')(['targetValue', 'fuelUnit'])])
@@ -43,7 +43,7 @@ const getTargetConsumption = async (p: {
         dates.forEach((i) => builder.orWhere('date', i));
       });
     } else {
-      query.where('date', p.date);
+      query.where('date', 'like', p.date.split('-')[0] + '%');
     }
   }
 
