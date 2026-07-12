@@ -267,7 +267,7 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
       const [result1, result2] = await Promise.all([
         DashboardService.findCarbonEmissions(
           {
-            monitoring,
+            monitoring: monitoring,
             forYear: selectedYear,
             emissions,
             allConsumptions: filteredConsumptions,
@@ -277,7 +277,7 @@ export const getcarbonFootprint: AuthGetAppController<'GetDashboardCarbonFootpri
         ),
         DashboardService.findCarbonEmissions(
           {
-            monitoring,
+            monitoring: monitoring,
             emissions,
             allConsumptions: consumptionsForSelectedMonth,
             fuels: fuelSources,

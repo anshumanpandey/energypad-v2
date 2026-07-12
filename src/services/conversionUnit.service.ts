@@ -6,7 +6,7 @@ const findBy = (p: { names: string | string[] }) => {
   if (p?.names) {
     if (Array.isArray(p.names)) {
       const names = p.names;
-      return UnitsUtil.SupportedUnits.filter((unit) => names.map(u => u.toLowerCase()).includes(unit.toLowerCase()));
+      return UnitsUtil.SupportedUnits.filter((unit) => names.map((u) => u.toLowerCase()).includes(unit.toLowerCase()));
     } else {
       const names = p.names;
       return UnitsUtil.SupportedUnits.filter((unit) => unit.toLowerCase() === names.toLowerCase());
@@ -15,12 +15,19 @@ const findBy = (p: { names: string | string[] }) => {
   return UnitsUtil.SupportedUnits;
 };
 
+type TargetConsumption = {
+  id: number;
+  date: string;
+  fuelSourceId: number;
+  siteId: number;
+  factorUnits: { targetValue: number; fuelUnit: string }[];
+};
 const getTargetConsumption = async (p: {
   date?: string | string[];
   fuelSource?: number | number[];
   siteId?: number | number[];
   year: Date;
-}) => {
+}): Promise<TargetConsumption[]> => {
   const query = DB('TargetConsumption')
     .select(['TargetConsumption.*', ...addPrefix('TCFC')(['targetValue', 'fuelUnit'])])
     .innerJoin({ TCFC: 'TargetConsumptionFuelConversion' }, 'TargetConsumption.id', 'TCFC.targetConsumptionId');

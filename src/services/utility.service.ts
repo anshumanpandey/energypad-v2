@@ -3,6 +3,7 @@ import Decimal from 'decimal.js';
 import { AppModels, RequestBodyParams, Transactionable } from '@types';
 import { DbUtils, MathUtils, UnitsUtil } from '@utils';
 import SiteService from './sites.service';
+import ConversionUnitService from './conversionUnit.service';
 import { ProducedConsumption } from './dashboard.service';
 import { capitalizeFirstLetter } from '../utils/appUtils';
 import { ulid } from 'ulid';
@@ -569,7 +570,9 @@ export type Projection = {
 export const consumingProjection = async (p: ConsummingStaticsticsParams): Promise<Projection[][]> => {
   const sitesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.siteId)).values());
   const fuelSourcesId = Array.from(new Set(p.currentConsumptionRecords.map((i) => i.fuelSourceId)).values());
-  const targetData = await getMonitoring({ siteId: sitesId });
+  const year = new Date()
+  year.setFullYear(p.year)
+  const targetData = await ConversionUnitService.getTargetConsumption({ siteId: sitesId, year });
 
   const mapMonthRecord = new Map();
   for (let fuelIdx = 0; fuelIdx < fuelSourcesId.length; fuelIdx++) {
@@ -590,23 +593,23 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
           break;
         }
 
-        const projetion = targetData.find(
+        const projection = targetData.find(
           (i) =>
             i.date === thisConsumption.date &&
             i.siteId === thisConsumption.siteId &&
             i.fuelSourceId === thisConsumption.fuelSourceId,
         );
 
-        const previouseProjection = projetion
+        const previouseProjection = projection
           ? targetData.find(
               (i) =>
-                i.date === DbUtils.dateToStringDate(subMonths(DbUtils.stringDateToDate(projetion.date), 1)) &&
-                i.siteId === projetion.siteId &&
-                i.fuelSourceId === projetion.fuelSourceId,
-            )
+                i.date === DbUtils.dateToStringDate(subMonths(DbUtils.stringDateToDate(projection.date), 1)) &&
+                i.siteId === projection.siteId &&
+                i.fuelSourceId === projection.fuelSourceId,
+            )?.factorUnits?.find(u => u.fuelUnit === thisConsumption.fuelUnit)
           : undefined;
 
-        const projectedEnergy = projetion ? projetion.energy : 0;
+        const projectedEnergy = projection?.factorUnits.find(u => u.fuelUnit === thisConsumption.fuelUnit)?.targetValue || 0;
         const r = {
           produced: thisConsumption.produced,
           fuelSourceName: thisConsumption.fuelSourceName,
@@ -620,11 +623,11 @@ export const consumingProjection = async (p: ConsummingStaticsticsParams): Promi
           projectedEnergy: projectedEnergy,
           saving: new Decimal(projectedEnergy).minus(thisConsumption ? thisConsumption.consumption : 0).toNumber(),
           increasedPercentage:
-            !previouseProjection || previouseProjection?.energy === 0
+            !previouseProjection || previouseProjection.targetValue === 0
               ? 0
               : MathUtils.calculateIncreasePercentage({
                   currentValue: projectedEnergy || 0,
-                  passValue: previouseProjection?.energy || 0,
+                  passValue: previouseProjection.targetValue || 0,
                 }),
         };
         const found = mapMonthRecord.get(idx.toString());
