@@ -193,6 +193,26 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
       }, [] as { driver: string; category: string; siteId: number | undefined }[])
       .flat();
 
+    const results = await txr('TargetConsumption')
+      .select()
+      .whereIn(
+        'siteId',
+        targetConsumptionQueries.consumption.map((i) => i.siteId),
+      )
+      .whereIn(
+        'fuelSourceId',
+        targetConsumptionQueries.consumption.map((i) => i.fuelSourceId),
+      );
+
+    if (results.length > 0) {
+      await txr('TargetConsumption')
+        .del()
+        .whereIn(
+          'id',
+          results.map((i) => i.id),
+        );
+    }
+
     const queries = [
       txr('UtilityConsumptions')
         .insert(consumptionQuries)
@@ -200,7 +220,7 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
         .merge(['consumption', 'conversionFactor', 'fuelUnit', 'vat', 'usedInId', 'population', 'workingHours']),
       txr('TargetConsumption').insert(targetConsumptionQueries.consumption),
       txr('TargetConsumptionFuelConversion').insert(targetConsumptionQueries.fuelConversion),
-      txr('UtilityEmissions').insert(emissionsQueries).onConflict(['siteId', 'fuelSourceId', 'date']).merge(),
+      txr('UtilityEmissions').insert(emissionsQueries),
       txr('UtilityToDriver').insert(driverData).onConflict(['driver', 'category', 'siteId']).merge(),
       txr('BusinessPatterns')
         .insert(data.patternsData)
