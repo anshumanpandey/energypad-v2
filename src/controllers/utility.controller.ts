@@ -213,11 +213,14 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
         );
     }
 
-    await Promise.all(
-      driverData.map((row) => {
-        return txr('UtilityToDriver').del().where('category', row.category).where('siteId', row.siteId);
-      }),
-    );
+    if (driverData.length > 0) {
+      await txr('UtilityToDriver')
+        .del()
+        .whereIn(
+          'siteId',
+          driverData.map((i) => i.siteId as number),
+        );
+    }
 
     const queries = [
       txr('UtilityConsumptions')
