@@ -213,6 +213,12 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
         );
     }
 
+    await Promise.all(
+      driverData.map((row) => {
+        return txr('UtilityToDriver').del().where('category', row.category).where('siteId', row.siteId);
+      }),
+    );
+
     const queries = [
       txr('UtilityConsumptions')
         .insert(consumptionQuries)

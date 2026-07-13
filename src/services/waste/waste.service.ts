@@ -245,7 +245,7 @@ const wasteSingleNrv = (params: WasteSingleFuelParams & HddParams) => {
 };
 
 const wasteMultiNrv = (params: WasteSingleFuelParams & HddParams & DaylightParams) => {
-  const results: (WasteValue & { projectedEnergy: number; cIntercept: number; significant: boolean })[] = [];
+  const results: (WasteValue & { projectedEnergy: number; cIntercept: number; significant: boolean, nraWaste?: number })[] = [];
   const fuelSources = Array.from(
     new Set(params.consumptions.concat(params.nextConsumptions).map((i) => i.fuelSourceId)).values(),
   );
@@ -476,24 +476,24 @@ const wasteMultiNrv = (params: WasteSingleFuelParams & HddParams & DaylightParam
       if (!expectedSaving) continue;
 
       const nraAdjusted = new Decimal(expectedSaving.value).times(nraFactor);
-
+      
       const currentConsumption = params.nextConsumptions.find((t) => t.date === currentTime.date);
       if (!currentConsumption) continue;
-
+      
       const waste = new Decimal(nraAdjusted).minus(currentConsumption.consumption);
-
+      
       // row 80
       nraWaste.push({ date: currentConsumption.date, value: waste.toNumber() });
     }
 
     const IPMVPThreshold = new Decimal(2).times(regresion);
-    for (let i = 0; i < nraWaste.length; i++) {
-      const waste = nraWaste[i];
+    for (let i = 0; i < waste.length; i++) {
+      const daylightWaste = waste[i];
 
-      const consumption = params.nextConsumptions.find((t) => t.date === waste.date);
+      const consumption = params.nextConsumptions.find((t) => t.date === daylightWaste.date);
       if (!consumption) continue;
 
-      const significant = new Decimal(waste.value).abs().greaterThanOrEqualTo(IPMVPThreshold);
+      const significant = new Decimal(daylightWaste.value).abs().greaterThanOrEqualTo(IPMVPThreshold);
 
       const pastValue = results.find(
         (r) =>
@@ -519,9 +519,11 @@ const wasteMultiNrv = (params: WasteSingleFuelParams & HddParams & DaylightParam
       );
 
       const time = params.nextTime.find((t) => t.date === consumption.date && t.siteId === consumption.siteId);
+      const thisNraWaste = nraWaste.find(i => i.date)
 
       results.push({
-        waste: new Decimal(waste.value).toDP(2).toNumber(),
+        waste: new Decimal(daylightWaste.value).toDP(2).toNumber(),
+        nraWaste: thisNraWaste?.value,
         significant,
         hdd: currentHdd,
         cdd: currentCdd,
@@ -532,16 +534,16 @@ const wasteMultiNrv = (params: WasteSingleFuelParams & HddParams & DaylightParam
         wasteCost: wasteCost({
           consumption: consumption.consumption,
           consumptionCost: consumption.totalCost,
-          waste: waste.value,
+          waste: daylightWaste.value,
         }),
         wasteVatCost: consumption.vatCost
           ? wasteCost({
               consumption: consumption.consumption,
               consumptionCost: consumption.vatCost,
-              waste: waste.value,
+              waste: daylightWaste.value,
             })
           : null,
-        date: waste.date,
+        date: daylightWaste.date,
         consumption: consumption.consumption,
         projectedEnergy: 0,
         fuelSourceId: consumption.fuelSourceId,
@@ -551,7 +553,7 @@ const wasteMultiNrv = (params: WasteSingleFuelParams & HddParams & DaylightParam
         cIntercept: 0,
         usedIn: consumption.usedIn,
         increasedPercentage: pastValue
-          ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: waste.value })
+          ? calculateIncreasePercentage({ passValue: pastValue?.waste, currentValue: daylightWaste.value })
           : 0,
       });
     }
