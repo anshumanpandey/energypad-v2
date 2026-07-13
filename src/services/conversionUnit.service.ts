@@ -34,6 +34,7 @@ const getTargetConsumption = async (p: {
 
   if (p.year) {
     query.where('date', DbUtils.dateToStringDate(p.year));
+    query.where('date', 'like', p.year.getFullYear() + '%');
   }
 
   if (p.date) {
@@ -43,7 +44,7 @@ const getTargetConsumption = async (p: {
         dates.forEach((i) => builder.orWhere('date', i));
       });
     } else {
-      query.where('date', 'like', p.date.split('-')[0] + '%');
+      query.where('date', p.date);
     }
   }
 

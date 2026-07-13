@@ -289,6 +289,7 @@ const getTargedData = (w: Worksheet) => {
       fuelType: row.getCell(columnMap.fuelType).toString(),
       fuelUnit: row.getCell(columnMap.fuelUnit).toString().split('-').pop() || '',
       value: row.getCell(columnMap.value).toString() || '',
+      targetCarbon: row.getCell(columnMap.targetCarbon).toString() || '',
     };
     records.push(r);
   }
