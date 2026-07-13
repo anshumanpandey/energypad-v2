@@ -220,7 +220,7 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
         .merge(['consumption', 'conversionFactor', 'fuelUnit', 'vat', 'usedInId', 'population', 'workingHours']),
       txr('TargetConsumption').insert(targetConsumptionQueries.consumption),
       txr('TargetConsumptionFuelConversion').insert(targetConsumptionQueries.fuelConversion),
-      txr('UtilityEmissions').insert(emissionsQueries),
+      txr('UtilityEmissions').insert(emissionsQueries).onConflict(['siteId', 'fuelSourceId', 'date']).merge(),
       txr('UtilityToDriver').insert(driverData).onConflict(['driver', 'category', 'siteId']).merge(),
       txr('BusinessPatterns')
         .insert(data.patternsData)
