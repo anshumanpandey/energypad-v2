@@ -222,6 +222,16 @@ export const importFile: AuthAppController<'LogFileImport', 'LogFileImport'> = a
         );
     }
 
+    await Promise.all(
+      consumptionQuries.map((i) => {
+        const year = i.date.split('-')[0];
+        return txr('UtilityConsumptions')
+          .del()
+          .where({ siteId: i.siteId, fuelSourceId: i.fuelSourceId })
+          .whereLike('date', `${year}-%`);
+      }),
+    );
+
     const queries = [
       txr('UtilityConsumptions')
         .insert(consumptionQuries)
