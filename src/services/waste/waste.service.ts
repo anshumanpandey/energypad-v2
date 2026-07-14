@@ -352,10 +352,14 @@ const wasteMultiNrv = (params: WasteSingleFuelParams & HddParams & DaylightParam
     const totalOfCddDaylight = cddTimesDaylight.reduce((total, c) => total.plus(c.value), new Decimal(0)).toNumber();
 
     const sample = linest3Variable(
-      params.consumptions.map((c) => c.consumption),
-      params.hdd.filter((h) => h.kind === 'HDD').map((h) => h.value),
-      params.hdd.filter((h) => h.kind === 'CDD').map((h) => h.value),
-      params.daylight.map((h) => h.value),
+      params.consumptions
+        .filter((c) => params.year - 1 === DbUtils.stringDateToDate(c.date).getFullYear())
+        .map((c) => c.consumption),
+      params.hdd.filter((h) => h.kind === 'HDD' && params.year - 1 === h.date.getFullYear()).map((h) => h.value),
+      params.hdd.filter((h) => h.kind === 'CDD' && params.year - 1 === h.date.getFullYear()).map((h) => h.value),
+      params.daylight
+        .filter((d) => DbUtils.stringDateToDate(d.date).getFullYear() === params.year - 1)
+        .map((h) => h.value),
     );
 
     const residualPow2: { date: string; value: number }[] = [];
