@@ -460,7 +460,7 @@ export const energyWaste: any = async (req: any) => {
 
   const oldParams = {
     businessId: req.user.id,
-    startDate: subYears(selectedYear, 2),
+    startDate: subYears(selectedYear, 1),
     endDate: endOfYear(subYears(selectedYear, 1)),
     siteId,
   };
@@ -648,7 +648,7 @@ export const reports: any = async (req: any) => {
   const fuelSourceToUse = fuelSources.map(AppUtils.getRecordId);
   const oldParams = {
     businessId: req.user.id,
-    startDate: subYears(selectedYear, 2),
+    startDate: subYears(selectedYear, 1),
     endDate: endOfYear(subYears(selectedYear, 1)),
     siteId,
   };
