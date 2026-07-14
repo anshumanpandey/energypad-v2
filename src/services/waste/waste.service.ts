@@ -97,9 +97,7 @@ const wasteSingleNrv = (params: WasteSingleFuelParams & HddParams) => {
     const passHdds = params.hdd.filter(
       (c) =>
         //TODO: add site id to filter
-        isHdd(c) &&
-        DashboardService.consumptionIsNotProduced(c) &&
-        (DbUtils.filterByYear(params.year - 1) || DbUtils.filterByYear(params.year - 2)),
+        isHdd(c) && DashboardService.consumptionIsNotProduced(c) && DbUtils.filterByYear(params.year - 1)(c),
     );
 
     const currentFuelSourceNextConsumption = params.nextConsumptions.filter(
@@ -245,7 +243,12 @@ const wasteSingleNrv = (params: WasteSingleFuelParams & HddParams) => {
 };
 
 const wasteMultiNrv = (params: WasteSingleFuelParams & HddParams & DaylightParams) => {
-  const results: (WasteValue & { projectedEnergy: number; cIntercept: number; significant: boolean, nraWaste?: number })[] = [];
+  const results: (WasteValue & {
+    projectedEnergy: number;
+    cIntercept: number;
+    significant: boolean;
+    nraWaste?: number;
+  })[] = [];
   const fuelSources = Array.from(
     new Set(params.consumptions.concat(params.nextConsumptions).map((i) => i.fuelSourceId)).values(),
   );
@@ -476,12 +479,12 @@ const wasteMultiNrv = (params: WasteSingleFuelParams & HddParams & DaylightParam
       if (!expectedSaving) continue;
 
       const nraAdjusted = new Decimal(expectedSaving.value).times(nraFactor);
-      
+
       const currentConsumption = params.nextConsumptions.find((t) => t.date === currentTime.date);
       if (!currentConsumption) continue;
-      
+
       const waste = new Decimal(nraAdjusted).minus(currentConsumption.consumption);
-      
+
       // row 80
       nraWaste.push({ date: currentConsumption.date, value: waste.toNumber() });
     }
@@ -519,7 +522,7 @@ const wasteMultiNrv = (params: WasteSingleFuelParams & HddParams & DaylightParam
       );
 
       const time = params.nextTime.find((t) => t.date === consumption.date && t.siteId === consumption.siteId);
-      const thisNraWaste = nraWaste.find(i => i.date)
+      const thisNraWaste = nraWaste.find((i) => i.date);
 
       results.push({
         waste: new Decimal(daylightWaste.value).toDP(2).toNumber(),
@@ -578,7 +581,7 @@ const wasteMultiAdjustment = (params: WasteSingleFuelParams & HddParams) => {
     const passHdds = params.hdd.filter(DbUtils.filterByYear(params.year - 1));
 
     const linearRegresion = linest3Variable(
-      passConsumptions.map(c => c.consumption),
+      passConsumptions.map((c) => c.consumption),
       passHdds.filter((h) => h.kind === 'HDD').map((h) => h.value),
       passHdds.filter((h) => h.kind === 'CDD').map((h) => h.value),
     );
@@ -705,7 +708,7 @@ const calculateWaste = async (params: WasteSingleFuelParams & HddParams & Daylig
     const waste = wasteMultiNrv(params);
     return waste;
   }
-  return []
+  return [];
 };
 
 export const WasteCalculationV2 = {

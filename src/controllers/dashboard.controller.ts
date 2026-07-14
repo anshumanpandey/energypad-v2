@@ -720,91 +720,36 @@ export const reports: any = async (req: any) => {
     if (pastHdds instanceof ApiError) return pastHdds;
     if (currentHdd instanceof ApiError) return currentHdd;
 
-    const singleFuelConsumptions = await DashboardService.filterSingleConsumptionForHeatingOrCooling({
-      yearToFilterBy: year - 2,
-      consumptions: oldConsumptions,
-    });
-    const singleFuelProjectedConsumptions = await DashboardService.filterSingleConsumptionForHeatingOrCooling({
-      yearToFilterBy: year - 1,
-      consumptions: oldConsumptions,
-    });
-    const lightingAndPowerConsumptions = await DashboardService.filterLightingAndPowerConsumption({
-      yearToFilterBy: year - 2,
-      consumptions: oldConsumptions,
-    });
-    const lightingAndPowerProjectedConsumptions = await DashboardService.filterLightingAndPowerConsumption({
-      yearToFilterBy: year - 1,
-      consumptions: oldConsumptions,
+    const drivers = await DashboardService.getSiteDrivers({
+      siteId: Array.from(new Set(oldConsumptions.map((c) => c.siteId)).values()),
     });
 
-    const energyParams = {
-      drivers: [],
+    const replaceSiteId = <T = { siteId: number }>(r: T) => ({ ...r, siteId });
+    const filterPassYear = (y: number) => (c: ProducedConsumption) => c.date.split("-")[0] === y.toString()
+    const energyParams: Parameters<typeof WasteCalculationV2.calculateWaste>[0] = {
+      drivers,
       consumptions: oldConsumptions,
-      hdd: pastHdds.filter(isHdd),
-      cdd: pastHdds.filter(isCdd),
+      hdd: multi_nrv_hdd.oldHdd.map(replaceSiteId),
       nextConsumptions: currentConsumptionRecords,
-      nextHdd: currentHdd,
-      nextCdd: currentHdd,
+      nextHdd: multi_nrv_hdd.nextHdd.map(replaceSiteId),
       year,
 
-      population: oldConsumptions.map((c) => ({
+      population: oldConsumptions.filter(filterPassYear(year - 1)).map((c) => ({
         siteId: c.siteId,
         value: c.population,
         date: c.date,
       })),
-      nextPopulation: currentConsumptionRecords.map((c) => ({
+      nextPopulation: currentConsumptionRecords.filter(filterPassYear(year)).map((c) => ({
         siteId: c.siteId,
         value: c.population,
         date: c.date,
       })),
 
-      time: oldConsumptions.map((c) => ({
-        siteId: c.siteId,
-        value: c.workingHours,
-        date: c.date,
-      })),
-      nextTime: currentConsumptionRecords.map((c) => ({
-        siteId: c.siteId,
-        value: c.workingHours,
-        date: c.date,
-      })),
+      time: multi_nrv_hdd.hours.map(replaceSiteId),
+      nextTime: multi_nrv_hdd.nextHours.map(replaceSiteId),
 
-      daylight: sites
-        .map((s) => {
-          const gen = new Rand('6345323');
-          return Array(oldConsumptions.length)
-            .fill(0)
-            .map((_, idx) => ({
-              siteId: s.id,
-              value: Number.parseFloat((gen.next() * 100).toFixed(2)),
-              date: `${year - 1}-${(idx + 1).toString().padStart(2, '0')}-01`,
-            }));
-        })
-        .flat(),
-      nextDaylight: sites
-        .map((s) => {
-          const gen = new Rand('546725442');
-          return Array(currentConsumptionRecords.length)
-            .fill(0)
-            .map((_, idx) => ({
-              siteId: s.id,
-              value: Number.parseFloat((gen.next() * 100).toFixed(2)),
-              date: `${year}-${(idx + 1).toString().padStart(2, '0')}-01`,
-            }));
-        })
-        .flat(),
-
-      singleFuelConsumptions: singleFuelConsumptions,
-      singleFuelHdd: pastHdds.filter(DbUtils.filterByYear(year - 2)),
-
-      singleFuelProjectedConsumptions: singleFuelProjectedConsumptions,
-      singleFuelProjectedHdd: pastHdds.filter(DbUtils.filterByYear(year - 1)),
-
-      lightingAndPowerConsumptions: lightingAndPowerConsumptions,
-      lightingAndPowerProjectedConsumptions: lightingAndPowerProjectedConsumptions,
-
-      selectedYearConsumptions: currentConsumptionRecords,
-      selectedYearHdd: currentHdd.filter(DbUtils.filterByYear(year)),
+      daylight: multi_nrv_hdd.daylight.map(replaceSiteId),
+      nextDaylight: multi_nrv_hdd.nextDaylight.map(replaceSiteId),
     };
 
     statistics = await WasteCalculationV2.calculateWaste(energyParams);
