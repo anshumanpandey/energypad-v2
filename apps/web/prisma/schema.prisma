@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  ANALYST
+  SITE_MANAGER
+  VIEWER
+}
+
+enum PlatformRole {
+  USER
+  PLATFORM_ADMIN
+}
+
+enum PlanKey {
+  STARTER
+  GROWTH
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+model User {
+  id            String       @id @default(uuid()) @db.Uuid
+  name          String?
+  email         String       @unique
+  emailVerified DateTime?    @db.Timestamptz(3)
+  image         String?
+  platformRole  PlatformRole @default(USER)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(3)
+  accounts      Account[]
+  sessions      Session[]
+  memberships   Membership[]
+}
+
+model Account {
+  id                String  @id @default(uuid()) @db.Uuid
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid()) @db.Uuid
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime @db.Timestamptz(3)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime @db.Timestamptz(3)
+  @@unique([identifier, token])
+}
+
+model Plan {
+  key          PlanKey @id
+  name         String
+  siteLimit    Int?
+  entitlements Json
+  organisations Organisation[]
+}
+
+model Organisation {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  currency    String   @default("GBP") @db.Char(3)
+  timezone    String   @default("Europe/London")
+  planKey     PlanKey  @default(STARTER)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  plan        Plan     @relation(fields: [planKey], references: [key])
+  memberships Membership[]
+  invitations Invitation[]
+  sites       Site[]
+  auditEvents AuditEvent[]
+}
+
+model Membership {
+  id             String         @id @default(uuid()) @db.Uuid
+  organisationId String         @db.Uuid
+  userId         String         @db.Uuid
+  role           MembershipRole
+  revokedAt      DateTime?      @db.Timestamptz(3)
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @db.Timestamptz(3)
+  organisation   Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  siteAssignments SiteAssignment[]
+  @@unique([organisationId, userId])
+  @@unique([id, organisationId])
+  @@index([userId, revokedAt])
+}
+
+model Site {
+  id             String   @id @default(uuid()) @db.Uuid
+  organisationId String   @db.Uuid
+  code           String
+  name           String
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(3)
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  assignments    SiteAssignment[]
+  invitationSites InvitationSite[]
+  @@unique([id, organisationId])
+  @@unique([organisationId, code])
+}
+
+model SiteAssignment {
+  organisationId String @db.Uuid
+  membershipId   String @db.Uuid
+  siteId         String @db.Uuid
+  membership     Membership @relation(fields: [membershipId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  site           Site @relation(fields: [siteId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  @@id([membershipId, siteId])
+  @@index([organisationId, siteId])
+}
+
+model Invitation {
+  id             String         @id @default(uuid()) @db.Uuid
+  organisationId String         @db.Uuid
+  email          String
+  role           MembershipRole
+  tokenHash      String         @unique
+  invitedBy      String         @db.Uuid
+  expiresAt      DateTime       @db.Timestamptz(3)
+  acceptedAt     DateTime?      @db.Timestamptz(3)
+  revokedAt      DateTime?      @db.Timestamptz(3)
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  organisation   Organisation   @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  sites          InvitationSite[]
+  @@unique([id, organisationId])
+  @@index([organisationId, email])
+}
+
+model InvitationSite {
+  organisationId String @db.Uuid
+  invitationId   String @db.Uuid
+  siteId         String @db.Uuid
+  invitation     Invitation @relation(fields: [invitationId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  site           Site @relation(fields: [siteId, organisationId], references: [id, organisationId], onDelete: Cascade)
+  @@id([invitationId, siteId])
+}
+
+model AuditEvent {
+  id             String   @id @default(uuid()) @db.Uuid
+  organisationId String   @db.Uuid
+  actorUserId    String   @db.Uuid
+  action         String
+  targetId       String
+  correlationId  String   @db.Uuid
+  metadata       Json
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  @@index([organisationId, createdAt])
+}
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int
+  expiresAt DateTime @db.Timestamptz(3)
+}

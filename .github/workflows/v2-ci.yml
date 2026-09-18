@@ -1,0 +1,59 @@
+name: V2 foundation
+on:
+  push:
+    paths: ["apps/web/**", ".github/workflows/v2-ci.yml"]
+  pull_request:
+    paths: ["apps/web/**", ".github/workflows/v2-ci.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: v2-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/web
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: energiepad
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U energiepad"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_ADMIN_URL: postgresql://energiepad:ci-only@localhost:5432/postgres
+      AUTH_URL: http://localhost:3101
+      AUTH_SECRET: ci-only-ephemeral-secret-not-used-in-production-1234567890
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:integration
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: v2-browser-results
+          path: apps/web/test-results/
+          retention-days: 7

@@ -1,0 +1,2288 @@
+{
+  "captured": "2026-09-17",
+  "rootRevision": "926702eb0eccfdf443085f58d347688ef520d2fb",
+  "nestedRevision": "6aca4341153011e157ec8a67f1b5d6395cefd25d",
+  "files": [
+    {
+      "file": "src/app.ts",
+      "sha256": "feae8136a2502706378985df85a03c46c470c7ad00b50326a8b9fbecb48cde8b"
+    },
+    {
+      "file": "src/controllers/auth.controller.ts",
+      "sha256": "419d63caaa78a05df5f55f1f35d64e7539620108c02c384f9b1db35a1d918838"
+    },
+    {
+      "file": "src/controllers/conversionUnit.controller.ts",
+      "sha256": "dc707f08f2ef0d96159407df8ea3ffdf2f122e7b649bc72cccc021cb8b77e450"
+    },
+    {
+      "file": "src/controllers/dashboard.controller.ts",
+      "sha256": "6cc718cab1168d5b51174a7973f503f6ef83cf9dd93ad2604da5cb46030f25dd"
+    },
+    {
+      "file": "src/controllers/index.ts",
+      "sha256": "92263e6db8dd35f41fc6b54b000c629a61259af4064fb53922a72a86d925f7b2"
+    },
+    {
+      "file": "src/controllers/multi_adjustment_hdd.ts",
+      "sha256": "b13340ad63f6e807c70c3827368942fb35d34474611738ff6af571ff29b6dd34"
+    },
+    {
+      "file": "src/controllers/multi_nrv_hdd.ts",
+      "sha256": "f017ccbffe6ef5959ad1bcf2283c4a6bc17452599932b8855b33a9fcbbc5d0a7"
+    },
+    {
+      "file": "src/controllers/single_rv_hdd.ts",
+      "sha256": "61860eabe85b97a9518a6cc043e3470632e3ac55f0153dfadfced385ee42134b"
+    },
+    {
+      "file": "src/controllers/sites.controller.ts",
+      "sha256": "20b48c634eb6ca6a061e0777aba4a4a1ef7cc9374bbcf37f34a1405f70f6fa3d"
+    },
+    {
+      "file": "src/controllers/user.controller.ts",
+      "sha256": "654e920e5e6bd808fa5d4f461c872a70e245bc0051487cbafabd61a03a2f4ac8"
+    },
+    {
+      "file": "src/controllers/utility.controller.ts",
+      "sha256": "5878b2f45bb3c992c2339aaf198485ad2f88edc9af452bb0d8ffd66e9d9f4310"
+    },
+    {
+      "file": "src/index.ts",
+      "sha256": "00c55e47ae7abb074f88af9a3e9b6a0527ed77ff6acbf4314e57eff65d507cdb"
+    },
+    {
+      "file": "src/lib/ApiError.ts",
+      "sha256": "b0ab20a1d4a6c81e433050e0d9cc7c03df79b4f87115a387e511d24d4d2ed524"
+    },
+    {
+      "file": "src/lib/EnvFactory.ts",
+      "sha256": "bc91c80c0cfa35a860c1e4e11ab560a7e3fe177fa7e6f4ecbe7cc91ca9931c19"
+    },
+    {
+      "file": "src/lib/GlobalEnv.ts",
+      "sha256": "c733b2f8d0e0f379ce07f8b4ea9010e630c361906ec91aedd91487120e2e7e3c"
+    },
+    {
+      "file": "src/lib/Logger.ts",
+      "sha256": "1f06c3bff6568bfac9a2c8f58499cef83f1cef29a4418ef3f4b6eca4b8e12793"
+    },
+    {
+      "file": "src/lib/db/Db.ts",
+      "sha256": "ffb218609fff9b82c70db78a1dee8870e8a58af2df8cd3d6ed9cd779fe030458"
+    },
+    {
+      "file": "src/lib/db/knexfile.ts",
+      "sha256": "a32025dba3a686c14c9321dda91be2f6fde5d011a74303911b1dc339cefda4a7"
+    },
+    {
+      "file": "src/lib/excel/BusinessExcelClient.ts",
+      "sha256": "ac6ea44df60619b976a2d10482851c3337f0500c30c11686064876ddd2debd93"
+    },
+    {
+      "file": "src/lib/excel/LogExcelClient.ts",
+      "sha256": "b2e26e713adf4415d04a77159144c413740526c14d5e709e64e9b2854744c14d"
+    },
+    {
+      "file": "src/lib/excel/OperationsExcelClient.ts",
+      "sha256": "3eb3f15fa51141280231c0dfd891d238c1e0212ce050890f1d485435490ce626"
+    },
+    {
+      "file": "src/lib/excel/TenantExcelClient.ts",
+      "sha256": "338570f3161cf6887b4b293bc64f013b77403d5760844e5799bd3a911fe52dbb"
+    },
+    {
+      "file": "src/lib/excel/UtilityEmissionExcelClient.ts",
+      "sha256": "bcdeeacf7c5d4355381af9812fad36c94bf7a66d3d05870c49d93f88390badbc"
+    },
+    {
+      "file": "src/lib/excel/UtilityExcelClient.ts",
+      "sha256": "6906b871c14d618915f4291345d4fd3cc400b93eaea20c54b6a8d70d46e107f4"
+    },
+    {
+      "file": "src/lib/excel/index.ts",
+      "sha256": "b19d5d230a46fa2a52e9925a424a7193fda55b17a23c7c3072bc6b21b02db670"
+    },
+    {
+      "file": "src/lib/index.ts",
+      "sha256": "06dccbb7cbf06743fb6fd8319826f6beea3a929d4788fb32118a8c894f81c793"
+    },
+    {
+      "file": "src/middleware/appHelmet.middleware.ts",
+      "sha256": "45a62d83c198372e2bbbeb67331a10967dc79ff0459b03b209aa84f33c207e4b"
+    },
+    {
+      "file": "src/middleware/auth.middleware.ts",
+      "sha256": "03c7a431a3157da6f747b008a986336df40cb745675ef0e590064abbf344852c"
+    },
+    {
+      "file": "src/middleware/error.middleware.ts",
+      "sha256": "b1112c883ed15daadd58c9a382aa4eeb3ed74fedc3d69d148670e7baa60f0d42"
+    },
+    {
+      "file": "src/middleware/expressAsync.middleware.ts",
+      "sha256": "407d1b3e5b2983bf4c6a69afeb9e282a0375db5c8111aed48e6dcd72eff3d16d"
+    },
+    {
+      "file": "src/middleware/fileupload.middleware.ts",
+      "sha256": "45c0c766d3072426d64998b1fef84e5da5765846b35e6e2bcacbc7681c9739d0"
+    },
+    {
+      "file": "src/middleware/index.ts",
+      "sha256": "e9ef34e4aab179a55c8c71b5cc54c0a226f85800ff95254c72d32d1a87df5719"
+    },
+    {
+      "file": "src/middleware/requestValidator.middleware.ts",
+      "sha256": "2790de8a800972ff2928340f7e019a58924e97c57dd85137eb73f9c5f71f5066"
+    },
+    {
+      "file": "src/openApi/OpenApiDefinition.ts",
+      "sha256": "3e38935ac910cb00a8b09c6d18cc3715f5278c27ab11c5815e75f79032f0e7b9"
+    },
+    {
+      "file": "src/openApi/definitions/auth.login.definition.ts",
+      "sha256": "6f5547858e82707edac31d216e90ec82a89fe9290bdca6084023783646a5ea03"
+    },
+    {
+      "file": "src/openApi/definitions/auth.register.definition.ts",
+      "sha256": "e224c624a354c35d86771d668ee8a41cdcbde66858d35111047fc005deb6a17f"
+    },
+    {
+      "file": "src/openApi/definitions/businessEnergy.definition.ts",
+      "sha256": "a561932dcb2f4cc7bb0fac79a2855737a542e92e581f25f09fe4f80a4a09571e"
+    },
+    {
+      "file": "src/openApi/definitions/businessEnergyBrand.definition.ts",
+      "sha256": "eb9b37068a22858f97ab8b63389fecd9d9cd20300060787b140a9941166ac131"
+    },
+    {
+      "file": "src/openApi/definitions/businessEnergyCost.definition.ts",
+      "sha256": "c8a7f1402d82f3de249284144f5f2bdda2d891e21bbf705265e510a88a8d202c"
+    },
+    {
+      "file": "src/openApi/definitions/businessEnergyDistance.definition.ts",
+      "sha256": "90338b0c97607b518cd4f5c8b47e7a9270d6e0fbcc264848a77c0c82cc0909ac"
+    },
+    {
+      "file": "src/openApi/definitions/businessFloor.definition.ts",
+      "sha256": "d3a82c7743938fe6e1cde778815ca11d09f04ac0084a1258a63de26fa0fb7392"
+    },
+    {
+      "file": "src/openApi/definitions/businessPattern.definition.ts",
+      "sha256": "8419105e500cb3687c3f0834be7992be26fc4b35e5cf74eb553b405af1de4430"
+    },
+    {
+      "file": "src/openApi/definitions/conversionUnit.get.definition.ts",
+      "sha256": "b65cec1c229bbf96fd4a787dc828a0492069cafe5de1c3bf234444ece31b6a0b"
+    },
+    {
+      "file": "src/openApi/definitions/countries.get.definition.ts",
+      "sha256": "a4002f4d9b63845d183ef0cac1d8a5bd8803b900cbd9a102641eb7bc66c0a793"
+    },
+    {
+      "file": "src/openApi/definitions/dashboard.carbonfootprint.get.definition.ts",
+      "sha256": "0b2eb23fb0d034b6b98eb9bf14fad5eacf5f6a34c9e60a18dab0de07d0e29a1e"
+    },
+    {
+      "file": "src/openApi/definitions/dashboard.energywaste.get.definition.ts",
+      "sha256": "980c6c0d74c76482648f117b5de69e6e5d6c75951e0e3e895e96c0f55a6227a4"
+    },
+    {
+      "file": "src/openApi/definitions/dashboard.get.definition.ts",
+      "sha256": "67af39159e9516402f10c513d8bef7a5b17ccbf2012d071eb0656e7812d4b360"
+    },
+    {
+      "file": "src/openApi/definitions/dashboard.portfolio.get.definition.ts",
+      "sha256": "b7bc1394d21f21a28cd4941b9e0003e54368984dd53597378200fd013d34bcd7"
+    },
+    {
+      "file": "src/openApi/definitions/dashboard.report.get.definition.ts",
+      "sha256": "e5d62cfa04a7c0de9914e5316036d2a5c76754fbc301bd4f98df80c0002bd792"
+    },
+    {
+      "file": "src/openApi/definitions/energyLog.definition.ts",
+      "sha256": "680ce20442979830d5a8525d8b5847e6cc0f803235eccc388105bd7985d9abe5"
+    },
+    {
+      "file": "src/openApi/definitions/energyTarget.definition.ts",
+      "sha256": "4429cbbacbe327f3d557c5a968396f9d6948d9661f6740cd2dd800da1081748f"
+    },
+    {
+      "file": "src/openApi/definitions/fuelSource.definition.ts",
+      "sha256": "c8b208fd074cfeb68ba4de160b6cf741873ae08f7ab3afac1cc14da6d1218159"
+    },
+    {
+      "file": "src/openApi/definitions/fuelUse.definition.ts",
+      "sha256": "423448f431aa153ca971e3ee23e8ae8a144d9d7f4d40e70c19adf4856eb66c89"
+    },
+    {
+      "file": "src/openApi/definitions/genericError.definition.ts",
+      "sha256": "603157e46f2563ba6a5b6b8ae561008304361e20dfaa0d1ff413145f4a61b0b1"
+    },
+    {
+      "file": "src/openApi/definitions/jwt.definition.ts",
+      "sha256": "5c281fbafc9e54f9483a31767f346a85c2102d481cabbf0d3d69722088531ccf"
+    },
+    {
+      "file": "src/openApi/definitions/logFile.import.definition.ts",
+      "sha256": "f16a6434f15fa927e9871ef5f36327412e1a5f1a9cc09d3135b68ad21c0cfbe7"
+    },
+    {
+      "file": "src/openApi/definitions/programme.definition.ts",
+      "sha256": "511981736eff2f2c356a6fe3a2855308f91ee835f60ec0ba441d6ab3d64c6dff"
+    },
+    {
+      "file": "src/openApi/definitions/review.definition.ts",
+      "sha256": "bfd90d4baa39844b48a754b5e765c84dc3081d1771e3f9e7608838d8f8c751dc"
+    },
+    {
+      "file": "src/openApi/definitions/savingTip.definition.ts",
+      "sha256": "5b112a491e98fc1b09c8aee13df42b039c5893d9a34e654388ffce76aaa8e309"
+    },
+    {
+      "file": "src/openApi/definitions/savingTips.get.definition.ts",
+      "sha256": "ef35fc04562067c9c32b43f184490ed1f2533944d93f38e4421dbd2e0c30e032"
+    },
+    {
+      "file": "src/openApi/definitions/site.create.definition.ts",
+      "sha256": "a3b5bee144ef8cba6d4c0ab6b0dd9b6510009ce1a7ec49cb8d23f3e03ef73c2e"
+    },
+    {
+      "file": "src/openApi/definitions/site.definition.ts",
+      "sha256": "48e5255441dc4fcc08229a6df5eeae0f8166daae24c97388ad5b695d0791f8b6"
+    },
+    {
+      "file": "src/openApi/definitions/site.delete.definition.ts",
+      "sha256": "0adaffebb4257d1520881874508fb7bdc8577b918c0e5604d88e829156e903c2"
+    },
+    {
+      "file": "src/openApi/definitions/site.update.definition.ts",
+      "sha256": "e3f94b1ba2db7fe8a9004cdd403e40ffacedad3931cb1c14fb0898af2933fbd6"
+    },
+    {
+      "file": "src/openApi/definitions/siteConversionUnit.set.definition.ts",
+      "sha256": "786358c0dd76c2d0a765f6a3ffbc748b4189dba56d403f870b0f3d983364b7a1"
+    },
+    {
+      "file": "src/openApi/definitions/siteDetails.get.definition.ts",
+      "sha256": "fa02dd3d8a4556ae9b10866dc5a454ab561f3acf7d64c73345403261aa9b8f31"
+    },
+    {
+      "file": "src/openApi/definitions/states.get.definition.ts",
+      "sha256": "748014a3307bb33cbfd1fbf54e86ce1b513b2eb4333a1d93d2190439ed3d4ad0"
+    },
+    {
+      "file": "src/openApi/definitions/success.definition.ts",
+      "sha256": "fe05b8bb59d25fe6fb8c63e182584da75edc22edd6a17248382174a4a9a2edc9"
+    },
+    {
+      "file": "src/openApi/definitions/tenant.definition.ts",
+      "sha256": "51dabc6d18db42f04c57cae95b5a9044f64f54d738bebf2ae5ab3349b9a0c817"
+    },
+    {
+      "file": "src/openApi/definitions/user.definition.ts",
+      "sha256": "956f566e58cb9e74c0a2b50bf0f259cae946cb116e0595c43e0aefa63f7a708a"
+    },
+    {
+      "file": "src/openApi/definitions/user.energy.get.definition.ts",
+      "sha256": "b9f19079478145bd4747dc49a3860782cf16af69dcc579b08269ed3edf2b34bc"
+    },
+    {
+      "file": "src/openApi/definitions/user.floors.post.definition.ts",
+      "sha256": "0e5131104f82ce9844c61f1a9f00ed7f337085103afed9c3ae94c9a70bf57d8a"
+    },
+    {
+      "file": "src/openApi/definitions/user.get.definition.ts",
+      "sha256": "6bf5939c884d1a56679969a37c534f760162c6b2e96eb71b731c5c982bb1869e"
+    },
+    {
+      "file": "src/openApi/definitions/user.get.floors.definition.ts",
+      "sha256": "7be8a2c492192988c20fc92b8b1d25b70430d2848d622b0d9600fab327ca52af"
+    },
+    {
+      "file": "src/openApi/definitions/user.get.sites.definition.ts",
+      "sha256": "5fbb77743ef88b97b4ee4901dd27ce34ea9f92285af5451e2ba7d4786bbff57a"
+    },
+    {
+      "file": "src/openApi/definitions/user.import.definition.ts",
+      "sha256": "f3e42bcaa0684544d6c78f611bba6f839f23a5f71be9acb7998cc07dd2bcc088"
+    },
+    {
+      "file": "src/openApi/definitions/user.log.get.definition.ts",
+      "sha256": "0652fe33961c07ee646762009da7ded98905afb81de3823de840a38870a26fb8"
+    },
+    {
+      "file": "src/openApi/definitions/user.log.post.definition.ts",
+      "sha256": "c69014fc21f7b182016f2b8a5ac4cf147a37e73abd5abd89ecef3aaf39e8f124"
+    },
+    {
+      "file": "src/openApi/definitions/user.operation.import.definition.ts",
+      "sha256": "4862fcedf26a2dab52b03ca36e4d05fc5897d4fcac0981d3e8591be6ed0a9165"
+    },
+    {
+      "file": "src/openApi/definitions/user.patterns.get.definition.ts",
+      "sha256": "b28aa12e49dca722649cb65c08c0df8a5321a626ad9bc4c1f10c02d4c1083ce5"
+    },
+    {
+      "file": "src/openApi/definitions/user.programmes.post.definition.ts",
+      "sha256": "3e7d0ad0a1073461f69c907540b076be6dbcabcae9d217a7728359c0684fedb9"
+    },
+    {
+      "file": "src/openApi/definitions/user.review.post.definition.ts",
+      "sha256": "6eb854b71ead63a707878c8320fad471139e441441b269a06e86cd15c3a7ca74"
+    },
+    {
+      "file": "src/openApi/definitions/user.saveEnergy.definition.ts",
+      "sha256": "33ba233cf9762b5c9987ed3e212bd0410a882da578fd9f8a658916ab11981ceb"
+    },
+    {
+      "file": "src/openApi/definitions/user.savePattern.definition.ts",
+      "sha256": "c610c2ecf411703a41ee4f3812a7d9fcd65053ef49b6c6a5d1ef69fb48152ae6"
+    },
+    {
+      "file": "src/openApi/definitions/user.tenant.import.definition.ts",
+      "sha256": "0bc817cdd8986499a3c13c93d8d801d670050cb5ba96fa3a670a850aecd01207"
+    },
+    {
+      "file": "src/openApi/definitions/user.tenant.post.definition.ts",
+      "sha256": "cf0466044b6766f904c08b0f485751806ad3191e3947680231e0372d782b18af"
+    },
+    {
+      "file": "src/openApi/definitions/user.update.definition.ts",
+      "sha256": "1e95ea439cbdb699aaeccbc7e8668708295ed140a5a1cca73b8ef7b78d70427b"
+    },
+    {
+      "file": "src/openApi/definitions/utility.fuelSources.get.definition.ts",
+      "sha256": "ef4409e35287705d042bae0ec470d43ac5745f2c83b65c46e9b196feec29cd9a"
+    },
+    {
+      "file": "src/openApi/definitions/utility.getConsumption.get.definition.ts",
+      "sha256": "8a8b5013b08cbd157096025c07084e08b9b38e0ea062b6b9b0924a6a5e48983d"
+    },
+    {
+      "file": "src/openApi/definitions/utility.getEmissions.get.definition.ts",
+      "sha256": "00a9bb93c9ec747b765300ae1d6aa41cc39447c02835c2fd9912387d27553afe"
+    },
+    {
+      "file": "src/openApi/definitions/utility.getMonitoring.get.definition.ts",
+      "sha256": "be49ec4765bebedc6f43e8913d4836fdff95b52cdd697e5ff092307a5c6a7de9"
+    },
+    {
+      "file": "src/openApi/definitions/utility.usedIn.get.definition.ts",
+      "sha256": "71b17d2cd1a4be5147e350bc76e7f4d91b9c543205c8fb8c0e7dd16a339f0d09"
+    },
+    {
+      "file": "src/openApi/definitions/utilityConsumption.add.definition.ts",
+      "sha256": "056c2433dae5602562bbbd2faa8d31ab054db9ec65c968766a60183122f90a15"
+    },
+    {
+      "file": "src/openApi/definitions/utilityConsumption.definition.ts",
+      "sha256": "fae89c7553e53e82a7dc31915b5ed05cf78c30ff636bf468af9d5ad09d7140e5"
+    },
+    {
+      "file": "src/openApi/definitions/utilityEmission.add.definition.ts",
+      "sha256": "e2feddfcd90d79f42bab6d99e88ccd8008c90d546799a8a65e406791a0dcf2cc"
+    },
+    {
+      "file": "src/openApi/definitions/utilityFile.import.definition.ts",
+      "sha256": "083ec40423a6ab943c4b2332fa5f98fb2f51e3136cdf6383cf13f7e5e8fa06ba"
+    },
+    {
+      "file": "src/openApi/definitions/utilityMonitoring.add.definition.ts",
+      "sha256": "2de7666728755fe7bf85c1e757105aeb27fa9715f27bb4a659dbc3b9b4c01f17"
+    },
+    {
+      "file": "src/openApi/index.ts",
+      "sha256": "bf691e3d6210623ce8ec6e595bf6a7fd3186981cc2c56094d05250c1d51d3112"
+    },
+    {
+      "file": "src/routes/v1/auth.route.ts",
+      "sha256": "57d56858bd37da0d8ac4470c3fb098a130d349c2b7b673df2f92810a73a12f9e"
+    },
+    {
+      "file": "src/routes/v1/business.route.ts",
+      "sha256": "6807585da464c36c12fb1581debe9bcf5a9015aa85d093b3169735ac3707f301"
+    },
+    {
+      "file": "src/routes/v1/conversionUnit.route.ts",
+      "sha256": "78cd007e88827664c7cd102f69261147f14187007d879087e5f5a76da3df7f1a"
+    },
+    {
+      "file": "src/routes/v1/dashboard.route.ts",
+      "sha256": "b9200f5a2ecdd9054c23226129fe4c55b2866d74f99d62ff1b6985f588a57b75"
+    },
+    {
+      "file": "src/routes/v1/index.ts",
+      "sha256": "ed75ea59291fcac923986919cb7432b1279b18efd57fd7f895aee5e687dcc019"
+    },
+    {
+      "file": "src/routes/v1/sites.route.ts",
+      "sha256": "0f877f43ff865556f837e8198317f8a309e426c5ad8297cf1c25fe60ead82243"
+    },
+    {
+      "file": "src/routes/v1/utility.route.ts",
+      "sha256": "bca2817db5976f8be42d1ab5ddbf3bb66e07b203277a53faf9a3415a0c946d56"
+    },
+    {
+      "file": "src/scripts/GenerateSchema.ts",
+      "sha256": "806c1f397b2dc1a6836afe9d18f06e175ece8420530170911127dece0ff584d2"
+    },
+    {
+      "file": "src/scripts/GenerateTypes.ts",
+      "sha256": "23eeb863954a992b306dd014a411f9afd660aadda18edc6003a479e73fe2c8f0"
+    },
+    {
+      "file": "src/services/auth.service.ts",
+      "sha256": "90e0641b12dafb6c7525edb32d0552e095879d5a5d558e07dfabf0f6387b1b59"
+    },
+    {
+      "file": "src/services/conversionUnit.service.ts",
+      "sha256": "727c8d318088e11a78959603358acd65ca7e2ba174a94a996937fe8cb94278ba"
+    },
+    {
+      "file": "src/services/dashboard.service.ts",
+      "sha256": "e32132914e99a8e8bdf2efbef1b94b34496b218c1c3e7a7153c23a7cd1e7c957"
+    },
+    {
+      "file": "src/services/greenDays.service.ts",
+      "sha256": "cd80ac034fa05d5288261c1b95ba010d93b281ffa51bf1f13e9775dae6c57d4b"
+    },
+    {
+      "file": "src/services/index.ts",
+      "sha256": "fb24d3d051d096ed322ddee381d79b5eed7b3139ca952a00df904a7c6c0d2e1f"
+    },
+    {
+      "file": "src/services/sites.service.ts",
+      "sha256": "4d3117ae49c28fd1e5d26f5775a2f07c75287c6a64ad9617e7743801c4956ff1"
+    },
+    {
+      "file": "src/services/timedate.service.ts",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "src/services/user.service.ts",
+      "sha256": "677effbf1dbdcb7243b0b055b48188adf3ffe096eeec520882293a0abacc4719"
+    },
+    {
+      "file": "src/services/utility.service.ts",
+      "sha256": "0fbbe68e6e543406d43198a36756e16142e637ed4a7ebd2792f47672d00ffd5f"
+    },
+    {
+      "file": "src/services/waste/test/multiRoutine.test.ts",
+      "sha256": "0ddf8b9938b71892c9722ac19958c416ac260da691588588788ec7b941673d1a"
+    },
+    {
+      "file": "src/services/waste/test/multipleNRV.test.ts",
+      "sha256": "85bcea23f3e8a07cfa616383f8b74808892594f7c7b80fdbff919e1f00122ea4"
+    },
+    {
+      "file": "src/services/waste/test/singleRV.test.ts",
+      "sha256": "22d30228f20ded5e3908a5b0ac3e86de9a8670952afffbe0133bdc1f7de4806d"
+    },
+    {
+      "file": "src/services/waste/test/waste.test.ts",
+      "sha256": "f6f4b1de51fbc3487fb0e52d98ba8dd65890901bbfec8bfa3fa6ad133362cb08"
+    },
+    {
+      "file": "src/services/waste/waste.service.ts",
+      "sha256": "964a14c280b3c85ca54b7843e2256d181f720b08fa878c2d32138bd72caf9d8a"
+    },
+    {
+      "file": "src/types/Generated.ts",
+      "sha256": "588db0561490ac7d65da2099f4717b530493726d381b9d9f14d285fa0b930397"
+    },
+    {
+      "file": "src/types/custom.d.ts",
+      "sha256": "c69a4cf2a3fa6adbec922ff683af26e63058e92de7237f17b184622d38e17a23"
+    },
+    {
+      "file": "src/types/index.ts",
+      "sha256": "d5c19655468e29f60c871b21e73af8ebc653f736e7123ade916f22c4a5f80ce5"
+    },
+    {
+      "file": "src/types/types.ts",
+      "sha256": "fa84cb762fe572f61e7febb1c32853e13d1cc2455e81cdb5a935d10dc047f20d"
+    },
+    {
+      "file": "src/utils/appUtils.ts",
+      "sha256": "3cb02e8400aa244f9847d7b74d8d90275b43d1c135d768217fd8090fd50ca934"
+    },
+    {
+      "file": "src/utils/dbUtils.ts",
+      "sha256": "eeb16db2df1403612d011b1a297d46859835fa5fbe02962ea405fc9b38cf6374"
+    },
+    {
+      "file": "src/utils/errorUtils.ts",
+      "sha256": "f909ce03c736a72ef719c2fe5178a4fb7121d3735a6ff4502e13f9450d281801"
+    },
+    {
+      "file": "src/utils/excelUtils.ts",
+      "sha256": "89400e279aca4e58f7ee2698a70aa04b930eb40f85b23de838667202ea39d514"
+    },
+    {
+      "file": "src/utils/getSinglePropArr.ts",
+      "sha256": "f56891d3c481ddcbd02f6add16832fd61ab50d4a3990a28c4b4f8a88f68814b4"
+    },
+    {
+      "file": "src/utils/index.ts",
+      "sha256": "8050813795f36f70ed1240d3e832acdd165d5378ffbd94ccb8b697a93fc8d5a4"
+    },
+    {
+      "file": "src/utils/mathUtils.ts",
+      "sha256": "14a3933a261472fab55ce144189576b391e8e0172c90ecee82250212b7cc850d"
+    },
+    {
+      "file": "src/utils/passwordEncryption.ts",
+      "sha256": "04b936144dc5352af48d3b4498969b89e9dbab9663627bce89ad37f4247e636e"
+    },
+    {
+      "file": "src/utils/unitsUtils.ts",
+      "sha256": "a4d0b37caec255953811f934d9525871e5feb8ab173566b1ffe3776be2a9682d"
+    },
+    {
+      "file": "migrations/20211109190309_users_table.ts",
+      "sha256": "9b237f7a1d4575fb1856838dbe0c1c73b03a740c5165b08ba6b31c371db3b3d0"
+    },
+    {
+      "file": "migrations/20211111150106_sites_table.ts",
+      "sha256": "df756e54259fbfc32799212588229bbde1dd8d21684406cad0d969ae16cb33f6"
+    },
+    {
+      "file": "migrations/20211111202053_utility_table.ts",
+      "sha256": "2f2551bb102d898f4147c4182b26a44f3e9718b3b5b95ac5c601478f692e73b6"
+    },
+    {
+      "file": "migrations/20211111212202_utility_consumption_table.ts",
+      "sha256": "eff490c6abab79cf1d1fe2717d6c9556fca0e793295a5cd26bbb2a310276564b"
+    },
+    {
+      "file": "migrations/20211209162755_programmes.ts",
+      "sha256": "01eafc51978c78cab5fcbe245364eee5e272d2b29a65333830b7299628fddf9b"
+    },
+    {
+      "file": "migrations/20211210173932_brand.ts",
+      "sha256": "91e9f2bb4951ec1051eda16bb8da04d2dc2d60e89f1a7493bbb830f38847c6e3"
+    },
+    {
+      "file": "migrations/20211212024743_energy_saving_tips.ts",
+      "sha256": "b11dcac3a800897f1dc055940c75651411f7b6898b9fa8a1c44a17f94d7ef20b"
+    },
+    {
+      "file": "migrations/20211212054148_fuel_props.ts",
+      "sha256": "f8d63941bad4e8e1ca76575174387721a8369e246cbb5768f54b4659f67bc997"
+    },
+    {
+      "file": "migrations/20211213040401_business_pattern.ts",
+      "sha256": "391446e1d75f90a94267d3b8e494cda949657d44b71ea8f8ce47c7fa25168d15"
+    },
+    {
+      "file": "migrations/20211213055820_utility_consumption_2.ts",
+      "sha256": "6456580269d978095d89d37cd139b0d423b067697e56f8cb15273607f7aa83dc"
+    },
+    {
+      "file": "migrations/20211213150659_emissions.ts",
+      "sha256": "84fa337439062483ba9c6a2a4b925e1aa1cafd85db85a5f8cf94e2dd3715e32a"
+    },
+    {
+      "file": "migrations/20211213175444_business_log.ts",
+      "sha256": "8487e4f13c71d2751cd2305203d370d5cf7be70adcb4a6e2b32398ab4601fe0b"
+    },
+    {
+      "file": "migrations/20211213181052_business_tenant.ts",
+      "sha256": "c4ba98963862554b0f095b3a481d9aacb19017542b6ec368e162982c79904699"
+    },
+    {
+      "file": "migrations/20211213191706_programmes_2.ts",
+      "sha256": "4082c4501c8ee86c4d07bf0d290e64b6aa212ab97a7b9a0204a32a3e2cedbdff"
+    },
+    {
+      "file": "migrations/20211213221453_business_review.ts",
+      "sha256": "4a14501e4e0476ac4ff2ad3f15111757029e18a862e6ffaa2e10be52207b5c2a"
+    },
+    {
+      "file": "migrations/20211220015724_utilityEmission_2.ts",
+      "sha256": "d8c3acc448b70afd9ab4a8bda44cb3831e81a3d389cb242ce3b6a2d40128f811"
+    },
+    {
+      "file": "migrations/20211220022447_utility_consumption_2.ts",
+      "sha256": "55b3f360cd43fe2fda8eb1153e860f01caec443e6f660f32a323e3d5eed4ad40"
+    },
+    {
+      "file": "migrations/20220107120704_site_2.ts",
+      "sha256": "aab1976b9d9173739102bb8be307f7c82c76b13a8fbc3277bb6828b0314c7c17"
+    },
+    {
+      "file": "migrations/20220113173107_business_energy_2.ts",
+      "sha256": "26e478a0c2775f134f69686c24189397c8b3e59621c14935feffc649abd3ae45"
+    },
+    {
+      "file": "migrations/20220117153702_fuel_sources.ts",
+      "sha256": "cce73997daa3a459b047be83576bf7f555adb3e57d2f52c0575f72be803b7489"
+    },
+    {
+      "file": "migrations/20220208154757_consumption_emission.ts",
+      "sha256": "54cbe20508be9a23681e43f84fcc77573b9c69039f768302a6a8bd8df7d40dec"
+    },
+    {
+      "file": "migrations/20220214152346_business_pattern_2.ts",
+      "sha256": "e5591bcd9bf2c5dc4faed3906fd2b418a54d9d9bc0e1a411f2b99988f63661bb"
+    },
+    {
+      "file": "migrations/20220311163726_energy_2.ts",
+      "sha256": "53e99979f8a6fbb94d8703672ad912fa56f8cc198d7fda38a27861094794ec30"
+    },
+    {
+      "file": "migrations/20220315203747_countries.ts",
+      "sha256": "8c9bb01d3c162b180cd7f337495c76922f248ce58216b970a520f426642bcdb3"
+    },
+    {
+      "file": "migrations/20220622161940_business_working_hours.ts",
+      "sha256": "acd19e88721c8d3dd533770e1629f800c6bc34c3b41d7506d97ec768f576f408"
+    },
+    {
+      "file": "migrations/20220624181053_business_2.ts",
+      "sha256": "eb89000989cdc2c96a8a651d71abd1c3c1a861986d993af7653be780606eccd0"
+    },
+    {
+      "file": "migrations/20220624183401_site_workinghours.ts",
+      "sha256": "822c08fea480b6d42fe1bf94f008ef1c7c30808930440cb747807fa55bf20c14"
+    },
+    {
+      "file": "migrations/20220922133258_currency_1.ts",
+      "sha256": "6f4fcf305d82ccfb307173bac1bd3489aeb1f71890ec1650d4f76afe8af50f8e"
+    },
+    {
+      "file": "migrations/20220922191909_consumption_3.ts",
+      "sha256": "755f1c35ee79ebafd8604ac2a83e0a416b12f305b62317eaf0003b4eaa8d2c9d"
+    },
+    {
+      "file": "migrations/20220923161813_site_employee_time.ts",
+      "sha256": "ec633c1588f97dca1d57c1d3cc0af99c52d1813c1c956d01f7bc13c5acda8e7f"
+    },
+    {
+      "file": "migrations/20220923174942_consumption_4.ts",
+      "sha256": "1ecc67f963853457d5573c9cba3614c4f37a32b10ef6e3875e66c9d53410cc0e"
+    },
+    {
+      "file": "migrations/20220923204330_consumption_type.ts",
+      "sha256": "69b9120406c8c9ae05bacc1fdf8661c74ce9a772a6cd1971271210b744c557f4"
+    },
+    {
+      "file": "migrations/20220927144429_site_conversion_unit.ts",
+      "sha256": "a3031405bdc086117040a0a8417925d3c97afc6274156fe24c5c8c3e2c29637a"
+    },
+    {
+      "file": "migrations/20220927204942_sites_business_uniquename.ts",
+      "sha256": "84a3bf3972ad0efc6a99665095e9bf816c625699ec25bb1ba1da52712b6befaa"
+    },
+    {
+      "file": "migrations/20221011155047_site_unique_name.ts",
+      "sha256": "1124b1cf925a0b202c9f66979dba7b2e7befead03aa51922ba12e5a732f7b9dd"
+    },
+    {
+      "file": "migrations/20221130161903_emission_2.ts",
+      "sha256": "076d0522c6721059ccec481e17352972fabc754d4007830ce03191ecd6c03776"
+    },
+    {
+      "file": "migrations/20221205164121_business_address.ts",
+      "sha256": "316ed048652ce909e480fc50f81d4304b38f702f2bd9049b5a57439dc97e808c"
+    },
+    {
+      "file": "migrations/20221208160430_site_country.ts",
+      "sha256": "7aee162f64148a94462ba9b02314787020a4361f503386462aefb01a010ab02b"
+    },
+    {
+      "file": "migrations/20221209185506_emission_3.ts",
+      "sha256": "6da5156cdad611911f7af069307312e394a513a99a84629d3ec7492baa3a45ca"
+    },
+    {
+      "file": "migrations/20221212195034_consumption_emission_target.ts",
+      "sha256": "2470a087f2d38819b075c60b4b6f01fae5172ae2d8c6d3c08102a11cb7dd4ac4"
+    },
+    {
+      "file": "migrations/20230419154350_business_siteName.ts",
+      "sha256": "962a8037eb71f4061f098bbbaa85b6cccca1648c32f94c2a4dce371ed6238739"
+    },
+    {
+      "file": "migrations/20230421182635_emission_consumption_remove.ts",
+      "sha256": "f885689183e25b007c62b964a7841da09c65cb15d0b6e4f2d5a1823aa32b1c63"
+    },
+    {
+      "file": "migrations/20230424183822_utility_monitoring.ts",
+      "sha256": "2612f759d921171e583db66920d0042a8bfbace9c584c7a5fbd9d1f5f51f7875"
+    },
+    {
+      "file": "migrations/20230531184856_business_state_optional.ts",
+      "sha256": "f29804e3a11737109cf8b2892e884e46b126d19894e085ebdc0ce3da9bf49fc7"
+    },
+    {
+      "file": "migrations/20230601222114_business_pattern_unique.ts",
+      "sha256": "c061d80d8f7098c05bb10f1d158fd5281909e17af7f5664409d309bc24726506"
+    },
+    {
+      "file": "migrations/20230617073554_consumption_id.ts",
+      "sha256": "148f3654d47bf8f6df5cfff975c24df5f02a7580301b75ddb0e7a25ee962e040"
+    },
+    {
+      "file": "migrations/20230622234526_business_subscriptionDate.ts",
+      "sha256": "b0a609471b3d4349ef90864bfa717d4a74136b05e8a7ef99c95144f18cda3539"
+    },
+    {
+      "file": "migrations/20230623091553_emissions_factor_type.ts",
+      "sha256": "a983e91958f1b0d56ffb9a56a40a4a9d8971626b578ad4ef0b688189dff62de4"
+    },
+    {
+      "file": "migrations/20230623223413_emission_monitoring_refactor.ts",
+      "sha256": "2f0e88441911940db7f9ae4b8df8d401544cc6cc094e1ecf3791045474c35eca"
+    },
+    {
+      "file": "migrations/20230626164347_site_code.ts",
+      "sha256": "56d88e286fb33fb3c1f6491248e26e6c9973f084af40ddaa8af7d61a817591ca"
+    },
+    {
+      "file": "migrations/20230628003643_consumption_emission_target_types.ts",
+      "sha256": "aaab394fe043187d848225670964799607afb9d712c513e3e12848a33b9ae6c7"
+    },
+    {
+      "file": "migrations/20230628140018_site_vat.ts",
+      "sha256": "d195fc2e6671a99264b11ad085a70eec76dc9759a4423e053ef5aaf5e83824fe"
+    },
+    {
+      "file": "migrations/20230703215842_site_code_unique.ts",
+      "sha256": "ee663ee34deeb75b721bc84631d9c2fbb9ad4a41795892d2f606447e18856e9d"
+    },
+    {
+      "file": "migrations/20240831012717_utility_unique_index.ts",
+      "sha256": "87d23839525f417fee4467b1bee7ab5ab9865ceebcf2028265717d19c7c5a57c"
+    },
+    {
+      "file": "migrations/20241009063913_tips_user_mapping.ts",
+      "sha256": "5f3c355adb7c2853433fe9265d54e57327286a11f3dce6a4d51b3a2d18f9e375"
+    },
+    {
+      "file": "migrations/20241011120551_tip_user_siteid.ts",
+      "sha256": "b46b005204390886ff4c92246ba2dd4e4aca5fe2e7ba90a6dfdd586db119f76d"
+    },
+    {
+      "file": "migrations/20241120031833_utility_vatCost.ts",
+      "sha256": "c4980bc3ffce57923ac55361b56a1eaf85861fc156a24d6c849d0394ec0d7393"
+    },
+    {
+      "file": "migrations/20250317181454_consumption_population_time.ts",
+      "sha256": "e3cc595f4d4e5cd7ca1561b1f96a131b7783655f3067e0571964e6f486fd2d0b"
+    },
+    {
+      "file": "migrations/20260612073555_waste_config_sheet.ts",
+      "sha256": "87a2c8b46b05f8256beeeeaec1b536a5dc02f95291e95a687de4ac847fc0b20e"
+    },
+    {
+      "file": "migrations/20260622125419_consumption_unique.ts",
+      "sha256": "dc822703a2786dcb847be2f0ef922f9831cafd19af1fc1600425a6648e12e471"
+    },
+    {
+      "file": "migrations/20260712224525_TargetConsimptionTargetCarbon.ts",
+      "sha256": "0f110c3996ac313ff4663ccccb9264296809788a9a191ed951d83539b4ad6ac4"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/About.js",
+      "sha256": "a8d3433f804c5e0f155a81ea41610234302a88f1bc035791522aafbe95f7691c"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/About.tsx",
+      "sha256": "a940c75f69d10a3d9a8db129a83db9a79d63eb0975ca5fc73c13a36abc54fcdf"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Analytics.js",
+      "sha256": "37e47f9850b5521af8feb747b364cf3eaeeab1e3ee02cfbc4fcb79748b5ed557"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Analytics.tsx",
+      "sha256": "04f246dac68407fd6d6a4f65f3a048cae5f5f528d58b515cb95f70f4622a5014"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/CarbonFootprint/Carbon.js",
+      "sha256": "967e98ba61225061227f86d61535c90b43f580d86d62d26c05b9c76754a29cea"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/CarbonFootprint/Carbon.tsx",
+      "sha256": "f028bd5aff2c41bfb85bd89abd1e1c38a6165934f7db38229cb1c1db73739d29"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/CarbonFootprint/CarbonEmissionsTable.js",
+      "sha256": "757e5c31bebc69a2e53177197069b25ee2ad194593fd1a5b3e1a9c3a97dd8ea1"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/CarbonFootprint/CarbonEmissionsTable.tsx",
+      "sha256": "d1be1fe81b193ad764dcffc8a1552d3211e5f822dae7731d69618a06796ed870"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/CarbonFootprint/CarbonFootprints.js",
+      "sha256": "cb385233adf0258296b4ea32a872a860049ebf93ec5530c518074e9e5c782f2b"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/CarbonFootprint/CarbonFootprints.tsx",
+      "sha256": "8d66f145154adb53c19dd58e8d41e3f92cb85565cd83de0ea74732f18b811603"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/CarbonFootprint/HorizontalGroup.js",
+      "sha256": "601079ac19ba614a12fa49b3f4323d2dd9af2f430aaac1c73ec9d7faa8ff9f93"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/CarbonFootprint/HorizontalGroup.tsx",
+      "sha256": "c68f60b5895dde41b88fc61ac1a7e677fb81e780a428fd6efbf80e12fd1e3625"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/CarbonFootprint/HorizontalGrouped.js",
+      "sha256": "5f1cd683751b3672e60b71339643ae1e877c7cdbf0347d53dd8eb9b18cc9a56b"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/CarbonFootprint/HorizontalGrouped.tsx",
+      "sha256": "916413f60a98da8ec5641d1e929803299da60e6ef47ba54b5a07d6a06169de0a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Card.js",
+      "sha256": "590ddf9493cd32a7f5d83756a88cec9f495688b50ec520168597a24e201bb9fc"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Card.tsx",
+      "sha256": "b3535fa1c1b1c0875368c46ce78e238226504913baafa2e52bb8d239bf49e5fc"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/DivergingBar.js",
+      "sha256": "286cec0858d5caa0dc0fbeb2a4799e2c9039d76b7b1279bd6130b09b0418bbb4"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/DivergingBar.tsx",
+      "sha256": "f69c0c710a6f2995ce4d8b329de6fa6488608485ea395d75d790435f194c6566"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/DoubleSideBar.js",
+      "sha256": "8120c74d236bd0d9d028fc7ece0f67f6292cc84ced786a0a5db45297c106abc3"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/DoubleSideBar.tsx",
+      "sha256": "d2d4294d3db48fdf17fa209a5c1c7aff16cfe043120d317d57218db2db011637"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/GroupedBar.js",
+      "sha256": "cff4a2b72859f63968ffa4452cafc487e98d1f19d3130d9dda15cf12d4ef8653"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/GroupedBar.tsx",
+      "sha256": "3a0eded49ab5d7f5e3467e0a606f30e70e1090d9324e84694d1389511a6a702a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/OrdinaryBarChart.js",
+      "sha256": "7c72e16bb0a85f6e946af66ede6e0c26ca808df06481cedef4ba5fa0e978930b"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/OrdinaryBarChart.tsx",
+      "sha256": "6f28ab727e4e8a469027525576cc6d0118bf23873ebae0737e41119e88662eec"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/StackedSigns.js",
+      "sha256": "78b77278731bea3d51e67f42a229501b81891b883e1d9b392e357d854be7eb85"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/StackedSigns.tsx",
+      "sha256": "bbe069a572db104adddfcb381e6bd708bdec6999a173cb5e3232cfc400b18d2e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/Stacked_GroupedSigns.js",
+      "sha256": "6fa4b513bafef30f23381eea318c5a0c56377aa08772a6cbc28fbcd599aa0c18"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/Stacked_GroupedSigns.tsx",
+      "sha256": "abf90bf804043c1802558ec9e6612a63a8f06178bf52dc9473749dc2d8164741"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/Thermometer.js",
+      "sha256": "32b12e19ebac5c6e16632f85cbcebec52a059cdf847301643b599ee4b99a4be1"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/Thermometer.tsx",
+      "sha256": "e017acd647c89abdb9f601a77c49b4b85f9f64fc289c15333baae142a529c9de"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/VerticalGrouped.js",
+      "sha256": "5d920643980a8080d7a9938361ef1193a09f9d47b9a7513ab7d9d57c5877028e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Bars/VerticalGrouped.tsx",
+      "sha256": "96fd4c97bb0f9cf4665305e1312c7968b73afa163ecb603149dc89b68e6ab311"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Lines/LineChart.js",
+      "sha256": "5c3aee4afa7fe0644eb293f43def542897b5f4a8cde1d2b1a23ef4ae83f9aec7"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Lines/LineChart.tsx",
+      "sha256": "46e2b8ae647901f774f8fc90751467be5a89231ee85fe06227d8c0cea3adb2a9"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Pies/Full.js",
+      "sha256": "e8468c8565c8e0f1c3d23d7cd9b85598571fdbc7708cdc872f6ab51cd3868d6c"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Pies/Full.tsx",
+      "sha256": "8e861bd26a6dfeaa0bd7d868ab1baeab91d252391ea50a8e7aa4fdebe3bf3a8e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Pies/PieChart.js",
+      "sha256": "7f8efd09b250c643f1636c0132f9e8addca9efe56d5fdf301dc8d2f83a3e2c20"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Pies/PieChart.tsx",
+      "sha256": "d726cbe3350dc4848df533a08eb5356a025c0cc797136b7e6ba51a84dfcd9695"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Pies/Waste.js",
+      "sha256": "a191bc73be889fe21d2dcc85fb452ab071c4b51b57a7ea80c74a79d1d12b428c"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Charts/Pies/Waste.tsx",
+      "sha256": "a1469d9edf11a20593089526b6a5da1e93e173513203debc1fdef88d5614d0de"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyLog/EnergyLog.js",
+      "sha256": "5ad16d065b4d87a3bce464b24aae5db3905056b3fb7bfd429ce7e269cb7eb535"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyLog/EnergyLog.tsx",
+      "sha256": "1418f21caaaaa934ac26f59a741bd51b9b37b1079a32f5baaf64872647a74b7f"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyLog/EnergyLogState.js",
+      "sha256": "698e4595b3418c5e7d89384898f5748d5d5c212ce6ae18546fd2f898164df29f"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyLog/EnergyLogState.ts",
+      "sha256": "0ca8d62225ffa345dfd8b203a579d38d9c478d75f836e89169385bcc136b00e9"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergySavingTips.js",
+      "sha256": "1b06355ac1e14a0d3e730b8b392f07baff3130ac65aa405ee4ff8def92ad9574"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergySavingTips.tsx",
+      "sha256": "0cdf1d1674492f5ed04af1a8d0f39b9f7b0c9ecbe48d95dd76aa86b0a4dfaab9"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyWaste/EnergyWaste.js",
+      "sha256": "876cd8eaea418bfc9b68fcfce14778e311fa77fa26b35c00ac374ea725364f5a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyWaste/EnergyWaste.tsx",
+      "sha256": "ad316a63f303d8db8e5d37460a8752a3461f107452b1650534932d97eb47561e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyWaste/Horizontal.js",
+      "sha256": "ee0bef7c2ad7583959ef8671c868c459dc973d96de088a704fff130f04e250af"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyWaste/Horizontal.tsx",
+      "sha256": "1564e5dc6a54ac60570f8fdb6412c76778abf37e105a3b604bc18e6b43a29c24"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyWaste/LargeBarChart.js",
+      "sha256": "106e83816037508bf0b5078c1ba383764c0aeb8bb45ef63b862d07501eb26444"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyWaste/LargeBarChart.tsx",
+      "sha256": "b9fd261c259d4cb92be9d97d4d64d8852f8574a8e072841ef9e293f868c03615"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyWaste/SideMenu.js",
+      "sha256": "b76f3e9cd1dfd0049a618816c11ae5b8ed9c70bd326280d68c531d025c2e3e77"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyWaste/SideMenu.tsx",
+      "sha256": "64b81cdb4e9d34203c4f6e40990b10d3fb95bd4dcacdd71e97a703c28cd90d4d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyWaste/WasteTable.js",
+      "sha256": "3d91fbc286b6990cb8193fc89c5b7bfdd6cfae6e7aea52e364b304851e540d1f"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/EnergyWaste/WasteTable.tsx",
+      "sha256": "fa2bf74c680c1cd6938db4c6d6672d487b3c8280182fd8cbfef3a20d308c2605"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/FuelCard.js",
+      "sha256": "131c39e51a4a402507c29febcaf33c4f40580221150ae0c8fbb9c7884390bef6"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/FuelCard.tsx",
+      "sha256": "b1b460d0955fa05f62a0003c3496b117d7c578c4efe1ddda86dfb02083c99c4e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Layout.js",
+      "sha256": "e3f3c751df7b8acb43c1ced0163eb0d055fcb55bf5f41a6789407fc6e8fd1456"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Layout.tsx",
+      "sha256": "7d0fa9936b6802333b7d43022cdba5c4ee0ee6d8346f997fbfb4cc525ab0420d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/OverlappingInfo.js",
+      "sha256": "a1f9bbe4148f88c701647b164699a891ec34bc9f61fbbe3882ad40df6b45adf2"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/OverlappingInfo.tsx",
+      "sha256": "2c601fdd9369f690f18dda64df549893a0ba7d9151eec0282c54ae8a42935732"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/Portfolio.js",
+      "sha256": "f4539f52369e96f9a7c5f173cf219b10af9b6ed4019f8ad1fe61fa678838a4bb"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/Portfolio.tsx",
+      "sha256": "efe3dcd40e754f9a3682e5bcf958701873a742f2af2f1ff8fce66cce082648a5"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/PortfolioBarChart.js",
+      "sha256": "5811ee6e936e3519d345356f0a30e2920bd152951c7477222b0fb19bf6b4eacf"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/PortfolioBarChart.tsx",
+      "sha256": "524bf78a7948634d89ce61e490b72d51a317884405b01139588003514d49efc5"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/PortfolioLineChart.js",
+      "sha256": "ab80a6c9371a390dc926a54a048b498fe11221b7aed612692be9d41bca58f94a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/PortfolioLineChart.tsx",
+      "sha256": "d916c1b49b6273295d15e0a18071d19c02a6351fd8ea572e180c2c58a2dd0191"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/PortfolioSideMenu.js",
+      "sha256": "246dc1b920ef5e1534d8bdd37ae28217b1128d89b47bdcb362d4959d047857ce"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/PortfolioSideMenu.tsx",
+      "sha256": "7bcad703f62494ac2dbb2c51437ebde7c381de3147ecc9e9941b19bdca399adf"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/PortfolioState.js",
+      "sha256": "98fba52addb943794fe89901d1c78d323e9301e8bf29dde3c7e09e41ef37d074"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/PortfolioState.ts",
+      "sha256": "9fb88a4864d4a9810677837d5cdd4d36377ec9faab3ec5511978029e8d3bf1e8"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/PortfolioTable.js",
+      "sha256": "257d032e88a6223c6a34efebeb41db196b60bebceda5667c14cf4b6652619bac"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Portfolio/PortfolioTable.tsx",
+      "sha256": "5cbd741977692858c763317fa321cebbdf6df7fe281ff4d416c41ca3673205d8"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Report/ReportState.js",
+      "sha256": "9068a0148c07d067f2348f68da8d3119a4a29eabd0701b43ad66c80947916346"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Report/ReportState.ts",
+      "sha256": "25993b07fbf16e8684f845f7af27815486f1fb8dc3119889254e893d32505398"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Report/ReportTargetTable.js",
+      "sha256": "3705ba7498c7a6cf1ab00659e9edbfd8d394f6d503a33d8a7b51e49696f27faa"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Report/ReportTargetTable.tsx",
+      "sha256": "38eeff7da7bba5c950eeb699f061da2839aec0341ff426e7edf5614014d6ffa0"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Report/Reports.js",
+      "sha256": "2f9802a4f555f8fdc1588cfa6b4a90c8e68532fdbef96a02b04ac02078b47c3d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Report/Reports.tsx",
+      "sha256": "631a9caf777b78bee2adfdb80c39e249d4a6373dab58a5102ff30f53d39bc4e7"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Report/ReportsSidebar.js",
+      "sha256": "f3a0012fa751c3db2fd2b9730a363e64c515c6134653db8fa8ff00c4f39be687"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Report/ReportsSidebar.tsx",
+      "sha256": "7372e4784f93f4c6c6acdd92180515ac6a5792d486daf6230444e7939b29cf39"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/RightSideBar.js",
+      "sha256": "149a160421bc87bcb3747984c9abafacf64b954935ebc8c02a7c887c866a5b1e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/RightSideBar.tsx",
+      "sha256": "266339df55b5c593a3d2490848266790cf2ac722ffb454cc38957ff3aa21503d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideBar.js",
+      "sha256": "8de974d6ad3565d3e3850c51f9c881acec2d31dc246706e53178484183cea14b"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideBar.tsx",
+      "sha256": "19795a0e0e747c18f05b8dadf23622492493199c0a60ff2c7b7d4e7c08dac736"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideMenu/Base.js",
+      "sha256": "48297f5ae834f3926676d24d3d0b78ade647fef95275d950f6ed5f502478ad3d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideMenu/Base.tsx",
+      "sha256": "e2468420351f76be223000568173015f44fd14dbe330c9f5a4d631ac4f500655"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideMenu/EnergyLog.js",
+      "sha256": "8c3fe251939027eb9d1d2de083e386ffcff6e850347fb2018df10f52aa9a1e9e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideMenu/EnergyLog.tsx",
+      "sha256": "a52ddfc72a17e11b442bd609ec58f5c1f9a998064492fc1cc681795b819f0291"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideMenu/EnergySavingTips.js",
+      "sha256": "40951ef582958022d84a2c9bad2f2f0034b12c6756e13641f804fe901144c670"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideMenu/EnergySavingTips.tsx",
+      "sha256": "52f463cc3d9a9c12e046ba134e8f04709c46adda5b821a0672bd7c50e59b1430"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideMenu/Site.js",
+      "sha256": "a1d65d4d3ca973c4e9211b41627bdd3e151520708677d716f8652f3bdeebfcc1"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideMenu/Site.tsx",
+      "sha256": "579d6d9e5dda595a19799cb4ca2b2a3e1e78de3e359d648a1b0c5a60a6cbeeed"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideMenu/carbonfootprint.js",
+      "sha256": "532eb1e7e730886bee7797af3371855bdd7d2f71b3421ecd0305a324f3652575"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/SideMenu/carbonfootprint.tsx",
+      "sha256": "fb33a6f0dd6f32d9562b5d0164201961c3a03da883830314cba878ad62cf83f1"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Tables/BuildingOperationsTable.js",
+      "sha256": "9d414f85237fd0541b37ebdb45251ea4ca63ebf8d4c389191e250a038ffb408f"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Tables/BuildingOperationsTable.tsx",
+      "sha256": "ee264b9586350a7036eed47f3da0f08192690d8c974575e9de2dd7596ee55023"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Tables/BuildingUserTables.js",
+      "sha256": "237bf117cb14e73a6923278072905a3794991c6d93b3a78dd19369e843196f08"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Tables/BuildingUserTables.tsx",
+      "sha256": "5a048042e53c9dc1e30752fd5b65084c27e659b4a4985affdf11ea2bd5138e94"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Tables/ReportsTable.js",
+      "sha256": "c151bad7cec1efc84cc174560f701427456fdd3229a998851035b98d77ddf6d0"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Tables/ReportsTable.tsx",
+      "sha256": "45480a03fb088208f4c18f582e4fae1af159a8e213d27e3ef2fb080e21445e7d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Tables/UtilityTables.js",
+      "sha256": "115954465c9c1cb0a306ba411fcd9395aaafda6bf6b87e9b104e65321d6dd6a8"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/Tables/UtilityTables.tsx",
+      "sha256": "404204eae22593186d5639bac02ca022339b749f829fead458f7a136d6730936"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/TopMenu.js",
+      "sha256": "1af6724d9694a3b9fd96dc38fe1137b4b894d874337cfcd14d9c7268e87e9117"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/TopMenu.tsx",
+      "sha256": "328827e7331f38d0dc8bb1d9c6ad46166aa9e396caa8dfda48101866e38a5fa1"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/ConsumptionPanel.js",
+      "sha256": "06c12975384a5f53956439ab635b999ad3a2372cac114195f0a6a04cb7b3765b"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/ConsumptionPanel.tsx",
+      "sha256": "898b6f5097f9a75f6a9db4892f23e807bcce5587710246a2d567115736f929b2"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/CostPanel.js",
+      "sha256": "b542a108761b76e60ae73ac7dc08b6c47eceae076addcee178f97e1bd6ad3bf8"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/CostPanel.tsx",
+      "sha256": "8dac4797d61ccd7f7e114089966801b23d5b29ce2be9266474fac0adaad1f7e5"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/FuelPanel.js",
+      "sha256": "05abb7323d3250f146ad2d6bb4a1564123ea42840693c0a166bbca824feda89e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/FuelPanel.tsx",
+      "sha256": "2260944161867f3a47fba0b364387e567b41b784ca3a98076625758a918935be"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/IncreasedPercentage.js",
+      "sha256": "65a9163e8c6151070d01d21635c745fc2b31ce536afe5587cbe07b3a40101cde"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/IncreasedPercentage.tsx",
+      "sha256": "7fa944dc62d90cd48de34d88b39e6a17843e72dcc60f706ec1a6763276e14dc0"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/LeageState.js",
+      "sha256": "9edc85af7be475e1b1d1db703d430442dc79d75bce5b0d21e719a74ee1d58f58"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/LeageState.ts",
+      "sha256": "1cedeab7f8476479defcde8b4dc772e6b0df8a3eef2b332cfe67b5629a266204"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/TargetConsumptionPanel.js",
+      "sha256": "7b6ed928ed7cde803e80befb718f25a2f21d7a854d287eafe34d39f1d3a347d9"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/TargetConsumptionPanel.tsx",
+      "sha256": "3c38e612b4ffb6a8c7cf7cb296f568cffaa800de64554bdd49e841d0db7f507f"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/UtilityLeague.js",
+      "sha256": "cecb34593ca2d07309038a124f29d9a5dbe7fffdee6484cbe2fe32d4512a25e6"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Analytics/UtilityLeague/UtilityLeague.tsx",
+      "sha256": "3277ecd612ad088f66f1d62e5284e35ada582c2401d096c57e489aafcaedd9e5"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/App.js",
+      "sha256": "282bd76c7f8d8d0e2ab8e517e843ba33c398935e749b230e9275a889edd81a54"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/App.test.js",
+      "sha256": "69cb7a66680faa564fd7c9507920bdbd22d482498a92c0d94488e35afb04d2bb"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/App.test.tsx",
+      "sha256": "1f0914ca057e799130da87a78d48021657aba67e01fcbcb50b099944ee2ea864"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/App.tsx",
+      "sha256": "fbd4f0a84ef9c9b7cbd8d568c931777a88c133938fdfab1ae41bd58549061e52"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Blog.js",
+      "sha256": "dfe18b832bbe704e19c02db1d088077bb1d8c1a7d2ce3000d157af866608c949"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Blog.tsx",
+      "sha256": "8a371670562307d267223bf1d8727af852512e22158b56743aec89b2feb7b1f2"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/ApiCountrySelect.js",
+      "sha256": "baa920177434aade0082d1c973beb404499a8fb3808f8b60e88b24afcba61adb"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/ApiCountrySelect.tsx",
+      "sha256": "a02bca970bb0e1199d527101fcac916f69f934c0ba42f4ebb593b63b9e5c7622"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/ApiStateSelect.js",
+      "sha256": "d57f9dcbad27f7152881e0d3e85574debbfe87c979fdb2e626981c985f476616"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/ApiStateSelect.tsx",
+      "sha256": "a2cc3b8d0a24d262337183df8728f281e6b9a91c53cdf60bed568980198cb2bc"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/AxiosRequestFactory.js",
+      "sha256": "d1dbcff9ea9d75d37cd3433f6d6e3a3e9a73d854e6f96bda175296cd34cdd550"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/AxiosRequestFactory.tsx",
+      "sha256": "b045134b84719efd47ec47ac5930c9c88df7be9c28c83f00d2f97a1749f00702"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/DateRange.js",
+      "sha256": "c90e1680d2c98f26ed06ca905ced2f47295050f8a8e947b2d0ebf9f92a8d4476"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/DateRange.tsx",
+      "sha256": "cd98c62e1dd6f3c90490256a7816f44ced5a267b971ec39f4fd9ee30c2d59ec0"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/ErrorLabel.js",
+      "sha256": "c5e42e8b5ae3690e539b1b523cdab111feec9fa0a545867cada612273bcc0fa0"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/ErrorLabel.tsx",
+      "sha256": "3505fc1769d26cb7cb00f54b3a71003f7bf049ed5b017bbe1818c4b9b06b7fba"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/FuelSourceSelect.js",
+      "sha256": "fb5c27d03fc40aa13d35ea2ef9550a8746c21f04720dd1220e783e207399bcf6"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/FuelSourceSelect.tsx",
+      "sha256": "d69114f1b0269cc7fdbf167dd53d725789cb27f63a0434aa0c75be2790d97171"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/PrivateRoute.js",
+      "sha256": "bd6ae7e8faa5460cef399634b79f271accc5d87647299b54a97a2033dd68f4de"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/PrivateRoute.tsx",
+      "sha256": "1541c726bf10105b5f0bdffcf2621a654d8273b29d1255ccf297057e2d36ce8c"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/Select2Buttons.js",
+      "sha256": "86d19c6c7fb99274350e04aec30081b09817923e2923bc35fc9f140f31c3910b"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/Select2Buttons.tsx",
+      "sha256": "af47717e0af70e0938983ee4d4532b611fe659876cfd85598ac992513d462ad4"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/SiteList.js",
+      "sha256": "0bf48a93df29daa4d031c06efd750cc8eea88cf13e24cf1452b6eb461a145f96"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Components/SiteList.tsx",
+      "sha256": "e271416cddf8cebb1aafb5fff76cfc8f3a118f891a547c9145b7da03f6c14299"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Contact.js",
+      "sha256": "f59f069f61fb185e36c83d00db10e1d6af7c7ffeb3f77f9b31fa611cc6240399"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Contact.tsx",
+      "sha256": "6fb80e5ec7578769905dfb47630eb7c96def9bd30a1b85575cdc34c01d659b95"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/FormsTop.js",
+      "sha256": "a9a0dc81ec04f87ff28b0a17a361374d050d244a305343214c7a3d61c2b7180f"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/FormsTop.tsx",
+      "sha256": "29c98824b81a37860c950a1c4243d409cf8256a9b7cf5c5b8f321db5f7b81be9"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Galllery.js",
+      "sha256": "406d4b4b324a700649343d8917a1374ec8457280448338f8993a5e6ee9cc4a25"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Galllery.tsx",
+      "sha256": "49a3e5aa1fd1bd2ec63e13b42b3d32e2f6ce2e108900a93e8f082d314c9e949a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/ApiStringDateToDate.js",
+      "sha256": "b59864a5ef31c909f0a66f8217f0a3d5a46b4a979aa082ca283845bdd0ec0a69"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/ApiStringDateToDate.ts",
+      "sha256": "035eda19805269b481c68276b46f2a66812bf1161665f0909d8dd0f2b22080a8"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/DateFormat.js",
+      "sha256": "f59aa0ec5858916a2b37bed4a10100dfa552636ecbe5e0b04deb15e6763848e9"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/DateFormat.ts",
+      "sha256": "4ebaf191084cc9ed1a03787bfc9bf15e16947a060cdbdc1c70cbd4414ea401a2"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/ReactSelect.js",
+      "sha256": "2e65663422d09354cebb8aa4bf9a932a231daf0f8608cd6919e2f153f08de5e6"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/ReactSelect.ts",
+      "sha256": "4c9ce47690426d0a59ee76796fcdc9c90ef98d7fa21a03a003a16937e7e5f9c8"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/Year.js",
+      "sha256": "a68d885a233fe277658167bb9e127f7c03887856e965eef5ebd9eaff7ee95ca4"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/Year.ts",
+      "sha256": "2ba2ebba9124d199bb4247906c5306fd2991191bccfd1f40f506dc56336eb836"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/country-currency.js",
+      "sha256": "face5dd30d76b3fbbae2727257b6dbd82b19f4e5cf8b432dbf5bf2dd2ea23cd0"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/country-currency.ts",
+      "sha256": "bee76c4f058b4b6cb62395fbfbb7abef91c3a39ae0b44d6b5df9c1b70939ba6a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/diffRecords.js",
+      "sha256": "8d16d504b9326aa98eba7b1cf43b840a24949859ac22f73a28f5fdfdbec0ff4a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/diffRecords.ts",
+      "sha256": "dbc3bda1665305f967141df5d1e62556cd709159fafb035f100f91dc3c3f35cb"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/increasedPercentage.js",
+      "sha256": "46412d0cd2b1df95caf15ea862d18ce3ea76fdf3ee4faf9dc97c8d13629daf91"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/increasedPercentage.ts",
+      "sha256": "d799d871aab4ca5a1d75d2446eed5afb5bdc22312051bb0487e4e9fdb4abcfdd"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/sectors.js",
+      "sha256": "87a5275b9e285f38c3ce6e82e0afb75efe840d9d0b9b711d1881d25054332834"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Helper/sectors.ts",
+      "sha256": "8160ef105e7a8b87d7f970392de50708eca0ff04bfae937fdc9efebe96a6940e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Home.js",
+      "sha256": "880987fb15bfdf265ef39ab089daba0aae5d17e233fe43f2ef98f477079c11ec"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Home.tsx",
+      "sha256": "b4dbcd1be477ce332ed2e00d05e41ba04dd0164fb39870b741e8594c3c8c55fa"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Hooks/useConvertHtmlToImg.js",
+      "sha256": "a2cf13e6a4e861dd8dce736687e23f77011c53c8f4e5924dea0cb24419a3c216"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Hooks/useConvertHtmlToImg.ts",
+      "sha256": "61d264f5fb85a54091c9dc322e37de8d3d288e2708170fd68a744b7c2a8d10c1"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Hooks/useDidUpdateEffect.js",
+      "sha256": "9daf2895f2ea33bd0d1b35c8dbad48bad61c338f443be17f90d38b61ff13ab3e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Hooks/useDidUpdateEffect.ts",
+      "sha256": "44efdebc8b00f3e9082e556508e05c91423a80476edb3a97ec5dfe2d060b1bca"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Hooks/useQueryManager.js",
+      "sha256": "1544ebe6432a748db98ade85c884bbbd0313e646f4104ddbb5a95841199f564e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Hooks/useQueryManager.ts",
+      "sha256": "cfc7921bd4bc7294fc233a048590844bc39a3f1dbe4fb8a7f386fb3465602b7d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Layout.js",
+      "sha256": "799bb97317202c07183263e6dc723ee0d056c00d40044d823db58254513209ea"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Layout.tsx",
+      "sha256": "82926d7d180a9c7e062c3a6868712c869bf153570c05f9a0ae2d1258269a1c41"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Login.js",
+      "sha256": "429d8299441bdb9f50176ab5261ce7d2dd813990f272db5c724c1d3ee8cc7d86"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Login.tsx",
+      "sha256": "263bee53eddfa644686945c884cff0d4b59021402d0efd8499e4586e599bcb2d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/BuildingPattern.js",
+      "sha256": "82b210f974d46e7aecee14ca07042a83b67c9e42d0943f08c25ddcff9f4bd85a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/BuildingPattern.ts",
+      "sha256": "c44b353759abfe00c04854fa5409dc5ad41f4d5f1a2c4d5de4c516a0b4c7d24e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Consumption.js",
+      "sha256": "142832b1d12d1b644b2725a37260d14519c02876a6fbdb23e81aefb26639c67c"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Consumption.ts",
+      "sha256": "8a3c505fc58c76c6c3a089fcd75eb7a13d41d33b1d2e226dac207d6ef325afec"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Emission.js",
+      "sha256": "78d1da564ede9f2c8ad2557886e920f5edb1dfe554720338c7269c0a4e7bcbfa"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Emission.ts",
+      "sha256": "649e59a5e4741de853b394ba77bb92c9df3c5f1fb2ef954dc888fc27ef43ffab"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Floor.js",
+      "sha256": "3877c0e2086ab77bec2c27745f65560bcdc64d7cc484e33e3c582023ed28fac4"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Floor.ts",
+      "sha256": "6e962ab73804a0103ede449bc4b8b206bd4b4a68f277b9cca80db66c5ee68e6f"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/FuelSource.js",
+      "sha256": "e78b686d008974cf835287b5f06da2e730ece8005ac2fd356f0c686a0b251ae0"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/FuelSource.ts",
+      "sha256": "eb5ad05b38a6b95f00456d9a2bf7bd6aa2f58dc49337c57b3a2dac98c9caac13"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/FuelUse.js",
+      "sha256": "ec803de12fa51fdbab92ccae2db8d7779dd0bd3d450fa47c9d4fe2090d05d8e8"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/FuelUse.ts",
+      "sha256": "3b9be39659f624e76962c17bda70370bc68ba24be005cabd666146739f180658"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Login.js",
+      "sha256": "c9de461af41345f509234b4e6afcddf2f92a77638d28f2d27287e4bb6247d285"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Login.ts",
+      "sha256": "3aa8d41bedb42b2a68db37573b9506bded5c8ff4f70f51a2beb6a087dafde32a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Logs.js",
+      "sha256": "6b3f3c5f8a265aeae2fe575fdfe16a24869d93a78c9bd22013a5484b31849aa2"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Logs.ts",
+      "sha256": "a87b4b4db0d6e715f06ecda89dc39c41648a60307266e5aa0e6e9a38d677e137"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/M_T.js",
+      "sha256": "8e4798bdd0906ddde03f0ea87a8583f712448b25416eb31921c33619843d3ce3"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/M_T.ts",
+      "sha256": "9f4e04d3823341cf99b7db051da8c7ce94adeece3ed1dbe4bf4ed93b8b7b1747"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Option.js",
+      "sha256": "c48f4698c5b0e08747322768235ff70adf70473645d852bdf9b97939faac9877"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Option.ts",
+      "sha256": "72c5f654ca66b4fef137ceec0e9dc9066ebd358c48082948b2128786dcbf3f74"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Register.js",
+      "sha256": "0a573beabfa22ebe740baeb136c155c749d99830423641fdcaec97bfb5e1a2f1"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Register.ts",
+      "sha256": "ca91e27ad8d58ae0705315a2409bf822175d1d53ea51a604d9e401c03a02c815"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Review.js",
+      "sha256": "bbb15d1acc1449b5e13dcf089fd1fda2bb2520ac874359eeb839491f0ccb65dc"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Review.ts",
+      "sha256": "dd8d2d42264d68a86cca90249d6cb00f6c9c007d378dd65ab50b9ed12eec05e1"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Site.js",
+      "sha256": "c42b839c4ed213eefd502bd7d0fc83f7a71534dd6829836ccfcc3be9efabfcce"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Site.ts",
+      "sha256": "244f00a79a3dd8bed43fc6dcb0cb0f998f82eab78c3e765f7c1493ebb6cf2144"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Tarriff.js",
+      "sha256": "2302df62294f32ad214555632feea8c256a9f388361bddd723896d2d296b7c78"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Models/Tarriff.ts",
+      "sha256": "ad5bcf0a941f3759401b98411caa4fc8b3e396f5b86a4220a27a2217466d5fd6"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Progress.js",
+      "sha256": "707142116940739783d3d3776ceda53341815abc9d8ba98f2b7dc505401ff3cc"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Progress.tsx",
+      "sha256": "30d93a8d2771049167cf3c91e8f07b2caa274cb2015de1e8aedefcf6832cedc7"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Recognitions.js",
+      "sha256": "7cdbc1d65abcaf46ac23b7f987e7136d51045d15e26d1452b4176676045a26e5"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Recognitions.tsx",
+      "sha256": "2bdb9afdb1e8682ae33cc3231e52173a5ac7334fa99bc43cffec4524fa30523f"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/Auth.js",
+      "sha256": "7fdf39dd9bb9f03c81edca3e0dd9e736a2dff6937c6a908564205b1b38f8a6cd"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/Auth.ts",
+      "sha256": "a39087dd218e4206323624ff79762f973a525ad0b29b1ccd6b05e227c151d7a4"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/BaseAxios.js",
+      "sha256": "cd2ab6072fb54ac7bafa5e136e27f858084e57133f17a36e11a5fedc56179e9a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/BaseAxios.ts",
+      "sha256": "8fb6fccade939dc053a43c70d53a9a6d76f3f018a9ccba33faa25f19bb836c43"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/Business.js",
+      "sha256": "f172d490e584ade726d3190ebcec2b62b0a80e5f4bacb7750c7c7d39ac32eab3"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/Business.ts",
+      "sha256": "5bde759bfd0a5ce3d81bb36ceea59daa2ec235f6dc82d56a4b40ace1d7925743"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/Review.js",
+      "sha256": "dd09e7d5a3166c5d1994af268d83066b6185671af2adc6c755c7cbaf4b7fab5b"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/Review.ts",
+      "sha256": "8a4ca8381e593a92d9a7a3f61f5678a59bf724fa120420385b3ec8fe45771b4a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/Site.js",
+      "sha256": "bb8fd10d4cc887b96362afdb4cbb56deee98ab7e5eb3a8587d710ecd5297cefe"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/Site.ts",
+      "sha256": "930dbb27f7397bae762a96345a184397a79f5d71fd1edd30acdbaeabb6549174"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/Utility.js",
+      "sha256": "2018006549a8e9b47b7290fce2c94752e42811b431200d603a5279f4c6255970"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Services/Utility.ts",
+      "sha256": "8abf26c084d9fc9e6135c490114aa9e35a9f61f2f275c8fb4e739579d4188c49"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/BuildingEnergyLog.js",
+      "sha256": "0b83f1166a72d2e040e1629be3fe4c9eea53ff806cd1c6e56db0af3631da13c7"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/BuildingEnergyLog.tsx",
+      "sha256": "6e4a4811f91c20ad646be822e4af6a4c8f9550859fea69baeded8b3ac2944189"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/BuildingEnergyPatterns/BuildingEnergyPatterns.js",
+      "sha256": "a4838e8752b14734a221713be7a49758da3a4440cace71d68e85a0f430bf9f23"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/BuildingEnergyPatterns/BuildingEnergyPatterns.tsx",
+      "sha256": "54df80b25314ec1719ea307d39b90b550708f6991f20572d91133cdd59a3545c"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/BuildingEnergyPatterns/PatternInputSection.js",
+      "sha256": "4bf59e3d4b3aeade8b3a0607707a84a0cc501174f2d2d3c018d83b3883fdc442"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/BuildingEnergyPatterns/PatternInputSection.tsx",
+      "sha256": "ce97fa3c6381532ca87490f41e8c21e8d34533cc6d0887aabb432bc8d231bbb3"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/Business.js",
+      "sha256": "24c2e5920b42081a88de7fe7e2e225faf600f3d4b2f9bed2542854c082cd495e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/Business.tsx",
+      "sha256": "4bb57c7f8e67b050a19dcb317a23b2dfb5c91a6e60488b862f52421eaab52b95"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/Comsumption/ConsumptionImportModal.js",
+      "sha256": "c6bb259afbd84e4635244b9b082b4a44f64006808e27b75fc57ee4688cc6053e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/Comsumption/ConsumptionImportModal.tsx",
+      "sha256": "d3a439a8baa97757a00cc1db4f209163e636fafb36797a8c3bf76f1be0c7c904"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/Comsumption/SimpleImportModal.js",
+      "sha256": "6999778dc2994318d19ab3ce2f925ddaf7991b6385dd81f5bf08d78b89e973cd"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/Comsumption/SimpleImportModal.tsx",
+      "sha256": "6c75a5052586884eaf0ce79097f0e7fa5e9277b683e15695a033c82d9640c47a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/ReviewAndProgrammes.js",
+      "sha256": "2590abe2324e97572bd329462c143ff17b08ebc7d10a85410b01876a2ebc4eb4"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/ReviewAndProgrammes.tsx",
+      "sha256": "9e4346bb1443f1eed6de75ccc6430b6ab1770a8849c98295faf1c88d6befc179"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/Settings.js",
+      "sha256": "e94f78578235f023904f3d8c46c755dcd1dba738c3fdd39751a5ace7051aa24e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/Settings.tsx",
+      "sha256": "19010472abc18a4fa9ba7c9d8b747c8fca8ac2eaa4d2105747b43a2568c2d6f5"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/Sites.js",
+      "sha256": "3df0827e409a684282ab301a8fda0cc6f2ba16dcb405d30e641e213ad7fab52c"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/Sites.tsx",
+      "sha256": "7560fa29c22e9aada8271839e520859a41c058ad6629df8157772388486d8dff"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/UtilityAndEmissions.js",
+      "sha256": "4a8bfb841dc85dc88254170009dd579d82c615430bba76ed2c2cbf0a6898ce1f"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/UtilityAndEmissions.tsx",
+      "sha256": "a410c97af2e74f944cb8b84f2af2bf271eb4c50ded94258338c40adb369067ac"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/buildingEnergyForm/BuildingEnergy.js",
+      "sha256": "3edfc4799cc252e147447d82999a2d31820d6f01e3495bff435f8f2a5c3c93d4"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/buildingEnergyForm/BuildingEnergy.tsx",
+      "sha256": "50428247b9fcba059545d2f46fde07012ae1e62fa1173e6281458a0380f8ce6b"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/buildingEnergyForm/FuelSourceInput.js",
+      "sha256": "1dec6ffc8d5093ddd554506ec634fcedf4877cea719490b2376317b19161e637"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/buildingEnergyForm/FuelSourceInput.tsx",
+      "sha256": "58e9a414987b4ebbd896b07e848493c9b630b7d2e454b6e38d13f9d27be1f8c0"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/buildingEnergyForm/FuelUseInput.js",
+      "sha256": "74818211bba967eb532bb35fe213f0d1fc8d9a6c311859ba02c8e8f45a213b1d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Settings/buildingEnergyForm/FuelUseInput.tsx",
+      "sha256": "c955cf0d9a4da9f81e2dd86f16268974394906f1d0afc1d1f47aea5e4d4e231b"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/ActionCreators/index.js",
+      "sha256": "73fdff17db52998b294822cd78ff6d3237d32b2a9ea9554e3071e224b6511daf"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/ActionCreators/index.ts",
+      "sha256": "2f238dbc1b9f56e6b3800a9f86464fb9e9ba8059ac3e03ded7d224491b8745c3"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/ActionTypes/index.js",
+      "sha256": "89646018a072940a627c45f9374503fe99c24ad36e9f5795ee9e467e70ed84e4"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/ActionTypes/index.ts",
+      "sha256": "589aa3385a2e3ab7225ee76ee3a6aa639eb0be4540a48ed08ec71d053945f761"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Actions/index.js",
+      "sha256": "efb770a395675fbfce7ffaaa874ffe205a5cb98f662820b293e2f988fc9a0186"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Actions/index.ts",
+      "sha256": "65dd27f6b32e4262ec6729e4d66ef861ac6bf246da215d8d9f4a43ceb89a967d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/DisplayReducer.js",
+      "sha256": "df4e76668f79c1beb4dd3184cee4d1b34b4be8493979cd94f9bea6ea5821bf6c"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/DisplayReducer.ts",
+      "sha256": "839b8dd75113dcf5ba8922e3c5a633c117a90efb33f37499917b0d192e06e8e2"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/FuelReducer.js",
+      "sha256": "3ba6c95632d510a39390fdf865ea6a6f026bf438438742c0a0fbf2e506c5f329"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/FuelReducer.ts",
+      "sha256": "bd8690997683590346a630e0d72d81770d588ff0c46905a3c5e68b1e2027bfbf"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/MonthReducer.js",
+      "sha256": "2cc6702329986af6648905d66373678f5ba5fc1e434434723a84ff7a78f82fec"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/MonthReducer.ts",
+      "sha256": "cac34f3be79dc990eee0c0c36ec8abcfc1a6015d7679f90a0eb94537e3f056fc"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/SiteReducer.js",
+      "sha256": "7bba95bce8d27dc494319d4601de730a3a4b3fe4bbd36499d6d74ea4b30991c7"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/SiteReducer.ts",
+      "sha256": "6433b05148436aaf092baa43d958e5550a1646ae4719d5d896eedef09aea602b"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/YearReducer.js",
+      "sha256": "a0701245ac3f76d36fefb6bb79aee521edd992c5082f851418a5f0b1bdb67d9e"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/YearReducer.ts",
+      "sha256": "4d993288beda4fcbe1a5a1645b61feaad7e8de6d77ffe9c321b27108ba3d585a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/index.js",
+      "sha256": "58d1a49064ee6aa5d0b3b139e73b31987bcc0b25ace88f5c6d4863a9451b7686"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/Reducers/index.ts",
+      "sha256": "2b8723c5ac66bbcba556d54d9355ffb4fe140da3e151653b445e4850e9d79cbd"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/index.js",
+      "sha256": "8a49e0aef97a4524e055bf5fb6f54b7c669dc2f4e45e4b227baaea3d53ee2445"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/index.ts",
+      "sha256": "7d2a3786cce8bbcec7109dd51529d0014a16d8b690316e3b2c96e399e0fcae8d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/store.js",
+      "sha256": "bac8ec92d3b80c728d41393487cda0e0550ed7c6cb9949faf8455dc1a3f6fef3"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/State/store.ts",
+      "sha256": "b12af27a365fb23fb7654552fb8d26f953dfd22c935d9616b67fb41e4b6c7be0"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Team.js",
+      "sha256": "c572413d7ced85dcb1dab878cd0d3ae68fa80260cc071e2dce9b09fbbc1222ee"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Team.tsx",
+      "sha256": "d7217b18446256f4ffe9f39b55174f2be55f7da8870fb9147afa915cd6e421fd"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/UserManagement.js",
+      "sha256": "799adb6b7021d7b212dcb7b031d7c7a439ae2af1b8e611620cbab9ddb9d1a8e0"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/UserManagement.tsx",
+      "sha256": "73c9e48f3fa004a89c529e03ecd4c440ae28883c61fc7fce0dfa7c2fa6e051e8"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Work.js",
+      "sha256": "b635b8bc5eefeb364ad2eb31f96334853a519b253d0bc45839a582c662c5a60d"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/Work.tsx",
+      "sha256": "f42dfb91e703325bb911bcd6babba477053e87cdf321cd45a501cae35a323af8"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/index.js",
+      "sha256": "a6f75eadc9af19d46849be3f02ccac1da8bd1ff2ae8b965c24e3f56056b798ed"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/index.tsx",
+      "sha256": "542ac31601d0efcf575abc343ffa0219c2695bb5712a5c1602968bbeaaa1e1ba"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/react-app-env.d.ts",
+      "sha256": "57eda4c4c04a1dca45c62857326882ce9cc948c4b52973c0e3c3b7e4c3fa3990"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/reportWebVitals.js",
+      "sha256": "d9c37e97cef3e9dc8b79519126b2470c9e8ec2056cfcfc5425638d771f01c662"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/reportWebVitals.ts",
+      "sha256": "fa208d5a5ab6d20b64122998b074707dea08d12ed619652955f77df958d85786"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/setupTests.js",
+      "sha256": "937a014aee16c67a2d078c0b53014035fca1ddea65c0b91d410aa76cef7c435a"
+    },
+    {
+      "file": "Energiepad/energiepadui/src/setupTests.ts",
+      "sha256": "22583759d0045fdf8d62c9db0aacba9fd8bddde79c671aa08c97dcfd4e930cc6"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/app.js",
+      "sha256": "2767b16d959e5d4d980dd01ef81537a777a8abf295da451b313d76f3a53a1189"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/app.ts",
+      "sha256": "2d324d44d21a2aa4d43cf01f8f270cc2583d5ff48850de262c0498a5f1f0875d"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/controllers/auth.controller.js",
+      "sha256": "c5734523fcb661159aa28db619289542698d05cc585aaa44562e29f0c037bf00"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/controllers/auth.controller.ts",
+      "sha256": "0c91753955b72b0bae9942abcf9e61d945971f46d5e7de03b9f1b30eea6ddfee"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/controllers/business.controller.js",
+      "sha256": "ce8079569f30073409dc95014b864c3c80a0836fa3cdc2e2fb0bb841ee100b5e"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/controllers/business.controller.ts",
+      "sha256": "2f474b6be3cae14ccf880f08879748574f92af9c8c0d158338c2d696d25ca96d"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/controllers/index.controller.js",
+      "sha256": "43080bf8e2b521eba127b7e1c44eeba150c69944381321e2db9e6dd5f73c32e8"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/controllers/index.controller.ts",
+      "sha256": "2b6fa0f0d718058db459c0d9d149133c8b5b53928df43d01d94c5d70def433e9"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/controllers/users.controller.js",
+      "sha256": "5a032f45ba6d001f3a8492f828792247ae94ebeba7342bb85ecfbfab85a52e75"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/controllers/users.controller.ts",
+      "sha256": "0dddc2fd8918e4fa710b13e820b6a6ef47c9c48c1e7a231ef1156765f8b7573e"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/controllers/utilities.controller.js",
+      "sha256": "0317b59011b521095f93ac99995e73821894028bacab25d0068d82ce186798c1"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/controllers/utilities.controller.ts",
+      "sha256": "d99c0df01bf8dd0a3bf66b3e0b9b0d8a6705da9df8a9690649a1071bbd389c26"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/databases/index.js",
+      "sha256": "78f845ecf9f351b7f5a5742d7592e19ac6b94d8121965277c33223bf1ef151a9"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/databases/index.ts",
+      "sha256": "fc87ec9d6a266accff5d22e903b35765ad1670ae60a6705022bd5dfcacdad515"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/dtos/business.dto.js",
+      "sha256": "05a30a413f0b34f69ee3136d93990c29a3623e74f76aa6229818e2cc7861f2a6"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/dtos/business.dto.ts",
+      "sha256": "8ad70d652dc2d3e4b05b194aa5c887fce11ac41d6fdefe377feb2c7ad98770e9"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/dtos/users.dto.js",
+      "sha256": "dcbd9d66bfd2d35767657408866504fe0bee31169b4eacb9374954d401f9dab2"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/dtos/users.dto.ts",
+      "sha256": "e288e1c02bfca0d54210e87f159893737ac2905d8174b6f3dee6d4b766160041"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/dtos/utilities.dto.js",
+      "sha256": "321530dcd0eb30d656474b1e87d2c0395cefba35ec165d016ae0354f17ea759d"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/dtos/utilities.dto.ts",
+      "sha256": "5ede21ee43a17f3383ca4eaa212be013f96dd3143cecd84f553b5cdb6bf41532"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/exceptions/HttpException.js",
+      "sha256": "e1a36cd79371336532a7fbe7cda3d4f6291ed804b33cd9bc01d4c449b0dde6e2"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/exceptions/HttpException.ts",
+      "sha256": "b5fec354baf66e79ea4168b993f53daff132d28e2dffb15a4b8a4ca73249e1a3"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/auth.interface.js",
+      "sha256": "f497725567f082bd7ddb4100d33a9e728c58a56063e2496eaa271b80b91e5d50"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/auth.interface.ts",
+      "sha256": "25ebba4bbe62ea28c29b308d3b247fb85fa06c9b4215f51151daa7807679a747"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/buildingEnergy.interface.js",
+      "sha256": "4ba3aa0640c65092f130d740a7f58fb74033148e18b87a1161593fec39048c0a"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/buildingEnergy.interface.ts",
+      "sha256": "9b1f896ab753beb3b6bd995b000f55f58f76e353b80b4c91c3713367e6e55b27"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/business.interface.js",
+      "sha256": "8eca544a4fd0337cb969455299471fb1bffecf7d210b090b831128d8d5aaf01b"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/business.interface.ts",
+      "sha256": "72fcb2dbab8d1facc219234a183fd08737ecc56f1e581bb9aa9aab1dadd9a3a8"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/db.interface.js",
+      "sha256": "5e4d0c52087d6d53052163b6804804e81b0e2fd2773a5c87c0e38256651618b6"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/db.interface.ts",
+      "sha256": "f170eb455044805a474c8872a9b9050f725f6a2285438c3e16ce98d7c46a6b0a"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/routes.interface.js",
+      "sha256": "b738498f84823e75547b36a98f04f70b959831cf2368992c9ddbe251cf61069d"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/routes.interface.ts",
+      "sha256": "c197935b3dfa49e4e7216232156d5a96b20a75e7a07da3de0229a358f0897856"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/users.interface.js",
+      "sha256": "4190efc2bfc16408133ea72e5eeb2a3b19769e86306cb7cbf3c0abc16a4e2d72"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/users.interface.ts",
+      "sha256": "1302b972692724f290712d124ab3503eab616501a3a46e8595366850dda5bc4a"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/utilities.interface.js",
+      "sha256": "95aca278d78897eec11e3b6af0ba609eaadc3211d0187efb3404638e8cfb3912"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/utilities.interface.ts",
+      "sha256": "513f452bb8c653210df7cbb07f7119ff77b8ae354a59bb2af884f6417c1201e9"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/utility.interface.js",
+      "sha256": "bbb20f3ec6a0cd2d69776f52fd8049d22e7e646d9bba7d370ce7b98b2004b13d"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/interfaces/utility.interface.ts",
+      "sha256": "fd4b1c328f6466ad43a9bb0429eb5200392be3994009ba65ac8a920931efe3f7"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/middlewares/auth.middleware.js",
+      "sha256": "d93a9bd9760a3eb9091a1018976f441489da7b3dad67c927704603086818ab38"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/middlewares/auth.middleware.ts",
+      "sha256": "e95d1d195d76295ca4b2d8ec19ba55dd956228ef9e839c36ac1de7049210f026"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/middlewares/error.middleware.js",
+      "sha256": "15742a611132c3904aedaaf7c106f7ec1b6c6f932f36b483ee46c35b24a033a3"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/middlewares/error.middleware.ts",
+      "sha256": "07a9932b0eda3bb64e1e2116ce99ea9c93f5875ceef4da7adbbf56a8d6ea2331"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/middlewares/validation.middleware.js",
+      "sha256": "a1424b21a319a65c1adc74b78b3c9ca88a670fadc05e394c5039c6ae46ecc788"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/middlewares/validation.middleware.ts",
+      "sha256": "7519e3f7de58f8ea59c6a54c74d9678195c662319e7992ff83f0bb9efa723976"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/migrations/20211102115749-create-business.js",
+      "sha256": "c18fc0a6f6fe47674d8fc28bc89dc8d7fed80f24dee2d1899c8f037c9120329f"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/migrations/20211102115749-create-business.ts",
+      "sha256": "3df8cf7b4f563bdf93478f03fd104bdbacba8c3d4e9e035e548ba64b8f9dfc5a"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/models/buildingEnergy.model.js",
+      "sha256": "a74a04cdc2e9a3b8f84fee6e5f8091309aef1dbdc2f664216efe0dd156f6cc14"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/models/buildingEnergy.model.ts",
+      "sha256": "a0de5648ba9b88ab04c03b6e4d9c4b2023341e0287c384d5eebc0561ec7d74e8"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/models/business.model.js",
+      "sha256": "5511b6dada70042775d65aaba3b5f06700f70130da4ccaff98e7152be145b57e"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/models/business.model.ts",
+      "sha256": "39bae8118ef5c2ebf7f5d5c0f7eb7a8cf27e72fbfa673e6c9981e249281659f0"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/models/users.model.js",
+      "sha256": "04065438ad8cbeab1e8a16ddb324cdd6e34d9f5f4f431e2bc004fc558c315e68"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/models/users.model.ts",
+      "sha256": "95d72fb91454a63350bdc2e2387b3d4775cad0ecdaa973ffa2b16786aacd6e9b"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/models/utilities.model.js",
+      "sha256": "79b65a7b068b4ef6c841dd13ddf40d453c638b0c389f5af0771e4806a0dfbca9"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/models/utilities.model.ts",
+      "sha256": "64b746ee5f582caf95b2a6a2ca787997f1d98f4c594ffc6afb6fbfb7890e4967"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/routes/auth.route.js",
+      "sha256": "ec2415e623b598a519bb3e8df1a9ee5820c500593e4de643b622c525762d63f6"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/routes/auth.route.ts",
+      "sha256": "ea2330a8ab350354768de7abe972730102c80643835c95b0277967b3b80fa6ad"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/routes/business.route.js",
+      "sha256": "0bce71733ded956e1fa428b9d270b5274baa5c93acff3c9879d5fa27dd202d1d"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/routes/business.route.ts",
+      "sha256": "a434bd82fa11278167653799c7e38259182038bb12a00a81b6f958ea7975779f"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/routes/index.route.js",
+      "sha256": "fec9ab770474255ca1e3de00bd2a018fbee6aeca5ffccaec32276700ef89afd4"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/routes/index.route.ts",
+      "sha256": "7bace542bef923e88aa204cc04716b3894b98f64ed666ea5c7b68163d0d26123"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/routes/users.route.js",
+      "sha256": "ef6d511d110bc5de6c6500cd92006418b936ff8542ad2b301440bc34d4a06eed"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/routes/users.route.ts",
+      "sha256": "0b2d45157114bb16deb63e9bea4bae7d660af02ded87fe4be552a9666d61b187"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/routes/utilities.route.js",
+      "sha256": "9e8726d422a15ad5c3c20cf91c98c4a0fb0d1c6006aaf0463abe3133995f209e"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/routes/utilities.route.ts",
+      "sha256": "610905e9d3eb37d6ff2839449315f7850298ab510df94b62b0ef6d12c5a1d809"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/server.js",
+      "sha256": "f9c68b303b4a02d26f21c817d10950fbd706a1307bdd45c01a0b6b06af0d8aff"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/server.ts",
+      "sha256": "c95af6e8832748f7e7af2f6b5fb99dc6adb24db81e3db94cf7d0169e41e1dcfd"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/services/auth.service.js",
+      "sha256": "2fe28e57560c170322a89d431e80f6f1b5e723d4db6316f1a73dc87eb8791079"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/services/auth.service.ts",
+      "sha256": "1c52e97dc517d9bd6d5ad4101e6adb011eed95b1080bfb444918963763c1fef2"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/services/business.service.js",
+      "sha256": "fd949b33fe8b3f7cf100a0bce13cd9ee3ea51a4e6d3dd4ff0ed7bb42403ed142"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/services/business.service.ts",
+      "sha256": "292dd8b862eda9c4ff4ed42f33c4c9190e71235f6447677f1969735a2b49578e"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/services/users.service.js",
+      "sha256": "3757f011f0589b7ff48f6a5beb56e8d6ada64220470ee45bd83f677fae993a62"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/services/users.service.ts",
+      "sha256": "6740be2819cd754c2058bf3aa91f885ced3d8bf74e08bd9b8f0e44d8b53a3c25"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/services/utilities.service.js",
+      "sha256": "4593cb16f03291a021cf332b910bdb0373eafc752dcefd4696e3931d0a8431e5"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/services/utilities.service.ts",
+      "sha256": "1b672b69bd44c3f65537fc6d4662a456c8af232f7237bfcf114c1a85b99d904e"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/tests/auth.test.js",
+      "sha256": "82e8eb10b1317f44945820e0d0b732e694d969f6791e708260f55503187041ad"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/tests/auth.test.ts",
+      "sha256": "b0463474cfb49d7ecb236fcd8231d8a73e828eba9b7edad5a4c45eb9fadc1c67"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/tests/index.test.js",
+      "sha256": "c66606d4f397125e5ed5232502a0970a20a3516e6dc03c52dd3cf8e5a387e033"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/tests/index.test.ts",
+      "sha256": "a410e57c53030f18f58643507177789e09e30c4af04e1cdaf8abbfc78a5540cd"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/tests/users.test.js",
+      "sha256": "88fae10fc48f0a130f278d397ccbb993a686a760572265b64e93b2484d9c9c7e"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/tests/users.test.ts",
+      "sha256": "65787b7491497413ee86811964385f6739e09f700d7fbf0d8f4dcfa57f4a961b"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/utils/logger.js",
+      "sha256": "528b50973fcf3e7727078a7853d6b5a19272dc7ebd6e26d1f3dd9698f98f4def"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/utils/logger.ts",
+      "sha256": "f892fb5a56b4dac7bfbfe70b40b49c1cb28f9bca9fdb681bf266d7a7d4af24ca"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/utils/util.js",
+      "sha256": "edf95563b5b6ac03ef4d00f4c0b132f21e31db49d3281a79ac5561d8b1f889ec"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/utils/util.ts",
+      "sha256": "6c73736a6ad4b718d5d5252c7156ade362e1547d70723c385c795aff45cc0e52"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/utils/validateEnv.js",
+      "sha256": "93fbe4bcd1a99a5fa39833d830644fa6f70896a37784d9251b24433c519a314c"
+    },
+    {
+      "file": "Energiepad/energeiapdapi/src/utils/validateEnv.ts",
+      "sha256": "4d0372aa34e0d9adf85a9b486ff8d91c7f4ff2274589e4cf871b95e7ac660e8c"
+    }
+  ],
+  "rootWorkingTree": [
+    " ? Energiepad",
+    " M jest.unit.config.js",
+    " M src/services/dashboard.service.ts",
+    "?? docs/",
+    "?? jest.setup.js",
+    "?? sandbox.js",
+    "?? src/services/timedate.service.ts",
+    "?? test/auth.test.js",
+    "?? test/conversionFactor.test.js",
+    "?? test/dashboard.test.js",
+    "?? test/demo-mar-2025/heatingAndCooling/heatingAndCooling.test.js",
+    "?? test/demo-mar-2025/heatingAndCoolingAndPowering/heatingAndCoolingAndPowering.test.js",
+    "?? test/demo-mar-2025/heatingOrCoolingAndPower/heatingOrCoolingAndPower.test.js",
+    "?? test/demo-mar-2025/lightingAndPower/lightingAndPower.test.js",
+    "?? test/demo-mar-2025/singleHeatingOrCooling/singleHeatingOrCooling.test.js",
+    "?? test/sites.test.js",
+    "?? test/testhelp.js",
+    "?? test/user.test.js",
+    "?? test/utility.test.js"
+  ],
+  "limitations": [
+    "Static source inventory; not deployed schema or runtime verification",
+    "Source files not modified; hashes exclude workbook data"
+  ]
+}

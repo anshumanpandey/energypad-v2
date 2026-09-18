@@ -1,0 +1,10 @@
+node_modules
+.next
+.next-e2e
+.local
+coverage
+playwright-report
+test-results
+package-lock.json
+prisma/migrations
+next-env.d.ts

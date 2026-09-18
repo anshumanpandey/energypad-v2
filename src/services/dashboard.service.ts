@@ -689,8 +689,6 @@ const calculateWaste = async (params: EnergyWasteParams): Promise<WasteValue[]> 
     return records;
   }
 
-  console.log('no formulate to apply found');
-
   return [];
 };
 
