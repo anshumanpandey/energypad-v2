@@ -83,3 +83,9 @@ See [Sprint 2 design](../../docs/SPRINT_2_DESIGN.md) and [acceptance](../../docs
 Run `npm run db:seed:energy-2020 -- <organisation-uuid>` against the local development database. This creates `TEST-2020` / **Test Site — 2020 Demo**, historical attributes, one electricity meter and 12 synthetic estimated monthly readings for 2020 (113,900 kWh total). Costs use a synthetic GBP 0.15/kWh net rate and 20% VAT. These are demonstration values, not measured data or a real tariff.
 
 The seed requires an existing workspace with a verified owner, uses the normal authorization/site-limit/audit services, and is separate from plan seeding. Repeated runs skip existing readings and never overwrite unrelated or changed records. It refuses production mode and non-local database hosts.
+
+### Import monthly consumption
+
+In **Energy**, select a site and load its records, then use **Import consumption workbook**. Select an active meter and upload an XLSX with a header row and 1–120 monthly readings in the chosen sheet. Map month (YYYY-MM text), quantity and source unit; supply `actual` or `estimated` as reading status. Optional fields include net cost, VAT percentage, currency, end use and legacy reference. Mapped columns take precedence over defaults. Units must match the selected meter; configure sourced factors first for physical units.
+
+Validate and review the preview before committing. Download CSV errors to fix invalid rows. Each commit is atomic and retry-safe; reopening or changing mapping requires revalidation. Existing periods are rejected rather than overwritten. The importer discards credential columns and rejects formulas/macros/external links under the same limits as site imports.

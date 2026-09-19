@@ -10,3 +10,6 @@ export const siteService = new SiteService(db, mailer, process.env.AUTH_URL ?? '
 
 import { EnergyService } from './energy';
 export const energyService = new EnergyService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { EnergyImportService } from './energy-import';
+export const energyImportService = new EnergyImportService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');

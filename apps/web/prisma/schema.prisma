@@ -241,6 +241,7 @@ model Meter {
   site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
   consumption ConsumptionRecord[]
   conversions UnitConversionVersion[]
+  energyImports EnergyImportBatch[]
   @@unique([id, siteId, organisationId])
   @@unique([siteId, code])
   @@unique([id, organisationId])
@@ -276,6 +277,8 @@ model ConsumptionRecord {
   normalizedKwh Decimal @db.Decimal(19, 3)
   conversionFactor Decimal @db.Decimal(16, 6)
   conversionVersion String
+  energyImportId String? @db.Uuid
+  energyImport EnergyImportBatch? @relation(fields: [energyImportId, organisationId], references: [id, organisationId])
   conversionId String? @db.Uuid
   conversion UnitConversionVersion? @relation(fields: [conversionId, organisationId], references: [id, organisationId])
   estimated Boolean @default(false)
@@ -313,5 +316,25 @@ model UnitConversionVersion {
   records ConsumptionRecord[]
   @@unique([id, organisationId])
   @@unique([meterId, sourceUnit, fuel, validFrom])
+  @@index([organisationId, siteId])
+}
+
+model EnergyImportBatch {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  meterId String @db.Uuid
+  fingerprint String
+  status String @default("UPLOADED")
+  sheets Json
+  mapping Json?
+  result Json?
+  createdBy String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  committedAt DateTime? @db.Timestamptz(3)
+  meter Meter @relation(fields: [meterId, siteId, organisationId], references: [id, siteId, organisationId])
+  records ConsumptionRecord[]
+  @@unique([id, organisationId])
+  @@unique([meterId, fingerprint])
   @@index([organisationId, siteId])
 }

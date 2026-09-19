@@ -401,4 +401,36 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await expect(normalized).toBeVisible();
   await normalized.getByText('Conversion details').click();
   await expect(normalized.getByText('Synthetic browser test reference', { exact: true })).toBeVisible();
+  const book = new ExcelJS.Workbook();
+  const readingSheet = book.addWorksheet('Monthly readings');
+  readingSheet.addRow(['month', 'quantity', 'password']);
+  for (let month = 1; month <= 12; month++)
+    readingSheet.addRow([`2021-${String(month).padStart(2, '0')}`, '1', 'synthetic-import-secret']);
+  await page.getByLabel('Consumption workbook', { exact: true }).setInputFiles({
+    name: 'consumption.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer: Buffer.from(await book.xlsx.writeBuffer()),
+  });
+  await page.getByRole('button', { name: 'Upload consumption workbook', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Map consumption columns' })).toBeVisible();
+  await expect(page.getByText('synthetic-import-secret')).toHaveCount(0);
+  await page.getByLabel('Month (YYYY-MM) column', { exact: true }).selectOption('0');
+  await page.getByLabel('Quantity column', { exact: true }).selectOption('1');
+  await page.getByLabel('Source unit default', { exact: true }).fill('m3');
+  await page.getByLabel('Reading status (actual / estimated) default', { exact: true }).fill('actual');
+  await page.getByLabel('I confirm these rows belong').check();
+  await page.getByRole('button', { name: 'Validate consumption import', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Commit consumption import', exact: true })).toBeDisabled();
+  const errorDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download consumption errors', exact: true }).click();
+  expect((await errorDownload).suggestedFilename()).toBe('consumption-errors.csv');
+  await page.getByLabel('Source unit default', { exact: true }).fill('MWh');
+  await page.getByRole('button', { name: 'Validate consumption import', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Commit consumption import', exact: true })).toBeEnabled();
+  await page.screenshot({ path: testInfo.outputPath('consumption-import.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Commit consumption import', exact: true }).click();
+  await expect(page.getByText('Consumption import complete: 12 readings created.', { exact: true })).toBeVisible();
+  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  await expect(page.getByText('Main electricity · 12/12 months recorded', { exact: true })).toBeVisible();
 });

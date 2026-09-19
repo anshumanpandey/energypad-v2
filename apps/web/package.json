@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "typecheck": "prisma generate && next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "tsx scripts/integration.ts && tsx scripts/sites-integration.ts && tsx scripts/energy-integration.ts",
+    "test:integration": "tsx scripts/integration.ts && tsx scripts/sites-integration.ts && tsx scripts/energy-integration.ts && tsx scripts/energy-import-integration.ts",
     "test:e2e": "playwright test",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",

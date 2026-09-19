@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Button } from './ui/button';
+import { EnergyImportWorkspace } from './energy-import-workspace';
 import { request, useMutation } from './forms';
 type EnergyData = {
   meters: { id: string; name: string; code: string; unit: string; archivedAt: string | null }[];
@@ -264,6 +265,14 @@ export function EnergyWorkspace({
               </form>
             )}
           </section>
+          {manage && (
+            <EnergyImportWorkspace
+              key={siteId}
+              base={`/api/v1/${base}/imports`}
+              meters={data.meters}
+              onCommitted={load}
+            />
+          )}
           <section className="panel stack-form">
             <h2>Consumption records</h2>
             {!data.records.length ? (

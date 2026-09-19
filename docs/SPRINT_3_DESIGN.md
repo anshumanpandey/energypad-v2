@@ -17,7 +17,7 @@ Owner/Admin can write. Other roles read under existing site scope; Site Managers
 ## Next deliverables before sprint acceptance
 
 1. Tariff/end-use mappings and monthly observed drivers; extend the delivered meter-specific conversion versions to approved shared catalogs if needed. Preserve all retained legacy energy fields with explicit tax/time-basis mapping.
-2. Consumption workbook mapping/validation/preview/atomic commit with batch identity, row errors and retry idempotency; correction lineage and non-monthly overlap policies.
+2. Correction lineage and non-monthly overlap policies. Monthly workbook mapping/preview/atomic commit is delivered in the consumption import milestone below.
 3. Weather provider adapter, explicit site coordinates and heating/cooling base temperatures, complete-day validation and methodology versioning. Persist provider/provenance rather than inventing missing observations. Provider selection was requested; no external weather requests or site-location transmissions have been implemented.
 4. Durable enrichment job states, bounded retries and visible recovery, with tenant checks at execution and result access.
 5. Validate import and weather enrichment across at least 12 months, provider-failure recovery, legacy energy mapping and UI/browser accessibility. Do not mark the sprint complete based on manual consumption entry alone.
@@ -36,3 +36,15 @@ Meter-specific sourced conversion versions now support m3, litre and kg. Owner/A
 Consumption selects only a version with matching tenant/site/meter/fuel/unit covering the whole month. Missing or expired factors fail explicitly. The normalized value rounds to three decimal places; the original quantity and six-decimal factor are retained. Each reading references its immutable version and exposes conversion provenance in the Energy table. New versions do not recalculate old readings. Fixed kWh/MWh dimensional conversions cannot be overridden.
 
 This is a bounded meter-specific catalog, not an approved global factor library. Incorrect saved versions currently require a future audited correction workflow; the UI warns that versions cannot be edited and does not offer deletion. Tariff automation, allocation taxonomies and monthly observed drivers remain outstanding.
+
+## Consumption import milestone
+
+The Energy page now includes an XLSX importer for one explicitly selected active meter per batch. It reuses the bounded workbook parser and credential-column discard policy. Files are transient; only sanitized cells are staged. Uploads are limited to 20 attempts per organisation/hour. Workbooks use plain values (not formulas), and the selected sheet must contain 1–120 monthly rows. Months must be text in YYYY-MM format; ambiguous dates are rejected. Source units must exactly match the meter. Actual/estimated status must be supplied in a mapped column or explicit default.
+
+Users select the sheet, map columns or provide defaults, confirm the meter/unit/net-cost basis, and validate. The preview includes normalized energy, costs and quality warnings; row errors are downloadable as CSV. Invalid rows, duplicate months, existing periods, unsupported conversion coverage and inactive meters prevent commit. Changing a mapping hides its stale preview. Reopened batches must be validated again in the UI. The recent-import list allows recovery after navigating away.
+
+EnergyImportBatch is separate from the site importer. Fingerprints deduplicate sanitized content per meter, including across organisations through globally unique tenant-owned meters. The batch has a composite tenant FK and imported readings reference its id. No workbook can switch meter after upload. Uploading the same workbook for a different meter intentionally creates a different batch.
+
+Preview and commit reuse the same reading preparation code as manual entry. Commit locks the organisation, checks the actor's current permissions, revalidates every row and compares a signature of prepared domain inputs/results. A changed meter, conversion context, attribute snapshot or newly occupied month requires a new preview. All readings, per-reading audit events and batch completion are written in one transaction. Simultaneous/repeated commits return the completed batch without duplicate readings or commit audit. Failures leave no partial readings.
+
+This importer creates new monthly readings only. Corrections, arbitrary billing periods, multi-meter sheets and direct migration of ambiguous legacy tax/working-hour fields remain separate work.

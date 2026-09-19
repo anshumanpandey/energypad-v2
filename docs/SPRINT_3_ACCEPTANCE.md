@@ -20,7 +20,7 @@ Status: **in progress**. Monthly manual consumption is implemented; full sprint 
 
 ## Remaining acceptance gates
 
-Consumption workbook import/preview/commit and retry batches, shared approved conversion catalogs, monthly observed drivers and full legacy mapping, correction lineage, weather provider integration, enrichment jobs/retries and 12-month import-plus-enrichment validation remain to be implemented. No weather coverage, calculation compatibility, production deployment or remote CI success is claimed.
+Shared approved conversion catalogs, monthly observed drivers and full legacy mapping, correction lineage, weather provider integration, enrichment jobs/retries and 12-month import-plus-enrichment validation remain to be implemented. No weather coverage, calculation compatibility, production deployment or remote CI success is claimed.
 - Lint, formatting, TypeScript and the production Webpack build passed. Build used the separate `.next-e2e` output directory to preserve the running development preview.
 
 
@@ -30,3 +30,14 @@ Consumption workbook import/preview/commit and retry batches, shared approved co
 - Ten unit tests passed. Energy integration now includes sourced-factor precision, validity boundaries, concurrent overlap rejection, immutable database rows, stable historical results, permission checks and meter fuel/unit changes.
 - No real fuel factors or weather data were seeded. The existing 2020 synthetic electricity dataset remains unchanged.
 - Expanded Energy browser scenario passed (42.3 seconds), including creation of a synthetic gas factor, physical-unit entry and displayed provenance. TypeScript, lint and formatting passed. Migration `202609180003_energy_conversions` applied locally without changing existing consumption values.
+
+## Consumption import milestone — 19 September 2026
+
+- Delivered XLSX upload, sheet/column/default mapping, explicit meter/unit/cost confirmation, normalized preview, CSV errors, atomic commit and recent-batch reopening on Energy.
+- Added tenant-owned EnergyImportBatch and consumption provenance with migration `202609190001_energy_imports`, applied to the local V2 database.
+- Twelve unit tests passed. Existing energy integration checks passed after sharing reading preparation with imports.
+- New import integration checks passed: complete 12-month normalized/tax totals; credential stripping; upload and concurrent-commit idempotency; tenant boundaries; duplicate/unit rejection; no partial writes on stale existing periods; changed historical-context detection and revalidation; revoked write access.
+- TypeScript, lint and formatting passed. The 2020 demo dataset was not changed.
+
+The remaining sprint work includes monthly observed drivers, tariff/end-use mappings, correction lineage, full legacy mapping, weather integration and durable enrichment jobs. The full Sprint 3 import-plus-weather acceptance gate remains open.
+- Expanded Energy browser workflow passed, including unit-error repair, CSV download, 12-month workbook commit and complete-year coverage. Production Webpack build passed using `.next-e2e` to keep the local preview separate.

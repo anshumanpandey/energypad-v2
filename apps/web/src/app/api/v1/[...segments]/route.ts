@@ -1,5 +1,5 @@
 import { api, readBody, readBytes } from '@/server/http';
-import { foundation, siteService, energyService } from '@/server/services';
+import { foundation, siteService, energyService, energyImportService } from '@/server/services';
 import { DomainError } from '@/domain/policy';
 
 type Context = { params: Promise<{ segments: string[] }> };
@@ -15,6 +15,23 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'imports') {
+        const site = s[3];
+        if (s.length === 6 && method === 'GET') return energyImportService.list(actor, org, site);
+        if (s.length === 6 && method === 'POST')
+          return energyImportService.upload(
+            actor,
+            org,
+            site,
+            new URL(request.url).searchParams.get('meterId') ?? '',
+            await readBytes(request, 2_000_000),
+          );
+        if (s.length === 7 && method === 'GET') return energyImportService.detail(actor, org, site, s[6]);
+        if (s.length === 8 && s[7] === 'preview' && method === 'POST')
+          return energyImportService.map(actor, org, site, s[6], await readBody(request));
+        if (s.length === 8 && s[7] === 'commit' && method === 'POST')
+          return energyImportService.commit(actor, org, site, s[6]);
+      }
       if (s[2] === 'portfolios') {
         if (s.length === 3 && method === 'GET') return siteService.portfolios(actor, org);
         if (s.length === 3 && method === 'POST') return siteService.savePortfolio(actor, org, await readBody(request));
