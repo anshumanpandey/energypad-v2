@@ -13,11 +13,12 @@
     "lint": "eslint .",
     "typecheck": "prisma generate && next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "tsx scripts/integration.ts && tsx scripts/sites-integration.ts",
+    "test:integration": "tsx scripts/integration.ts && tsx scripts/sites-integration.ts && tsx scripts/energy-integration.ts",
     "test:e2e": "playwright test",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:energy-2020": "tsx scripts/seed-energy-2020.ts",
     "local:services": "tsx scripts/local-services.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

@@ -77,7 +77,8 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
     await expect(page).toHaveURL(new RegExp(`${orgPath}/${section}$`));
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
     await expect(navigation.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
-    await expect(page.getByText('Coming in a later release', { exact: true })).toBeVisible();
+    if (section !== 'energy') await expect(page.getByText('Coming in a later release', { exact: true })).toBeVisible();
+    else await expect(page.getByRole('heading', { name: 'Add a site to get started' })).toBeVisible();
   }
   await navigation.getByRole('link', { name: 'Energy', exact: true }).click();
   await page.getByRole('link', { name: 'Advanced Analysis', exact: true }).click();
@@ -328,4 +329,76 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
     await page.request.get(`/api/v1/organisations/${orgPath.split('/')[2]}/sites/${manualSite.id}`)
   ).json();
   expect(savedSite.currency).toBe('GBP');
+});
+
+test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ page }, testInfo) => {
+  page.setDefaultTimeout(20_000);
+  await page.goto('/login');
+  await signIn(page, `energy-${randomUUID()}@example.test`);
+  await page.getByLabel('Organisation name').fill('Energy Workspace');
+  await page.getByRole('button', { name: 'Create workspace' }).click();
+  await expect(page).toHaveURL(/\/org\/[^/]+\/overview$/);
+  const org = new URL(page.url()).pathname.split('/')[2];
+  const siteResponse = await page.request.post(`/api/v1/organisations/${org}/sites`, {
+    headers: { origin: 'http://localhost:3101' },
+    data: { code: 'ENERGY', name: 'Energy Site' },
+  });
+  expect(siteResponse.ok()).toBe(true);
+  const site = await siteResponse.json();
+  const meterResponse = await page.request.post(`/api/v1/organisations/${org}/sites/${site.id}/meters`, {
+    headers: { origin: 'http://localhost:3101' },
+    data: { code: 'E1', name: 'Main electricity', fuel: 'ELECTRICITY', unit: 'MWh' },
+  });
+  expect(meterResponse.ok()).toBe(true);
+  await page.getByRole('link', { name: 'Energy', exact: true }).click();
+  await page.getByLabel('Year', { exact: true }).fill('2024');
+  await page.getByRole('button', { name: 'Load energy records' }).click();
+  await expect(page.getByRole('heading', { name: 'Record monthly consumption' })).toBeVisible();
+  await page.getByLabel('Month', { exact: true }).fill('2024-02');
+  await page.getByLabel('Quantity (meter units)').fill('1.25');
+  await page.getByLabel('Net cost', { exact: true }).fill('100');
+  await page.getByLabel('Currency (3-letter code)').fill('gBp');
+  await page.getByLabel('VAT (%)').fill('20');
+  await page.getByRole('button', { name: 'Save consumption' }).click();
+  await expect(page.getByRole('status')).toContainText('Consumption recorded.');
+  await expect(page.getByLabel('Quantity (meter units)')).toHaveValue('');
+  await expect(page.getByText('Main electricity · 1/12 months recorded')).toBeVisible();
+  await expect(page.getByRole('cell').filter({ hasText: /^1250/ })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '100 / 120 GBP', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: /Missing population/ })).toBeVisible();
+  await page.getByLabel('Month', { exact: true }).fill('2024-02');
+  await page.getByLabel('Quantity (meter units)').fill('2');
+  await page.getByRole('button', { name: 'Save consumption' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'already has a reading' })).toBeVisible();
+  await expect(page.getByLabel('Quantity (meter units)')).toHaveValue('2');
+  await page.screenshot({ path: testInfo.outputPath('energy.png'), fullPage: true });
+  await page.reload();
+  await page.getByLabel('Year', { exact: true }).fill('2024');
+  await page.getByRole('button', { name: 'Load energy records' }).click();
+  await expect(page.getByRole('cell').filter({ hasText: /^1250/ })).toBeVisible();
+  const gasResponse = await page.request.post(`/api/v1/organisations/${org}/sites/${site.id}/meters`, {
+    headers: { origin: 'http://localhost:3101' },
+    data: { code: 'G1', name: 'Gas meter', fuel: 'GAS', unit: 'm3' },
+  });
+  expect(gasResponse.ok()).toBe(true);
+  const gas = await gasResponse.json();
+  await page.getByRole('button', { name: 'Load energy records' }).click();
+  await expect(page.getByRole('heading', { name: 'Add conversion factor' })).toBeVisible();
+  await page.getByLabel('Conversion meter', { exact: true }).selectOption(gas.id);
+  await page.getByLabel('kWh per source unit', { exact: true }).fill('10.5');
+  await page.getByLabel('First month', { exact: true }).fill('2024-01');
+  await page.getByLabel('Last month (inclusive)', { exact: true }).fill('2024-12');
+  await page.getByLabel('Factor source / reference', { exact: true }).fill('Synthetic browser test reference');
+  await page.getByRole('button', { name: 'Save conversion factor', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Conversion factor saved.');
+  await expect(page.getByLabel('kWh per source unit', { exact: true })).toHaveValue('');
+  await page.getByLabel('Energy meter', { exact: true }).selectOption(gas.id);
+  await page.getByLabel('Month', { exact: true }).fill('2024-01');
+  await page.getByLabel('Quantity (meter units)').fill('100');
+  await page.getByRole('button', { name: 'Save consumption' }).click();
+  await expect(page.getByRole('status')).toContainText('Consumption recorded.');
+  const normalized = page.getByRole('cell').filter({ hasText: /^1050/ });
+  await expect(normalized).toBeVisible();
+  await normalized.getByText('Conversion details').click();
+  await expect(normalized.getByText('Synthetic browser test reference', { exact: true })).toBeVisible();
 });

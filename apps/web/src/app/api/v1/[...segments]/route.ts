@@ -1,5 +1,5 @@
 import { api, readBody, readBytes } from '@/server/http';
-import { foundation, siteService } from '@/server/services';
+import { foundation, siteService, energyService } from '@/server/services';
 import { DomainError } from '@/domain/policy';
 
 type Context = { params: Promise<{ segments: string[] }> };
@@ -30,6 +30,18 @@ async function handle(request: Request, context: Context) {
         if (s.length === 5 && s[4] === 'preview' && method === 'POST')
           return siteService.mapImport(actor, org, s[3], await readBody(request));
         if (s.length === 5 && s[4] === 'commit' && method === 'POST') return siteService.commitImport(actor, org, s[3]);
+      }
+      if (s[2] === 'sites' && s.length === 6 && s[4] === 'energy' && s[5] === 'conversions' && method === 'POST')
+        return energyService.addConversion(actor, org, s[3], await readBody(request));
+      if (s[2] === 'sites' && s.length === 5 && s[4] === 'energy') {
+        if (method === 'GET')
+          return energyService.records(
+            actor,
+            org,
+            s[3],
+            Number(new URL(request.url).searchParams.get('year') ?? new Date().getUTCFullYear()),
+          );
+        if (method === 'POST') return energyService.add(actor, org, s[3], await readBody(request));
       }
       if (s[2] === 'sites') {
         if (s.length === 3 && method === 'POST') return siteService.createSite(actor, org, await readBody(request));

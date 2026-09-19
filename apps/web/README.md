@@ -77,3 +77,9 @@ Data accepts XLSX files up to 2 MB, with up to 10 sheets, 50 columns and 2,000 r
 Imports create new sites only. Existing codes, including archived codes, are rejected rather than updated. Business-account sheets do not create accounts or organisations; invitations remain the account activation workflow. Original fixture credentials never become customer identities. Consumption import and calculations are Sprint 3+. No original workbook or calculation fixture is rewritten.
 
 See [Sprint 2 design](../../docs/SPRINT_2_DESIGN.md) and [acceptance](../../docs/SPRINT_2_ACCEPTANCE.md).
+
+### Optional 2020 demo energy data
+
+Run `npm run db:seed:energy-2020 -- <organisation-uuid>` against the local development database. This creates `TEST-2020` / **Test Site — 2020 Demo**, historical attributes, one electricity meter and 12 synthetic estimated monthly readings for 2020 (113,900 kWh total). Costs use a synthetic GBP 0.15/kWh net rate and 20% VAT. These are demonstration values, not measured data or a real tariff.
+
+The seed requires an existing workspace with a verified owner, uses the normal authorization/site-limit/audit services, and is separate from plan seeding. Repeated runs skip existing readings and never overwrite unrelated or changed records. It refuses production mode and non-local database hosts.

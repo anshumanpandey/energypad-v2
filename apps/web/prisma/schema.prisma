@@ -138,6 +138,7 @@ model Site {
   archivedAt DateTime? @db.Timestamptz(3)
   attributes SiteAttributeHistory[]
   meters Meter[]
+  consumption ConsumptionRecord[]
   @@unique([id, organisationId])
   @@unique([organisationId, code])
 }
@@ -238,6 +239,9 @@ model Meter {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
   site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+  consumption ConsumptionRecord[]
+  conversions UnitConversionVersion[]
+  @@unique([id, siteId, organisationId])
   @@unique([siteId, code])
   @@unique([id, organisationId])
 }
@@ -257,4 +261,57 @@ model ImportBatch {
   attributes SiteAttributeHistory[]
   @@unique([organisationId, fingerprint])
   @@unique([id, organisationId])
+}
+
+model ConsumptionRecord {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  meterId String @db.Uuid
+  periodStart DateTime @db.Date
+  periodEnd DateTime @db.Date
+  sourceQuantity Decimal @db.Decimal(16, 3)
+  sourceUnit String
+  fuel String
+  normalizedKwh Decimal @db.Decimal(19, 3)
+  conversionFactor Decimal @db.Decimal(16, 6)
+  conversionVersion String
+  conversionId String? @db.Uuid
+  conversion UnitConversionVersion? @relation(fields: [conversionId, organisationId], references: [id, organisationId])
+  estimated Boolean @default(false)
+  netCost Decimal? @db.Decimal(16, 3)
+  vatPercent Decimal? @db.Decimal(6, 3)
+  vatCost Decimal? @db.Decimal(16, 3)
+  grossCost Decimal? @db.Decimal(16, 3)
+  currency String? @db.Char(3)
+  endUse String
+  externalLegacyId String
+  attributeSnapshot Json
+  qualityFlags Json
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+  meter Meter @relation(fields: [meterId, siteId, organisationId], references: [id, siteId, organisationId])
+  @@unique([meterId, periodStart])
+  @@index([organisationId, siteId, periodStart])
+}
+
+model UnitConversionVersion {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  meterId String @db.Uuid
+  sourceUnit String
+  fuel String
+  factor Decimal @db.Decimal(16, 6)
+  validFrom DateTime @db.Date
+  validUntil DateTime @db.Date
+  source String
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  meter Meter @relation(fields: [meterId, siteId, organisationId], references: [id, siteId, organisationId])
+  records ConsumptionRecord[]
+  @@unique([id, organisationId])
+  @@unique([meterId, sourceUnit, fuel, validFrom])
+  @@index([organisationId, siteId])
 }
