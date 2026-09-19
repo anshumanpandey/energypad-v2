@@ -2,6 +2,9 @@ import { test, expect, type Page } from '@playwright/test';
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
+// Load this CommonJS dependency outside Playwright’s ESM import hook.
+const ExcelJS = createRequire(import.meta.url)('exceljs') as typeof import('exceljs');
 async function mailLink(email: string, type: 'signin' | 'invite') {
   let link = '';
   await expect
@@ -62,6 +65,24 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
       })
     ).status(),
   ).toBe(400);
+  const navigation = page.getByRole('navigation', { name: 'Main navigation' });
+  for (const [name, section] of [
+    ['Energy', 'energy'],
+    ['Carbon', 'carbon'],
+    ['Opportunities', 'opportunities'],
+    ['AI Analyst', 'ai-analyst'],
+    ['Billing', 'billing'],
+  ]) {
+    await navigation.getByRole('link', { name, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${orgPath}/${section}$`));
+    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+    await expect(navigation.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByText('Coming in a later release', { exact: true })).toBeVisible();
+  }
+  await navigation.getByRole('link', { name: 'Energy', exact: true }).click();
+  await page.getByRole('link', { name: 'Advanced Analysis', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Advanced Analysis', exact: true })).toBeVisible();
+  await expect(navigation.getByRole('link', { name: 'Energy', exact: true })).toHaveAttribute('aria-current', 'page');
   await page.getByRole('link', { name: 'Settings', exact: true }).click();
   await page.getByLabel('Organisation name').fill('Northstar Energy');
   await page.getByRole('button', { name: 'Save changes' }).click();
@@ -85,6 +106,11 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   await member.getByRole('button', { name: 'Accept invitation' }).click();
   await expect(member).toHaveURL(new RegExp(`${orgPath}/overview`));
   expect((await member.request.get(`${apiPath}/members`)).status()).toBe(403);
+  await expect(member.getByRole('link', { name: 'Billing', exact: true })).toHaveCount(0);
+  // Streamed not-found pages may have HTTP 200; verify the access-denied UI.
+  await member.goto(`${orgPath}/billing`);
+  await expect(member.getByRole('heading', { name: 'We couldn’t find that page.' })).toBeVisible();
+  await expect(member.getByRole('heading', { name: 'Manage your subscription' })).toHaveCount(0);
   await member.goto(invitation);
   await expect(member.getByRole('heading', { name: 'Invitation unavailable' })).toBeVisible();
   await member.goto('/onboarding');
@@ -103,7 +129,7 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   await row.getByRole('button', { name: 'Save role' }).click();
   await expect(row.getByRole('status')).toContainText('Changes saved');
   await member.goto(`${orgPath}/sites`);
-  await expect(member.getByRole('heading', { name: 'No sites assigned yet' })).toBeVisible();
+  await expect(member.getByText('No sites assigned yet.', { exact: false })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('members-desktop.png'), fullPage: true });
   await row.getByRole('button', { name: 'Remove member', exact: true }).click();
   await row.getByRole('button', { name: 'Confirm removal' }).click();
@@ -116,7 +142,7 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await expect(page.getByRole('navigation')).toBeVisible();
   await page.getByRole('link', { name: 'Sites', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Your portfolio starts here' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sites', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.goto(`${orgPath}/overview`);
   await page.screenshot({ path: testInfo.outputPath('overview-mobile.png'), fullPage: true });
@@ -163,4 +189,143 @@ test('onboarding submits without JavaScript and preserves input after validation
   } finally {
     await context.close();
   }
+});
+
+test('shared forms distinguish unavailable scripts from saving and recover after reload', async ({ page, browser }) => {
+  await page.goto('/login');
+  await signIn(page, `form-readiness-${randomUUID()}@example.test`);
+  await page.getByLabel('Organisation name').fill('Form Readiness Workspace');
+  await page.getByRole('button', { name: 'Create workspace' }).click();
+  await expect(page).toHaveURL(/\/org\/[^/]+\/overview$/);
+  const orgPath = new URL(page.url()).pathname.replace('/overview', '');
+  const context = await browser.newContext({ storageState: await page.context().storageState() });
+  // Keep inline streaming scripts working while simulating failed application bundles.
+  await context.route('**/_next/static/**/*.js*', (route) => route.abort());
+  const blocked = await context.newPage();
+  try {
+    await blocked.goto(`${orgPath}/settings`);
+    await expect(blocked.getByRole('button', { name: 'Save changes', exact: true })).toBeDisabled();
+    await expect(blocked.getByText('Interactive controls are still loading.', { exact: false })).toBeVisible();
+    await expect(blocked.getByRole('button', { name: 'Saving…', exact: true })).toHaveCount(0);
+    await blocked.goto(`${orgPath}/members`);
+    await expect(blocked.getByRole('button', { name: 'Invite member', exact: true })).toBeDisabled();
+    await expect(blocked.getByRole('button', { name: 'Manage', exact: true })).toBeDisabled();
+    await expect(blocked.getByRole('link', { name: 'reload this page' }).first()).toBeVisible();
+    await context.unrouteAll();
+    await blocked.goto(`${orgPath}/settings`);
+    await expect(blocked.getByRole('button', { name: 'Save changes', exact: true })).toBeEnabled();
+    await expect(blocked.getByText('Interactive controls are still loading.', { exact: false })).toHaveCount(0);
+    await blocked.getByLabel('Organisation name').fill('Recovered Workspace');
+    let releaseRequest!: () => void;
+    const release = new Promise<void>((resolve) => {
+      releaseRequest = resolve;
+    });
+    await blocked.route('**/api/v1/organisations/*', async (route) => {
+      if (route.request().method() === 'PATCH') await release;
+      await route.continue();
+    });
+    await blocked.getByRole('button', { name: 'Save changes', exact: true }).click();
+    try {
+      await expect(blocked.getByRole('button', { name: 'Saving…', exact: true })).toBeDisabled();
+    } finally {
+      releaseRequest();
+    }
+    await expect(blocked.getByRole('status')).toContainText('Changes saved');
+    await expect(blocked.getByRole('button', { name: 'Save changes', exact: true })).toBeEnabled();
+    await blocked.reload();
+    await expect(blocked.getByLabel('Organisation name')).toHaveValue('Recovered Workspace');
+  } finally {
+    await context.close();
+  }
+});
+
+test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testInfo) => {
+  page.setDefaultTimeout(20_000);
+  await page.goto('/login');
+  await signIn(page, `sprint2-${randomUUID()}@example.test`);
+  await page.getByLabel('Organisation name').fill('Sprint Two Workspace');
+  await page.getByRole('button', { name: 'Create workspace' }).click();
+  await expect(page).toHaveURL(/\/org\/[^/]+\/overview$/);
+  const orgPath = new URL(page.url()).pathname.replace('/overview', '');
+  await page.getByRole('link', { name: 'Portfolio', exact: true }).click();
+  await page.getByLabel('New portfolio name').fill('Regional sites');
+  await page.getByRole('button', { name: 'Create portfolio', exact: true }).click();
+  await expect(page.getByLabel('Portfolio name', { exact: true })).toHaveValue('Regional sites');
+  await page.getByRole('link', { name: 'Sites', exact: true }).click();
+  await page.getByRole('button', { name: 'Add site', exact: true }).click();
+  await page.getByLabel('Site code', { exact: true }).fill('MANUAL');
+  await page.getByLabel('Site name', { exact: true }).fill('Manual Site');
+  await page.getByLabel('Currency (3-letter code)').fill('gBp');
+  await page.getByLabel('Portfolio', { exact: true }).selectOption({ label: 'Regional sites' });
+  await page.getByRole('button', { name: 'Save site', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Attribute history' })).toBeVisible();
+  await page.getByLabel('Effective date').fill('2026-01-01');
+  await page.getByLabel('Population', { exact: true }).fill('0');
+  await page.getByLabel('Floor area (m²)').fill('1200.5');
+  await page.getByRole('button', { name: 'Add history entry' }).click();
+  const history = page.locator('.site-history-entry');
+  await expect(history.getByText('2026-01-01', { exact: true })).toBeVisible();
+  await expect(history.locator('dd').first()).toHaveText('0');
+  await expect(page.getByLabel('Effective date')).toHaveValue('');
+  await expect(page.getByLabel('Population', { exact: true })).toHaveValue('');
+  await expect(page.getByLabel('Floor area (m²)')).toHaveValue('');
+  await page.getByLabel('Effective date').fill('2026-01-01');
+  await page.getByLabel('Population', { exact: true }).fill('12');
+  await page.getByRole('button', { name: 'Add history entry' }).click();
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(page.getByLabel('Effective date')).toHaveValue('2026-01-01');
+  await expect(page.getByLabel('Population', { exact: true })).toHaveValue('12');
+  await page.getByLabel('Meter code').fill('MAIN');
+  await page.getByLabel('Meter name').fill('Main electricity');
+  await page.getByRole('button', { name: 'Add meter', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Edit meter', exact: true })).toBeVisible();
+  const newMeter = page.locator('form').filter({ has: page.getByRole('heading', { name: 'New meter', exact: true }) });
+  await expect(newMeter.getByLabel('Meter code')).toHaveValue('');
+  await expect(newMeter.getByLabel('Meter name')).toHaveValue('');
+  await expect(newMeter.getByLabel('Fuel')).toHaveValue('ELECTRICITY');
+  await expect(newMeter.getByLabel('Unit')).toHaveValue('kWh');
+  await newMeter.getByLabel('Meter code').fill('MAIN');
+  await newMeter.getByLabel('Meter name').fill('Duplicate meter');
+  await newMeter.getByRole('button', { name: 'Add meter', exact: true }).click();
+  await expect(newMeter.getByRole('alert')).toBeVisible();
+  await expect(newMeter.getByLabel('Meter code')).toHaveValue('MAIN');
+  await expect(newMeter.getByLabel('Meter name')).toHaveValue('Duplicate meter');
+  await page.getByRole('link', { name: 'Data', exact: true }).click();
+  const workbook = new ExcelJS.Workbook(),
+    sheet = workbook.addWorksheet('Sites');
+  sheet.addRow(['code', 'name', 'password']);
+  sheet.addRow(['IMPORT-1', 'Imported Site', 'synthetic-secret-do-not-store']);
+  sheet.addRow(['', 'Second Imported Site', 'synthetic-secret-do-not-store']);
+  await page.getByLabel('Excel workbook').setInputFiles({
+    name: 'sites.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer: Buffer.from(await workbook.xlsx.writeBuffer()),
+  });
+  await page.getByRole('button', { name: 'Upload workbook' }).click();
+  await expect(page.getByRole('heading', { name: '2. Map and validate' })).toBeVisible();
+  await expect(page.getByText('synthetic-secret-do-not-store')).toHaveCount(0);
+  await page.getByLabel('I confirm these sites belong').check();
+  await page.getByRole('button', { name: 'Validate and preview' }).click();
+  await expect(page.getByRole('button', { name: 'Download row errors' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Commit import' })).toBeDisabled();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download row errors' }).click();
+  expect((await downloadPromise).suggestedFilename()).toBe('import-errors.csv');
+  await page.getByLabel('Code prefix for rows without a code').fill('IMPORTED');
+  await page.getByRole('button', { name: 'Validate and preview' }).click();
+  await expect(page.getByRole('button', { name: 'Commit import' })).toBeEnabled();
+  await page.screenshot({ path: testInfo.outputPath('import-preview.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Commit import' }).click();
+  await expect(page.getByText('Import complete: 2 sites created.', { exact: false })).toBeVisible();
+  await page.reload();
+  await page.getByRole('link', { name: 'Sites', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Imported Site', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Second Imported Site', exact: true })).toBeVisible();
+  const sites = await (await page.request.get(`/api/v1/organisations/${orgPath.split('/')[2]}/sites`)).json();
+  expect(sites).toHaveLength(3);
+  const manualSite = sites.find((site: { code: string }) => site.code === 'MANUAL');
+  const savedSite = await (
+    await page.request.get(`/api/v1/organisations/${orgPath.split('/')[2]}/sites/${manualSite.id}`)
+  ).json();
+  expect(savedSite.currency).toBe('GBP');
 });

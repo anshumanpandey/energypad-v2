@@ -8,6 +8,14 @@ import type { Actor } from './foundation';
 export async function readBody(request: Request): Promise<unknown> {
   if (!request.headers.get('content-type')?.includes('application/json'))
     throw new DomainError('CONTENT_TYPE', 'Send a JSON request.', 415);
+  const text = (await readBytes(request, 16_384)).toString('utf8');
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new DomainError('INVALID_JSON', 'The request is not valid JSON.');
+  }
+}
+export async function readBytes(request: Request, limit: number) {
   const reader = request.body?.getReader();
   const chunks: Uint8Array[] = [];
   let length = 0;
@@ -17,7 +25,7 @@ export async function readBody(request: Request): Promise<unknown> {
         const { value, done } = await reader.read();
         if (done) break;
         length += value.byteLength;
-        if (length > 16_384) {
+        if (length > limit) {
           await reader.cancel();
           throw new DomainError('BODY_TOO_LARGE', 'This request is too large.', 413);
         }
@@ -27,12 +35,7 @@ export async function readBody(request: Request): Promise<unknown> {
       reader.releaseLock();
     }
   }
-  const text = Buffer.concat(chunks).toString('utf8');
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new DomainError('INVALID_JSON', 'The request is not valid JSON.');
-  }
+  return Buffer.concat(chunks);
 }
 export async function api(request: Request, work: (actor: Actor) => Promise<unknown>, status = 200) {
   const correlationId = randomUUID();

@@ -1,4 +1,4 @@
-# EnergiePad V2 — Sprint 1 foundation
+# EnergiePad V2 — sites and import
 
 An isolated Next.js application alongside the legacy Express/React applications. It has its own dependencies, database and migrations. Run commands **from this directory**, not the repository root. Nothing here migrates legacy data.
 
@@ -27,7 +27,7 @@ Open **http://localhost:3100** (use this hostname to match `AUTH_URL`). Sign in 
 
 After verification, create an organisation, invite a teammate, and open their invitation in a separate browser profile. Sign in with the **invited email** and accept. Settings and role management require Owner/Admin; only Owners can manage other Owners. Create another organisation from the sidebar and use the workspace selector to switch.
 
-The plan seed is idempotent and creates only the four internal plan definitions. It does not create users, demo metrics, sites or credentials. Site editing, energy analysis, reports, billing and migration are later sprints; the UI says so explicitly.
+The plan seed is idempotent and creates only the four internal plan definitions. It does not create users, demo metrics, sites or credentials. Site/portfolio management, meters and site workbook imports are available. Energy data, analysis, reports, billing and legacy account migration remain later sprints.
 
 To use an existing **dedicated V2** PostgreSQL server instead, copy `.env.example` to `.env`, set `DATABASE_URL` and a random `AUTH_SECRET`, and omit `local:services`. Never point the migration commands at a legacy or shared production database.
 
@@ -58,7 +58,7 @@ Integration and browser tests each create a uniquely named disposable database. 
 - `prisma`: PostgreSQL schema, migration and plan seed.
 - `scripts`, `tests`: local runtime and security/browser tests.
 
-Auth.js is pinned to `5.0.0-beta.32`; it is a deliberate pre-release dependency behind the auth boundary, requiring review before deployment. `.npmrc` omits unused peer dependencies, including the unused Nodemailer provider. Required peers are explicit dependencies. `deepmerge-ts` and `mysql2` overrides pin patched transitive Prisma utilities; migration/build checks cover the Prisma paths used here. Review overrides when upgrading Prisma.
+Auth.js is pinned to `5.0.0-beta.32`; it is a deliberate pre-release dependency behind the auth boundary, requiring review before deployment. `.npmrc` omits unused peer dependencies, including the unused Nodemailer provider. Required peers are explicit dependencies. `deepmerge-ts` and `mysql2` overrides pin patched transitive Prisma utilities; migration/build checks cover the Prisma paths used here. ExcelJS’s uuid dependency is overridden to 11.1.1 to address its audit advisory; XLSX read/write tests exercise compatibility. Review overrides when upgrading these packages.
 
 ## Production configuration (not deployed)
 
@@ -67,3 +67,13 @@ Set a dedicated PostgreSQL `DATABASE_URL`, an HTTPS `AUTH_URL`, a cryptographica
 Migrate and seed before starting the app. Production backup/restore, retention, legal policies, abuse controls at the ingress, observability and legacy cutover remain deployment/Sprint 8 work. This implementation does not send real email, deploy, configure billing, or import legacy accounts.
 
 See [Sprint 1 design](../../docs/SPRINT_1_DESIGN.md), [security model](../../docs/V2_SECURITY.md) and [acceptance evidence](../../docs/SPRINT_1_ACCEPTANCE.md).
+
+## Sprint 2 workflow
+
+Owners/Admins can create portfolios, add sites, maintain meter records and append site attribute snapshots. Archive removes a resource from active use while preserving history and audit. Site managers only read assigned sites. Portfolio grouping is available as a structural feature; paid portfolio analytics remain future work.
+
+Data accepts XLSX files up to 2 MB, with up to 10 sheets, 50 columns and 2,000 rows per sheet (10 MB expanded ZIP limit). Header row is row 1. Password/credential columns are discarded before database staging; the raw workbook is not saved. Formula/error cells are rejected. Choose a sheet, map fields/defaults, select the source business email when present, and confirm the sites belong to the current organisation. Supply missing codes or a prefix and an effective date for any historical attributes. Units must already be m² and hours/week. Download row errors, correct mapping or re-upload corrected data, then validate and commit. Commit rechecks site codes and the plan limit atomically. Repeated identical sanitized uploads reuse a batch; a committed batch cannot be imported twice.
+
+Imports create new sites only. Existing codes, including archived codes, are rejected rather than updated. Business-account sheets do not create accounts or organisations; invitations remain the account activation workflow. Original fixture credentials never become customer identities. Consumption import and calculations are Sprint 3+. No original workbook or calculation fixture is rewritten.
+
+See [Sprint 2 design](../../docs/SPRINT_2_DESIGN.md) and [acceptance](../../docs/SPRINT_2_ACCEPTANCE.md).

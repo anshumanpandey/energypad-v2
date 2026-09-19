@@ -24,7 +24,7 @@ export const hashToken = (token: string) => createHash('sha256').update(token).d
 
 export class FoundationService {
   constructor(
-    private db: PrismaClient,
+    protected db: PrismaClient,
     private mail: Mailer,
     private appUrl: string,
   ) {}
@@ -35,7 +35,7 @@ export class FoundationService {
     return user;
   }
 
-  private async membership(actor: Actor, organisationId: string, permission?: Permission, tx: Tx = this.db) {
+  protected async membership(actor: Actor, organisationId: string, permission?: Permission, tx: Tx = this.db) {
     const member = await tx.membership.findFirst({
       where: {
         organisationId: uuid.parse(organisationId),
@@ -49,12 +49,12 @@ export class FoundationService {
     return member;
   }
 
-  private async lock(tx: Tx, organisationId: string) {
+  protected async lock(tx: Tx, organisationId: string) {
     uuid.parse(organisationId);
     await tx.$queryRaw`SELECT id FROM "Organisation" WHERE id = ${organisationId}::uuid FOR UPDATE`;
   }
 
-  private async audit(
+  protected async audit(
     tx: Tx,
     actor: Actor,
     organisationId: string,
@@ -134,6 +134,7 @@ export class FoundationService {
     return this.db.site.findMany({
       where: {
         organisationId,
+        archivedAt: null,
         ...(member.role === 'SITE_MANAGER'
           ? { assignments: { some: { membershipId: member.id, organisationId } } }
           : {}),
@@ -192,7 +193,9 @@ export class FoundationService {
       });
       if (existing) throw new DomainError('ALREADY_MEMBER', 'This person is already a member.', 409);
       const siteIds = [...new Set(data.siteIds)];
-      if ((await tx.site.count({ where: { id: { in: siteIds }, organisationId } })) !== siteIds.length)
+      if (
+        (await tx.site.count({ where: { id: { in: siteIds }, organisationId, archivedAt: null } })) !== siteIds.length
+      )
         throw notFound();
       await tx.invitation.updateMany({
         where: { organisationId, email: data.email, acceptedAt: null, revokedAt: null },
@@ -366,7 +369,9 @@ export class FoundationService {
         where: { id: membershipId, organisationId, revokedAt: null, role: 'SITE_MANAGER' },
       });
       if (!target) throw notFound();
-      if ((await tx.site.count({ where: { id: { in: siteIds }, organisationId } })) !== siteIds.length)
+      if (
+        (await tx.site.count({ where: { id: { in: siteIds }, organisationId, archivedAt: null } })) !== siteIds.length
+      )
         throw notFound();
       await tx.siteAssignment.deleteMany({ where: { membershipId, organisationId } });
       if (siteIds.length)

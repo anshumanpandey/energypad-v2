@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { OrganisationFields } from './organisation-fields';
 import { canManageRole, roleLabels, roles, type Role } from '@/domain/policy';
 
-async function request(path: string, method: string, body?: unknown) {
+export async function request(path: string, method: string, body?: unknown) {
   const response = await fetch(`/api/v1/${path}`, {
     method,
     headers: { 'Content-Type': 'application/json' },
@@ -17,7 +17,7 @@ async function request(path: string, method: string, body?: unknown) {
   return data;
 }
 const subscribe = () => () => {};
-function useMutation() {
+export function useMutation() {
   // Prevent a native form submission before React has attached the JSON handler.
   const hydrated = useSyncExternalStore(
     subscribe,
@@ -45,6 +45,12 @@ function useMutation() {
   }
   const feedback = (
     <>
+      {!hydrated && (
+        <p className="notice" role="status">
+          Interactive controls are still loading. If this message remains, check that JavaScript is enabled and{' '}
+          <a href="">reload this page</a>.
+        </p>
+      )}
       {error && (
         <div className="notice error" role="alert">
           {error}
@@ -58,7 +64,7 @@ function useMutation() {
       )}
     </>
   );
-  return { pending: pending || !hydrated, run, feedback, router };
+  return { pending, disabled: pending || !hydrated, run, feedback, router };
 }
 export function OrganisationForm({
   organisation,
@@ -81,7 +87,7 @@ export function OrganisationForm({
     <form onSubmit={submit} className="stack-form">
       {m.feedback}
       <OrganisationFields values={organisation} />
-      <Button disabled={m.pending} type="submit">
+      <Button disabled={m.disabled} type="submit">
         {m.pending ? 'Saving…' : 'Save changes'}
         <Save size={16} />
       </Button>
@@ -144,7 +150,13 @@ export function InviteForm({ organisationId, role, sites }: { organisationId: st
   }
   return (
     <div className="invite-panel">
-      <Button onClick={() => setOpen(!open)} variant={open ? 'secondary' : 'primary'} aria-expanded={open}>
+      {m.feedback}
+      <Button
+        disabled={m.disabled}
+        onClick={() => setOpen(!open)}
+        variant={open ? 'secondary' : 'primary'}
+        aria-expanded={open}
+      >
         {open ? <X size={17} /> : <Plus size={17} />}
         {open ? 'Close invitation' : 'Invite member'}
       </Button>
@@ -154,7 +166,6 @@ export function InviteForm({ organisationId, role, sites }: { organisationId: st
             <h2>Bring your team together</h2>
             <p className="muted">They’ll receive a link to join this organisation.</p>
           </div>
-          {m.feedback}
           <div className="form-grid">
             <label>
               Email address
@@ -174,7 +185,7 @@ export function InviteForm({ organisationId, role, sites }: { organisationId: st
             </label>
           </div>
           {inviteRole === 'SITE_MANAGER' && <SiteChoices sites={sites} selected={siteIds} onChange={setSites} />}
-          <Button disabled={m.pending} type="submit">
+          <Button disabled={m.disabled} type="submit">
             <Send size={15} />
             {m.pending ? 'Sending…' : 'Send invitation'}
           </Button>
@@ -203,8 +214,10 @@ export function MemberActions({
   const path = `organisations/${organisationId}/members/${member.id}`;
   return (
     <div className="member-actions">
+      {m.feedback}
       <Button
         variant="secondary"
+        disabled={m.disabled}
         onClick={() => {
           setOpen(!open);
           setConfirm(false);
@@ -217,7 +230,6 @@ export function MemberActions({
       </Button>
       {open && (
         <div className="member-editor">
-          {m.feedback}
           <label>
             Member role
             <select value={role} onChange={(e) => setRole(e.target.value as Role)}>
@@ -232,7 +244,7 @@ export function MemberActions({
           </label>
           <Button
             variant="secondary"
-            disabled={m.pending || role === member.role}
+            disabled={m.disabled || role === member.role}
             onClick={() =>
               void m.run(async () => {
                 await request(path, 'PATCH', { role });
@@ -246,7 +258,7 @@ export function MemberActions({
               <SiteChoices sites={sites} selected={siteIds} onChange={setSites} />
               <Button
                 variant="secondary"
-                disabled={m.pending}
+                disabled={m.disabled}
                 onClick={() =>
                   void m.run(async () => {
                     await request(`${path}/sites`, 'PUT', { siteIds });
@@ -263,7 +275,7 @@ export function MemberActions({
                 <p>Remove this person’s access to this organisation?</p>
                 <Button
                   variant="danger"
-                  disabled={m.pending}
+                  disabled={m.disabled}
                   onClick={() =>
                     void m.run(async () => {
                       await request(path, 'DELETE');
@@ -294,7 +306,7 @@ export function RevokeInvite({ organisationId, id }: { organisationId: string; i
       {m.feedback}
       <Button
         variant="ghost"
-        disabled={m.pending}
+        disabled={m.disabled}
         onClick={() =>
           void m.run(async () => {
             await request(`organisations/${organisationId}/invitations/${id}`, 'DELETE');
@@ -312,7 +324,7 @@ export function AcceptInvite({ token }: { token: string }) {
     <>
       {m.feedback}
       <Button
-        disabled={m.pending}
+        disabled={m.disabled}
         onClick={() =>
           void m.run(async () => {
             const result = await request('invitations/accept', 'POST', { token });

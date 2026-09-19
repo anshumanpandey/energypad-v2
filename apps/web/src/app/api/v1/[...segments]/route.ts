@@ -1,5 +1,5 @@
-import { api, readBody } from '@/server/http';
-import { foundation } from '@/server/services';
+import { api, readBody, readBytes } from '@/server/http';
+import { foundation, siteService } from '@/server/services';
 import { DomainError } from '@/domain/policy';
 
 type Context = { params: Promise<{ segments: string[] }> };
@@ -15,6 +15,38 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'portfolios') {
+        if (s.length === 3 && method === 'GET') return siteService.portfolios(actor, org);
+        if (s.length === 3 && method === 'POST') return siteService.savePortfolio(actor, org, await readBody(request));
+        if (s.length === 4 && method === 'PATCH')
+          return siteService.savePortfolio(actor, org, await readBody(request), s[3]);
+        if (s.length === 4 && method === 'DELETE') return siteService.archivePortfolio(actor, org, s[3]);
+      }
+      if (s[2] === 'imports') {
+        if (s.length === 3 && method === 'GET') return siteService.imports(actor, org);
+        if (s.length === 3 && method === 'POST')
+          return siteService.upload(actor, org, await readBytes(request, 2_000_000));
+        if (s.length === 4 && method === 'GET') return siteService.importDetail(actor, org, s[3]);
+        if (s.length === 5 && s[4] === 'preview' && method === 'POST')
+          return siteService.mapImport(actor, org, s[3], await readBody(request));
+        if (s.length === 5 && s[4] === 'commit' && method === 'POST') return siteService.commitImport(actor, org, s[3]);
+      }
+      if (s[2] === 'sites') {
+        if (s.length === 3 && method === 'POST') return siteService.createSite(actor, org, await readBody(request));
+        if (s.length === 4 && method === 'GET') return siteService.siteDetail(actor, org, s[3]);
+        if (s.length === 4 && method === 'PATCH')
+          return siteService.updateSite(actor, org, s[3], await readBody(request));
+        if (s.length === 4 && method === 'DELETE') return siteService.archiveSite(actor, org, s[3]);
+        if (s.length === 5 && s[4] === 'attributes' && method === 'POST')
+          return siteService.addAttributes(actor, org, s[3], await readBody(request));
+        if (s[4] === 'meters') {
+          if (s.length === 5 && method === 'POST')
+            return siteService.saveMeter(actor, org, s[3], await readBody(request));
+          if (s.length === 6 && method === 'PATCH')
+            return siteService.saveMeter(actor, org, s[3], await readBody(request), s[5]);
+          if (s.length === 6 && method === 'DELETE') return siteService.archiveMeter(actor, org, s[3], s[5]);
+        }
+      }
       if (s.length === 2) {
         if (method === 'GET') return foundation.getWorkspace(actor, org);
         if (method === 'PATCH') return foundation.updateOrganisation(actor, org, await readBody(request));

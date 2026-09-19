@@ -37,3 +37,9 @@ Headers deny framing, MIME sniffing, third-party content and sensitive URL paths
 `apps/web/scripts/integration.ts` tests authorization and database invariants on real PostgreSQL. `apps/web/tests/e2e/foundation.spec.ts` exercises the actual browser/session/email flow, hostile origins, guessed tenant IDs and access revocation. No test login backdoor exists in production routes. See the Sprint 1 acceptance report for executed checks.
 
 SSO/MFA, support impersonation, customer data migration, bulk import, calculation engines, report sharing, billing webhooks, backup restoration, retention and deployment observability are not implemented in this sprint.
+
+## Sprint 2 extension
+
+Sites, portfolios and meters use organisation-scoped service checks and composite relationship foreign keys. Only Owner/Admin can write or import. Site Managers read assigned active sites and their meters/history; archive clears grants. Attribute history is append-only in PostgreSQL. Active-site quotas are enforced under the same organisation lock as imports and site creation.
+
+Uploads are authenticated, origin-checked, byte-bounded and rate-limited before parsing. ZIP expansion, entries, dimensions and cell lengths are bounded; formulas, macros, external links and entity declarations are unsupported. Credential headers are normalized and removed with their entire columns before staging. The original bytes are transient. Staging and preview are accessible only to current Owner/Admin members of the batch organisation. Error downloads contain coordinates/field/reason, not source cell values. Import commit is transactional, revalidates all rows and supports safe retries. Production ingress limits and staging retention policy remain deployment requirements.

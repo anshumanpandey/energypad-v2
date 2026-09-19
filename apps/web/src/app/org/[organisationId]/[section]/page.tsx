@@ -7,16 +7,22 @@ import {
   Users,
   ShieldCheck,
   BarChart3,
+  Zap,
+  Leaf,
+  Lightbulb,
+  Sparkles,
+  CreditCard,
   FileText,
-  Layers3,
   CircleDashed,
   Settings,
   ArrowRight,
 } from 'lucide-react';
 import { pageActor, accessible } from '@/server/page-auth';
-import { foundation } from '@/server/services';
-import { can, canManageRole, roleLabels, hasFeature } from '@/domain/policy';
+import { foundation, siteService } from '@/server/services';
+import { can, canManageRole, roleLabels } from '@/domain/policy';
 import { InviteForm, MemberActions, OrganisationForm, RevokeInvite } from '@/components/forms';
+import { SitesWorkspace, PortfoliosWorkspace } from '@/components/sites-workspace';
+import { ImportWorkspace } from '@/components/import-workspace';
 import { Button } from '@/components/ui/button';
 
 export default async function WorkspacePage({
@@ -159,12 +165,16 @@ export default async function WorkspacePage({
               )}
             </div>
             <div className="setup-row">
-              <span className="step-circle">3</span>
+              <span className={`step-circle ${sites.length ? 'complete' : ''}`}>
+                {sites.length ? <Check size={17} /> : '3'}
+              </span>
               <div>
                 <strong>Connect your first site</strong>
-                <p>Site setup will be available in the next release.</p>
+                <p>Add sites manually or import a workbook from Data.</p>
               </div>
-              <span className="mini-label">Coming next</span>
+              <Link href={`${base}/sites`} aria-label="Manage your sites">
+                <ArrowRight size={18} />
+              </Link>
             </div>
           </section>
           <section className="panel foundation-panel">
@@ -174,8 +184,8 @@ export default async function WorkspacePage({
             <span className="eyebrow">A SOLID FOUNDATION</span>
             <h2>Ready for what’s next.</h2>
             <p>
-              This release brings your organisation, team and access controls together. Sites, energy analysis and
-              reporting follow in the next stages.
+              Manage your organisation, team, sites and meters, or import a site workbook. Energy analysis and reporting
+              follow in the next stages.
             </p>
             <Link href={`${base}/sites`} className="text-link">
               Explore your workspace <ArrowUpRight size={15} />
@@ -348,49 +358,81 @@ export default async function WorkspacePage({
     );
   }
   if (section === 'sites') {
+    const portfolios = await siteService.portfolios(actor, org.id);
     return (
       <>
         <Heading
-          eyebrow="YOUR PLACES, CONNECTED"
+          eyebrow="YOUR SITES"
           title="Sites"
-          text={
-            membership.role === 'SITE_MANAGER'
-              ? 'The sites assigned to you by your organisation.'
-              : 'Your organisation’s buildings and energy locations.'
-          }
+          text="Manage locations, meters and effective-dated site attributes."
         />
-        {sites.length ? (
-          <div className="site-grid">
-            {sites.map((site) => (
-              <section className="panel" key={site.id}>
-                <span className="large-icon">
-                  <Building2 />
-                </span>
-                <h2>{site.name}</h2>
-                <p className="muted">{site.code}</p>
-                <span className="tag subtle">Site details coming next</span>
-              </section>
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            icon={<Building2 size={32} />}
-            title={membership.role === 'SITE_MANAGER' ? 'No sites assigned yet' : 'Your portfolio starts here'}
-            text={
-              membership.role === 'SITE_MANAGER'
-                ? 'Ask your organisation owner or admin to assign sites to you. Only assigned sites will appear here.'
-                : 'Your sites will bring your energy performance into focus. Site and meter setup arrives in the next release.'
-            }
-            label="Site setup · Coming next"
-          />
-        )}
+        <SitesWorkspace orgId={org.id} sites={sites} portfolios={portfolios} manage={manage} />
       </>
     );
   }
+  if (section === 'portfolio') {
+    const portfolios = await siteService.portfolios(actor, org.id);
+    return (
+      <>
+        <Heading
+          eyebrow="YOUR PORTFOLIOS"
+          title="Portfolio"
+          text="Group sites into portfolios. Performance comparisons arrive with analytics."
+        />
+        <PortfoliosWorkspace orgId={org.id} portfolios={portfolios} manage={manage} />
+      </>
+    );
+  }
+  if (section === 'data') {
+    if (!manage)
+      return (
+        <>
+          <Heading eyebrow="YOUR DATA" title="Data" text="Ask an owner or admin to import your site workbook." />
+        </>
+      );
+    const batches = await siteService.imports(actor, org.id);
+    return (
+      <>
+        <Heading eyebrow="SITE IMPORT" title="Data" text="Upload, map, validate and import your sites." />
+        <ImportWorkspace orgId={org.id} batches={batches} />
+      </>
+    );
+  }
+  if (section === 'billing' && !can(membership.role, 'billing:manage')) notFound();
   const future = {
+    energy: {
+      icon: <Zap size={32} />,
+      title: 'Energy',
+      headline: 'Understand your energy use',
+      text: 'Consumption trends, weather insights and waste and savings will become available as your energy data tools are released.',
+    },
+    carbon: {
+      icon: <Leaf size={32} />,
+      title: 'Carbon',
+      headline: 'Understand your carbon footprint',
+      text: 'Carbon reporting will connect energy use to versioned emission factors, with clear sources and site comparisons.',
+    },
+    opportunities: {
+      icon: <Lightbulb size={32} />,
+      title: 'Opportunities',
+      headline: 'Turn insights into action',
+      text: 'Track potential savings, assign actions and verify results when opportunity management becomes available.',
+    },
+    'ai-analyst': {
+      icon: <Sparkles size={32} />,
+      title: 'AI Analyst',
+      headline: 'Explore the story behind your energy',
+      text: 'Ask questions and investigate performance using verified analytical results when the AI Analyst becomes available.',
+    },
+    billing: {
+      icon: <CreditCard size={32} />,
+      title: 'Billing',
+      headline: 'Manage your subscription',
+      text: 'Plan selection, trials, payments and subscription management are not available yet. Your current plan does not represent an active paid subscription.',
+    },
     analysis: {
       icon: <BarChart3 size={32} />,
-      title: 'Analysis',
+      title: 'Advanced Analysis',
       headline: 'Turn energy data into understanding',
       text: 'Baseline models, routine adjustments and performance insights will be available after site and data foundations are in place.',
     },
@@ -399,12 +441,6 @@ export default async function WorkspacePage({
       title: 'Reports',
       headline: 'A clearer story of your performance',
       text: 'Shareable reports will bring your verified energy results together. Reporting tools are planned for a later release.',
-    },
-    portfolio: {
-      icon: <Layers3 size={32} />,
-      title: 'Portfolio',
-      headline: 'See the bigger picture',
-      text: 'Compare sites and understand performance across your organisation. Portfolio tools are planned for a later release.',
     },
   }[section];
   if (!future) notFound();
@@ -415,16 +451,14 @@ export default async function WorkspacePage({
         title={future.title}
         text="Your energy workspace is growing, one foundation at a time."
       />
-      <EmptyState
-        icon={future.icon}
-        title={future.headline}
-        text={future.text}
-        label={
-          section === 'portfolio' && !hasFeature(org.planKey, 'portfolio')
-            ? 'Planned for Growth and above'
-            : 'Coming in a later release'
-        }
-      />
+      {section === 'energy' && (
+        <Button asChild variant="secondary">
+          <Link href={`${base}/analysis`}>
+            Advanced Analysis <ArrowRight size={17} />
+          </Link>
+        </Button>
+      )}
+      <EmptyState icon={future.icon} title={future.headline} text={future.text} label="Coming in a later release" />
     </>
   );
 }
@@ -467,6 +501,18 @@ function formatDate(value: Date, timeZone: string, time = false) {
   }).format(value);
 }
 const eventLabels: Record<string, string> = {
+  'site.created': 'Site created',
+  'site.updated': 'Site updated',
+  'site.archived': 'Site archived',
+  'site.attributes_added': 'Site history added',
+  'portfolio.created': 'Portfolio created',
+  'portfolio.updated': 'Portfolio updated',
+  'portfolio.archived': 'Portfolio archived',
+  'meter.created': 'Meter created',
+  'meter.updated': 'Meter updated',
+  'meter.archived': 'Meter archived',
+  'import.uploaded': 'Site workbook staged',
+  'import.committed': 'Sites imported',
   'organisation.created': 'Workspace created',
   'organisation.updated': 'Organisation details updated',
   'invitation.created': 'Team invitation created',

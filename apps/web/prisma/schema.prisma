@@ -95,6 +95,8 @@ model Organisation {
   invitations Invitation[]
   sites       Site[]
   auditEvents AuditEvent[]
+  portfolios Portfolio[]
+  imports ImportBatch[]
 }
 
 model Membership {
@@ -123,6 +125,19 @@ model Site {
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   assignments    SiteAssignment[]
   invitationSites InvitationSite[]
+  portfolioId String? @db.Uuid
+  portfolio Portfolio? @relation(fields: [portfolioId, organisationId], references: [id, organisationId])
+  type String?
+  address String?
+  postCode String?
+  town String?
+  country String?
+  region String?
+  currency String? @db.Char(3)
+  externalLegacyId String?
+  archivedAt DateTime? @db.Timestamptz(3)
+  attributes SiteAttributeHistory[]
+  meters Meter[]
   @@unique([id, organisationId])
   @@unique([organisationId, code])
 }
@@ -180,4 +195,66 @@ model RateLimitBucket {
   key       String   @id
   count     Int
   expiresAt DateTime @db.Timestamptz(3)
+}
+
+model Portfolio {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  name String
+  archivedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  sites Site[]
+  @@unique([id, organisationId])
+  @@unique([organisationId, name])
+}
+
+model SiteAttributeHistory {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  effectiveFrom DateTime @db.Date
+  population Decimal? @db.Decimal(14, 3)
+  floorArea Decimal? @db.Decimal(14, 3)
+  weeklyHours Decimal? @db.Decimal(7, 3)
+  vatPercent Decimal? @db.Decimal(6, 3)
+  authorId String @db.Uuid
+  importBatchId String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+  batch ImportBatch? @relation(fields: [importBatchId, organisationId], references: [id, organisationId])
+  @@unique([siteId, effectiveFrom])
+}
+
+model Meter {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  code String
+  name String
+  fuel String
+  unit String
+  archivedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+  @@unique([siteId, code])
+  @@unique([id, organisationId])
+}
+
+model ImportBatch {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  fingerprint String
+  createdBy String @db.Uuid
+  status String @default("UPLOADED")
+  sheets Json
+  mapping Json?
+  result Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  committedAt DateTime? @db.Timestamptz(3)
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  attributes SiteAttributeHistory[]
+  @@unique([organisationId, fingerprint])
+  @@unique([id, organisationId])
 }

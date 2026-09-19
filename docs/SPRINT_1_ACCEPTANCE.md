@@ -39,3 +39,19 @@ Production database, verified sender/Resend credentials, HTTPS host and secret, 
 The creation form used the client hydration flag as a pending mutation flag, so an unhydrated page displayed a disabled “Saving…” button before submission. Onboarding now uses an authenticated Server Action and a progressively enhanced form. The button is enabled in the server-rendered HTML, pending feedback only starts on submission, validation errors retain the entered values, and successful creation redirects on the server. The loading boundary is scoped to organisation routes so onboarding can render without client scripts.
 
 Verification: the normal browser workflow passed; a dedicated JavaScript-disabled regression passed for enabled submission, validation feedback, retained input, successful redirect and persisted Owner membership. Lint and TypeScript checks passed.
+
+## Shared form readiness fix — 18 September 2026
+
+Settings, invitations and membership controls now distinguish script readiness from an active mutation. “Saving…”, “Sending…” and “Joining…” appear only during submitted requests. Before hydration, controls remain safely disabled and show a visible explanation with a native reload link; the invitation and member-management entry buttons use the same readiness guard. These interactive forms still require JavaScript.
+
+A browser regression blocks application scripts, checks settings and team controls for truthful feedback, restores scripts, verifies recovery and checks that a submitted settings change shows pending feedback and persists.
+
+Verification: all three Playwright scenarios passed, including the existing membership lifecycle and JavaScript-disabled onboarding tests. ESLint, TypeScript and formatting checks passed.
+
+## Navigation alignment — 18 September 2026
+
+The workspace sidebar now follows the specified Overview, Sites, Energy, Carbon, Opportunities, AI Analyst, Reports, Data, Settings and Billing destinations, with Portfolio retained as a direct destination and team/audit links grouped under Manage. Settings remains restricted to Owner/Admin; Billing is Owner-only in both navigation and the server-rendered route. Advanced Analysis is a drill-down from Energy, preserving the existing `/analysis` URL and highlighting Energy in navigation. Future modules show explicit availability states; billing does not imply an active paid subscription.
+
+The browser workflow now checks the six added destinations, active links, the Advanced Analysis drill-down and denial of the Billing page for a Viewer, alongside the existing mobile navigation and membership workflow.
+
+Verification: the expanded browser workflow passed, including navigation, billing access denial, membership lifecycle and mobile navigation. ESLint, TypeScript and formatting checks passed.

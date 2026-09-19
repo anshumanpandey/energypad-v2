@@ -8,7 +8,12 @@ import {
   Users,
   Settings,
   ScrollText,
-  BarChart3,
+  Zap,
+  Leaf,
+  Lightbulb,
+  Sparkles,
+  Database,
+  CreditCard,
   FileText,
   Layers3,
   Menu,
@@ -41,16 +46,25 @@ export function WorkspaceShell({
   const nav = [
     { key: 'overview', name: 'Overview', icon: LayoutDashboard },
     { key: 'sites', name: 'Sites', icon: Building2 },
-    { key: 'analysis', name: 'Analysis', icon: BarChart3 },
+    { key: 'energy', name: 'Energy', icon: Zap },
+    { key: 'carbon', name: 'Carbon', icon: Leaf },
+    { key: 'opportunities', name: 'Opportunities', icon: Lightbulb },
+    { key: 'ai-analyst', name: 'AI Analyst', icon: Sparkles },
     { key: 'reports', name: 'Reports', icon: FileText },
+    { key: 'data', name: 'Data', icon: Database },
+    ...(can(role, 'organisation:update') ? [{ key: 'settings', name: 'Settings', icon: Settings }] : []),
+    ...(can(role, 'billing:manage') ? [{ key: 'billing', name: 'Billing', icon: CreditCard }] : []),
     { key: 'portfolio', name: 'Portfolio', icon: Layers3 },
   ];
   const admin = [
     { key: 'members', name: 'Team members', icon: Users, permission: 'members:manage' as const },
     { key: 'audit', name: 'Activity log', icon: ScrollText, permission: 'audit:read' as const },
-    { key: 'settings', name: 'Settings', icon: Settings, permission: 'organisation:update' as const },
   ].filter((item) => can(role, item.permission));
-  const title = [...nav, ...admin].find((item) => item.key === section)?.name ?? 'Workspace';
+  const activeSection = section === 'analysis' ? 'energy' : section;
+  const title =
+    section === 'analysis'
+      ? 'Advanced Analysis'
+      : ([...nav, ...admin].find((item) => item.key === section)?.name ?? 'Workspace');
   return (
     <div className="workspace">
       <a className="skip-link" href="#main">
@@ -90,13 +104,13 @@ export function WorkspaceShell({
             <Link
               key={key}
               href={`/org/${organisation.id}/${key}`}
-              className={section === key ? 'nav-link active' : 'nav-link'}
-              aria-current={section === key ? 'page' : undefined}
+              className={activeSection === key ? 'nav-link active' : 'nav-link'}
+              aria-current={activeSection === key ? 'page' : undefined}
               onClick={() => setOpen(false)}
             >
               <Icon size={19} />
               {name}
-              {section === key && <span className="nav-dot" />}
+              {activeSection === key && <span className="nav-dot" />}
             </Link>
           ))}
           {admin.length > 0 && (
@@ -106,8 +120,8 @@ export function WorkspaceShell({
                 <Link
                   key={key}
                   href={`/org/${organisation.id}/${key}`}
-                  className={section === key ? 'nav-link active' : 'nav-link'}
-                  aria-current={section === key ? 'page' : undefined}
+                  className={activeSection === key ? 'nav-link active' : 'nav-link'}
+                  aria-current={activeSection === key ? 'page' : undefined}
                   onClick={() => setOpen(false)}
                 >
                   <Icon size={19} />
