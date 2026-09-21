@@ -1,3 +1,5 @@
+import { aggregateWeather } from '../../src/domain/weather';
+import { syntheticWeather } from '../fixtures/weather';
 import { test, expect, type Page } from '@playwright/test';
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -433,4 +435,253 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await page.getByLabel('Year', { exact: true }).fill('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   await expect(page.getByText('Main electricity · 12/12 months recorded', { exact: true })).toBeVisible();
+  const drivers = page.getByRole('region', { name: 'Drivers and schedules' });
+  await expect(drivers.getByText('Average population (people) · 0/12 months observed', { exact: true })).toBeVisible();
+  await drivers.getByLabel('Observation month').fill('2021-01');
+  await drivers.getByLabel('Observed value').fill('0');
+  await drivers.getByLabel('Observation source').fill('Synthetic attendance');
+  await drivers.getByRole('button', { name: 'Save observation', exact: true }).click();
+  await expect(drivers.getByRole('status')).toContainText('Monthly observation saved.');
+  await expect(drivers.getByLabel('Observed value')).toHaveValue('');
+  await expect(drivers.getByText('Average population (people) · 1/12 months observed', { exact: true })).toBeVisible();
+  await drivers.getByLabel('Schedule name').fill('Standard week');
+  await drivers.getByLabel('First day', { exact: true }).fill('2021-01-01');
+  await drivers.getByLabel('Last day (inclusive)', { exact: true }).fill('2021-12-31');
+  await drivers.getByLabel('Planned weekly hours').fill('40');
+  await drivers.getByLabel('Schedule source').fill('Synthetic operating plan');
+  await drivers.getByRole('button', { name: 'Save operating schedule', exact: true }).click();
+  await expect(drivers.getByText('Standard week · 40 hours/week', { exact: true })).toBeVisible();
+  await expect(drivers.getByLabel('Schedule name')).toHaveValue('');
+  await drivers.getByLabel('Schedule name').fill('Overlap');
+  await drivers.getByLabel('First day', { exact: true }).fill('2021-06-01');
+  await drivers.getByLabel('Last day (inclusive)', { exact: true }).fill('2021-12-31');
+  await drivers.getByLabel('Planned weekly hours').fill('20');
+  await drivers.getByLabel('Schedule source').fill('Synthetic conflicting plan');
+  await drivers.getByRole('button', { name: 'Save operating schedule', exact: true }).click();
+  await expect(drivers.getByRole('alert')).toContainText('already covers');
+  await expect(drivers.getByLabel('Schedule name')).toHaveValue('Overlap');
+  const driverBook = new ExcelJS.Workbook();
+  const driverSheet = driverBook.addWorksheet('Drivers');
+  driverSheet.addRow(['month', 'driver', 'value', 'source']);
+  for (let month = 1; month <= 12; month++)
+    driverSheet.addRow([
+      `2021-${String(month).padStart(2, '0')}`,
+      'OPERATING_HOURS',
+      '160',
+      'Synthetic operations log',
+    ]);
+  await drivers.getByLabel('Driver workbook', { exact: true }).setInputFiles({
+    name: 'drivers.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer: Buffer.from(await driverBook.xlsx.writeBuffer()),
+  });
+  await drivers.getByRole('button', { name: 'Preview driver workbook', exact: true }).click();
+  await expect(drivers.getByText('Driver import: READY · 12 valid rows · 0 errors', { exact: true })).toBeVisible();
+  await expect(drivers.getByRole('button', { name: 'Commit driver import', exact: true })).toBeDisabled();
+  await drivers.getByLabel('I confirm the selected site').check();
+  await drivers.getByRole('button', { name: 'Commit driver import', exact: true }).click();
+  await expect(
+    drivers.getByText('Total operating hours (hours/month) · 12/12 months observed', { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  await expect(
+    drivers.getByText('Total operating hours (hours/month) · 12/12 months observed', { exact: true }),
+  ).toBeVisible();
+  await expect(drivers.getByRole('row').filter({ hasText: 'Synthetic attendance' })).toContainText('0');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await drivers.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: testInfo.outputPath('monthly-drivers-mobile.png'), fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const weather = page.getByRole('region', { name: 'Historical weather' });
+  await weather.getByLabel('Weather latitude').fill('51.5');
+  await weather.getByLabel('Weather longitude').fill('-0.12');
+  await weather.getByLabel('Weather timezone').fill('Europe/London');
+  await weather.getByLabel('Heating base (°C)').fill('15');
+  await weather.getByLabel('Cooling base (°C)').fill('20');
+  await weather.getByLabel('Weather settings source').fill('Synthetic browser settings');
+  await weather.getByRole('button', { name: 'Save weather settings', exact: true }).click();
+  await expect(weather.getByRole('status')).toContainText('Weather settings saved');
+  const configId = await weather.getByLabel('Weather settings version').inputValue();
+  // Browser response fixture only; the real adapter/database are covered by integration tests.
+  // This avoids transmitting test sites or relying on an external service in the browser suite.
+
+  const queueUrl = `/api/v1/organisations/${org}/sites/${site.id}/energy/weather/enrich`;
+  const queueRequest = {
+    headers: { origin: 'http://localhost:3101' },
+    data: { configurationId: configId, year: 2020 },
+  };
+  const queued = await page.request.post(queueUrl, queueRequest);
+  expect(queued.ok()).toBe(true);
+  const durableJob = await queued.json();
+  expect(durableJob.status).toBe('QUEUED');
+  expect((await (await page.request.post(queueUrl, queueRequest)).json()).id).toBe(durableJob.id);
+  let browserResult: unknown = null;
+  let browserJob: Record<string, unknown> | null = null;
+  const weatherPath = `**/api/v1/organisations/${org}/sites/${site.id}/energy/weather`;
+  await page.route(`${weatherPath}?year=2021`, async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    await route.fulfill({
+      response,
+      json: {
+        ...body,
+        jobs: browserJob ? [browserJob] : body.jobs,
+        results: browserResult ? [browserResult] : body.results,
+      },
+    });
+  });
+  const queueBrowserJob = () => ({
+    id: 'synthetic-job',
+    configurationId: configId,
+    status: 'QUEUED',
+    attempts: 0,
+    totalAttempts: 0,
+    availableAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    lastError: null,
+  });
+  await page.route(`${weatherPath}/enrich`, async (route) => {
+    browserJob = queueBrowserJob();
+    await route.fulfill({ json: browserJob });
+  });
+  await page.route(`${weatherPath}/jobs/synthetic-job/retry`, async (route) => {
+    browserJob = queueBrowserJob();
+    await route.fulfill({ json: browserJob });
+  });
+  await weather.getByRole('button', { name: 'Fetch weather for 2021', exact: true }).click();
+  await expect(weather.getByText('Queued · Attempt 0/3', { exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  await expect(weather.getByText('Queued · Attempt 0/3', { exact: true })).toBeVisible();
+  browserJob = {
+    ...queueBrowserJob(),
+    status: 'RETRY_WAIT',
+    attempts: 1,
+    lastError: 'The weather provider could not be reached or returned an error.',
+  };
+  await weather.getByRole('button', { name: 'Refresh weather status', exact: true }).click();
+  await expect(weather.getByText('Waiting to retry · Attempt 1/3', { exact: true })).toBeVisible();
+  browserJob = {
+    ...queueBrowserJob(),
+    status: 'FAILED',
+    attempts: 3,
+    lastError: 'The weather provider could not be reached or returned an error.',
+  };
+  await weather.getByRole('button', { name: 'Refresh weather status', exact: true }).click();
+  await expect(weather.getByRole('alert')).toContainText('weather provider');
+  await weather.getByRole('button', { name: 'Retry weather job', exact: true }).click();
+  await expect(weather.getByText('Queued · Attempt 0/3', { exact: true })).toBeVisible();
+  const raw = syntheticWeather(2021);
+  const daily = raw.daily.time.map((date, i) => ({
+    date,
+    meanTemperature: raw.daily.temperature_2m_mean[i],
+    daylightSeconds: raw.daily.daylight_duration[i],
+  }));
+  browserJob = { ...queueBrowserJob(), status: 'SUCCEEDED', attempts: 1 };
+  browserResult = {
+    id: 'synthetic-browser-result',
+    configurationId: configId,
+    year: 2021,
+    methodology: 'daily-mean-degree-days-v1',
+    monthly: aggregateWeather(daily, { heatingBase: '15', coolingBase: '20' }),
+    inputHash: 'synthetic-browser-fixture',
+    createdAt: new Date().toISOString(),
+    provenance: {
+      provider: 'Open-Meteo',
+      dataset: 'ERA5',
+      returnedLatitude: 51.5,
+      returnedLongitude: -0.125,
+      timezone: 'Europe/London',
+      retrievedAt: new Date().toISOString(),
+      licence: 'CC BY 4.0',
+    },
+  };
+  // Automatic polling must pick up completed work without clicking Refresh.
+  await expect(weather.getByText('12/12 months enriched', { exact: true })).toBeVisible();
+  await expect(weather.getByRole('row').filter({ hasText: '2021-02' })).toContainText('140');
+  await weather.getByText('Weather provenance and method', { exact: true }).click();
+  await expect(weather.getByText(/Returned grid coordinates: 51.5/)).toBeVisible();
+  await weather.getByText('Add a weather settings version', { exact: true }).click();
+  await weather.getByLabel('Heating base (°C)').fill('16');
+  await weather.getByLabel('Weather settings source').fill('Synthetic revised policy');
+  await weather.getByRole('button', { name: 'Save weather settings', exact: true }).click();
+  await expect(weather.getByText('0/12 months enriched for this settings version', { exact: true })).toBeVisible();
+  await weather.getByLabel('Weather settings version').selectOption(configId);
+  await expect(weather.getByText('12/12 months enriched', { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await weather.screenshot({ path: testInfo.outputPath('weather-mobile.png') });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByLabel('Year', { exact: true }).fill('2024');
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  await page.getByRole('button', { name: 'Correct conversion factor', exact: true }).click();
+  const factorForm = page.getByRole('form', { name: 'Correct conversion factor', exact: true });
+  await factorForm.getByLabel('Corrected kWh per m3').fill('11');
+  await factorForm.getByLabel('Corrected factor source').fill('Revised synthetic browser factor');
+  await factorForm.getByLabel('Conversion correction reason').fill('Supplier corrected test factor');
+  await factorForm.getByRole('button', { name: 'Save conversion correction', exact: true }).click();
+  await expect(page.getByText('Source: Revised synthetic browser factor', { exact: true })).toBeVisible();
+  await expect(page.getByRole('cell').filter({ hasText: /^1050/ })).toBeVisible();
+  await page.getByRole('button', { name: 'View factor history', exact: true }).click();
+  await expect(page.getByText('Supplier corrected test factor', { exact: true })).toBeVisible();
+  const gasRow = page.getByRole('row').filter({ hasText: 'Gas meter' }).filter({ hasText: '2024-01' });
+  await gasRow.getByRole('button', { name: 'Correct reading', exact: true }).click();
+  const correctionForm = page.getByRole('form', { name: 'Correct monthly reading', exact: true });
+  await correctionForm.getByLabel('Corrected quantity (m3)').fill('200');
+  await correctionForm.getByLabel('Reading correction reason').fill('Correct quantity and apply revised factor');
+  await correctionForm.getByLabel('Apply the current sourced conversion for this month').check();
+  await correctionForm.getByRole('button', { name: 'Save reading correction', exact: true }).click();
+  await expect(gasRow.getByRole('cell').filter({ hasText: /^2200/ })).toBeVisible();
+  await expect(page.getByText('Gas meter · 1/12 months recorded', { exact: true })).toBeVisible();
+  await gasRow.getByRole('button', { name: 'View reading history', exact: true }).click();
+  await expect(gasRow.getByText('100 m3 → 1050 kWh · Actual', { exact: true })).toBeVisible();
+  await expect(gasRow.getByText('200 m3 → 2200 kWh · Actual', { exact: true })).toBeVisible();
+  await gasRow.getByRole('button', { name: 'Correct reading', exact: true }).click();
+  await correctionForm.getByLabel('Corrected quantity (m3)').fill('300');
+  await correctionForm.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(correctionForm).toHaveCount(0);
+  await page.reload();
+  await page.getByLabel('Year', { exact: true }).fill('2024');
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  await expect(gasRow.getByRole('cell').filter({ hasText: /^2200/ })).toBeVisible();
+  await gasRow.getByRole('button', { name: 'View reading history', exact: true }).click();
+  await expect(gasRow.getByText('100 m3 → 1050 kWh · Actual', { exact: true })).toBeVisible();
+  await gasRow.screenshot({ path: testInfo.outputPath('reading-correction-history.png') });
+  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  const observationRow = drivers
+    .getByRole('row')
+    .filter({ hasText: 'Average population (people)' })
+    .filter({ hasText: '2021-01' });
+  await observationRow.getByRole('button', { name: 'Correct observation', exact: true }).click();
+  const observationForm = drivers.getByRole('form', { name: 'Correct observation', exact: true });
+  await observationForm.getByLabel('Corrected observed value').fill('25');
+  await observationForm.getByLabel('Correction reason', { exact: true }).fill('Correct attendance count');
+  await observationForm.getByRole('button', { name: 'Save observation correction', exact: true }).click();
+  await expect(observationRow.getByRole('cell', { name: '25', exact: true })).toBeVisible();
+  await expect(drivers.getByText('Average population (people) · 1/12 months observed', { exact: true })).toBeVisible();
+  await observationRow.getByRole('button', { name: 'View observation history', exact: true }).click();
+  await expect(observationRow.getByText('2021-01 · POPULATION · 0', { exact: true })).toBeVisible();
+  await observationRow.getByRole('button', { name: 'Correct observation', exact: true }).click();
+  await observationForm.getByLabel('Corrected observed value').fill('99');
+  await observationForm.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(observationForm).toHaveCount(0);
+  await drivers.getByRole('button', { name: 'Correct schedule', exact: true }).click();
+  const scheduleForm = drivers.getByRole('form', { name: 'Correct schedule', exact: true });
+  await scheduleForm.getByLabel('Corrected weekly hours').fill('35');
+  await scheduleForm.getByLabel('Correction reason', { exact: true }).fill('Correct weekly plan');
+  await scheduleForm.getByRole('button', { name: 'Save schedule correction', exact: true }).click();
+  await expect(drivers.getByText('Standard week · 35 hours/week', { exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  await expect(observationRow.getByRole('cell', { name: '25', exact: true })).toBeVisible();
+  await drivers.getByRole('button', { name: 'View schedule history', exact: true }).click();
+  await expect(
+    drivers.getByText('Standard week · 40 hours/week · 2021-01-01 to 2021-12-31 inclusive', { exact: true }),
+  ).toBeVisible();
+  await observationRow.getByRole('button', { name: 'View observation history', exact: true }).click();
+  await observationRow.screenshot({ path: testInfo.outputPath('driver-correction-history.png') });
 });

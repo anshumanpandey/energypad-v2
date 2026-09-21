@@ -1,5 +1,12 @@
 import { api, readBody, readBytes } from '@/server/http';
-import { foundation, siteService, energyService, energyImportService } from '@/server/services';
+import {
+  foundation,
+  siteService,
+  energyService,
+  energyImportService,
+  driverService,
+  weatherService,
+} from '@/server/services';
 import { DomainError } from '@/domain/policy';
 
 type Context = { params: Promise<{ segments: string[] }> };
@@ -15,6 +22,39 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'weather') {
+        if (s.length === 9 && s[6] === 'jobs' && s[8] === 'retry' && method === 'POST')
+          return weatherService.retry(actor, org, s[3], s[7]).then((job) => ({ id: job.id, status: job.status }));
+        if (s.length === 6 && method === 'GET')
+          return weatherService.list(actor, org, s[3], Number(new URL(request.url).searchParams.get('year')));
+        if (s.length === 7 && s[6] === 'configuration' && method === 'POST')
+          return weatherService.configure(actor, org, s[3], await readBody(request));
+        if (s.length === 7 && s[6] === 'enrich' && method === 'POST')
+          return weatherService
+            .enqueue(actor, org, s[3], await readBody(request))
+            .then((job) => ({ id: job.id, status: job.status }));
+      }
+      if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'drivers') {
+        const site = s[3];
+        if (s.length === 9 && (s[6] === 'observations' || s[6] === 'schedules')) {
+          if (s[8] === 'history' && method === 'GET') return driverService.history(actor, org, site, s[7], s[6]);
+          if (s[8] === 'correct' && method === 'POST')
+            return s[6] === 'observations'
+              ? driverService.correctObservation(actor, org, site, s[7], await readBody(request))
+              : driverService.correctSchedule(actor, org, site, s[7], await readBody(request));
+        }
+
+        if (s.length === 6 && method === 'GET')
+          return driverService.list(actor, org, site, Number(new URL(request.url).searchParams.get('year')));
+        if (s.length === 6 && method === 'POST') return driverService.add(actor, org, site, await readBody(request));
+        if (s.length === 7 && s[6] === 'schedules' && method === 'POST')
+          return driverService.addSchedule(actor, org, site, await readBody(request));
+        if (s.length === 7 && s[6] === 'imports' && method === 'GET') return driverService.imports(actor, org, site);
+        if (s.length === 7 && s[6] === 'imports' && method === 'POST')
+          return driverService.upload(actor, org, site, await readBytes(request, 2_000_000));
+        if (s.length === 9 && s[6] === 'imports' && s[8] === 'commit' && method === 'POST')
+          return driverService.commit(actor, org, site, s[7]);
+      }
       if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'imports') {
         const site = s[3];
         if (s.length === 6 && method === 'GET') return energyImportService.list(actor, org, site);
@@ -47,6 +87,16 @@ async function handle(request: Request, context: Context) {
         if (s.length === 5 && s[4] === 'preview' && method === 'POST')
           return siteService.mapImport(actor, org, s[3], await readBody(request));
         if (s.length === 5 && s[4] === 'commit' && method === 'POST') return siteService.commitImport(actor, org, s[3]);
+      }
+      if (s[2] === 'sites' && s[4] === 'energy' && s.length === 8) {
+        if (s[5] === 'records' && s[7] === 'history' && method === 'GET')
+          return energyService.readingHistory(actor, org, s[3], s[6]);
+        if (s[5] === 'records' && s[7] === 'correct' && method === 'POST')
+          return energyService.correctReading(actor, org, s[3], s[6], await readBody(request));
+        if (s[5] === 'conversions' && s[7] === 'history' && method === 'GET')
+          return energyService.conversionHistory(actor, org, s[3], s[6]);
+        if (s[5] === 'conversions' && s[7] === 'correct' && method === 'POST')
+          return energyService.correctConversion(actor, org, s[3], s[6], await readBody(request));
       }
       if (s[2] === 'sites' && s.length === 6 && s[4] === 'energy' && s[5] === 'conversions' && method === 'POST')
         return energyService.addConversion(actor, org, s[3], await readBody(request));

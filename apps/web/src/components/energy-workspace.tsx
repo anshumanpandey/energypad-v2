@@ -2,34 +2,21 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { EnergyImportWorkspace } from './energy-import-workspace';
+import { DriverWorkspace, type DriverData } from './driver-workspace';
+import { WeatherWorkspace, type WeatherData } from './weather-workspace';
+import {
+  ReadingCorrections,
+  ConversionCorrections,
+  type ReadingRevision,
+  type ConversionRevision,
+} from './energy-corrections';
 import { request, useMutation } from './forms';
 type EnergyData = {
+  drivers: DriverData;
+  weather: WeatherData;
   meters: { id: string; name: string; code: string; unit: string; archivedAt: string | null }[];
-  conversions: {
-    id: string;
-    meterId: string;
-    sourceUnit: string;
-    fuel: string;
-    factor: string;
-    validFrom: string;
-    validUntil: string;
-    source: string;
-  }[];
-  records: {
-    id: string;
-    meterId: string;
-    periodStart: string;
-    sourceQuantity: string;
-    sourceUnit: string;
-    normalizedKwh: string;
-    conversionFactor: string;
-    conversionVersion: string;
-    conversionId: string | null;
-    netCost: string | null;
-    grossCost: string | null;
-    currency: string | null;
-    qualityFlags: string[];
-  }[];
+  conversions: ConversionRevision[];
+  records: ReadingRevision[];
   coverage: { meterId: string; name: string; missing: string[] }[];
 };
 export function EnergyWorkspace({
@@ -48,8 +35,12 @@ export function EnergyWorkspace({
   const data = loaded?.siteId === siteId && loaded.year === year ? loaded.data : null;
   const base = `organisations/${orgId}/sites/${siteId}/energy`;
   async function load() {
-    const result = (await request(`${base}?year=${year}`, 'GET')) as EnergyData;
-    setLoaded({ siteId, year, data: result });
+    const [result, drivers, weather] = await Promise.all([
+      request(`${base}?year=${year}`, 'GET'),
+      request(`${base}/drivers?year=${year}`, 'GET'),
+      request(`${base}/weather?year=${year}`, 'GET'),
+    ]);
+    setLoaded({ siteId, year, data: { ...result, drivers, weather } });
   }
   if (!sites.length)
     return (
@@ -117,6 +108,22 @@ export function EnergyWorkspace({
               </div>
             ))}
           </section>
+          <WeatherWorkspace
+            key={`weather:${siteId}:${year}`}
+            base={`${base}/weather`}
+            year={year}
+            data={data.weather}
+            manage={manage}
+            reload={load}
+          />
+          <DriverWorkspace
+            key={`${siteId}:${year}`}
+            base={`${base}/drivers`}
+            year={year}
+            data={data.drivers}
+            manage={manage}
+            reload={load}
+          />
           {manage && data.meters.some((meter) => !meter.archivedAt) && (
             <form
               className="panel stack-form"
@@ -193,18 +200,21 @@ export function EnergyWorkspace({
               kWh and MWh use fixed conversions. For m³, litres or kilograms, record the kWh per source unit from your
               supplier or an approved reference. Factors apply only to the specified meter, fuel and complete months.
             </p>
-            {data.conversions.map((c) => (
-              <article className="site-history-entry" key={c.id}>
-                <strong>
-                  {data.meters.find((meter) => meter.id === c.meterId)?.name} · {c.factor} kWh/{c.sourceUnit}
-                </strong>
-                <p>
-                  {c.fuel} · {c.validFrom.slice(0, 7)} to{' '}
-                  {new Date(new Date(c.validUntil).getTime() - 86400000).toISOString().slice(0, 7)} inclusive
-                </p>
-                <p>Source: {c.source}</p>
-              </article>
-            ))}
+            {data.conversions
+              .filter((c) => !c.replacement)
+              .map((c) => (
+                <article className="site-history-entry" key={c.id}>
+                  <strong>
+                    {data.meters.find((meter) => meter.id === c.meterId)?.name} · {c.factor} kWh/{c.sourceUnit}
+                  </strong>
+                  <p>
+                    {c.fuel} · {c.validFrom.slice(0, 7)} to{' '}
+                    {new Date(new Date(c.validUntil).getTime() - 86400000).toISOString().slice(0, 7)} inclusive
+                  </p>
+                  <p>Source: {c.source}</p>
+                  <ConversionCorrections base={base} conversion={c} manage={manage} reload={load} />
+                </article>
+              ))}
             {!data.conversions.length && <p>No custom conversion factors recorded.</p>}
             {manage && data.meters.some((meter) => !meter.archivedAt && ['m3', 'litre', 'kg'].includes(meter.unit)) && (
               <form
@@ -258,7 +268,7 @@ export function EnergyWorkspace({
                   </label>
                 </div>
                 <p className="field-hint">
-                  Saved versions cannot be edited. Check the factor and dates before saving; overlapping periods are
+                  Saved versions remain in history. Use a correction to replace a factor; overlapping periods are
                   rejected. Existing readings retain their original conversion.
                 </p>
                 <Button disabled={m.disabled}>Save conversion factor</Button>
@@ -287,6 +297,7 @@ export function EnergyWorkspace({
                       <th>Energy (kWh)</th>
                       <th>Net / gross cost</th>
                       <th>Data quality</th>
+                      <th>History and corrections</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -319,6 +330,9 @@ export function EnergyWorkspace({
                         </td>
                         <td>
                           {record.qualityFlags.length ? record.qualityFlags.join(' · ') : 'No input issues detected'}
+                        </td>
+                        <td>
+                          <ReadingCorrections base={base} record={record} manage={manage} reload={load} />
                         </td>
                       </tr>
                     ))}

@@ -139,6 +139,10 @@ model Site {
   attributes SiteAttributeHistory[]
   meters Meter[]
   consumption ConsumptionRecord[]
+  weatherConfigurations WeatherConfiguration[]
+  driverObservations DriverObservation[]
+  operatingSchedules OperatingSchedule[]
+  driverImports DriverImportBatch[]
   @@unique([id, organisationId])
   @@unique([organisationId, code])
 }
@@ -265,6 +269,9 @@ model ImportBatch {
 }
 
 model ConsumptionRecord {
+  revision Int @default(1)
+  supersedesId String? @db.Uuid
+  correctionReason String?
   id String @id @default(uuid()) @db.Uuid
   organisationId String @db.Uuid
   siteId String @db.Uuid
@@ -295,11 +302,17 @@ model ConsumptionRecord {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
   meter Meter @relation(fields: [meterId, siteId, organisationId], references: [id, siteId, organisationId])
-  @@unique([meterId, periodStart])
+  previous ConsumptionRecord? @relation("ReadingRevisions", fields:[supersedesId,organisationId], references:[id,organisationId], onDelete:NoAction, onUpdate:NoAction)
+  replacement ConsumptionRecord? @relation("ReadingRevisions")
+  @@unique([id,organisationId])
+  @@unique([supersedesId,organisationId])
   @@index([organisationId, siteId, periodStart])
 }
 
 model UnitConversionVersion {
+  revision Int @default(1)
+  supersedesId String? @db.Uuid
+  correctionReason String?
   id String @id @default(uuid()) @db.Uuid
   organisationId String @db.Uuid
   siteId String @db.Uuid
@@ -315,7 +328,9 @@ model UnitConversionVersion {
   meter Meter @relation(fields: [meterId, siteId, organisationId], references: [id, siteId, organisationId])
   records ConsumptionRecord[]
   @@unique([id, organisationId])
-  @@unique([meterId, sourceUnit, fuel, validFrom])
+  previous UnitConversionVersion? @relation("ConversionRevisions", fields:[supersedesId,organisationId], references:[id,organisationId], onDelete:NoAction, onUpdate:NoAction)
+  replacement UnitConversionVersion? @relation("ConversionRevisions")
+  @@unique([supersedesId,organisationId])
   @@index([organisationId, siteId])
 }
 
@@ -337,4 +352,130 @@ model EnergyImportBatch {
   @@unique([id, organisationId])
   @@unique([meterId, fingerprint])
   @@index([organisationId, siteId])
+}
+
+model DriverObservation {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  month DateTime @db.Date
+  driver String
+  value Decimal @db.Decimal(14, 3)
+  source String
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  importBatchId String? @db.Uuid
+  site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+  batch DriverImportBatch? @relation(fields: [importBatchId, organisationId], references: [id, organisationId])
+  @@index([organisationId, siteId])
+  revision Int @default(1)
+  supersedesId String? @db.Uuid
+  correctionReason String?
+  previous DriverObservation? @relation("ObservationRevisions", fields: [supersedesId, organisationId], references: [id, organisationId], onDelete: NoAction, onUpdate: NoAction)
+  replacement DriverObservation? @relation("ObservationRevisions")
+  @@unique([id, organisationId])
+  @@unique([supersedesId, organisationId])
+}
+
+model OperatingSchedule {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  name String
+  validFrom DateTime @db.Date
+  validUntil DateTime @db.Date
+  weeklyHours Decimal @db.Decimal(6, 3)
+  source String
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+  @@index([organisationId, siteId, validFrom])
+  revision Int @default(1)
+  supersedesId String? @db.Uuid
+  correctionReason String?
+  previous OperatingSchedule? @relation("ScheduleRevisions", fields: [supersedesId, organisationId], references: [id, organisationId], onDelete: NoAction, onUpdate: NoAction)
+  replacement OperatingSchedule? @relation("ScheduleRevisions")
+  @@unique([id, organisationId])
+  @@unique([supersedesId, organisationId])
+}
+
+model DriverImportBatch {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  fingerprint String
+  result Json
+  status String
+  createdBy String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  committedAt DateTime? @db.Timestamptz(3)
+  site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+  observations DriverObservation[]
+  @@unique([id, organisationId])
+  @@unique([siteId, fingerprint])
+}
+
+model WeatherConfiguration {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  version Int
+  latitude Decimal @db.Decimal(9,6)
+  longitude Decimal @db.Decimal(9,6)
+  timezone String
+  heatingBase Decimal @db.Decimal(6,3)
+  coolingBase Decimal @db.Decimal(6,3)
+  source String
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  site Site @relation(fields:[siteId, organisationId], references:[id, organisationId])
+  results WeatherYear[]
+  jobs WeatherJob[]
+  @@unique([siteId, version])
+  @@unique([id, siteId, organisationId])
+}
+
+model WeatherYear {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  configurationId String @db.Uuid
+  year Int
+  methodology String
+  provenance Json
+  daily Json
+  monthly Json
+  inputHash String
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  configuration WeatherConfiguration @relation(fields:[configurationId,siteId,organisationId], references:[id,siteId,organisationId])
+  @@unique([configurationId, year, methodology])
+  @@index([organisationId, siteId, year])
+}
+
+model WeatherJob {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  configurationId String @db.Uuid
+  year Int
+  methodology String
+  status String @default("QUEUED")
+  attempts Int @default(0)
+  totalAttempts Int @default(0)
+  requestedBy String @db.Uuid
+  correlationId String @db.Uuid
+  availableAt DateTime @default(now()) @db.Timestamptz(3)
+  leaseToken String? @db.Uuid
+  leaseUntil DateTime? @db.Timestamptz(3)
+  lastErrorCode String?
+  lastError String?
+  resultId String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  finishedAt DateTime? @db.Timestamptz(3)
+  configuration WeatherConfiguration @relation(fields:[configurationId,siteId,organisationId], references:[id,siteId,organisationId])
+  @@unique([configurationId, year, methodology])
+  @@index([status, availableAt])
+  @@index([organisationId, siteId, year])
 }

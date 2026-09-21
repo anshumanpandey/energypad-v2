@@ -1,7 +1,15 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, type ConsumptionRecord } from '@prisma/client';
 import { FoundationService, type Actor } from './foundation';
-import { DomainError } from '../domain/policy';
-import { consumptionInput, conversionInput, energyConversions, missingMonths, monthPeriod } from '../domain/energy';
+import { DomainError, uuid } from '../domain/policy';
+import {
+  consumptionInput,
+  conversionInput,
+  energyConversions,
+  missingMonths,
+  monthPeriod,
+  readingCorrectionInput,
+  conversionCorrectionInput,
+} from '../domain/energy';
 
 export class EnergyService extends FoundationService {
   async records(actor: Actor, org: string, siteId: string, year: number) {
@@ -11,6 +19,7 @@ export class EnergyService extends FoundationService {
       where: {
         organisationId: org,
         siteId,
+        replacement: { is: null },
         periodStart: { gte: new Date(`${year}-01-01`), lt: new Date(`${year + 1}-01-01`) },
       },
       orderBy: [{ periodStart: 'desc' }, { meterId: 'asc' }],
@@ -22,6 +31,7 @@ export class EnergyService extends FoundationService {
       conversions: await this.db.unitConversionVersion.findMany({
         where: { organisationId: org, siteId },
         orderBy: { validFrom: 'desc' },
+        include: { replacement: { select: { id: true } } },
       }),
       coverage: meters
         .filter((m) => !m.archivedAt)
@@ -35,25 +45,55 @@ export class EnergyService extends FoundationService {
         })),
     };
   }
-  async addConversion(actor: Actor, org: string, siteId: string, input: unknown) {
+  async addConversion(
+    actor: Actor,
+    org: string,
+    siteId: string,
+    input: unknown,
+    supersedesId?: string,
+    reason?: string,
+  ) {
     const data = conversionInput.parse(input);
     const validFrom = monthPeriod(data.firstMonth).start;
     const validUntil = monthPeriod(data.lastMonth).end;
     return this.db.$transaction(async (tx) => {
       await this.lock(tx, org);
       await this.membership(actor, org, 'organisation:update', tx);
+      const previous = supersedesId
+        ? await tx.unitConversionVersion.findFirst({
+            where: { id: uuid.parse(supersedesId), organisationId: org, siteId, replacement: { is: null } },
+          })
+        : null;
+      if (supersedesId && !previous)
+        throw new DomainError(
+          'STALE_REVISION',
+          'This factor is unavailable or has already been corrected. Reload before trying again.',
+          409,
+        );
+      if (previous && previous.meterId !== data.meterId)
+        throw new DomainError('CORRECTION_SCOPE', 'A correction must keep the same meter.');
       const meter = await tx.meter.findFirst({
-        where: { id: data.meterId, organisationId: org, siteId, archivedAt: null, site: { archivedAt: null } },
+        where: {
+          id: data.meterId,
+          organisationId: org,
+          siteId,
+          ...(previous ? {} : { archivedAt: null }),
+          site: { archivedAt: null },
+        },
       });
       if (!meter) throw new DomainError('NOT_FOUND', 'This active meter is not available.', 404);
-      if (!['m3', 'litre', 'kg'].includes(meter.unit))
+      const sourceUnit = previous?.sourceUnit ?? meter.unit,
+        fuel = previous?.fuel ?? meter.fuel;
+      if (!['m3', 'litre', 'kg'].includes(sourceUnit))
         throw new DomainError('FIXED_CONVERSION', 'kWh and MWh use fixed dimensional conversions.');
       if (
         await tx.unitConversionVersion.findFirst({
           where: {
             meterId: meter.id,
-            sourceUnit: meter.unit,
-            fuel: meter.fuel,
+            sourceUnit,
+            fuel,
+            replacement: { is: null },
+            ...(previous ? { id: { not: previous.id } } : {}),
             validFrom: { lt: validUntil },
             validUntil: { gt: validFrom },
           },
@@ -69,8 +109,9 @@ export class EnergyService extends FoundationService {
           organisationId: org,
           siteId,
           meterId: meter.id,
-          sourceUnit: meter.unit,
-          fuel: meter.fuel,
+          sourceUnit,
+          fuel,
+          ...(previous ? { supersedesId: previous.id, revision: previous.revision + 1, correctionReason: reason } : {}),
           factor: data.factor,
           validFrom,
           validUntil,
@@ -78,9 +119,101 @@ export class EnergyService extends FoundationService {
           authorId: actor.userId,
         },
       });
-      await this.audit(tx, actor, org, 'energy.conversion_added', result.id, { siteId, meterId: meter.id });
+      await this.audit(
+        tx,
+        actor,
+        org,
+        previous ? 'energy.conversion_corrected' : 'energy.conversion_added',
+        result.id,
+        {
+          siteId,
+          meterId: meter.id,
+          ...(previous ? { supersedesId: previous.id, reason, revision: result.revision } : {}),
+        },
+      );
       return result;
     });
+  }
+  async correctConversion(actor: Actor, org: string, siteId: string, id: string, input: unknown) {
+    const data = conversionCorrectionInput.parse(input);
+    return this.addConversion(actor, org, siteId, data.conversion, id, data.reason);
+  }
+  async correctReading(actor: Actor, org: string, siteId: string, id: string, input: unknown) {
+    const data = readingCorrectionInput.parse(input);
+    return this.db.$transaction(async (tx) => {
+      await this.lock(tx, org);
+      await this.membership(actor, org, 'organisation:update', tx);
+      const previous = await tx.consumptionRecord.findFirst({
+        where: { id: uuid.parse(id), organisationId: org, siteId, replacement: { is: null } },
+      });
+      if (!previous)
+        throw new DomainError(
+          'STALE_REVISION',
+          'This reading is unavailable or has already been corrected. Reload before trying again.',
+          409,
+        );
+      if (
+        previous.meterId !== data.reading.meterId ||
+        previous.periodStart.toISOString().slice(0, 7) !== data.reading.month ||
+        previous.externalLegacyId !== data.reading.externalLegacyId
+      )
+        throw new DomainError(
+          'CORRECTION_SCOPE',
+          'Keep the original meter, month and legacy reference when correcting a reading.',
+        );
+      const prepared = await this.prepareReading(tx, actor, org, siteId, data.reading, {
+        previous,
+        useLatestConversion: data.useLatestConversion,
+      });
+      const result = await tx.consumptionRecord.create({
+        data: {
+          ...prepared,
+          supersedesId: previous.id,
+          revision: previous.revision + 1,
+          correctionReason: data.reason,
+          energyImportId: previous.energyImportId,
+        },
+      });
+      await this.audit(tx, actor, org, 'energy.corrected', result.id, {
+        siteId,
+        meterId: previous.meterId,
+        supersedesId: previous.id,
+        reason: data.reason,
+        revision: result.revision,
+        useLatestConversion: data.useLatestConversion,
+      });
+      return result;
+    });
+  }
+  async readingHistory(actor: Actor, org: string, siteId: string, id: string) {
+    await this.getSite(actor, org, siteId);
+    const record = await this.db.consumptionRecord.findFirst({
+      where: { id: uuid.parse(id), organisationId: org, siteId },
+    });
+    if (!record) throw new DomainError('NOT_FOUND', 'This reading is not available.', 404);
+    return this.db.consumptionRecord.findMany({
+      where: { organisationId: org, siteId, meterId: record.meterId, periodStart: record.periodStart },
+      orderBy: { revision: 'desc' },
+    });
+  }
+  async conversionHistory(actor: Actor, org: string, siteId: string, id: string) {
+    await this.getSite(actor, org, siteId);
+    const record = await this.db.unitConversionVersion.findFirst({
+      where: { id: uuid.parse(id), organisationId: org, siteId },
+    });
+    if (!record) throw new DomainError('NOT_FOUND', 'This factor is not available.', 404);
+    const rows = await this.db.unitConversionVersion.findMany({
+      where: { organisationId: org, siteId, meterId: record.meterId },
+    });
+    let root = record;
+    while (root.supersedesId) root = rows.find((row) => row.id === root.supersedesId)!;
+    const history = [root];
+    let next = rows.find((row) => row.supersedesId === root.id);
+    while (next) {
+      history.push(next);
+      next = rows.find((row) => row.supersedesId === next!.id);
+    }
+    return history.reverse();
   }
   async add(actor: Actor, org: string, siteId: string, input: unknown) {
     return this.db.$transaction(async (tx) => {
@@ -113,38 +246,54 @@ export class EnergyService extends FoundationService {
     org: string,
     siteId: string,
     input: unknown,
+    correction?: { previous: ConsumptionRecord; useLatestConversion: boolean },
   ): Promise<Prisma.ConsumptionRecordUncheckedCreateInput> {
     const data = consumptionInput.parse(input);
     const { start, end } = monthPeriod(data.month);
+    const previous = correction?.previous;
     const meter = await tx.meter.findFirst({
-      where: { id: data.meterId, siteId, organisationId: org, archivedAt: null, site: { archivedAt: null } },
+      where: {
+        id: data.meterId,
+        siteId,
+        organisationId: org,
+        ...(previous ? {} : { archivedAt: null }),
+        site: { archivedAt: null },
+      },
     });
     if (!meter) throw new DomainError('NOT_FOUND', 'This active meter is not available.', 404);
-    const standard = energyConversions[meter.unit as keyof typeof energyConversions];
-    const version = standard
-      ? null
-      : await tx.unitConversionVersion.findFirst({
-          where: {
-            organisationId: org,
-            siteId,
-            meterId: meter.id,
-            fuel: meter.fuel,
-            sourceUnit: meter.unit,
-            validFrom: { lte: start },
-            validUntil: { gte: end },
-          },
-          orderBy: { validFrom: 'desc' },
-        });
-    const conversion = standard ?? (version ? { factor: version.factor.toString(), version: version.id } : null);
+    const sourceUnit = previous?.sourceUnit ?? meter.unit,
+      fuel = previous?.fuel ?? meter.fuel;
+    const preserveConversion = previous && !correction?.useLatestConversion;
+    const standard = energyConversions[sourceUnit as keyof typeof energyConversions];
+    const version =
+      standard || preserveConversion
+        ? null
+        : await tx.unitConversionVersion.findFirst({
+            where: {
+              organisationId: org,
+              siteId,
+              meterId: meter.id,
+              fuel,
+              sourceUnit,
+              replacement: { is: null },
+              validFrom: { lte: start },
+              validUntil: { gte: end },
+            },
+            orderBy: { validFrom: 'desc' },
+          });
+    const conversion = preserveConversion
+      ? { factor: previous.conversionFactor.toString(), version: previous.conversionVersion }
+      : (standard ?? (version ? { factor: version.factor.toString(), version: version.id } : null));
     if (!conversion)
       throw new DomainError(
         'CONVERSION_REQUIRED',
         'Add a sourced conversion factor covering this meter and month before recording consumption.',
       );
     if (
-      await tx.consumptionRecord.findFirst({
+      !previous &&
+      (await tx.consumptionRecord.findFirst({
         where: { meterId: meter.id, periodStart: { lt: end }, periodEnd: { gt: start } },
-      })
+      }))
     )
       throw new DomainError('PERIOD_CONFLICT', 'This meter already has a reading for this month.', 409);
     const attributes = await tx.siteAttributeHistory.findFirst({
@@ -154,12 +303,19 @@ export class EnergyService extends FoundationService {
     const changed = await tx.siteAttributeHistory.count({
       where: { organisationId: org, siteId, effectiveFrom: { gt: start, lt: end } },
     });
+    const attributeFlags = previous
+      ? (previous.qualityFlags as string[]).filter(
+          (flag) => !['Estimated reading', 'VAT unknown; gross cost unavailable'].includes(flag),
+        )
+      : [
+          ...(attributes?.population == null ? ['Missing population'] : []),
+          ...(attributes?.weeklyHours == null ? ['Missing weekly operating hours'] : []),
+          ...(attributes?.floorArea == null ? ['Missing floor area'] : []),
+          ...(changed ? ['Site attributes changed during this month'] : []),
+        ];
     const qualityFlags = [
       ...(data.estimated ? ['Estimated reading'] : []),
-      ...(attributes?.population == null ? ['Missing population'] : []),
-      ...(attributes?.weeklyHours == null ? ['Missing weekly operating hours'] : []),
-      ...(attributes?.floorArea == null ? ['Missing floor area'] : []),
-      ...(changed ? ['Site attributes changed during this month'] : []),
+      ...attributeFlags,
       ...(data.netCost !== null && data.vatPercent === null ? ['VAT unknown; gross cost unavailable'] : []),
     ];
     const quantity = new Prisma.Decimal(data.quantity);
@@ -173,10 +329,10 @@ export class EnergyService extends FoundationService {
       periodStart: start,
       periodEnd: end,
       sourceQuantity: quantity,
-      sourceUnit: meter.unit,
-      fuel: meter.fuel,
+      sourceUnit,
+      fuel,
       normalizedKwh: quantity.mul(conversion.factor).toDecimalPlaces(3),
-      conversionId: version?.id ?? null,
+      conversionId: preserveConversion ? previous.conversionId : (version?.id ?? null),
       conversionFactor: conversion.factor,
       conversionVersion: conversion.version,
       estimated: data.estimated,
@@ -187,14 +343,16 @@ export class EnergyService extends FoundationService {
       currency: data.currency,
       endUse: data.endUse,
       externalLegacyId: data.externalLegacyId,
-      attributeSnapshot: {
-        id: attributes?.id ?? null,
-        effectiveFrom: attributes?.effectiveFrom.toISOString().slice(0, 10) ?? null,
-        population: attributes?.population?.toString() ?? null,
-        weeklyHours: attributes?.weeklyHours?.toString() ?? null,
-        floorArea: attributes?.floorArea?.toString() ?? null,
-        basis: 'start-of-month-v1',
-      },
+      attributeSnapshot: previous
+        ? (previous.attributeSnapshot as Prisma.InputJsonValue)
+        : {
+            id: attributes?.id ?? null,
+            effectiveFrom: attributes?.effectiveFrom.toISOString().slice(0, 10) ?? null,
+            population: attributes?.population?.toString() ?? null,
+            weeklyHours: attributes?.weeklyHours?.toString() ?? null,
+            floorArea: attributes?.floorArea?.toString() ?? null,
+            basis: 'start-of-month-v1',
+          },
       qualityFlags,
       authorId: actor.userId,
     };

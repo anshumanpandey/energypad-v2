@@ -61,3 +61,9 @@ export const conversionInput = z
   })
   .strict()
   .refine((v) => v.lastMonth >= v.firstMonth, 'The last month must not precede the first month.');
+
+export const correctionReason = z.string().trim().min(3, 'Explain why this correction is needed.').max(500);
+export const readingCorrectionInput = z
+  .object({ reading: consumptionInput, reason: correctionReason, useLatestConversion: z.boolean() })
+  .strict();
+export const conversionCorrectionInput = z.object({ conversion: conversionInput, reason: correctionReason }).strict();
