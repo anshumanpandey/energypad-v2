@@ -218,6 +218,42 @@ try {
   console.log(
     '✓ schedule history, date replacement, released ranges, overlap rejection, stale/concurrent edits and immutability',
   );
+  const namedBook = new ExcelJS.Workbook();
+  namedBook.addWorksheet('Unselected').addRows([
+    ['month', 'driver', 'value', 'source'],
+    ['2030-01', 'POPULATION', '999', 'Must stay outside'],
+  ]);
+  namedBook.addWorksheet('Reviewed').addRows([
+    ['Period', 'Count'],
+    ['2030-01', '0'],
+  ]);
+  const namedTemplate = {
+    version: 1,
+    kind: 'drivers',
+    sheetName: 'Reviewed',
+    columns: { month: 'Period', value: 'Count' },
+    defaults: { driver: 'POPULATION', source: 'Reviewed attendance' },
+  };
+  const namedBytes = new Uint8Array(await namedBook.xlsx.writeBuffer());
+  await assert.rejects(drivers.upload(actor, org.id, site.id, namedBytes));
+  const namedBatch = await drivers.upload(actor, org.id, site.id, namedBytes, undefined, namedTemplate);
+  assert.equal(namedBatch.status, 'READY');
+  assert.deepEqual((namedBatch.result as { selection: { excludedSheets: string[] } }).selection.excludedSheets, [
+    'Unselected',
+  ]);
+  await drivers.commit(actor, org.id, site.id, namedBatch.id);
+  assert.equal(await db.driverObservation.count({ where: { importBatchId: namedBatch.id } }), 1);
+  namedBook.getWorksheet('Unselected')!.addRow(['Changed unrelated row']);
+  const retry = await drivers.upload(
+    actor,
+    org.id,
+    site.id,
+    new Uint8Array(await namedBook.xlsx.writeBuffer()),
+    undefined,
+    namedTemplate,
+  );
+  assert.equal(retry.id, namedBatch.id);
+  console.log('✓ named-sheet mapping, versioned template, excluded rows and retry after unrelated sheet changes');
   await sites.archiveSite(actor, org.id, site.id);
   await assert.rejects(drivers.correctObservation(actor, org.id, site.id, importCorrection.id, correction));
   await assert.rejects(drivers.correctSchedule(actor, org.id, site.id, revisedSchedule.id, scheduleCorrection));

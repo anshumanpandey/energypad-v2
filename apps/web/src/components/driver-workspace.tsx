@@ -1,4 +1,10 @@
 'use client';
+import {
+  WorkbookTemplateFields,
+  workbookSelection,
+  WorkbookSelectionSummary,
+  type WorkbookSelection,
+} from './workbook-template';
 import { DriverCorrections, type DriverRevision } from './driver-corrections';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -23,7 +29,12 @@ export type DriverData = {
   })[];
   coverage: { driver: keyof typeof driverLabels; missing: string[] }[];
 };
-type Batch = { id: string; status: string; createdAt: string; result: DriverPreview };
+type Batch = {
+  id: string;
+  status: string;
+  createdAt: string;
+  result: DriverPreview & { selection?: WorkbookSelection };
+};
 export function DriverWorkspace({
   base,
   year,
@@ -203,9 +214,9 @@ export function DriverWorkspace({
         <div className="stack-form">
           <h3>Import monthly drivers</h3>
           <p>
-            Upload one XLSX sheet with exactly these columns: <code>month, driver, value, source</code>. Use text months
-            (YYYY-MM) and driver codes POPULATION or OPERATING_HOURS. Each row is one observation. Up to 240 rows, 2 MB;
-            plain values only.
+            Import one selected XLSX sheet with these destination columns: <code>month, driver, value, source</code>.
+            Use text months (YYYY-MM) and driver codes POPULATION or OPERATING_HOURS. Each row is one observation. Up to
+            240 rows, 2 MB; plain values only.
           </p>
           <form
             className="stack-form"
@@ -216,7 +227,10 @@ export function DriverWorkspace({
               setBatch(null);
               setConfirmed(false);
               void m.run(async () => {
-                const response = await fetch(`/api/v1/${base}/imports`, { method: 'POST', body: file });
+                const response = await fetch(`/api/v1/${base}/imports?${await workbookSelection(form)}`, {
+                  method: 'POST',
+                  body: file,
+                });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.title ?? 'Upload failed.');
                 setBatch(result);
@@ -238,6 +252,7 @@ export function DriverWorkspace({
                 }}
               />
             </label>
+            <WorkbookTemplateFields kind="drivers" />
             <Button disabled={m.disabled}>Preview driver workbook</Button>
           </form>
           <Button
@@ -266,6 +281,7 @@ export function DriverWorkspace({
           ))}
           {batch && (
             <div className="stack-form">
+              <WorkbookSelectionSummary selection={batch.result.selection} />
               <strong>
                 Driver import: {batch.status} · {batch.result.records.length} valid rows · {batch.result.issues.length}{' '}
                 errors

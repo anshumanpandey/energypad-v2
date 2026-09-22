@@ -292,3 +292,52 @@ Sprint 8 implementation will use a read-only production inventory, source-specif
 A final cutover runbook must name responsible owners, acceptable reconciliation tolerances, backup/restore point, write-freeze window, final delta import, validation queries, go/no-go checks and rollback trigger. Preserve legacy read-only access where practical. Rollback must account for writes made in V2 after cutover; never destroy the old database or rely on reversing incomplete historical down migrations.
 
 Outstanding evidence: actual production schema/migration history, sanitized data sample, timezone/currency/unit meanings, orphan counts and business-to-user membership policy. This source-derived map supports review; it is not a claim that production migration has been tested.
+
+## Implemented tariff destinations — 21 September 2026
+
+These destinations supplement the proposed discovery mappings above. They are explicitly entered records, not an automatic source-database migration.
+
+| Legacy source | Implemented V2 destination | Transformation / remaining review |
+| --- | --- | --- |
+| BusinessFuelUses / UsedInToFuelSourceToSite id, siteId, fuelSourceId, usedInId | SiteEnergyUse id/siteId/organisationId plus associationLegacyTable/associationLegacyId, fuelLegacyId, endUseLegacyId and legacySource | Resolve owned site first. Source IDs are strings within an explicit source-system namespace. Association duplicates are rejected. Register a reviewed code/label and supported fuel code; no inferred allocation. |
+| BusinessFuelsPricing id, currencyCode, vat, fuelSourceId, siteId, usedInId | TariffVersion pricingLegacyId, currency, vatPercent, energyUseId, siteId/organisationId and legacySource | A source VAT percent/fraction and rate tax basis must be explicitly resolved. V2 requires validity dates, timezone and unit; these are not guessed from absent source fields. |
+| BusinessBrands id, name, startTime, endTime, rate, days | TariffVersion bands[].legacyId/name/startTime/endTime/rate/days | Convert reviewed day labels to ISO weekdays; clarify currency major/minor units and rate unit. Split overnight bands across weekdays. Preserve original source values in the eventual migration ledger; no automatic ambiguous conversion. |
+| BusinessBrands siteId, fuelSourceId, usedInId | TariffVersion energyUseId through SiteEnergyUse | One owned site/use identity; prevent cross-tenant or cross-site reference substitution. |
+
+Tariff corrections preserve prior normalized values, source IDs and author/time, but do not constitute an imported raw-source ledger. FuelSources labels/colors, a managed shared catalog and stable reading-to-use links still need implementation. Recorded UtilityConsumptions net/VAT/gross values are never replaced by these tariff rates.
+
+## Implemented catalog and consumption associations — 21 September 2026
+
+| Legacy field | V2 destination | Rule |
+| --- | --- | --- |
+| FuelSources id/source/colorCode | EnergyCatalogVersion(kind=FUEL).legacyId/name/color + legacySource | Explicit source namespace and reviewed supported fuel code; colour must be hex. No automatic label-based mapping. |
+| FuelUses id/use/fuelSourceId | EnergyCatalogVersion(kind=END_USE).legacyId/name/fuel + legacySource; SiteEnergyUse pinned fuel/end-use catalog versions | Retain end-use identity independently of site labels. Source IDs stay fixed across display corrections. Raw source fuel relationships still require the migration adapter's identity map. |
+| UtilityConsumptions.usedInId | ConsumptionRecord.energyUseId + energyUseSnapshot | Resolve the owned site's registered use explicitly. Original endUse text remains separate. One reference per reading; no duplicate quantity allocation. |
+
+Manual/XLSX consumption can select a site use by its stable code. The generic importer does not accept raw legacy usedInId as though it were a V2 UUID or code. Source-database adapters and full raw-value provenance/reconciliation remain outstanding.
+
+## Executable dry-run adapter — 21 September 2026
+
+[LEGACY_TARIFF_DRY_RUN.md](LEGACY_TARIFF_DRY_RUN.md) documents the bounded six-table adapter for FuelSources, FuelUses, BusinessFuelUses, UsedInToFuelSourceToSite, BusinessFuelsPricing and BusinessBrands. It preserves allowlisted original fields, resolves explicit logical dependencies, validates V2 catalog/use/tariff inputs and reconciles source/mapped/unmapped counts. Numeric tax/rate conversion requires explicit basis decisions and uses decimal arithmetic.
+
+The target preflight verifies current Owner/Admin membership and active tenant-owned sites, then reports existing catalog/use codes or identities as conflicts inside a read-only database snapshot. It does not silently reuse existing objects or write the plan. Atomic apply/reuse, actual export review and production reconciliation remain open.
+
+### Tariff migration atomic apply milestone
+
+The reviewed six-table tariff adapter now has an operator apply command with source-hash verification, current permission/site/conflict checks under the organisation lock, transactional destination and audit writes, and an immutable source-to-target receipt. Identical-batch retries reuse that receipt; unrelated existing destinations are not adopted. Real export reconciliation remains open. See LEGACY_TARIFF_DRY_RUN.md.
+
+### BusinessTenant occupancy destination
+
+The reviewed occupancy workbook maps BusinessTenant.regularTenantAmount → OccupancyObservation.regularCount and irregularTenantAmount → irregularCount (whole counts; null and zero distinct). Resolve siteId to the explicitly selected owned site and usedInId to a registered energyUseCode. Map date to reviewed inclusive firstDay/lastDay (same day for a dated count); do not infer monthly averages. Preserve id as legacyId with legacySource namespace and source reference. Preview/commit preserves batch row evidence and source counts, rejects overlapping periods and duplicate identities, and writes atomically. Corrections retain source identity and batch lineage. No accounts or derived DriverObservation rows are created.
+
+### BusinessPatterns executable destination
+
+Map startDate/endDate to explicitly reviewed firstDay/lastDay (inclusive), daysOnYear to nullable OperatingPattern.daysOnYear, and temperature to its decimal value with explicit temperatureUnit and temperatureContext. Unknown units/context remain UNKNOWN, not assumed Celsius/heating. Resolve siteId/usedInId to the selected owned site/registered energyUseCode; retain id under legacySource/legacyId and record source evidence. The pattern workbook supports preview/atomic commit and per-row reconciliation. Annual-day/interval discrepancies are retained and flagged. Corrections append immutable revisions; patterns do not mutate weather configurations or driver observations. Preserve the restricted original export separately for real-source reconciliation.
+
+### BusinessLog executable destination
+
+BusinessLog.startDate/endDate map to explicitly reviewed inclusive firstDay/lastDay, operation/comments to OperationalEvent.operation/comments. Resolve siteId/usedInId to selected owned site/registered energyUseCode; retain id under legacySource/legacyId and assign a stable site eventCode. The log XLSX preview/commit pipeline provides all-row reconciliation, source identity protection, atomic writes and immutable corrections. Overlapping events are preserved; no savings status or opportunity approval is inferred. Preserve the original restricted export for real-source reconciliation.
+
+### Reviewed consumption/meter migration
+
+Audit point 4 now has an executable operator preview/apply workflow for BusinessFuelsSize and UtilityConsumptions. Explicit meter-token/site/fuel/use mappings, tax/unit/conversion decisions and driver basis/conflict rules preserve source evidence without inferred allocations. Original timestamps, supplied VAT/cost/factor/population/hours are stored separately from calculated readings and remain unchanged by corrections. Immutable receipts provide source-to-target reconciliation, grouped totals and safe retries. Destination meters and conversions must be registered before migration; no real source export has been imported. See docs/LEGACY_ENERGY_MIGRATION.md for the input format, commands, review requirements and scope limits.

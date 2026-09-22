@@ -420,6 +420,12 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await page.getByLabel('Quantity column', { exact: true }).selectOption('1');
   await page.getByLabel('Source unit default', { exact: true }).fill('m3');
   await page.getByLabel('Reading status (actual / estimated) default', { exact: true }).fill('actual');
+  const savedMappingDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save mapping template v1', exact: true }).click();
+  const savedMappingPath = await (await savedMappingDownload).path();
+  await page.getByLabel('Source unit default', { exact: true }).fill('kWh');
+  await page.getByLabel('Load saved mapping template').setInputFiles(savedMappingPath!);
+  await expect(page.getByLabel('Source unit default', { exact: true })).toHaveValue('m3');
   await page.getByLabel('I confirm these rows belong').check();
   await page.getByRole('button', { name: 'Validate consumption import', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Commit consumption import', exact: true })).toBeDisabled();
@@ -684,4 +690,351 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   ).toBeVisible();
   await observationRow.getByRole('button', { name: 'View observation history', exact: true }).click();
   await observationRow.screenshot({ path: testInfo.outputPath('driver-correction-history.png') });
+
+  const catalogPanel = page.getByRole('region', { name: 'Shared energy catalog' });
+  await catalogPanel.getByRole('button', { name: 'Add catalog entry', exact: true }).click();
+  const catalogForm = catalogPanel.getByRole('form', { name: 'Add catalog entry', exact: true });
+  await catalogForm.getByRole('combobox', { name: 'Catalog kind', exact: true }).selectOption('FUEL');
+  await catalogForm.getByLabel('Catalog code', { exact: true }).fill('POWER');
+  await catalogForm.getByRole('combobox', { name: 'Catalog fuel', exact: true }).selectOption('ELECTRICITY');
+  await catalogForm.getByLabel('Catalog label', { exact: true }).fill('Grid power');
+  await catalogForm.getByLabel('Catalog colour', { exact: true }).fill('#123abc');
+  await catalogForm.getByLabel('Catalog source', { exact: true }).fill('Synthetic supplier catalog');
+  await catalogForm.getByRole('button', { name: 'Save catalog entry', exact: true }).click();
+  await expect(catalogPanel.getByText('FUEL · POWER · Grid power · Revision 1', { exact: true })).toBeVisible();
+  const pricing = page.getByRole('region', { name: 'Tariffs and end uses' });
+  await pricing.getByText('Register a site end use', { exact: true }).click();
+  const useForm = pricing.getByRole('form', { name: 'Add site end use', exact: true });
+  await useForm.getByLabel('End-use code', { exact: true }).fill('lighting');
+  await useForm.getByLabel('End-use name', { exact: true }).fill('Lighting');
+  await useForm.getByRole('combobox', { name: 'End-use fuel', exact: true }).selectOption('ELECTRICITY');
+  await useForm.getByLabel('End-use source', { exact: true }).fill('Synthetic site inventory');
+  await useForm
+    .getByRole('combobox', { name: 'Fuel catalog version', exact: true })
+    .selectOption({ label: 'POWER · Grid power · ELECTRICITY · v1' });
+  await useForm.getByRole('button', { name: 'Save site end use', exact: true }).click();
+  await expect(pricing.getByText('LIGHTING · Lighting · ELECTRICITY', { exact: true })).toBeVisible();
+  await expect(useForm.getByLabel('End-use code', { exact: true })).toHaveValue('');
+  await pricing.getByRole('button', { name: 'Add tariff', exact: true }).click();
+  const tariffForm = pricing.getByRole('form', { name: 'Add tariff', exact: true });
+  await tariffForm
+    .getByRole('combobox', { name: 'Tariff end use', exact: true })
+    .selectOption({ label: 'LIGHTING · Lighting · ELECTRICITY' });
+  await tariffForm.getByLabel('Tariff name', { exact: true }).fill('Synthetic electricity tariff');
+  await tariffForm.getByLabel('Tariff first day', { exact: true }).fill('2021-01-01');
+  await tariffForm.getByLabel('Tariff last day (inclusive)', { exact: true }).fill('2021-12-31');
+  await tariffForm.getByLabel('Tariff currency', { exact: true }).fill('gbp');
+  await tariffForm.getByRole('combobox', { name: 'Rate unit', exact: true }).selectOption('kWh');
+  await tariffForm.getByRole('combobox', { name: 'Rate tax basis', exact: true }).selectOption('NET');
+  await tariffForm.getByLabel('Tariff VAT percentage', { exact: true }).fill('20');
+  await tariffForm.getByLabel('Tariff timezone', { exact: true }).fill('Europe/London');
+  await tariffForm.getByLabel('Tariff source', { exact: true }).fill('Synthetic supplier rate card');
+  await tariffForm.getByLabel('Band name', { exact: true }).fill('All day');
+  await tariffForm.getByLabel('Band rate', { exact: true }).fill('0.15');
+  for (const day of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+    await tariffForm.getByLabel(day, { exact: true }).check();
+  await tariffForm.getByRole('button', { name: 'Save tariff', exact: true }).click();
+  await expect(pricing.getByText('Synthetic electricity tariff · Revision 1', { exact: true })).toBeVisible();
+  await expect(pricing.getByRole('cell', { name: '0.15 GBP/kWh', exact: true })).toBeVisible();
+  await pricing.getByRole('button', { name: 'Correct tariff', exact: true }).click();
+  const tariffCorrection = pricing.getByRole('form', { name: 'Correct tariff', exact: true });
+  await tariffCorrection.getByLabel('Band rate', { exact: true }).fill('0.2');
+  await tariffCorrection
+    .getByLabel('Tariff correction reason', { exact: true })
+    .fill('Correct synthetic supplier rate');
+  await tariffCorrection.getByRole('button', { name: 'Save tariff correction', exact: true }).click();
+  await expect(pricing.getByText('Synthetic electricity tariff · Revision 2', { exact: true })).toBeVisible();
+  await pricing.getByRole('button', { name: 'Correct tariff', exact: true }).click();
+  await tariffCorrection.getByLabel('Band rate', { exact: true }).fill('0.9');
+  await tariffCorrection.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(tariffCorrection).toHaveCount(0);
+  await page.reload();
+  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  await expect(pricing.getByRole('cell', { name: '0.2 GBP/kWh', exact: true })).toBeVisible();
+  await pricing.getByRole('button', { name: 'View tariff history', exact: true }).click();
+  await expect(pricing.getByRole('cell', { name: '0.15 GBP/kWh', exact: true })).toBeVisible();
+  await pricing.screenshot({ path: testInfo.outputPath('tariff-history.png') });
+  const occupancy = page.getByRole('region', { name: 'Occupancy history', exact: true });
+  const occupancyForm = occupancy.getByRole('form', { name: 'Add occupancy', exact: true });
+  await occupancyForm.getByLabel('Occupancy end use').selectOption('LIGHTING');
+  await occupancyForm.getByLabel('Occupancy first day').fill('2021-01-01');
+  await occupancyForm.getByLabel('Occupancy last day (inclusive)').fill('2021-01-31');
+  await occupancyForm.getByLabel('Regular occupants', { exact: true }).fill('0');
+  await occupancyForm.getByLabel('Occupancy source', { exact: true }).fill('Reviewed attendance register');
+  await occupancyForm.getByRole('button', { name: 'Save occupancy', exact: true }).click();
+  await expect(occupancy.getByText('Regular: 0 · Irregular: Unknown · Revision 1', { exact: true })).toBeVisible();
+  await expect(occupancyForm.getByLabel('Regular occupants', { exact: true })).toHaveValue('');
+  await occupancy.getByRole('button', { name: 'Correct occupancy', exact: true }).click();
+  const occupancyCorrection = occupancy.getByRole('form', { name: 'Correct occupancy', exact: true });
+  await occupancyCorrection.getByLabel('Regular occupants', { exact: true }).fill('12');
+  await occupancyCorrection.getByLabel('Irregular occupants', { exact: true }).fill('3');
+  await occupancyCorrection.getByLabel('Occupancy correction reason').fill('Corrected register');
+  await occupancyCorrection.getByRole('button', { name: 'Save occupancy correction', exact: true }).click();
+  await expect(occupancy.getByText('Regular: 12 · Irregular: 3 · Revision 2', { exact: true })).toBeVisible();
+  await occupancy.getByRole('button', { name: 'View occupancy history', exact: true }).click();
+  await expect(occupancy.getByText(/Revision 1: regular 0, irregular Unknown/)).toBeVisible();
+  await occupancy.getByRole('button', { name: 'Correct occupancy', exact: true }).click();
+  await occupancyCorrection.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(occupancyCorrection).toHaveCount(0);
+  const occupancyBook = new ExcelJS.Workbook();
+  const occupancySheet = occupancyBook.addWorksheet('Occupancy');
+  occupancySheet.addRow([
+    'firstDay',
+    'lastDay',
+    'energyUseCode',
+    'regularCount',
+    'irregularCount',
+    'source',
+    'legacySource',
+    'legacyId',
+  ]);
+  occupancySheet.addRow([
+    '2021-02-01',
+    '2021-02-28',
+    'LIGHTING',
+    '10',
+    '0',
+    'February register',
+    'synthetic',
+    'tenant-02',
+  ]);
+  await occupancy.getByLabel('Occupancy workbook', { exact: true }).setInputFiles({
+    name: 'occupancy.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer: Buffer.from(await occupancyBook.xlsx.writeBuffer()),
+  });
+  await occupancy.getByRole('button', { name: 'Preview occupancy workbook', exact: true }).click();
+  await expect(
+    occupancy.getByText('Occupancy import: READY · 1 source rows · 1 parsed rows · 0 errors', { exact: true }),
+  ).toBeVisible();
+  await occupancy.getByLabel('I confirm the site, end uses, inclusive periods and separate occupant counts.').check();
+  await occupancy.getByRole('button', { name: 'Commit occupancy import', exact: true }).click();
+  await expect(occupancy.getByText('Regular: 10 · Irregular: 0 · Revision 1', { exact: true })).toBeVisible();
+  await occupancy.screenshot({ path: testInfo.outputPath('occupancy-history.png') });
+
+  await catalogPanel.getByRole('button', { name: 'Correct catalog entry', exact: true }).click();
+  const catalogCorrection = catalogPanel.getByRole('form', { name: 'Correct catalog entry', exact: true });
+  await catalogCorrection.getByLabel('Catalog label', { exact: true }).fill('Electricity supply');
+  await catalogCorrection
+    .getByLabel('Catalog correction reason', { exact: true })
+    .fill('Correct supplier display label');
+  await catalogCorrection.getByRole('button', { name: 'Save catalog correction', exact: true }).click();
+  await expect(catalogPanel.getByText('FUEL · POWER · Electricity supply · Revision 2', { exact: true })).toBeVisible();
+  const electricityRow = page.getByRole('row').filter({ hasText: 'Main electricity' }).filter({ hasText: '2021-01' });
+  await electricityRow.getByRole('button', { name: 'Correct reading', exact: true }).click();
+  const linkForm = page.getByRole('form', { name: 'Correct monthly reading', exact: true });
+  await linkForm.getByRole('combobox', { name: 'Corrected registered end use', exact: true }).selectOption('LIGHTING');
+  await linkForm
+    .getByLabel('Reading correction reason', { exact: true })
+    .fill('Link original reading to reviewed site use');
+  await linkForm.getByRole('button', { name: 'Save reading correction', exact: true }).click();
+  await expect(electricityRow.getByText('Registered end use: LIGHTING · Lighting', { exact: true })).toBeVisible();
+  await expect(page.getByText('Main electricity · 12/12 months recorded', { exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  await electricityRow.getByRole('button', { name: 'View reading history', exact: true }).click();
+  await expect(electricityRow.getByText('Saved fuel catalog: Grid power · revision 1', { exact: true })).toBeVisible();
+  await expect(electricityRow.getByText('Registered end use: Unlinked', { exact: true })).toBeVisible();
+  await electricityRow.screenshot({ path: testInfo.outputPath('catalog-reading-history.png') });
+});
+
+test('Sprint 3 operating patterns, corrections and reviewed import', async ({ page }, testInfo) => {
+  await page.goto('/login');
+  await signIn(page, `patterns-${randomUUID()}@example.test`);
+  await page.getByLabel('Organisation name').fill('Pattern Workspace');
+  await page.getByRole('button', { name: 'Create workspace' }).click();
+  await expect(page).toHaveURL(/\/org\/[^/]+\/overview$/);
+  const org = new URL(page.url()).pathname.split('/')[2];
+  const headers = { origin: 'http://localhost:3101' };
+  const response = await page.request.post(`/api/v1/organisations/${org}/sites`, {
+    headers,
+    data: { code: 'PAT', name: 'Pattern Site' },
+  });
+  expect(response.ok()).toBe(true);
+  const site = await response.json();
+  const use = await page.request.post(`/api/v1/organisations/${org}/sites/${site.id}/energy/tariffs/uses`, {
+    headers,
+    data: { code: 'HEAT', name: 'Heating', fuel: 'ELECTRICITY', source: 'Reviewed end use' },
+  });
+  expect(use.ok()).toBe(true);
+  await page.getByRole('link', { name: 'Energy', exact: true }).click();
+  await page.getByLabel('Year', { exact: true }).fill('2020');
+  await page.getByRole('button', { name: 'Load energy records' }).click();
+  const panel = page.getByRole('region', { name: 'Operating patterns', exact: true });
+  const form = panel.getByRole('form', { name: 'Add pattern', exact: true });
+  await form.getByLabel('Pattern end use').selectOption('HEAT');
+  await form.getByLabel('Pattern first day').fill('2020-01-01');
+  await form.getByLabel('Pattern last day (inclusive)').fill('2020-01-31');
+  await form.getByLabel('Annual active days').fill('250');
+  await form.getByLabel('Pattern temperature').fill('18.5');
+  await form.getByLabel('Pattern source', { exact: true }).fill('Legacy pattern review');
+  await form.getByRole('button', { name: 'Save pattern', exact: true }).click();
+  await expect(panel.getByText(/Annual active days: 250/)).toBeVisible();
+  await expect(panel.getByText(/Temperature unit or context is unresolved/)).toBeVisible();
+  await expect(form.getByLabel('Annual active days')).toHaveValue('');
+  await panel.getByRole('button', { name: 'Correct pattern', exact: true }).click();
+  const correction = panel.getByRole('form', { name: 'Correct pattern', exact: true });
+  await correction.getByLabel('Temperature unit').selectOption('C');
+  await correction.getByLabel('Temperature context').selectOption('HEATING');
+  await correction.getByLabel('Pattern last day (inclusive)').fill('2020-12-31');
+  await correction
+    .getByLabel('Pattern correction reason')
+    .fill('Confirmed annual validity and Celsius heating setpoint');
+  await correction.getByRole('button', { name: 'Save pattern correction', exact: true }).click();
+  await expect(panel.getByText(/HEATING · Revision 2/)).toBeVisible();
+  await expect(panel.getByText(/Temperature unit or context is unresolved/)).toHaveCount(0);
+  await panel.getByRole('button', { name: 'View pattern history', exact: true }).click();
+  await expect(panel.getByText(/Revision 1: 2020-01-01 to 2020-01-31/)).toBeVisible();
+  await panel.getByRole('button', { name: 'Correct pattern', exact: true }).click();
+  await correction.getByRole('button', { name: 'Cancel', exact: true }).click();
+  const book = new ExcelJS.Workbook(),
+    sheet = book.addWorksheet('Patterns');
+  sheet.addRow([
+    'firstDay',
+    'lastDay',
+    'energyUseCode',
+    'daysOnYear',
+    'temperature',
+    'temperatureUnit',
+    'temperatureContext',
+    'source',
+    'legacySource',
+    'legacyId',
+  ]);
+  sheet.addRow([
+    '2021-01-01',
+    '2021-12-31',
+    'HEAT',
+    '0',
+    '0',
+    'C',
+    'HEATING',
+    'Reviewed workbook',
+    'synthetic',
+    'pattern-2021',
+  ]);
+  for (const name of ['Consumption', 'Drivers', 'Emissions', 'Targets'])
+    book.addWorksheet(name).addRows([['Unselected'], ['Retain outside batch']]);
+  await panel.getByLabel('Pattern workbook', { exact: true }).setInputFiles({
+    name: 'patterns.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer: Buffer.from(await book.xlsx.writeBuffer()),
+  });
+  const mappingDownload = page.waitForEvent('download');
+  await panel.getByRole('button', { name: 'Download patterns mapping template v1' }).click();
+  const mappingFile = await (await mappingDownload).path();
+  expect(mappingFile).toBeTruthy();
+  await panel.getByLabel('Saved mapping template (optional)').setInputFiles(mappingFile!);
+  await panel.getByRole('button', { name: 'Preview pattern workbook', exact: true }).click();
+  await expect(
+    panel.getByText('Pattern import: READY · 1 source rows · 1 parsed rows · 0 errors', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    panel.getByText(/Selected sheet: Patterns. Excluded sheets: Consumption, Drivers, Emissions, Targets/),
+  ).toBeVisible();
+  const savedDownload = page.waitForEvent('download');
+  await panel.getByRole('button', { name: 'Save this mapping template' }).click();
+  expect((await savedDownload).suggestedFilename()).toBe('patterns-mapping-v1.json');
+  await panel.screenshot({ path: testInfo.outputPath('named-sheet-template-preview.png') });
+  await panel.getByRole('checkbox').check();
+  await panel.getByRole('button', { name: 'Commit pattern import', exact: true }).click();
+  await expect(panel.getByText(/Pattern import: COMMITTED/)).toBeVisible();
+  await page.reload();
+  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByRole('button', { name: 'Load energy records' }).click();
+  await expect(panel.getByText(/Annual active days: 0 · Temperature: 0 C/)).toBeVisible();
+  await panel.screenshot({ path: testInfo.outputPath('operating-patterns.png') });
+});
+
+test('Sprint 3 operational events and log import', async ({ page }, testInfo) => {
+  await page.goto('/login');
+  await signIn(page, `events-${randomUUID()}@example.test`);
+  await page.getByLabel('Organisation name').fill('Event Workspace');
+  await page.getByRole('button', { name: 'Create workspace' }).click();
+  await expect(page).toHaveURL(/\/org\/[^/]+\/overview$/);
+  const org = new URL(page.url()).pathname.split('/')[2];
+  const headers = { origin: 'http://localhost:3101' };
+  const response = await page.request.post(`/api/v1/organisations/${org}/sites`, {
+    headers,
+    data: { code: 'LOG', name: 'Event Site' },
+  });
+  expect(response.ok()).toBe(true);
+  const site = await response.json();
+  const use = await page.request.post(`/api/v1/organisations/${org}/sites/${site.id}/energy/tariffs/uses`, {
+    headers,
+    data: { code: 'HEAT', name: 'Heating', fuel: 'ELECTRICITY', source: 'Reviewed end use' },
+  });
+  expect(use.ok()).toBe(true);
+  await page.getByRole('link', { name: 'Energy', exact: true }).click();
+  await page.getByLabel('Year', { exact: true }).fill('2020');
+  await page.getByRole('button', { name: 'Load energy records' }).click();
+  const panel = page.getByRole('region', { name: 'Operational events', exact: true });
+  const form = panel.getByRole('form', { name: 'Add event', exact: true });
+  await form.getByLabel('Event end use').selectOption('HEAT');
+  await form.getByLabel('Event first day').fill('2020-01-01');
+  await form.getByLabel('Event last day (inclusive)').fill('2020-01-31');
+  await form.getByLabel('Event code', { exact: true }).fill('log-01');
+  await form.getByLabel('Operation', { exact: true }).fill('Plant shutdown');
+  await expect(form.getByLabel('Event comments')).toHaveCSS('border-top-width', '1px');
+  await form.getByLabel('Event comments').fill('<script>evidence, not code</script>');
+  await form.getByLabel('Event source', { exact: true }).fill('Maintenance log');
+  await form.getByRole('button', { name: 'Save event', exact: true }).click();
+  await expect(panel.getByText('Plant shutdown · Revision 1', { exact: true })).toBeVisible();
+  await expect(panel.getByText('<script>evidence, not code</script>', { exact: true })).toBeVisible();
+  await expect(form.getByLabel('Event code', { exact: true })).toHaveValue('');
+  await panel.getByRole('button', { name: 'Correct event', exact: true }).click();
+  const correction = panel.getByRole('form', { name: 'Correct event', exact: true });
+  await correction.getByLabel('Event last day (inclusive)').fill('2020-02-01');
+  await correction.getByLabel('Event comments').fill('Confirmed shutdown interval');
+  await correction.getByLabel('Event correction reason').fill('Reviewed engineer log');
+  await correction.getByRole('button', { name: 'Save event correction', exact: true }).click();
+  await expect(panel.getByText('Plant shutdown · Revision 2', { exact: true })).toBeVisible();
+  await panel.getByRole('button', { name: 'View event history', exact: true }).click();
+  await expect(panel.getByText(/Revision 1: 2020-01-01 to 2020-01-31/)).toBeVisible();
+  await panel.getByRole('button', { name: 'Correct event', exact: true }).click();
+  await correction.getByRole('button', { name: 'Cancel', exact: true }).click();
+  const book = new ExcelJS.Workbook(),
+    sheet = book.addWorksheet('Logs');
+  sheet.addRow([
+    'firstDay',
+    'lastDay',
+    'energyUseCode',
+    'eventCode',
+    'operation',
+    'comments',
+    'source',
+    'legacySource',
+    'legacyId',
+  ]);
+  sheet.addRow([
+    '2020-01-15',
+    '2020-01-16',
+    'HEAT',
+    'LOG-02',
+    'Maintenance',
+    'Overlapping event',
+    'Engineer log',
+    'synthetic',
+    'log-2',
+  ]);
+  await panel.getByLabel('Event workbook', { exact: true }).setInputFiles({
+    name: 'events.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer: Buffer.from(await book.xlsx.writeBuffer()),
+  });
+  await panel.getByRole('button', { name: 'Preview event workbook', exact: true }).click();
+  await expect(
+    panel.getByText('Event import: READY · 1 source rows · 1 parsed rows · 0 errors', { exact: true }),
+  ).toBeVisible();
+  await panel.getByRole('checkbox').check();
+  await panel.getByRole('button', { name: 'Commit event import', exact: true }).click();
+  await expect(panel.getByText('Maintenance · Revision 1', { exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByLabel('Year', { exact: true }).fill('2020');
+  await page.getByRole('button', { name: 'Load energy records' }).click();
+  await expect(panel.getByText('Plant shutdown · Revision 2', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Maintenance · Revision 1', { exact: true })).toBeVisible();
+  await panel.screenshot({ path: testInfo.outputPath('operational-events.png') });
 });

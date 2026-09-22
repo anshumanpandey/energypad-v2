@@ -263,6 +263,46 @@ export class EnergyService extends FoundationService {
     if (!meter) throw new DomainError('NOT_FOUND', 'This active meter is not available.', 404);
     const sourceUnit = previous?.sourceUnit ?? meter.unit,
       fuel = previous?.fuel ?? meter.fuel;
+
+    let energyUseId = previous?.energyUseId ?? null;
+    let energyUseSnapshot = previous?.energyUseSnapshot ?? null;
+    if (data.energyUseCode !== undefined) {
+      const use = data.energyUseCode
+        ? await tx.siteEnergyUse.findFirst({
+            where: { organisationId: org, siteId, code: data.energyUseCode },
+            include: { fuelCatalog: true, endUseCatalog: true },
+          })
+        : null;
+      if (data.energyUseCode && (!use || use.fuel !== fuel))
+        throw new DomainError('END_USE_SCOPE', 'Choose a registered end use in this site matching the reading fuel.');
+      energyUseId = use?.id ?? null;
+      energyUseSnapshot = use
+        ? {
+            id: use.id,
+            code: use.code,
+            name: use.name,
+            fuel: use.fuel,
+            fuelCatalog: use.fuelCatalog
+              ? {
+                  id: use.fuelCatalog.id,
+                  code: use.fuelCatalog.code,
+                  name: use.fuelCatalog.name,
+                  color: use.fuelCatalog.color,
+                  revision: use.fuelCatalog.revision,
+                }
+              : null,
+            endUseCatalog: use.endUseCatalog
+              ? {
+                  id: use.endUseCatalog.id,
+                  code: use.endUseCatalog.code,
+                  name: use.endUseCatalog.name,
+                  color: use.endUseCatalog.color,
+                  revision: use.endUseCatalog.revision,
+                }
+              : null,
+          }
+        : null;
+    }
     const preserveConversion = previous && !correction?.useLatestConversion;
     const standard = energyConversions[sourceUnit as keyof typeof energyConversions];
     const version =
@@ -342,6 +382,10 @@ export class EnergyService extends FoundationService {
       grossCost: netCost !== null && vatCost !== null ? netCost.add(vatCost) : null,
       currency: data.currency,
       endUse: data.endUse,
+      energyUseId,
+      energyUseSnapshot: energyUseSnapshot === null ? Prisma.DbNull : (energyUseSnapshot as Prisma.InputJsonValue),
+      sourceProvenance:
+        previous?.sourceProvenance == null ? Prisma.DbNull : (previous.sourceProvenance as Prisma.InputJsonValue),
       externalLegacyId: data.externalLegacyId,
       attributeSnapshot: previous
         ? (previous.attributeSnapshot as Prisma.InputJsonValue)

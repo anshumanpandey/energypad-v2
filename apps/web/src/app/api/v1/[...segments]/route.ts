@@ -1,11 +1,17 @@
+import { parseTemplateText } from '@/domain/workbook-template';
 import { api, readBody, readBytes } from '@/server/http';
 import {
   foundation,
+  occupancyService,
+  patternService,
+  eventService,
   siteService,
   energyService,
   energyImportService,
   driverService,
   weatherService,
+  tariffService,
+  energyCatalogService,
 } from '@/server/services';
 import { DomainError } from '@/domain/policy';
 
@@ -22,6 +28,76 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'occupancy') {
+        if (s.length === 6 && method === 'GET')
+          return occupancyService.list(actor, org, s[3], Number(new URL(request.url).searchParams.get('year')));
+        if (s.length === 6 && method === 'POST') return occupancyService.add(actor, org, s[3], await readBody(request));
+        if (s.length === 8 && s[7] === 'correct' && method === 'POST')
+          return occupancyService.correct(actor, org, s[3], s[6], await readBody(request));
+        if (s.length === 8 && s[7] === 'history' && method === 'GET')
+          return occupancyService.history(actor, org, s[3], s[6]);
+        if (s.length === 7 && s[6] === 'imports' && method === 'GET') return occupancyService.imports(actor, org, s[3]);
+        if (s.length === 7 && s[6] === 'imports' && method === 'POST')
+          return occupancyService.upload(actor, org, s[3], await readBytes(request, 2_000_000));
+        if (s.length === 9 && s[6] === 'imports' && s[8] === 'commit' && method === 'POST')
+          return occupancyService.commit(actor, org, s[3], s[7]);
+      }
+      if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'patterns') {
+        if (s.length === 6 && method === 'GET')
+          return patternService.list(actor, org, s[3], Number(new URL(request.url).searchParams.get('year')));
+        if (s.length === 6 && method === 'POST') return patternService.add(actor, org, s[3], await readBody(request));
+        if (s.length === 8 && s[7] === 'correct' && method === 'POST')
+          return patternService.correct(actor, org, s[3], s[6], await readBody(request));
+        if (s.length === 8 && s[7] === 'history' && method === 'GET')
+          return patternService.history(actor, org, s[3], s[6]);
+        if (s.length === 7 && s[6] === 'imports' && method === 'GET') return patternService.imports(actor, org, s[3]);
+        if (s.length === 7 && s[6] === 'imports' && method === 'POST')
+          return patternService.upload(
+            actor,
+            org,
+            s[3],
+            await readBytes(request, 2_000_000),
+            new URL(request.url).searchParams.get('sheet') ?? undefined,
+            new URL(request.url).searchParams.has('template')
+              ? parseTemplateText(new URL(request.url).searchParams.get('template')!)
+              : undefined,
+          );
+        if (s.length === 9 && s[6] === 'imports' && s[8] === 'commit' && method === 'POST')
+          return patternService.commit(actor, org, s[3], s[7]);
+      }
+      if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'events') {
+        if (s.length === 6 && method === 'GET')
+          return eventService.list(actor, org, s[3], Number(new URL(request.url).searchParams.get('year')));
+        if (s.length === 6 && method === 'POST') return eventService.add(actor, org, s[3], await readBody(request));
+        if (s.length === 8 && s[7] === 'correct' && method === 'POST')
+          return eventService.correct(actor, org, s[3], s[6], await readBody(request));
+        if (s.length === 8 && s[7] === 'history' && method === 'GET')
+          return eventService.history(actor, org, s[3], s[6]);
+        if (s.length === 7 && s[6] === 'imports' && method === 'GET') return eventService.imports(actor, org, s[3]);
+        if (s.length === 7 && s[6] === 'imports' && method === 'POST')
+          return eventService.upload(actor, org, s[3], await readBytes(request, 2_000_000));
+        if (s.length === 9 && s[6] === 'imports' && s[8] === 'commit' && method === 'POST')
+          return eventService.commit(actor, org, s[3], s[7]);
+      }
+      if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'catalog') {
+        if (s.length === 6 && method === 'GET') return energyCatalogService.list(actor, org, s[3]);
+        if (s.length === 6 && method === 'POST')
+          return energyCatalogService.add(actor, org, s[3], await readBody(request));
+        if (s.length === 8 && s[7] === 'history' && method === 'GET')
+          return energyCatalogService.history(actor, org, s[3], s[6]);
+        if (s.length === 8 && s[7] === 'correct' && method === 'POST')
+          return energyCatalogService.correct(actor, org, s[3], s[6], await readBody(request));
+      }
+      if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'tariffs') {
+        if (s.length === 6 && method === 'GET') return tariffService.list(actor, org, s[3]);
+        if (s.length === 6 && method === 'POST') return tariffService.add(actor, org, s[3], await readBody(request));
+        if (s.length === 7 && s[6] === 'uses' && method === 'POST')
+          return tariffService.addUse(actor, org, s[3], await readBody(request));
+        if (s.length === 8 && s[7] === 'history' && method === 'GET')
+          return tariffService.history(actor, org, s[3], s[6]);
+        if (s.length === 8 && s[7] === 'correct' && method === 'POST')
+          return tariffService.correct(actor, org, s[3], s[6], await readBody(request));
+      }
       if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'weather') {
         if (s.length === 9 && s[6] === 'jobs' && s[8] === 'retry' && method === 'POST')
           return weatherService.retry(actor, org, s[3], s[7]).then((job) => ({ id: job.id, status: job.status }));
@@ -51,7 +127,16 @@ async function handle(request: Request, context: Context) {
           return driverService.addSchedule(actor, org, site, await readBody(request));
         if (s.length === 7 && s[6] === 'imports' && method === 'GET') return driverService.imports(actor, org, site);
         if (s.length === 7 && s[6] === 'imports' && method === 'POST')
-          return driverService.upload(actor, org, site, await readBytes(request, 2_000_000));
+          return driverService.upload(
+            actor,
+            org,
+            site,
+            await readBytes(request, 2_000_000),
+            new URL(request.url).searchParams.get('sheet') ?? undefined,
+            new URL(request.url).searchParams.has('template')
+              ? parseTemplateText(new URL(request.url).searchParams.get('template')!)
+              : undefined,
+          );
         if (s.length === 9 && s[6] === 'imports' && s[8] === 'commit' && method === 'POST')
           return driverService.commit(actor, org, site, s[7]);
       }

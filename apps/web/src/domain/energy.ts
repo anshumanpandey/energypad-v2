@@ -23,6 +23,12 @@ export const consumptionInput = z
       .regex(/^[A-Z]{3}$/)
       .nullish()
       .transform((v) => v ?? null),
+    energyUseCode: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z0-9_-]{1,40}$/)
+      .nullish(),
     endUse: z.string().trim().max(100).default(''),
     externalLegacyId: z.string().trim().max(160).default(''),
   })

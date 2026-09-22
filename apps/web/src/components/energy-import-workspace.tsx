@@ -1,4 +1,6 @@
 'use client';
+import { applyEnergyTemplate, saveEnergyTemplate, parseTemplateText } from '@/domain/workbook-template';
+import { downloadMapping } from './workbook-template';
 import { useState } from 'react';
 import { energyImportFields, type EnergyMapping } from '@/domain/energy-import';
 import type { ImportSheet, RowIssue } from '@/domain/sites';
@@ -24,6 +26,8 @@ type Batch = {
         grossCost: string | null;
         currency: string | null;
         qualityFlags: string[];
+        endUse: string;
+        energyUseSnapshot?: { code?: string; name?: string } | null;
       };
     }[];
   };
@@ -36,7 +40,8 @@ const labels: Record<(typeof energyImportFields)[number], string> = {
   netCost: 'Net cost',
   vatPercent: 'VAT (%)',
   currency: 'Currency',
-  endUse: 'End use',
+  endUse: 'Original end-use label',
+  energyUseCode: 'Registered site end-use code',
   externalLegacyId: 'Legacy reference',
 };
 export function EnergyImportWorkspace({
@@ -185,6 +190,41 @@ export function EnergyImportWorkspace({
                   ))}
                 </select>
               </label>
+              <div className="button-row">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    void m.run(async () => {
+                      downloadMapping(saveEnergyTemplate(batch.sheets, mapping), 'consumption-mapping-v1.json');
+                    }, 'Mapping template saved. Reuse it with the same worksheet and column names.')
+                  }
+                >
+                  Save mapping template v1
+                </Button>
+                <label>
+                  Load saved mapping template
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = '';
+                      if (!file) return;
+                      setFresh(false);
+                      setConfirmed(false);
+                      void m.run(async () => {
+                        if (file.size > 16_384) throw new Error('Use a mapping template smaller than 16 KB.');
+                        update(applyEnergyTemplate(batch.sheets, parseTemplateText(await file.text())));
+                      }, 'Template loaded. Review the mapping and confirm this meter before validating.');
+                    }}
+                  />
+                </label>
+              </div>
+              <p>
+                Templates match worksheet and header names, even if columns move. They do not select a meter or approve
+                an import. Only the selected sheet is imported.
+              </p>
               <div className="form-grid">
                 {energyImportFields.map((field) => (
                   <fieldset className="import-mapping-field" key={field}>
@@ -279,6 +319,7 @@ export function EnergyImportWorkspace({
                           <th>Quantity</th>
                           <th>kWh</th>
                           <th>Net / gross</th>
+                          <th>End-use association</th>
                           <th>Quality</th>
                         </tr>
                       </thead>
@@ -295,6 +336,13 @@ export function EnergyImportWorkspace({
                             <td>
                               {row.prepared.netCost ?? 'Unknown'} / {row.prepared.grossCost ?? 'Unknown'}{' '}
                               {row.prepared.currency}
+                            </td>
+                            <td>
+                              {row.prepared.energyUseSnapshot?.code
+                                ? `${row.prepared.energyUseSnapshot.code} · ${row.prepared.energyUseSnapshot.name}`
+                                : 'Unlinked'}
+                              <br />
+                              Original label: {row.prepared.endUse || 'None'}
                             </td>
                             <td>{row.prepared.qualityFlags.join(' · ') || 'No input issues detected'}</td>
                           </tr>

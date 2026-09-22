@@ -82,6 +82,8 @@ model Plan {
 }
 
 model Organisation {
+  legacyEnergyBatches LegacyEnergyBatch[]
+  legacyEnergyRows LegacyEnergyRow[]
   id          String   @id @default(uuid()) @db.Uuid
   name        String
   slug        String   @unique
@@ -97,6 +99,8 @@ model Organisation {
   auditEvents AuditEvent[]
   portfolios Portfolio[]
   imports ImportBatch[]
+  legacyTariffBatches LegacyTariffBatch[]
+  energyCatalog EnergyCatalogVersion[]
 }
 
 model Membership {
@@ -116,6 +120,12 @@ model Membership {
 }
 
 model Site {
+  events OperationalEvent[]
+  eventImports EventImportBatch[]
+  patterns OperatingPattern[]
+  patternImports PatternImportBatch[]
+  occupancy OccupancyObservation[]
+  occupancyImports OccupancyImportBatch[]
   id             String   @id @default(uuid()) @db.Uuid
   organisationId String   @db.Uuid
   code           String
@@ -143,6 +153,7 @@ model Site {
   driverObservations DriverObservation[]
   operatingSchedules OperatingSchedule[]
   driverImports DriverImportBatch[]
+  energyUses SiteEnergyUse[]
   @@unique([id, organisationId])
   @@unique([organisationId, code])
 }
@@ -269,6 +280,7 @@ model ImportBatch {
 }
 
 model ConsumptionRecord {
+  sourceProvenance Json?
   revision Int @default(1)
   supersedesId String? @db.Uuid
   correctionReason String?
@@ -295,6 +307,9 @@ model ConsumptionRecord {
   grossCost Decimal? @db.Decimal(16, 3)
   currency String? @db.Char(3)
   endUse String
+  energyUseId String? @db.Uuid
+  energyUseSnapshot Json?
+  energyUse SiteEnergyUse? @relation(fields: [energyUseId, organisationId, siteId], references: [id, organisationId, siteId])
   externalLegacyId String
   attributeSnapshot Json
   qualityFlags Json
@@ -478,4 +493,261 @@ model WeatherJob {
   @@unique([configurationId, year, methodology])
   @@index([status, availableAt])
   @@index([organisationId, siteId, year])
+}
+
+model SiteEnergyUse {
+  events OperationalEvent[]
+  patterns OperatingPattern[]
+  occupancy OccupancyObservation[]
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  code String
+  name String
+  fuel String
+  source String
+  legacySource String @default("")
+  fuelLegacyId String @default("")
+  endUseLegacyId String @default("")
+  associationLegacyId String @default("")
+  associationLegacyTable String @default("")
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+  tariffs TariffVersion[]
+  @@unique([id, organisationId, siteId])
+  @@unique([organisationId, siteId, code])
+  fuelCatalogId String? @db.Uuid
+  endUseCatalogId String? @db.Uuid
+  fuelCatalog EnergyCatalogVersion? @relation("UseFuelCatalog", fields: [fuelCatalogId, organisationId], references: [id, organisationId])
+  endUseCatalog EnergyCatalogVersion? @relation("UseEndCatalog", fields: [endUseCatalogId, organisationId], references: [id, organisationId])
+  readings ConsumptionRecord[]
+}
+
+model TariffVersion {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  energyUseId String @db.Uuid
+  name String
+  validFrom DateTime @db.Date
+  validUntil DateTime @db.Date
+  currency String @db.Char(3)
+  rateUnit String
+  taxBasis String
+  vatPercent Decimal @db.Decimal(6,3)
+  timezone String
+  source String
+  legacySource String @default("")
+  pricingLegacyId String @default("")
+  bands Json
+  revision Int @default(1)
+  supersedesId String? @db.Uuid
+  correctionReason String?
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  energyUse SiteEnergyUse @relation(fields: [energyUseId, organisationId, siteId], references: [id, organisationId, siteId])
+  previous TariffVersion? @relation("TariffRevisions", fields: [supersedesId, organisationId], references: [id, organisationId], onDelete: NoAction, onUpdate: NoAction)
+  replacement TariffVersion? @relation("TariffRevisions")
+  @@unique([id, organisationId])
+  @@unique([supersedesId, organisationId])
+  @@index([organisationId, siteId, energyUseId])
+}
+
+model EnergyCatalogVersion {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  kind String
+  code String
+  fuel String
+  name String
+  color String
+  source String
+  legacySource String @default("")
+  legacyId String @default("")
+  retired Boolean @default(false)
+  revision Int @default(1)
+  supersedesId String? @db.Uuid
+  correctionReason String?
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  previous EnergyCatalogVersion? @relation("CatalogRevisions", fields: [supersedesId, organisationId], references: [id, organisationId], onDelete: NoAction, onUpdate: NoAction)
+  replacement EnergyCatalogVersion? @relation("CatalogRevisions")
+  fuelUses SiteEnergyUse[] @relation("UseFuelCatalog")
+  endUses SiteEnergyUse[] @relation("UseEndCatalog")
+  @@unique([id, organisationId])
+  @@unique([supersedesId, organisationId])
+  @@index([organisationId, kind, code])
+}
+
+model LegacyTariffBatch {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  adapter String
+  source String
+  inputHash String
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  receipt Json
+  @@unique([organisationId, adapter, inputHash])
+}
+
+model OccupancyObservation {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ energyUseId String @db.Uuid
+ validFrom DateTime @db.Date
+ validUntil DateTime @db.Date
+ regularCount Int?
+ irregularCount Int?
+ source String
+ legacySource String @default("")
+ legacyId String @default("")
+ authorId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ revision Int @default(1)
+ supersedesId String? @db.Uuid
+ correctionReason String?
+ importBatchId String? @db.Uuid
+ site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+ energyUse SiteEnergyUse @relation(fields: [energyUseId, organisationId, siteId], references: [id, organisationId, siteId])
+ batch OccupancyImportBatch? @relation(fields: [importBatchId, organisationId, siteId], references: [id, organisationId, siteId])
+ previous OccupancyObservation? @relation("OccupancyRevisions", fields: [supersedesId, organisationId], references: [id, organisationId], onDelete: NoAction, onUpdate: NoAction)
+ replacement OccupancyObservation? @relation("OccupancyRevisions")
+ @@unique([id, organisationId])
+ @@unique([supersedesId, organisationId])
+ @@index([organisationId, siteId, energyUseId])
+}
+model OccupancyImportBatch {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ fingerprint String
+ result Json
+ status String
+ createdBy String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ committedAt DateTime? @db.Timestamptz(3)
+ site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+ observations OccupancyObservation[]
+ @@unique([id, organisationId, siteId])
+ @@unique([siteId, fingerprint])
+}
+
+model OperatingPattern {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ energyUseId String @db.Uuid
+ validFrom DateTime @db.Date
+ validUntil DateTime @db.Date
+ daysOnYear Int?
+ temperature Decimal? @db.Decimal(6,3)
+ temperatureUnit String
+ temperatureContext String
+ source String
+ legacySource String @default("")
+ legacyId String @default("")
+ authorId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ revision Int @default(1)
+ supersedesId String? @db.Uuid
+ correctionReason String?
+ importBatchId String? @db.Uuid
+ site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+ energyUse SiteEnergyUse @relation(fields: [energyUseId, organisationId, siteId], references: [id, organisationId, siteId])
+ batch PatternImportBatch? @relation(fields: [importBatchId, organisationId, siteId], references: [id, organisationId, siteId])
+ previous OperatingPattern? @relation("PatternRevisions", fields: [supersedesId, organisationId], references: [id, organisationId], onDelete: NoAction, onUpdate: NoAction)
+ replacement OperatingPattern? @relation("PatternRevisions")
+ @@unique([id, organisationId])
+ @@unique([supersedesId, organisationId])
+ @@index([organisationId, siteId, energyUseId])
+}
+model PatternImportBatch {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ fingerprint String
+ result Json
+ status String
+ createdBy String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ committedAt DateTime? @db.Timestamptz(3)
+ site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+ observations OperatingPattern[]
+ @@unique([id, organisationId, siteId])
+ @@unique([siteId, fingerprint])
+}
+
+model OperationalEvent {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ energyUseId String @db.Uuid
+ validFrom DateTime @db.Date
+ validUntil DateTime @db.Date
+ eventCode String
+ operation String
+ comments String
+ source String
+ legacySource String @default("")
+ legacyId String @default("")
+ authorId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ revision Int @default(1)
+ supersedesId String? @db.Uuid
+ correctionReason String?
+ importBatchId String? @db.Uuid
+ site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+ energyUse SiteEnergyUse @relation(fields: [energyUseId, organisationId, siteId], references: [id, organisationId, siteId])
+ batch EventImportBatch? @relation(fields: [importBatchId, organisationId, siteId], references: [id, organisationId, siteId])
+ previous OperationalEvent? @relation("EventRevisions", fields: [supersedesId, organisationId], references: [id, organisationId], onDelete: NoAction, onUpdate: NoAction)
+ replacement OperationalEvent? @relation("EventRevisions")
+ @@unique([id, organisationId])
+ @@unique([supersedesId, organisationId])
+ @@index([organisationId, siteId, energyUseId])
+}
+model EventImportBatch {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ fingerprint String
+ result Json
+ status String
+ createdBy String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ committedAt DateTime? @db.Timestamptz(3)
+ site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+ observations OperationalEvent[]
+ @@unique([id, organisationId, siteId])
+ @@unique([siteId, fingerprint])
+}
+
+model LegacyEnergyBatch {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+ inputHash String
+ authorId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ receipt Json
+ rows LegacyEnergyRow[]
+ @@unique([id, organisationId])
+ @@unique([organisationId, inputHash])
+}
+model LegacyEnergyRow {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+ batchId String @db.Uuid
+ batch LegacyEnergyBatch @relation(fields: [batchId, organisationId], references: [id, organisationId])
+ source String
+ table String
+ legacyId String
+ evidence Json
+ targets Json
+ @@unique([organisationId, source, table, legacyId])
 }

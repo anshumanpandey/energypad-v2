@@ -1,0 +1,71 @@
+{
+  "source": "synthetic-export",
+  "reference": "Synthetic example; replace destination IDs after review",
+  "tables": {
+    "BusinessFuelsSize": [
+      {
+        "id": "meter-list-1",
+        "meters": "E-001",
+        "siteId": "site-1",
+        "fuelSourceId": "electricity",
+        "usedInId": "lighting"
+      }
+    ],
+    "UtilityConsumptions": [
+      {
+        "id": "consumption-1",
+        "siteId": "site-1",
+        "fuelSourceId": "electricity",
+        "usedInId": "lighting",
+        "date": "January 2020",
+        "consumption": "100",
+        "totalCost": "50",
+        "vat": "0.2",
+        "vatCost": "10",
+        "conversionFactor": "1",
+        "fuelUnit": "kwh",
+        "created_at": "2020-02-01T12:00:00Z",
+        "updated_at": null,
+        "population": "20",
+        "workingHours": "160"
+      }
+    ]
+  },
+  "decisions": {
+    "meters": [
+      {
+        "legacyId": "meter-list-1",
+        "siteId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "energyUseCode": "LIGHT",
+        "format": "SINGLE",
+        "tokens": [
+          {
+            "token": "E-001",
+            "meterId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+          }
+        ],
+        "reason": "Reviewed source meter identifier"
+      }
+    ],
+    "readings": [
+      {
+        "legacyId": "consumption-1",
+        "meterListId": "meter-list-1",
+        "meterId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "month": "2020-01",
+        "sourceUnit": "kWh",
+        "estimated": false,
+        "currency": "GBP",
+        "costBasis": "NET",
+        "vatBasis": "FRACTION",
+        "conversionVersion": "energy-si-v1",
+        "factorBasis": "KWH_PER_SOURCE_UNIT",
+        "acceptCostDifference": false,
+        "population": "MONTHLY_AVERAGE",
+        "workingHours": "MONTHLY_TOTAL",
+        "reason": "Reviewed source date, units, monthly driver basis and single-meter assignment"
+      }
+    ],
+    "existingDrivers": "REJECT"
+  }
+}

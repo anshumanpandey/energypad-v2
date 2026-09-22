@@ -1,4 +1,5 @@
 'use client';
+import { MigrationEvidence, type MigrationEvidenceData } from './migration-evidence';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
@@ -28,6 +29,15 @@ export type ReadingRevision = Revision & {
   currency: string | null;
   estimated: boolean;
   endUse: string;
+  energyUseId: string | null;
+  energyUseSnapshot: {
+    code: string;
+    name: string;
+    fuel: string;
+    fuelCatalog?: { name: string; revision: number } | null;
+    endUseCatalog?: { name: string; revision: number } | null;
+  } | null;
+  sourceProvenance?: MigrationEvidenceData | null;
   externalLegacyId: string;
   energyImportId: string | null;
   attributeSnapshot: Record<string, unknown>;
@@ -55,11 +65,13 @@ function RevisionMeta({ value }: { value: Revision }) {
   );
 }
 export function ReadingCorrections({
+  uses,
   base,
   record,
   manage,
   reload,
 }: {
+  uses: { id: string; code: string; name: string; fuel: string }[];
   base: string;
   record: ReadingRevision;
   manage: boolean;
@@ -71,6 +83,10 @@ export function ReadingCorrections({
   return (
     <div className="stack-form">
       <span>Revision {record.revision}</span>
+      <span>
+        Registered end use:{' '}
+        {record.energyUseSnapshot ? `${record.energyUseSnapshot.code} · ${record.energyUseSnapshot.name}` : 'Unlinked'}
+      </span>
       {m.feedback}
       <Button
         variant="ghost"
@@ -98,6 +114,22 @@ export function ReadingCorrections({
               </p>
               <p>End use: {r.endUse || 'Not specified'}</p>
               <p>
+                Registered end use:{' '}
+                {r.energyUseSnapshot ? `${r.energyUseSnapshot.code} · ${r.energyUseSnapshot.name}` : 'Unlinked'}
+              </p>
+              {r.energyUseSnapshot?.fuelCatalog && (
+                <p>
+                  Saved fuel catalog: {r.energyUseSnapshot.fuelCatalog.name} · revision{' '}
+                  {r.energyUseSnapshot.fuelCatalog.revision}
+                </p>
+              )}
+              {r.energyUseSnapshot?.endUseCatalog && (
+                <p>
+                  Saved end-use catalog: {r.energyUseSnapshot.endUseCatalog.name} · revision{' '}
+                  {r.energyUseSnapshot.endUseCatalog.revision}
+                </p>
+              )}
+              <p>
                 Conversion: {r.conversionFactor} kWh/{r.sourceUnit}
               </p>
               <details>
@@ -105,7 +137,8 @@ export function ReadingCorrections({
                 <p style={{ overflowWrap: 'anywhere' }}>
                   Conversion version: {r.conversionVersion}
                   <br />
-                  Origin import: {r.energyImportId ?? 'Manual entry'}
+                  Origin import:{' '}
+                  {r.sourceProvenance ? 'Reviewed legacy migration' : (r.energyImportId ?? 'Manual entry')}
                   <br />
                   Legacy reference: {r.externalLegacyId || 'None'}
                 </p>
@@ -114,6 +147,7 @@ export function ReadingCorrections({
                   {String(r.attributeSnapshot.weeklyHours ?? 'Unknown')} · Floor area:{' '}
                   {String(r.attributeSnapshot.floorArea ?? 'Unknown')}
                 </p>
+                <MigrationEvidence data={r.sourceProvenance} />
                 <p>{r.qualityFlags.join(' · ') || 'No input issues recorded'}</p>
               </details>
             </article>
@@ -145,6 +179,7 @@ export function ReadingCorrections({
                   vatPercent: values.get('vatPercent') || null,
                   currency: values.get('currency') || null,
                   endUse: values.get('endUse'),
+                  energyUseCode: values.get('energyUseCode') || null,
                   externalLegacyId: record.externalLegacyId,
                 },
               });
@@ -198,6 +233,19 @@ export function ReadingCorrections({
                 step="0.001"
                 defaultValue={record.vatPercent ?? ''}
               />
+            </label>
+            <label>
+              Corrected registered end use
+              <select name="energyUseCode" defaultValue={record.energyUseSnapshot?.code ?? ''}>
+                <option value="">Unlinked</option>
+                {uses
+                  .filter((u) => u.fuel === record.fuel)
+                  .map((u) => (
+                    <option key={u.id} value={u.code}>
+                      {u.code} · {u.name}
+                    </option>
+                  ))}
+              </select>
             </label>
             <label>
               Corrected end use

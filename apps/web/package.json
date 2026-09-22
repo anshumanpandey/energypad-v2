@@ -14,7 +14,7 @@
     "lint": "eslint .",
     "typecheck": "prisma generate && next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "tsx scripts/integration.ts && tsx scripts/sites-integration.ts && tsx scripts/energy-integration.ts && tsx scripts/energy-import-integration.ts && tsx scripts/drivers-integration.ts && tsx scripts/weather-integration.ts && tsx scripts/weather-jobs-integration.ts && tsx scripts/energy-corrections-integration.ts && tsx scripts/sprint3-acceptance.ts",
+    "test:integration": "tsx scripts/integration.ts && tsx scripts/sites-integration.ts && tsx scripts/energy-integration.ts && tsx scripts/energy-import-integration.ts && tsx scripts/drivers-integration.ts && tsx scripts/weather-integration.ts && tsx scripts/weather-jobs-integration.ts && tsx scripts/energy-corrections-integration.ts && tsx scripts/sprint3-acceptance.ts && tsx scripts/tariffs-integration.ts && tsx scripts/energy-catalog-integration.ts && tsx scripts/legacy-tariff-integration.ts && tsx scripts/legacy-tariff-apply-integration.ts && tsx scripts/occupancy-integration.ts && tsx scripts/patterns-integration.ts && tsx scripts/events-integration.ts && tsx scripts/legacy-energy-integration.ts",
     "test:e2e": "playwright test",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
@@ -22,7 +22,12 @@
     "db:seed:energy-2020": "tsx scripts/seed-energy-2020.ts",
     "local:services": "tsx scripts/local-services.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "migration:preview:tariffs": "tsx scripts/legacy-tariff-preview.ts",
+    "migration:apply:tariffs": "tsx scripts/legacy-tariff-apply.ts",
+    "migration:preview:energy": "tsx scripts/legacy-energy-preview.ts",
+    "migration:apply:energy": "tsx scripts/legacy-energy-apply.ts",
+    "sprint4:readiness": "node --import tsx scripts/sprint4-readiness.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",

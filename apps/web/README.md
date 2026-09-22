@@ -117,3 +117,61 @@ On Energy, an Owner/Admin can choose **Correct reading** or **Correct conversion
 Reading corrections keep the original meter, calendar month, source unit/fuel, site-attribute snapshot and import reference. They can change quantity, costs, VAT, currency, estimated status and end use. A physical-unit reading keeps its original factor unless **Apply the current sourced conversion for this month** is explicitly selected. Correcting a factor never silently recalculates existing readings.
 
 Only full calendar months are supported; no billing-period proration or period reassignment is performed. Workbook imports create new periods; correct an imported reading individually to retain its origin. Monthly observations and operating schedules also offer correction forms and revision history. Observation month/driver/import origin stay fixed; schedule dates may change if they do not overlap another current schedule. Corrections require a reason and preserve prior values, author/time and sources. Only current observations count toward coverage; schedules do not populate actual observations.
+
+### Site end uses and tariffs
+
+Load a site in Energy and open **Tariffs and end uses**. Register a permanent site end-use code/name/fuel and source. Optional legacy identifiers require a named source system; association IDs also require their source table. The panel lists all saved tariff periods independently of the consumption year filter.
+
+Add a tariff with explicit dates, currency, rate unit, VAT inclusion/percentage, timezone and source. Enter rates in major currency units (GBP rather than pence), select weekdays and add local time bands. End times are exclusive; 24:00 means midnight at the end of the selected day. Split overnight bands across days. Overlapping bands/periods are rejected; uncovered hours have no defined rate.
+
+Use **Correct tariff** with a reason to save a new revision, and **View tariff history** to inspect prior rates and provenance. Corrections keep the site end use fixed. Tariffs do not automatically calculate bills, change consumption costs or allocate meter readings. Existing reading end-use labels remain independent. Shared catalog and explicit association support is described below; reviewed legacy migration adapters remain separate work.
+
+### Shared energy catalogs and reading associations
+
+Energy now offers an organisation-wide **Shared energy catalog** for fuel and end-use labels/colours/source identities. Owners and admins can add entries or correct their display values and retire them with a reason. Codes, fuel and legacy identities stay fixed. History is preserved; retirement prevents new site registrations.
+
+When registering a site end use, optionally select current active catalog versions matching its fuel. That site use keeps the selected versions after later catalog edits. Manual readings can select a registered site end use; **Correct reading** can link or unlink older records. The existing original label remains separate, and history includes the saved association and catalog versions. Association does not allocate quantity or calculate costs.
+
+Consumption imports accept an optional **Registered site end-use code** column/default. Codes are case-insensitive, resolved within the selected site and checked against the meter fuel. Review the resolved link and original label in the preview. Omit the code to import unlinked readings. Existing site uses remain valid for readings after their pinned catalog versions are retired.
+
+### Legacy tariff/catalog dry run
+
+Use `npm run migration:preview:tariffs -- <organisation-id> <verified-owner-or-admin-id> <bundle.json> <new-report.json>` for a read-only mapping and reconciliation report. It accepts a bounded six-table JSON export and explicit decisions for site/fuel/use identity, dates, weekdays, units and tax/rate basis. No application records are written. Existing destinations and ambiguous mappings are blockers; reports are private and never overwrite existing files.
+
+See [LEGACY_TARIFF_DRY_RUN.md](../../docs/LEGACY_TARIFF_DRY_RUN.md) and the synthetic example there. Ready means ready for review, not committed or approved. After review, use `npm run migration:apply:tariffs -- <organisation-id> <verified-owner-or-admin-id> <bundle.json> <reviewed-report.json>`. It atomically writes destinations and a durable immutable receipt; identical retries reuse the batch. Independent existing records remain conflicts.
+
+### Occupancy history
+
+Energy → **Occupancy history** stores separate regular/irregular counts for an explicit inclusive date range and registered site end use. Use equal dates for a dated count; blank means unknown. Counts never populate monthly average population automatically. Owners/Admins can add or correct counts/source; history preserves old values and reasons.
+
+Import one XLSX sheet with `firstDay, lastDay, energyUseCode, regularCount, irregularCount, source, legacySource, legacyId` headers (1–240 rows, 2 MB). Use YYYY-MM-DD text dates, whole counts and registered end-use codes. Legacy reference cells may be blank; an ID requires a namespace. Review the preview and confirm before committing. Duplicate identities, overlapping periods, invalid counts and unknown site end uses block the whole import. Recent imports support recovery and safe retry.
+
+## End-use operating patterns
+
+Energy → Operating patterns preserves inclusive validity dates, a registered site end use, annual active days (0–366 or unknown), and temperature/setpoint evidence (up to three decimals, original C/F/UNKNOWN unit and HEATING/COOLING/OTHER/UNKNOWN context). Blank stays unknown and zero is retained. No conversion, annual proration, daily schedule, observed operating hours or weather base is inferred. Source and namespaced legacy identity remain available.
+
+Missing values/unresolved temperature semantics and annual days exceeding the validity interval are visible review warnings. The original annual value is retained, since it may describe a yearly pattern with a shorter validity range. Current intervals cannot overlap for the same site end use; adjacent intervals are allowed. Required-reason corrections can change dates, days, temperature/unit/context and source while preserving end use, legacy identity and import batch. History follows the immutable revision chain even when dates change. Author/time and audits are retained; database triggers reject update/delete/truncate and invalid lineage.
+
+Owners/Admins may write; readers require site access. Imports use one XLSX sheet, 1–240 rows, 2 MB, with exactly `firstDay, lastDay, energyUseCode, daysOnYear, temperature, temperatureUnit, temperatureContext, source, legacySource, legacyId` columns. Use YYYY-MM-DD text dates; leave missing days/temperature blank, and explicitly use UNKNOWN for unresolved unit/context. Legacy references may be blank. Map legacy site/use IDs to the chosen site and registered code before upload. Preview shows every row, reconciliation counts, errors and review warnings. Commit rechecks current permissions/site/end-use/conflicts and writes all rows/audits/batch completion atomically. Recent imports, repeat uploads and concurrent retries are supported; existing records are never silently overwritten.
+
+## Operational events and log imports
+
+Energy → Operational events stores a stable uppercase site event code, registered site end use, inclusive first/last dates, operation (up to 500 characters), comments (up to 4,000), source and optional namespaced legacy identity. Same-day and overlapping events are valid. Dates do not identify an event: a code identifies its immutable revision chain. Comments are rendered as text, including markup-like evidence; no evidence is interpreted as approval, verified savings or a consumption adjustment.
+
+Owner/Admin may record or correct an event with a required reason. Dates, operation, comments and source may change; event code, end use, legacy identity and import batch stay fixed. Prior revisions retain author/time, reason and audit evidence. Site-scoped readers may inspect current records and history. Composite foreign keys enforce site/use/batch ownership; database triggers protect revisions from update/delete/truncate.
+
+The reviewed XLSX import takes one sheet, 1–240 rows, up to 2 MB, with `firstDay, lastDay, energyUseCode, eventCode, operation, comments, source, legacySource, legacyId` headers. Use YYYY-MM-DD text dates. Comments and legacy references may be blank; a legacy ID requires a namespace. Resolve source site/use IDs explicitly to the selected site and registered code. Preview shows all parsed rows and source/parsed/error counts. Duplicate codes or legacy IDs, invalid fields and unknown end uses block commit. Overlapping dates alone do not. Commit rechecks current access/site/mapping/conflicts and writes all events/audits/batch completion atomically. Recent imports can be reopened; identical uploads and concurrent/repeated commits are safe. Corrected imported events are not reverted by retries. Raw source exports remain separate reconciliation evidence.
+
+Opportunity/investigation links follow Sprint 6; this milestone establishes the retained operational evidence destination without claiming measured savings.
+
+### Reviewed consumption/meter migration
+
+Audit point 4 now has an executable operator preview/apply workflow for BusinessFuelsSize and UtilityConsumptions. Explicit meter-token/site/fuel/use mappings, tax/unit/conversion decisions and driver basis/conflict rules preserve source evidence without inferred allocations. Original timestamps, supplied VAT/cost/factor/population/hours are stored separately from calculated readings and remain unchanged by corrections. Immutable receipts provide source-to-target reconciliation, grouped totals and safe retries. Destination meters and conversions must be registered before migration; no real source export has been imported. See docs/LEGACY_ENERGY_MIGRATION.md for the input format, commands, review requirements and scope limits.
+
+### Named sheets and reusable import mappings
+
+Energy consumption mappings can be saved and loaded as version 1 JSON templates. Driver and operating-pattern imports accept an exact worksheet name or a v1 mapping file, so a source workbook can hold multiple sheets while each selected sheet is reviewed and committed separately. The preview lists excluded sheets; a saved template never selects an organisation, site or meter or bypasses confirmation. See [WORKBOOK_IMPORT_TEMPLATES.md](../../docs/WORKBOOK_IMPORT_TEMPLATES.md) for mapping fields, limits and the explicit FP15 Sprint 3/Sprint 5 allocation.
+
+### Sprint 4 fixture readiness
+
+Run `npm run sprint4:readiness -- <fixture-directory> [new-report.json]` to check the three regression reference filenames and discovery hashes without changing their contents. Exit 2 means fixture/methodology review remains open; exit 1 is a command/output failure. This preparation check deliberately cannot certify numerical compatibility. See [SPRINT_4_DESIGN.md](../../docs/SPRINT_4_DESIGN.md) for contracts, dependencies and the next implementation slices.

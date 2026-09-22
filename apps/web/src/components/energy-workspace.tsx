@@ -1,4 +1,9 @@
 'use client';
+import { EventWorkspace, type EventRecord } from './event-workspace';
+import { PatternWorkspace, type PatternRecord } from './pattern-workspace';
+import { OccupancyWorkspace, type OccupancyRecord } from './occupancy-workspace';
+import { TariffWorkspace, type TariffData } from './tariff-workspace';
+import { EnergyCatalog, type CatalogEntry } from './energy-catalog';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { EnergyImportWorkspace } from './energy-import-workspace';
@@ -12,6 +17,11 @@ import {
 } from './energy-corrections';
 import { request, useMutation } from './forms';
 type EnergyData = {
+  occupancy: OccupancyRecord[];
+  patterns: PatternRecord[];
+  events: EventRecord[];
+  pricing: TariffData;
+  catalog: CatalogEntry[];
   drivers: DriverData;
   weather: WeatherData;
   meters: { id: string; name: string; code: string; unit: string; archivedAt: string | null }[];
@@ -35,12 +45,17 @@ export function EnergyWorkspace({
   const data = loaded?.siteId === siteId && loaded.year === year ? loaded.data : null;
   const base = `organisations/${orgId}/sites/${siteId}/energy`;
   async function load() {
-    const [result, drivers, weather] = await Promise.all([
+    const [result, drivers, weather, pricing, catalog, occupancy, patterns, events] = await Promise.all([
       request(`${base}?year=${year}`, 'GET'),
       request(`${base}/drivers?year=${year}`, 'GET'),
       request(`${base}/weather?year=${year}`, 'GET'),
+      request(`${base}/tariffs`, 'GET'),
+      request(`${base}/catalog`, 'GET'),
+      request(`${base}/occupancy?year=${year}`, 'GET'),
+      request(`${base}/patterns?year=${year}`, 'GET'),
+      request(`${base}/events?year=${year}`, 'GET'),
     ]);
-    setLoaded({ siteId, year, data: { ...result, drivers, weather } });
+    setLoaded({ siteId, year, data: { ...result, drivers, weather, pricing, catalog, occupancy, patterns, events } });
   }
   if (!sites.length)
     return (
@@ -108,11 +123,50 @@ export function EnergyWorkspace({
               </div>
             ))}
           </section>
+          <EnergyCatalog
+            key={`catalog:${siteId}`}
+            base={`${base}/catalog`}
+            entries={data.catalog}
+            manage={manage}
+            reload={load}
+          />
+          <TariffWorkspace
+            key={`pricing:${siteId}`}
+            base={`${base}/tariffs`}
+            data={data.pricing}
+            catalog={data.catalog}
+            manage={manage}
+            reload={load}
+          />
           <WeatherWorkspace
             key={`weather:${siteId}:${year}`}
             base={`${base}/weather`}
             year={year}
             data={data.weather}
+            manage={manage}
+            reload={load}
+          />
+          <EventWorkspace
+            key={`events-${siteId}-${year}`}
+            base={`${base}/events`}
+            data={data.events}
+            uses={data.pricing.uses}
+            manage={manage}
+            reload={load}
+          />
+          <PatternWorkspace
+            key={`patterns-${siteId}-${year}`}
+            base={`${base}/patterns`}
+            data={data.patterns}
+            uses={data.pricing.uses}
+            manage={manage}
+            reload={load}
+          />
+          <OccupancyWorkspace
+            key={`occupancy-${siteId}-${year}`}
+            base={`${base}/occupancy`}
+            data={data.occupancy}
+            uses={data.pricing.uses}
             manage={manage}
             reload={load}
           />
@@ -141,6 +195,7 @@ export function EnergyWorkspace({
                     vatPercent: values.get('vatPercent') || null,
                     currency: values.get('currency') || null,
                     endUse: values.get('endUse'),
+                    energyUseCode: values.get('energyUseCode') || null,
                   });
                   form.reset();
                   await load();
@@ -169,6 +224,17 @@ export function EnergyWorkspace({
                 <label>
                   Quantity (meter units)
                   <input name="quantity" type="number" min="0" max="9999999999.999" step="0.001" required />
+                </label>
+                <label>
+                  Registered end use
+                  <select name="energyUseCode" defaultValue="">
+                    <option value="">Unlinked</option>
+                    {data.pricing.uses.map((u) => (
+                      <option key={u.id} value={u.code}>
+                        {u.code} · {u.name} · {u.fuel}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   End use (optional)
@@ -332,7 +398,13 @@ export function EnergyWorkspace({
                           {record.qualityFlags.length ? record.qualityFlags.join(' · ') : 'No input issues detected'}
                         </td>
                         <td>
-                          <ReadingCorrections base={base} record={record} manage={manage} reload={load} />
+                          <ReadingCorrections
+                            base={base}
+                            record={record}
+                            uses={data.pricing.uses}
+                            manage={manage}
+                            reload={load}
+                          />
                         </td>
                       </tr>
                     ))}

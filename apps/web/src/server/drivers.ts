@@ -1,3 +1,4 @@
+import { mapNamedWorkbook } from '../domain/workbook-template';
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { FoundationService, type Actor } from './foundation';
@@ -222,7 +223,7 @@ export class DriverService extends FoundationService {
       take: 20,
     });
   }
-  async upload(actor: Actor, org: string, siteId: string, bytes: Uint8Array) {
+  async upload(actor: Actor, org: string, siteId: string, bytes: Uint8Array, sheetName?: string, template?: unknown) {
     await this.db.$transaction(async (tx) => {
       await this.writeAccess(tx, actor, org, siteId);
       const window = Math.floor(Date.now() / 3600000);
@@ -234,9 +235,10 @@ export class DriverService extends FoundationService {
       });
       if (bucket.count > 20) throw new DomainError('RATE_LIMIT', 'Please wait before uploading more workbooks.', 429);
     });
-    const sheets = await readWorkbook(bytes);
+    const selected = mapNamedWorkbook(await readWorkbook(bytes), 'drivers', sheetName, template);
+    const sheets = selected.sheets;
     const fingerprint = createHash('sha256').update(JSON.stringify(sheets)).digest('hex');
-    const result = mapDriverWorkbook(sheets);
+    const result = { ...mapDriverWorkbook(sheets), selection: selected.selection };
     return this.db.$transaction(
       async (tx) => {
         await this.writeAccess(tx, actor, org, siteId);

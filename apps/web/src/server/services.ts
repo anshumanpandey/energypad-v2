@@ -25,3 +25,22 @@ export const weatherService = new WeatherJobs(
   process.env.AUTH_URL ?? 'http://localhost:3100',
   new OpenMeteoProvider({ apiKey: process.env.OPEN_METEO_API_KEY, production: process.env.NODE_ENV === 'production' }),
 );
+
+import { TariffService } from './tariffs';
+export const tariffService = new TariffService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { EnergyCatalogService } from './energy-catalog';
+export const energyCatalogService = new EnergyCatalogService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+);
+
+import { OccupancyService } from './occupancy';
+export const occupancyService = new OccupancyService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { PatternService } from './patterns';
+export const patternService = new PatternService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { EventService } from './events';
+export const eventService = new EventService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');

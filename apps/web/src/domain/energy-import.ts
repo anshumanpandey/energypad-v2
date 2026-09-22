@@ -11,6 +11,7 @@ export const energyImportFields = [
   'vatPercent',
   'currency',
   'endUse',
+  'energyUseCode',
   'externalLegacyId',
 ] as const;
 export const energyMappingInput = z
@@ -51,6 +52,7 @@ export function mapEnergyRows(sheets: ImportSheet[], mapping: EnergyMapping, met
       vatPercent: values.vatPercent || null,
       currency: values.currency || null,
       endUse: values.endUse,
+      energyUseCode: values.energyUseCode || null,
       externalLegacyId: values.externalLegacyId,
     });
     if (!parsed.success) {

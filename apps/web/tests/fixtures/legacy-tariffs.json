@@ -1,0 +1,101 @@
+{
+  "source": "synthetic-root-export",
+  "reference": "Synthetic migration review; not production data",
+  "tables": {
+    "FuelSources": [
+      {
+        "id": 1,
+        "source": "Grid electricity",
+        "colorCode": "#336699"
+      }
+    ],
+    "FuelUses": [
+      {
+        "id": 2,
+        "use": "Lighting",
+        "fuelSourceId": 1
+      }
+    ],
+    "BusinessFuelUses": [
+      {
+        "id": 3,
+        "siteId": 10,
+        "fuelSourceId": 1,
+        "usedInId": 2
+      }
+    ],
+    "UsedInToFuelSourceToSite": [],
+    "BusinessFuelsPricing": [
+      {
+        "id": "price-01",
+        "siteId": 10,
+        "fuelSourceId": 1,
+        "usedInId": 2,
+        "currencyCode": "gbp",
+        "vat": "0.2"
+      }
+    ],
+    "BusinessBrands": [
+      {
+        "id": "band-01",
+        "siteId": 10,
+        "fuelSourceId": 1,
+        "usedInId": 2,
+        "name": "All day",
+        "startTime": "00:00",
+        "endTime": "24:00",
+        "rate": "15",
+        "days": "Mon,Tue,Wed,Thu,Fri,Sat,Sun"
+      }
+    ]
+  },
+  "decisions": {
+    "sites": [
+      {
+        "legacyId": 10,
+        "targetSiteId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+      }
+    ],
+    "fuels": [
+      {
+        "legacyId": 1,
+        "code": "GRID",
+        "fuel": "ELECTRICITY"
+      }
+    ],
+    "endUses": [
+      {
+        "legacyId": 2,
+        "code": "LIGHT",
+        "color": "#336699"
+      }
+    ],
+    "associations": [
+      {
+        "table": "BusinessFuelUses",
+        "legacyId": 3,
+        "code": "LIGHTING"
+      }
+    ],
+    "tariffs": [
+      {
+        "legacyId": "price-01",
+        "firstDay": "2020-01-01",
+        "lastDay": "2020-12-31",
+        "timezone": "Europe/London",
+        "rateUnit": "kWh",
+        "taxBasis": "NET",
+        "vatBasis": "FRACTION",
+        "rateScale": "HUNDREDTH",
+        "bands": [
+          {
+            "legacyId": "band-01",
+            "days": [1, 2, 3, 4, 5, 6, 7],
+            "startTime": "00:00",
+            "endTime": "24:00"
+          }
+        ]
+      }
+    ]
+  }
+}
