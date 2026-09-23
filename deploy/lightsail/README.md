@@ -93,9 +93,8 @@ Inspect with `sudo docker compose --env-file /opt/energiepad/release.env -f
 before customer data is stored. Monitor disk usage: backups and previous images
 are retained intentionally, without automatic destructive pruning.
 
-The first deployment still requires GitHub authentication, the three environment
-secrets, a production domain/mail configuration, a successful CI run, and an
-HTTPS sign-in smoke test. Deployment does not change Sprint 4's UNVALIDATED
+The first deployment still requires production domain/mail configuration, a
+successful CI run, and an HTTPS sign-in smoke test. Deployment does not change Sprint 4's UNVALIDATED
 scientific-output status.
 
 ## Current installation status
@@ -108,11 +107,13 @@ credential has been configured. The dedicated
 key is stored locally in the gitignored `apps/web/.local/deployment/` directory.
 No key or production credential belongs in this repository.
 
-GitHub's `production` environment is created and allows only the `main`
-branch. The repository is still empty. Publishing access and the deployment
-private-key secret are awaiting approval; no workflow has run and public app/TLS
-have not been activated. Complete the connection and production settings before
-considering automatic deployment operational.
+GitHub's `production` environment allows only `main`. All three environment
+secrets are configured, the dedicated repository publishing key is authorized,
+and the app/workflow have been published. GitHub Actions is enabled. The current
+instance IP is still dynamic; attach a static IP and update `LIGHTSAIL_HOST` and
+`LIGHTSAIL_KNOWN_HOSTS` before relying on deployment across instance stop/start.
+Production domain, Resend and sender settings remain incomplete, so the server
+preflight intentionally refuses activation. Public app/TLS are not yet live.
 
 Validation passed: production Docker image build, loopback container health check
 with PostgreSQL (`status: ok`), TypeScript, health-route lint, formatting, YAML
