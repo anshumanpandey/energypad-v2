@@ -98,15 +98,13 @@ try {
   });
   await service.commit(owner, org.id, site.id, batch.id);
   assert.equal((await service.history(owner, org.id, site.id, imported.id))[0].comments, 'Corrected imported evidence');
-  const later = rows
-    .slice(0, 2)
-    .map((r, i) => ({
-      ...r,
-      firstDay: `2022-01-0${i + 1}`,
-      lastDay: `2022-01-0${i + 1}`,
-      legacyId: `later-${i}`,
-      eventCode: `LATER-${i}`,
-    }));
+  const later = rows.slice(0, 2).map((r, i) => ({
+    ...r,
+    firstDay: `2022-01-0${i + 1}`,
+    lastDay: `2022-01-0${i + 1}`,
+    legacyId: `later-${i}`,
+    eventCode: `LATER-${i}`,
+  }));
   const stale = await service.upload(owner, org.id, site.id, await workbook(later));
   await service.add(owner, org.id, site.id, later[1]);
   const before = await db.auditEvent.count();

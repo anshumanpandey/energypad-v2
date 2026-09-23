@@ -182,9 +182,7 @@ Run `npm run sprint4:readiness -- <fixture-directory> [new-report.json]` to chec
 
 `src/domain/analysis/reporting.ts` adds experimental kWh predictions, hours/population NRA and explicit significance policy with scoped monthly evidence. Missing months and invalid ratios remain blocked. Run `npm test -- tests/reporting.test.ts` for reporting checks. Reporting remains UNVALIDATED in the Advanced Analysis workflow.
 
-
 The internal `src/server/analysis/service.ts` assembles scoped persisted inputs, creates immutable baseline/run snapshots and provides authorized readiness/history reads. `202609220001_analysis_snapshots` adds the storage and database immutability constraints. All saved calculations remain UNVALIDATED in the authenticated analysis API and UI. Run `node --import tsx scripts/analysis-integration.ts` from `apps/web` to validate the service against an automatically created disposable database. That test applies all migrations only to its temporary database. See [SPRINT_4_DESIGN.md](../../docs/SPRINT_4_DESIGN.md) for permissions, snapshot identity and remaining workflow gates.
-
 
 Advanced Analysis is now available from **Energy → Advanced Analysis**. It provides experimental readiness, baseline selection/saving, reporting runs and immutable history with visible UNVALIDATED status. Apply migrations before using the page in another environment. The local workspace migration has been applied. Run `npx playwright test tests/e2e/analysis.spec.ts` for the isolated desktop/mobile browser workflow. The previous internal-only notes describe the earlier implementation slice; workbook approval remains outstanding.
 
