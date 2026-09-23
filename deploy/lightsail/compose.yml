@@ -1,0 +1,64 @@
+name: energiepad
+services:
+  db:
+    image: postgres:18-bookworm
+    restart: unless-stopped
+    env_file: /etc/energiepad/database.env
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+  web:
+    image: ${APP_IMAGE:?Set APP_IMAGE}
+    restart: unless-stopped
+    init: true
+    env_file: /etc/energiepad/runtime.env
+    ports: ['127.0.0.1:3100:3100']
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3100/api/health', {signal: AbortSignal.timeout(4000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    logging: *logging
+  worker:
+    image: ${APP_IMAGE:?Set APP_IMAGE}
+    restart: unless-stopped
+    init: true
+    env_file: /etc/energiepad/runtime.env
+    command: [node, --import, tsx, scripts/weather-worker.ts]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    depends_on:
+      web:
+        condition: service_healthy
+    logging: *logging
+  migrate:
+    image: ${APP_IMAGE:?Set APP_IMAGE}
+    profiles: [tools]
+    env_file: /etc/energiepad/migration.env
+    command: [sh, -c, 'npm run db:migrate && npm run db:seed']
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    logging: *logging
+volumes:
+  database:

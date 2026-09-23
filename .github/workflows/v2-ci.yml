@@ -1,14 +1,15 @@
-name: V2 foundation
+name: V2 CI and Lightsail deployment
 on:
   push:
-    paths: ["apps/web/**", ".github/workflows/v2-ci.yml"]
+    paths: ['apps/web/**', '.github/workflows/v2-ci.yml', 'deploy/lightsail/**']
   pull_request:
-    paths: ["apps/web/**", ".github/workflows/v2-ci.yml"]
+    paths: ['apps/web/**', '.github/workflows/v2-ci.yml', 'deploy/lightsail/**']
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
   group: v2-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   foundation:
     runs-on: ubuntu-latest
@@ -23,7 +24,7 @@ jobs:
           POSTGRES_USER: energiepad
           POSTGRES_PASSWORD: ci-only
           POSTGRES_DB: postgres
-        ports: ["5432:5432"]
+        ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U energiepad"
           --health-interval 5s --health-timeout 5s --health-retries 10
@@ -31,16 +32,18 @@ jobs:
       TEST_DATABASE_ADMIN_URL: postgresql://energiepad:ci-only@localhost:5432/postgres
       AUTH_URL: http://localhost:3101
       AUTH_SECRET: ci-only-ephemeral-secret-not-used-in-production-1234567890
-      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: false
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
+      - name: Check deployment scripts
+        run: for script in ../../deploy/lightsail/*.sh; do bash -n "$script"; done
       - run: npm ci
       - run: npm audit --audit-level=high
       - run: npm run format:check
@@ -57,3 +60,43 @@ jobs:
           name: v2-browser-results
           path: apps/web/test-results/
           retention-days: 7
+
+  deploy:
+    needs: foundation
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    concurrency:
+      group: lightsail-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Validate deployment configuration
+        env:
+          DEPLOY_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          DEPLOY_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.LIGHTSAIL_KNOWN_HOSTS }}
+        run: |
+          test -n "$DEPLOY_HOST" && test -n "$DEPLOY_KEY" && test -n "$KNOWN_HOSTS"
+          install -d -m 700 "$HOME/.ssh"
+          umask 077
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/lightsail"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+      - name: Build production image
+        run: docker build --tag "energiepad-v2:$GITHUB_SHA" apps/web
+      - name: Deploy tested revision to Lightsail
+        env:
+          DEPLOY_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+        run: |
+          set -o pipefail
+          docker save "energiepad-v2:$GITHUB_SHA" | gzip -1 | ssh \
+            -i "$HOME/.ssh/lightsail" -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+            -o ServerAliveInterval=30 -o ServerAliveCountMax=6 \
+            "deploy@$DEPLOY_HOST" "deploy $GITHUB_SHA"
+      - name: Remove runner SSH credentials
+        if: always()
+        run: rm -f "$HOME/.ssh/lightsail" "$HOME/.ssh/known_hosts"
