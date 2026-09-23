@@ -18,9 +18,9 @@ export const regressionFixtures = [
 export const calculationReviewDependencies = [
   { code: 'EXPECTED_RESULTS', detail: 'Record reviewed expected cells/results and provenance for all three fixtures.' },
   {
-    code: 'NRA_FORMULA_CACHE',
+    code: 'NATIVE_RECALCULATION',
     detail:
-      'Resolve CD11: the NRA workbook stored formulas disagree with cached R²/SStot results. Preserve the original and review a corrected version.',
+      'Record native recalculation evidence for the reference workbooks. CD11 shifting-range claim was withdrawn after direct XML inspection; the NRA source still requires result/methodology review.',
   },
   { code: 'TOLERANCES', detail: 'Record approved absolute/relative tolerances for each numerical result family.' },
   {

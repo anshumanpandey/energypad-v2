@@ -24,6 +24,7 @@ import { InviteForm, MemberActions, OrganisationForm, RevokeInvite } from '@/com
 import { SitesWorkspace, PortfoliosWorkspace } from '@/components/sites-workspace';
 import { ImportWorkspace } from '@/components/import-workspace';
 import { Button } from '@/components/ui/button';
+import { AnalysisWorkspace } from '@/components/analysis-workspace';
 import { EnergyWorkspace } from '@/components/energy-workspace';
 
 export default async function WorkspacePage({
@@ -40,6 +41,19 @@ export default async function WorkspacePage({
   } = await accessible(() => foundation.getWorkspace(actor, organisationId));
   const base = `/org/${org.id}`;
   const manage = can(membership.role, 'members:manage');
+  if (section === 'analysis')
+    return (
+      <>
+        <div className="page-heading">
+          <div>
+            <span className="eyebrow">ENERGY INSIGHTS</span>
+            <h1>Advanced Analysis</h1>
+            <p>Check monthly inputs, preserve a baseline and explore reporting results.</p>
+          </div>
+        </div>
+        <AnalysisWorkspace orgId={org.id} sites={sites} manage={can(membership.role, 'analysis:write')} />
+      </>
+    );
   if (section === 'energy')
     return (
       <>

@@ -6,13 +6,13 @@ Auth.js email links last 15 minutes and are consumed once by the Prisma adapter.
 
 The organisation URL identifies the requested scope. Cross-tenant IDs return the same unavailable response as missing records. PostgreSQL composite foreign keys bind SiteAssignment and InvitationSite to matching organisation IDs. PostgreSQL row-level security is **not** claimed: service checks and relationship constraints are the enforcement layers in Sprint 1. Any future repository/query path must preserve these checks.
 
-| Role | Organisation settings | Team and invitations | Site reads | Audit | Future billing |
-|---|---|---|---|---|---|
-| Owner | Yes | All roles | All organisation sites | Yes | Yes |
-| Admin | Yes | Non-owners only; cannot grant Owner | All organisation sites | Yes | No |
-| Analyst | No | No | All organisation sites | No | No |
-| Site manager | No | No | Assigned sites only | No | No |
-| Viewer | No | No | All organisation sites | No | No |
+| Role | Organisation settings | Team and invitations | Site reads | Save baselines / analysis runs | Audit | Future billing |
+|---|---|---|---|---|---|---|
+| Owner | Yes | All roles | All organisation sites | Yes | Yes | Yes |
+| Admin | Yes | Non-owners only; cannot grant Owner | All organisation sites | Yes | Yes | No |
+| Analyst | No | No | All organisation sites | Yes | No | No |
+| Site manager | No | No | Assigned sites only | No | No | No |
+| Viewer | No | No | All organisation sites | No | No | No |
 
 Platform Admin is a separate user flag, **not** a tenant bypass. Support impersonation is deferred. Site-manager membership alone grants no site access. Role changes clear old site grants so later demotion cannot restore stale permissions. Revoked membership fails the next service/API request even when its login session remains valid for another organisation.
 
@@ -43,3 +43,6 @@ SSO/MFA, support impersonation, customer data migration, bulk import, calculatio
 Sites, portfolios and meters use organisation-scoped service checks and composite relationship foreign keys. Only Owner/Admin can write or import. Site Managers read assigned active sites and their meters/history; archive clears grants. Attribute history is append-only in PostgreSQL. Active-site quotas are enforced under the same organisation lock as imports and site creation.
 
 Uploads are authenticated, origin-checked, byte-bounded and rate-limited before parsing. ZIP expansion, entries, dimensions and cell lengths are bounded; formulas, macros, external links and entity declarations are unsupported. Credential headers are normalized and removed with their entire columns before staging. The original bytes are transient. Staging and preview are accessible only to current Owner/Admin members of the batch organisation. Error downloads contain coordinates/field/reason, not source cell values. Import commit is transactional, revalidates all rows and supports safe retries. Production ingress limits and staging retention policy remain deployment requirements.
+
+
+Advanced Analysis uses the dedicated `analysis:write` permission for Owner, Admin and Analyst. This implements the specification's Analyst models/NRA responsibility and the Sprint 1 design's analytical-work role. The service checks the current membership before fitting, saving or reusing any baseline/run. The page uses the same permission to show save controls. Viewer and Site Manager remain read-only for analysis; Site Managers also require assignment. Demotion/revocation is effective on the next request. Analysis writes do not grant organisation settings, membership, audit-feed, billing or source-data editing permissions. Source-data write policy remains separately enforced by the existing services. All numerical outputs remain UNVALIDATED.

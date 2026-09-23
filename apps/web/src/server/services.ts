@@ -44,3 +44,6 @@ export const patternService = new PatternService(db, mailer, process.env.AUTH_UR
 
 import { EventService } from './events';
 export const eventService = new EventService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { AnalysisService } from './analysis/service';
+export const analysisService = new AnalysisService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');

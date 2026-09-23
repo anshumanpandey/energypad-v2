@@ -18,7 +18,7 @@ Decision precedence: approved V2 specification → approved Excel methodology/re
 | CD08 | Carbon helper selects factors by year/site/fuel, optionally ignores fuel; rounds factor×quantity before conversion. energyWaste response also overwrites carbonEmission with converted waste without multiplying factor. | Select immutable effective-dated factor matching geography/fuel/unit; separate actual carbon and avoided/wasted carbon. | Mixed fuels, mid-year factor changes, conversion precision and output semantics; Sprint 5. |
 | CD09 | produced mock consumption uses zero for missing periods. Some code excludes produced values, other aggregates consume filled series. | Preserve quality/missing status; no silent actual-zero substitution or fabricated baseline observations. | Missing month vs measured zero and insufficient baseline; Sprint 3–4. |
 | CD10 | Old dashboard calculator and V2-named waste calculator coexist; end-use scenarios differ; tests assert rounded exact numbers. | One approved engine with explicit model selection. Keep historical characterization separate from golden compatibility. | All end-use scenarios have an approved mapping; absolute/relative numeric tolerance at raw precision; Sprint 4. |
-| CD11 | Available workbook Regression Analysis!C38:M38 shifts AVERAGE(C9:N9)…AVERAGE(M9:X9); expected SStot uses one fixed baseline mean. Cached D41/G41 reflect the fixed-mean result instead. | Do not treat the file as an approved executable golden fixture yet. Recommend issuing a new approved fixture version with anchored baseline range; retain original hash. | Recalculation agrees with approved cached outputs and independent derivation; Sprint 4 blocker. |
+| CD11 | Corrected 22 September: direct XML inspection of the unchanged recorded NRA source shows B38:M38 all use AVERAGE(B9:M9). The earlier shifting-range claim was incorrect. | Withdraw the claimed formula/cache conflict; preserve the unchanged source. Review native recalculation, expected results and methodology before approving it. | Reproducible raw formula/cache extraction in scripts/extract_nra_evidence.py; native recalculation and golden approval remain open. |
 | CD12 | Workbook H49:H52 uses strict p<0.01 and p<0.05; V2 text uses ≤0.01 and ≤0.05. | Follow V2 inclusive boundaries in versioned labels, subject to explicit decision. Numeric p-values remain unchanged. | Exactly 0.01/0.05 and adjacent values; Sprint 4. |
 | CD13 | Workbook B90:M95 applies significance to final post-NRA variance against unchanged 2×baseline SE. Legacy multi-NRA path computes significant from pre-NRA waste. | Follow approved workbook methodology: post-NRA absolute variance and baseline SE threshold; expose pre/post values. | NRA changes classification; matched month gets correct final variance; Sprint 4. |
 | CD14 | R² labels differ across references; workbook K41 thresholds are 0.90/0.80/0.75. | Version configurable thresholds and labels separately from numerical engine. | Boundary labels and policy versions; do not silently recompute old report wording. |
@@ -44,8 +44,7 @@ Independent NumPy least-squares calculation from baseline inputs yields:
 | Fixed-mean SStot | 105.66666666666666 | Standard definition in the specification. |
 | Fixed-mean R² | 0.4196911369175561 | G41 cached 0.41969113691755555. |
 | Regression SE, df=8 | 2.7685579097935826 | A44 cached 2.768557909793584. |
-| SStot using stored shifting mean formulas | 87.40808264046362 | Conflicts with the fixed-mean method and cached result. |
-| R² implied by those formulas | 0.29847101839231405 | Would differ materially on recalculation. |
+| Direct stored-formula check, 22 September | All twelve B38:M38 formulas use B9:M9. | Earlier shifting-range values were based on an incorrect interpretation and are withdrawn. |
 
 This is independent formula analysis, not an Excel/native-engine recalculation or a completed V2 golden test. No file was resaved. P-values were inspected as TDIST(ABS(t),df,2) formulas, not independently numerically validated in this pass. Confirm all ranges and approved expected values when the full fixture set is available.
 
@@ -75,10 +74,14 @@ This is independent formula analysis, not an Excel/native-engine recalculation o
 4. Select Auth.js or Clerk behind an adapter and approve the new-app layout alongside preserved legacy source. No provider account or deployment was created.
 5. Approve credential-column handling and whether ordinary imports are single-organisation only; recommendation is reject credential columns and prohibit customer multi-org imports.
 
-Before Sprint 4: supply the missing Single Routine Adjustment V2.xlsx and Multi Routine Adjustment V2.xlsx; approve corrected NRA fixture version/results, numerical tolerances and calculation policies CD01–15. Formula correctness must not be traded for silent compatibility with a known defect.
+Before Sprint 4: supply the missing Single Routine Adjustment V2.xlsx and Multi Routine Adjustment V2.xlsx; review and approve NRA expected results and native recalculation evidence, numerical tolerances and calculation policies CD01–15. Formula correctness must not be traded for silent compatibility with a known defect.
 
 Later decisions: weather coverage/provider and base temperatures (Sprint 3); cost/VAT, currency aggregation and waste-rate denominator (Sprint 5); prices/trials/quotas/downgrade handling and the overlapping 100-site plan boundary (Sprint 7); retention, recovery objectives and cutover ownership (Sprint 8).
 
 ## Sprint 0 exit status
 
-Repository inventory, proposed feature dispositions, source-field mapping and compatibility register are delivered. Owner review is pending. Production parity cannot be certified from this snapshot; golden compatibility cannot pass with two fixtures missing and one unresolved formula/cache conflict. These are explicit acceptance dependencies, not completed checks.
+Repository inventory, proposed feature dispositions, source-field mapping and compatibility register are delivered. Owner review is pending. Production parity cannot be certified from this snapshot; golden compatibility cannot pass with two fixtures missing and unapproved expected results, recalculation evidence and numerical policies. These are explicit acceptance dependencies, not completed checks.
+
+## CD11 correction evidence — 22 September 2026
+
+Read-only extraction from the same recorded SHA-256 found literal formulas `(B9-AVERAGE(B9:M9))^2` through `(M9-AVERAGE(B9:M9))^2`, with no shared-formula attributes. Decimal arithmetic over B9:M9 gives SStot 105.666666666666666… versus cached D41 105.66666666666666 (difference about 6.67e-15). Summing cached B37:M37 squared residuals and using that SStot gives R² 0.419691136917555608… versus cached G41 0.41969113691755555 (difference about 5.89e-17). This is targeted formula/cache evidence, not an independent full regression or native recalculation. See NRA_FIXTURE_REVIEW.md.

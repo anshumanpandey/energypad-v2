@@ -175,3 +175,19 @@ Energy consumption mappings can be saved and loaded as version 1 JSON templates.
 ### Sprint 4 fixture readiness
 
 Run `npm run sprint4:readiness -- <fixture-directory> [new-report.json]` to check the three regression reference filenames and discovery hashes without changing their contents. Exit 2 means fixture/methodology review remains open; exit 1 is a command/output failure. This preparation check deliberately cannot certify numerical compatibility. See [SPRINT_4_DESIGN.md](../../docs/SPRINT_4_DESIGN.md) for contracts, dependencies and the next implementation slices.
+
+### Experimental Sprint 4 regression kernel
+
+`src/domain/analysis/regression.ts` provides pure one/two/three-driver OLS fitting and coefficient inference with explicit numerical policy and typed quality states. The authorized AnalysisService uses it for experimental application results; all outputs remain UNVALIDATED. Run `npm test -- tests/regression.test.ts` for the independent synthetic cases. Scope, method and remaining integration work are documented in [SPRINT_4_ENGINE.md](../../docs/SPRINT_4_ENGINE.md).
+
+`src/domain/analysis/reporting.ts` adds experimental kWh predictions, hours/population NRA and explicit significance policy with scoped monthly evidence. Missing months and invalid ratios remain blocked. Run `npm test -- tests/reporting.test.ts` for reporting checks. Reporting remains UNVALIDATED in the Advanced Analysis workflow.
+
+
+The internal `src/server/analysis/service.ts` assembles scoped persisted inputs, creates immutable baseline/run snapshots and provides authorized readiness/history reads. `202609220001_analysis_snapshots` adds the storage and database immutability constraints. All saved calculations remain UNVALIDATED in the authenticated analysis API and UI. Run `node --import tsx scripts/analysis-integration.ts` from `apps/web` to validate the service against an automatically created disposable database. That test applies all migrations only to its temporary database. See [SPRINT_4_DESIGN.md](../../docs/SPRINT_4_DESIGN.md) for permissions, snapshot identity and remaining workflow gates.
+
+
+Advanced Analysis is now available from **Energy → Advanced Analysis**. It provides experimental readiness, baseline selection/saving, reporting runs and immutable history with visible UNVALIDATED status. Apply migrations before using the page in another environment. The local workspace migration has been applied. Run `npx playwright test tests/e2e/analysis.spec.ts` for the isolated desktop/mobile browser workflow. The previous internal-only notes describe the earlier implementation slice; workbook approval remains outstanding.
+
+Analysis history loads 20 entries per page. Use **Load older baselines** or **Load older runs** to access earlier evidence. The experimental history API now returns `{ items, nextCursor }`, with `nextRunCursor` on each baseline; cursor/limit parameters are validated and scoped.
+
+Owners, Admins and Analysts can save experimental baselines and reporting runs using the dedicated analysis permission. Viewers and assigned Site Managers can inspect readiness/history/results but cannot save. Organisation and source-data management permissions are unchanged.

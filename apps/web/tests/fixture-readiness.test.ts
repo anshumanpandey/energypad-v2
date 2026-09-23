@@ -10,7 +10,7 @@ it('reports missing fixtures without implying approval or acceptance', async () 
     const report = await inspectRegressionFixtures(directory);
     expect(report.fixtures.map((f) => f.status)).toEqual(['missing', 'missing', 'missing']);
     expect(report.readyForCompatibilityAcceptance).toBe(false);
-    expect(report.reviewDependencies.map((d) => d.code)).toContain('NRA_FORMULA_CACHE');
+    expect(report.reviewDependencies.map((d) => d.code)).toContain('NATIVE_RECALCULATION');
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

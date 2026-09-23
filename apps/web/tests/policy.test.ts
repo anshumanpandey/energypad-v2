@@ -18,6 +18,11 @@ describe('access decisions', () => {
       expect(can(role, 'audit:read')).toBe(false);
     }
   });
+  it('allows Analysts to write analysis without administrative or source-data permissions', () => {
+    for (const role of roles) expect(can(role, 'analysis:write')).toBe(['OWNER', 'ADMIN', 'ANALYST'].includes(role));
+    for (const permission of ['organisation:update', 'members:manage', 'audit:read', 'billing:manage'] as const)
+      expect(can('ANALYST', permission)).toBe(false);
+  });
   it('denies unknown plans and gates entitlements', () => {
     expect(hasFeature('UNKNOWN', 'core')).toBe(false);
     expect(hasFeature('STARTER', 'portfolio')).toBe(false);

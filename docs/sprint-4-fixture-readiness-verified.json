@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-22T08:05:13.634Z",
+  "readyForCompatibilityAcceptance": false,
+  "fixtures": [
+    {
+      "id": "single",
+      "file": "Single Routine Adjustment V2.xlsx",
+      "recordedSha256": null,
+      "status": "missing",
+      "bytes": 0,
+      "sha256": null,
+      "approved": false
+    },
+    {
+      "id": "multi",
+      "file": "Multi Routine Adjustment V2.xlsx",
+      "recordedSha256": null,
+      "status": "missing",
+      "bytes": 0,
+      "sha256": null,
+      "approved": false
+    },
+    {
+      "id": "multi-nra",
+      "file": "Multi Routine Adjustment Plus NRA V2.xlsx",
+      "recordedSha256": "427df495d5858f091616ea3709125a305a2d7212ac6ce8ac5b54c9100f53caed",
+      "status": "recorded",
+      "bytes": 20507,
+      "sha256": "427df495d5858f091616ea3709125a305a2d7212ac6ce8ac5b54c9100f53caed",
+      "approved": false
+    }
+  ],
+  "reviewDependencies": [
+    {
+      "code": "EXPECTED_RESULTS",
+      "detail": "Record reviewed expected cells/results and provenance for all three fixtures."
+    },
+    {
+      "code": "NATIVE_RECALCULATION",
+      "detail": "Record native recalculation evidence for the reference workbooks. CD11 shifting-range claim was withdrawn after direct XML inspection; the NRA source still requires result/methodology review."
+    },
+    {
+      "code": "TOLERANCES",
+      "detail": "Record approved absolute/relative tolerances for each numerical result family."
+    },
+    {
+      "code": "CALCULATION_POLICIES",
+      "detail": "Resolve Sprint 4 decisions CD01–05, CD09–15, including boundaries and undefined numerical cases. CD06 is weather; CD07–08 are Sprint 5."
+    }
+  ],
+  "note": "Read-only file availability/integrity report. Recorded hashes are discovery evidence, not approved fixtures. No calculations or workbook recalculation were performed."
+}

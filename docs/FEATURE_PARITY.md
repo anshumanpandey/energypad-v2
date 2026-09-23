@@ -64,4 +64,4 @@ These are specification requirements without equivalent implementation found in 
 
 ## Review gate
 
-The inventory and proposed mappings are ready for review. Sprint 1 is not approved by this document. Confirm reference source/schema, ownership/role policy, auth provider and repository layout before foundation work. Resolve proposed retirement of marketing/placeholders and preservation/UI treatment of floors, tariffs and questionnaires. Missing fixtures and the NRA formula/cache discrepancy block Sprint 4 acceptance; they do not prevent reviewing the foundation design.
+The inventory and proposed mappings are ready for review. Sprint 1 is not approved by this document. Confirm reference source/schema, ownership/role policy, auth provider and repository layout before foundation work. Resolve proposed retirement of marketing/placeholders and preservation/UI treatment of floors, tariffs and questionnaires. Missing fixtures and unapproved expected results/methodology block Sprint 4 acceptance (the prior CD11 formula/cache claim was withdrawn on 22 September); they do not prevent reviewing the foundation design.

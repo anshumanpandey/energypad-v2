@@ -243,6 +243,7 @@ model SiteAttributeHistory {
 }
 
 model Meter {
+  baselines BaselineVersion[]
   id String @id @default(uuid()) @db.Uuid
   organisationId String @db.Uuid
   siteId String @db.Uuid
@@ -496,6 +497,7 @@ model WeatherJob {
 }
 
 model SiteEnergyUse {
+  baselines BaselineVersion[]
   events OperationalEvent[]
   patterns OperatingPattern[]
   occupancy OccupancyObservation[]
@@ -750,4 +752,57 @@ model LegacyEnergyRow {
  evidence Json
  targets Json
  @@unique([organisationId, source, table, legacyId])
+}
+
+
+model BaselineVersion {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  meterId String @db.Uuid
+  energyUseId String? @db.Uuid
+  supersedesId String? @db.Uuid
+  revision Int @default(1)
+  inputHash String
+  snapshot Json
+  fit Json
+  compatibility String @default("UNVALIDATED")
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  meter Meter @relation(fields: [meterId, siteId, organisationId], references: [id, siteId, organisationId])
+  energyUse SiteEnergyUse? @relation(fields: [energyUseId, organisationId, siteId], references: [id, organisationId, siteId])
+  previous BaselineVersion? @relation("BaselineRevisions", fields: [supersedesId, organisationId, siteId, meterId], references: [id, organisationId, siteId, meterId], onDelete: NoAction, onUpdate: NoAction)
+  replacement BaselineVersion? @relation("BaselineRevisions")
+  runs AnalysisRun[]
+  @@unique([id, organisationId, siteId, meterId])
+  @@unique([supersedesId, organisationId, siteId, meterId])
+  @@unique([organisationId, inputHash])
+}
+
+model AnalysisRun {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  meterId String @db.Uuid
+  baselineId String @db.Uuid
+  inputHash String
+  snapshot Json
+  compatibility String @default("UNVALIDATED")
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  baseline BaselineVersion @relation(fields: [baselineId, organisationId, siteId, meterId], references: [id, organisationId, siteId, meterId])
+  result AnalysisResult?
+  @@unique([id, organisationId, siteId, meterId])
+  @@unique([organisationId, inputHash])
+}
+
+model AnalysisResult {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  meterId String @db.Uuid
+  runId String @db.Uuid
+  output Json
+  run AnalysisRun @relation(fields: [runId, organisationId, siteId, meterId], references: [id, organisationId, siteId, meterId])
+  @@unique([runId, organisationId, siteId, meterId])
 }

@@ -1,0 +1,25 @@
+{
+  "purpose": "Synthetic independent exact-rational OLS reference; not an approved workbook fixture. Solved with Fraction Gaussian elimination of normal equations, independent of production QR.",
+  "x": [
+    [1, 0, 2],
+    [2, 1, 1],
+    [0, 3, 1],
+    [4, 2, 0],
+    [3, 1, 5],
+    [2, 4, 3],
+    [5, 3, 2],
+    [1, 5, 4],
+    [6, 2, 3]
+  ],
+  "y": [8, 11, 4, 17, 9, 7, 20, 3, 18],
+  "coefficientFractions": ["31439/4524", "3230/1131", "-2365/6032", "-22277/18096"],
+  "coefficients": [6.949381078691424, 2.8558797524314765, -0.3920755968169761, -1.2310455349248453],
+  "fitted": [
+    7.343169761273209, 11.038019451812556, 4.54210875331565, 17.58874889478338, 8.969717064544652, 7.399701591511937,
+    17.590461980548188, 2.9207007073386384, 19.607371794871796
+  ],
+  "ssResidual": 9.629862953138815,
+  "ssTotal": 307.55555555555554,
+  "rSquared": 0.9686890294153724,
+  "residualDegreesOfFreedom": 5
+}

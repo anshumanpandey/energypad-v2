@@ -32,7 +32,7 @@ CI configuration is supplied; a remote GitHub Actions run has not been triggered
 
 Full site/meter CRUD is Sprint 2. Energy imports, regression calculations, dashboards with actual energy metrics, reporting, AI, Stripe billing and migration are later milestones. Internal plan limits do not constitute approved commercial pricing. Enterprise's custom allowance remains unset until its commercial policy is agreed.
 
-Production database, verified sender/Resend credentials, HTTPS host and secret, restricted database roles, ingress controls and deployment operating policies still require configuration. Auth.js is pinned to a beta release behind its adapter. The missing regression workbooks and NRA formula/cache discrepancy from Sprint 0 remain open for Sprint 4; no calculations were changed.
+Production database, verified sender/Resend credentials, HTTPS host and secret, restricted database roles, ingress controls and deployment operating policies still require configuration. Auth.js is pinned to a beta release behind its adapter. The missing regression workbooks and reviewed-result/methodology gates remain open for Sprint 4; no calculations were changed. Correction on 22 September: the Sprint 0 NRA formula/cache discrepancy claim was withdrawn after direct XML inspection; see CD11.
 
 ## Onboarding fix — 18 September 2026
 

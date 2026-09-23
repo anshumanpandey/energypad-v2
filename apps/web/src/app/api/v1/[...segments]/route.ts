@@ -2,6 +2,7 @@ import { parseTemplateText } from '@/domain/workbook-template';
 import { api, readBody, readBytes } from '@/server/http';
 import {
   foundation,
+  analysisService,
   occupancyService,
   patternService,
   eventService,
@@ -28,6 +29,29 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'sites' && s[3] && s[4] === 'analysis') {
+        const query = new URL(request.url).searchParams;
+        const historyPage = {
+          cursor: query.get('cursor') ?? undefined,
+          limit: query.has('limit') ? Number(query.get('limit')) : undefined,
+        };
+        if (s.length === 8 && s[5] === 'baselines' && s[7] === 'runs' && method === 'GET')
+          return analysisService.runHistory(actor, org, s[3], s[6], historyPage);
+        if (s.length === 6 && s[5] === 'options' && method === 'GET') return analysisService.options(actor, org, s[3]);
+        if (s.length === 6 && s[5] === 'history' && method === 'GET')
+          return analysisService.history(actor, org, s[3], historyPage);
+        if (s.length === 6 && s[5] === 'readiness' && method === 'POST')
+          return analysisService.inspectReadiness(actor, org, s[3], await readBody(request));
+        if (s.length === 6 && s[5] === 'baselines' && method === 'POST')
+          return analysisService.createBaseline(actor, org, s[3], await readBody(request));
+        if (s.length === 7 && s[5] === 'baselines' && method === 'GET')
+          return analysisService.readBaseline(actor, org, s[3], s[6]);
+        if (s.length === 8 && s[5] === 'baselines' && s[7] === 'runs' && method === 'POST')
+          return analysisService.run(actor, org, s[3], s[6], await readBody(request));
+        if (s.length === 7 && s[5] === 'runs' && method === 'GET')
+          return analysisService.readRun(actor, org, s[3], s[6]);
+      }
+
       if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'occupancy') {
         if (s.length === 6 && method === 'GET')
           return occupancyService.list(actor, org, s[3], Number(new URL(request.url).searchParams.get('year')));

@@ -222,7 +222,7 @@ Import modal URLs supplied by Settings.tsx: POST `/utility/importUtilityEmission
 - GreenDaysServices calls DegreeDays using fixed postcode and country values in inspected paths. Weather persistence/methodology and asynchronous retries need replacement.
 - Utility service includes consumingProjection; Dashboard service includes filled-month records marked produced, consumption statistics, carbon, financial cost and target comparisons. Keep missing data distinguishable from actual zero.
 - Units utility supports L, m3 and kWh and rounds converted quantities to two decimals. Carbon lookup matches year/site/fuel, with an ignoreFuelSource mode; factor provenance and effective dates are absent from this logic.
-- Existing outputs are not approved golden values. The available NRA workbook has formula/cache conflicts documented separately.
+- Existing outputs are not approved golden values. The earlier NRA formula/cache conflict claim was withdrawn after direct XML inspection on 22 September; see CD11 and NRA_FIXTURE_REVIEW.md.
 
 ## Domain contracts
 
@@ -492,4 +492,4 @@ No legacy test suite was run: the root pretest tears down/starts Docker services
 
 The discovery source manifest records paths and SHA-256 hashes (no file contents), including generated siblings and existing working-tree differences. Production schema, exact deployed JS/TS resolution, real user journeys and missing golden files remain external evidence gaps.
 
-Discovery validation passed: all catalogue endpoint/request source references are present, relative documentation links and referenced line numbers resolve, all 564 source hashes remain unchanged, and the four NRA regression coefficients independently match cached coefficients within approximately 1.2e-15. That numerical comparison does not resolve the SStot formula/cache discrepancy or constitute full workbook approval.
+Discovery validation passed: all catalogue endpoint/request source references are present, relative documentation links and referenced line numbers resolve, all 564 source hashes remain unchanged, and the four NRA regression coefficients independently match cached coefficients within approximately 1.2e-15. That numerical comparison does not constitute full workbook approval. The separately claimed SStot formula/cache discrepancy was withdrawn on 22 September after direct XML inspection; see CD11.
