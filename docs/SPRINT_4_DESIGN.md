@@ -126,3 +126,39 @@ Database integration tests traverse over 100 baselines and runs with dense times
 `analysis:write` now permits Owner/Admin/Analyst in both AnalysisService and Advanced Analysis save controls. Organisation management permissions are unchanged. This follows the master specification's Analyst “Data, models, NRA, AI, opportunities” responsibility and the Sprint 1 analytical-work role. Only the models/NRA portion is addressed here; no broader source-data/admin permission is inferred.
 
 Unit checks cover the complete role matrix. Isolated integration checks exercise Analyst baseline and NRA creation with author/audit evidence, administrative and consumption-write denial, scoped-meter rejection, immediate demotion write denial, retained Viewer reads and revoked-membership denial. No migration or live membership changes are required.
+
+## Readable saved-baseline diagnostics
+
+The selected baseline now exposes coefficient estimates and units, standard errors, signed t statistics, two-sided p-values, residual degrees of freedom, SSE/SST, monthly actual/fitted/residual values and a collapsible covariance matrix. These are persisted model outputs, not a new fit. Residual months join frozen consumption revisions by ID, independent of array order; missing labels remain explicit.
+
+Nonzero small probabilities use scientific notation. Underflow exposes the retained natural logarithm; undefined zero-variance and numerical failures explain why a statistic is unavailable. Estimates and residuals remain visible when inference fails. Display rounding does not change the raw provenance. No significance classification or workbook acceptance is inferred.
+
+## Archived-site analysis history
+
+Analysis now distinguishes active operations (options/readiness), writes, and historical reads. Historical baseline/run reads and pagination allow archived sites while retaining membership, tenant and assigned-site filters. Active operations and writes still require an unarchived site. `historySites` supplies an authorized selector with active sites first and archived labels; archived selections load history without fetching active input options and omit calculation forms.
+
+Existing site archival removes Site Manager assignments; this change does not restore revoked assignments or grant new access. Archived evidence remains accessible to roles with organisation-wide read access, and any retained assignment is still checked. Saved snapshots and results are unchanged. No schema migration is needed.
+
+## NRA context and review records (audit point 3)
+
+New NRA runs require a rationale/assumptions paragraph and one to ten evidence references. References are stored and displayed as text; the application does not fetch them. Context is part of the immutable run snapshot/hash, alongside reference-month inputs, author and baseline/model versions. Correcting context or inputs creates a separate run with no inherited approval. Existing runs remain unchanged; runs without context remain readable but cannot be approved.
+
+Review policy `nra-review-v1` permits an active Owner/Admin other than the run author to approve, reject or revoke an approval. Review reasons are mandatory. `NraReview` stores append-only decisions with reviewer, time, policy version, revision, prior decision and a tenant/run composite foreign key. The latest decision is the current review state; earlier decisions remain visible. Revocation requires a current approval. Archived sites permit reading decisions but not adding them.
+
+`POST .../analysis/runs/:id/reviews` rechecks membership and scope inside the organisation lock/serializable transaction. Client request IDs make identical retries idempotent; mismatched retries and stale previous-decision IDs are rejected. Review and audit insertion are atomic. Database triggers reject decision mutation/deletion/truncation, invalid lineage and self-review. Review does not modify run/result compatibility: all calculations remain UNVALIDATED. This is an NRA evidence review, not workbook or numerical certification.
+
+## Versioned statistical interpretation (audit point 4)
+
+`src/domain/analysis/interpretation.ts` adds a presentation policy independent of the regression kernel. Version `statistical-interpretation-v1` follows the master specification's inclusive p-value bands (≤0.01 Very significant; ≤0.05 Significant; otherwise Not significant). R² bands follow the read-only verified NRA V2 K41 thresholds: ≥0.90 Very strong, ≥0.80 Strong, ≥0.75 Acceptable, otherwise Unreliable. The policy is explicitly PROVISIONAL and does not certify models, savings or numerical compatibility.
+
+Baseline creation stores the complete policy configuration and resulting coefficient/R² verdicts in its immutable input snapshot, which participates in the input hash. Reporting run provenance already links the frozen baseline/hash. UI renders saved interpretations rather than applying today's policy to historical numbers. Baselines predating this change show that no interpretation was recorded. Future policy changes must use a new version; coefficients and numeric results remain unchanged.
+
+Labels use raw numerical values, not display rounding. Constant-response R², unavailable inference, zero residual variance and underflow probabilities remain explicitly unclassified. Covariance/inference failure does not remove numerical estimates or residuals. This change needs no database migration.
+
+## Persisted multi-driver workflow coverage (audit point 5)
+
+The dedicated `analysis-multidriver-integration.ts` suite uses an eight-row orthogonal factorial design with known intercept 100, slopes 2/3/4 and orthogonal residuals. It saves and reloads HDD+CDD, HDD+CDD+DAYLIGHT, reversed weather-column order and mixed POPULATION+HDD+CDD baselines/runs. September predictions are independently specified as 185/309 kWh with 5 kWh variance. A newer conflicting weather configuration ensures assertions detect accidental latest-version substitution. Weather months are deliberately stored in reverse order.
+
+Tests verify source/configuration/hash provenance, coefficients and driver identity, residual sum of squares, reporting and frozen reloads. Missing October weather and missing operating-hours observations must block saves without adding partial records. The suite is included in `test:integration`.
+
+The browser suite exercises both weather models through readiness, configuration/driver selection, coefficient tables, missing reporting inputs, successful saving and history reload. Its fixture is seeded only by the disposable E2E server, with a database-name guard rejecting ordinary application databases. No provider request or production endpoint is added, and no workspace data is seeded. Synthetic evidence does not replace the outstanding approved workbook comparisons.

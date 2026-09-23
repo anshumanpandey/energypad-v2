@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 import zipfile
+from extract_routine_evidence import extract as extract_routine
 from extract_nra_evidence import read_cells, mean_range_diagnostic, extract, in_range
 
 
@@ -46,6 +47,20 @@ class EvidenceTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'hash differs'):
                 extract(source)
             self.assertEqual(source.read_bytes(), b'changed source')
+
+    def test_routine_profile_preserves_source_and_rejects_unknown_hash(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / 'Single Routine Adjustment V2.xlsx'
+            source.write_bytes(b'not the recorded source')
+            with self.assertRaisesRegex(ValueError, 'Unrecognized source hash'):
+                extract_routine(source)
+            self.assertEqual(source.read_bytes(), b'not the recorded source')
+
+    def test_explicit_ranges_do_not_change_nra_defaults(self):
+        sheet = '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="17"><c r="J17"><v>2</v></c></row></sheetData></worksheet>'
+        content = archive_with(sheet)
+        self.assertNotIn('J17', read_cells(content))
+        self.assertEqual(read_cells(content, {'routine': 'A1:M67'})['J17']['storedValue'], '2')
 
     def test_limits_ranges_and_rejects_xml_entities(self):
         self.assertTrue(in_range('M96', 'A89:M96'))

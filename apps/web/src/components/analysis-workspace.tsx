@@ -1,9 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
+import { NraReviewPanel, type NraReviewRecord } from './nra-review';
+import { BaselineDiagnostics } from './baseline-diagnostics';
 import { request, useMutation } from './forms';
 import type { AnalysisService } from '@/server/analysis/service';
 import type { BaselineDefinition, ReadinessIssue } from '@/server/analysis/contract';
+import type { RegressionInterpretation } from '@/domain/analysis/interpretation';
 import type { RegressionResult } from '@/domain/analysis/regression';
 import type { ReportingResult } from '@/domain/analysis/reporting';
 type Options = Awaited<ReturnType<AnalysisService['options']>>;
@@ -13,11 +16,20 @@ type Baseline = {
   id: string;
   revision: number;
   inputHash: string;
-  snapshot: { definition: BaselineDefinition; assembly: { warnings: ReadinessIssue[] } };
+  snapshot: {
+    definition: BaselineDefinition;
+    interpretation?: RegressionInterpretation;
+    assembly: { warnings: ReadinessIssue[]; rows: { consumption: { id: string; month: string } }[] };
+  };
   fit: RegressionResult;
 };
 type SavedRun = {
-  snapshot: { assembly: { warnings: ReadinessIssue[] } };
+  authorId: string;
+  reviews: NraReviewRecord[];
+  snapshot: {
+    assembly: { warnings: ReadinessIssue[] };
+    request: { policy: { nra: string }; nraContext?: { rationale: string; evidence: string[] } | null };
+  };
   id: string;
   inputHash: string;
   baseline: Baseline;
@@ -56,12 +68,17 @@ export function AnalysisWorkspace({
   orgId,
   sites,
   manage,
+  approve,
+  actorId,
 }: {
   orgId: string;
-  sites: { id: string; name: string }[];
+  approve: boolean;
+  actorId: string;
+  sites: { id: string; name: string; archived: boolean }[];
   manage: boolean;
 }) {
   const [siteId, setSiteId] = useState(sites[0]?.id ?? '');
+  const archived = sites.find((s) => s.id === siteId)?.archived ?? false;
   return (
     <div className="analysis-workspace stack-form">
       <div className="notice" role="note">
@@ -83,17 +100,37 @@ export function AnalysisWorkspace({
               {sites.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
+                  {s.archived ? ' · Archived' : ''}
                 </option>
               ))}
             </select>
           </label>
-          <SiteAnalysis key={siteId} base={`organisations/${orgId}/sites/${siteId}/analysis`} manage={manage} />
+          <SiteAnalysis
+            key={`${siteId}:${archived}`}
+            base={`organisations/${orgId}/sites/${siteId}/analysis`}
+            manage={manage && !archived}
+            archived={archived}
+            approve={approve && !archived}
+            actorId={actorId}
+          />
         </>
       )}
     </div>
   );
 }
-function SiteAnalysis({ base, manage }: { base: string; manage: boolean }) {
+function SiteAnalysis({
+  base,
+  manage,
+  archived,
+  approve,
+  actorId,
+}: {
+  base: string;
+  manage: boolean;
+  archived: boolean;
+  approve: boolean;
+  actorId: string;
+}) {
   const m = useMutation();
   const [options, setOptions] = useState<Options | null>(null),
     [history, setHistory] = useState<History>([]);
@@ -110,7 +147,10 @@ function SiteAnalysis({ base, manage }: { base: string; manage: boolean }) {
   const [issues, setIssues] = useState<ReadinessIssue[]>([]);
   useEffect(() => {
     let active = true;
-    Promise.all([request(`${base}/options`, 'GET'), request(`${base}/history`, 'GET')])
+    Promise.all([
+      archived ? Promise.resolve({ meters: [], uses: [], weather: [] }) : request(`${base}/options`, 'GET'),
+      request(`${base}/history`, 'GET'),
+    ])
       .then(([o, h]) => {
         if (active) {
           setOptions(o);
@@ -125,7 +165,7 @@ function SiteAnalysis({ base, manage }: { base: string; manage: boolean }) {
     return () => {
       active = false;
     };
-  }, [base, retry]);
+  }, [base, retry, archived]);
   async function refresh() {
     const page: HistoryPage = await request(`${base}/history`, 'GET');
     setHistory(page.items);
@@ -149,153 +189,160 @@ function SiteAnalysis({ base, manage }: { base: string; manage: boolean }) {
   return (
     <>
       {m.feedback}
-      <section className="panel stack-form" aria-label="Baseline setup">
-        <div>
-          <span className="eyebrow">1 · BASELINE</span>
-          <h2>Baseline setup</h2>
-          <p>
-            Select one to three drivers and a complete monthly period. Source revisions are preserved when you save.
-          </p>
+      {archived && (
+        <div className="notice" role="note">
+          Archived site · Saved baselines and runs are available for review. New calculations are disabled.
         </div>
-        {!options.meters.length ? (
-          <p>Add a meter and monthly consumption in Sites and Energy first.</p>
-        ) : (
-          <form
-            aria-label="Baseline definition"
-            className="stack-form"
-            onChange={() => setReadiness(null)}
-            onSubmit={(e) => {
-              e.preventDefault();
-              const f = new FormData(e.currentTarget);
-              const action = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('value');
-              const drivers = f.getAll('drivers') as string[];
-              const definition = {
-                meterId: f.get('meterId'),
-                energyUseId: f.get('energyUseId') || null,
-                period: { firstMonth: f.get('firstMonth'), lastMonth: f.get('lastMonth') },
-                drivers,
-                weather: drivers.some((d) => ['HDD', 'CDD', 'DAYLIGHT'].includes(d))
-                  ? { configurationId: f.get('weatherId'), methodology: 'daily-mean-degree-days-v1' }
-                  : null,
-                estimatedConsumption: f.get('estimatedConsumption'),
-                supersedesId: f.get('supersedesId') || null,
-                fitPolicy: { version: 'experimental-workflow-v1', relativeRankTolerance: 1e-10 },
-              };
-              void m.run(
-                async () => {
-                  setIssues([]);
-                  if (action === 'check') {
-                    setReadiness(await request(`${base}/readiness`, 'POST', definition));
-                    return;
-                  }
-                  const result = await request(`${base}/baselines`, 'POST', definition);
-                  if (result.status === 'BLOCKED') {
-                    setIssues(result.issues);
-                    throw new Error('Baseline could not be saved. Resolve the listed input issues.');
-                  }
-                  setBaseline(result.baseline);
-                  setRun(null);
-                  await refresh();
-                },
-                action === 'check' ? 'Readiness checked.' : 'Experimental baseline saved.',
-              );
-            }}
-          >
-            <fieldset className="form-grid" disabled={m.disabled}>
-              <label>
-                Meter
-                <select name="meterId" required>
-                  {options.meters.map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.code} · {x.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Consumption end use
-                <select name="energyUseId">
-                  <option value="">Unassigned readings</option>
-                  {options.uses.map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.code} · {x.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Baseline first month
-                <input type="month" name="firstMonth" required />
-              </label>
-              <label>
-                Baseline last month
-                <input type="month" name="lastMonth" required />
-              </label>
-              <label>
-                Weather configuration
-                <select name="weatherId">
-                  <option value="">Select if using weather drivers</option>
-                  {options.weather.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      Version {w.version} · {w.source}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Estimated consumption
-                <select name="estimatedConsumption">
-                  <option value="BLOCK">Block estimated readings</option>
-                  <option value="ALLOW_WITH_WARNING">Allow with a warning</option>
-                </select>
-              </label>
-              {manage && (
+      )}
+      {!archived && (
+        <section className="panel stack-form" aria-label="Baseline setup">
+          <div>
+            <span className="eyebrow">1 · BASELINE</span>
+            <h2>Baseline setup</h2>
+            <p>
+              Select one to three drivers and a complete monthly period. Source revisions are preserved when you save.
+            </p>
+          </div>
+          {!options.meters.length ? (
+            <p>Add a meter and monthly consumption in Sites and Energy first.</p>
+          ) : (
+            <form
+              aria-label="Baseline definition"
+              className="stack-form"
+              onChange={() => setReadiness(null)}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const f = new FormData(e.currentTarget);
+                const action = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('value');
+                const drivers = f.getAll('drivers') as string[];
+                const definition = {
+                  meterId: f.get('meterId'),
+                  energyUseId: f.get('energyUseId') || null,
+                  period: { firstMonth: f.get('firstMonth'), lastMonth: f.get('lastMonth') },
+                  drivers,
+                  weather: drivers.some((d) => ['HDD', 'CDD', 'DAYLIGHT'].includes(d))
+                    ? { configurationId: f.get('weatherId'), methodology: 'daily-mean-degree-days-v1' }
+                    : null,
+                  estimatedConsumption: f.get('estimatedConsumption'),
+                  supersedesId: f.get('supersedesId') || null,
+                  fitPolicy: { version: 'experimental-workflow-v1', relativeRankTolerance: 1e-10 },
+                };
+                void m.run(
+                  async () => {
+                    setIssues([]);
+                    if (action === 'check') {
+                      setReadiness(await request(`${base}/readiness`, 'POST', definition));
+                      return;
+                    }
+                    const result = await request(`${base}/baselines`, 'POST', definition);
+                    if (result.status === 'BLOCKED') {
+                      setIssues(result.issues);
+                      throw new Error('Baseline could not be saved. Resolve the listed input issues.');
+                    }
+                    setBaseline(result.baseline);
+                    setRun(null);
+                    await refresh();
+                  },
+                  action === 'check' ? 'Readiness checked.' : 'Experimental baseline saved.',
+                );
+              }}
+            >
+              <fieldset className="form-grid" disabled={m.disabled}>
                 <label>
-                  Baseline to supersede (optional)
-                  <select name="supersedesId">
-                    <option value="">Create a new baseline</option>
-                    {history.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        Revision {b.revision} · {b.id.slice(0, 8)}
+                  Meter
+                  <select name="meterId" required>
+                    {options.meters.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {x.code} · {x.name}
                       </option>
                     ))}
                   </select>
                 </label>
-              )}
-            </fieldset>
-            <fieldset className="analysis-drivers" disabled={m.disabled}>
-              <legend>Baseline drivers · select 1–3</legend>
-              {Object.entries(labels).map(([code, label]) => (
-                <label key={code}>
-                  <input type="checkbox" name="drivers" value={code} />
-                  {label}
+                <label>
+                  Consumption end use
+                  <select name="energyUseId">
+                    <option value="">Unassigned readings</option>
+                    {options.uses.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {x.code} · {x.name}
+                      </option>
+                    ))}
+                  </select>
                 </label>
-              ))}
-            </fieldset>
-            <p className="muted">
-              Experimental fitting policy: relative rank tolerance 1 × 10⁻¹⁰. A ready baseline is not methodology
-              approval.
-            </p>
-            <div className="analysis-actions">
-              <Button type="submit" name="action" value="check" disabled={m.disabled}>
-                Check readiness
-              </Button>
-              {manage && (
-                <Button type="submit" name="action" value="save" disabled={m.disabled}>
-                  Save experimental baseline
+                <label>
+                  Baseline first month
+                  <input type="month" name="firstMonth" required />
+                </label>
+                <label>
+                  Baseline last month
+                  <input type="month" name="lastMonth" required />
+                </label>
+                <label>
+                  Weather configuration
+                  <select name="weatherId">
+                    <option value="">Select if using weather drivers</option>
+                    {options.weather.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        Version {w.version} · {w.source}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Estimated consumption
+                  <select name="estimatedConsumption">
+                    <option value="BLOCK">Block estimated readings</option>
+                    <option value="ALLOW_WITH_WARNING">Allow with a warning</option>
+                  </select>
+                </label>
+                {manage && (
+                  <label>
+                    Baseline to supersede (optional)
+                    <select name="supersedesId">
+                      <option value="">Create a new baseline</option>
+                      {history.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          Revision {b.revision} · {b.id.slice(0, 8)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </fieldset>
+              <fieldset className="analysis-drivers" disabled={m.disabled}>
+                <legend>Baseline drivers · select 1–3</legend>
+                {Object.entries(labels).map(([code, label]) => (
+                  <label key={code}>
+                    <input type="checkbox" name="drivers" value={code} />
+                    {label}
+                  </label>
+                ))}
+              </fieldset>
+              <p className="muted">
+                Experimental fitting policy: relative rank tolerance 1 × 10⁻¹⁰. A ready baseline is not methodology
+                approval.
+              </p>
+              <div className="analysis-actions">
+                <Button type="submit" name="action" value="check" disabled={m.disabled}>
+                  Check readiness
                 </Button>
-              )}
+                {manage && (
+                  <Button type="submit" name="action" value="save" disabled={m.disabled}>
+                    Save experimental baseline
+                  </Button>
+                )}
+              </div>
+            </form>
+          )}
+          {readiness && (
+            <div role="status">
+              <strong>{readiness.ready ? 'Inputs ready for experimental fitting' : 'Baseline needs attention'}</strong>
+              <Issues issues={readiness.issues} />
+              <Issues issues={readiness.warnings} />
             </div>
-          </form>
-        )}
-        {readiness && (
-          <div role="status">
-            <strong>{readiness.ready ? 'Inputs ready for experimental fitting' : 'Baseline needs attention'}</strong>
-            <Issues issues={readiness.issues} />
-            <Issues issues={readiness.warnings} />
-          </div>
-        )}
-      </section>
+          )}
+        </section>
+      )}
       <Issues issues={issues} />
       <section className="panel stack-form" aria-label="Baseline and run history">
         <div>
@@ -396,12 +443,18 @@ function SiteAnalysis({ base, manage }: { base: string; manage: boolean }) {
       </section>
       {baseline && (
         <>
-          <section className="panel stack-form">
+          <section className="panel stack-form" aria-label="Selected baseline">
             <h2>Selected baseline · revision {baseline.revision}</h2>
             <p>
               {baseline.snapshot.definition.period.firstMonth} – {baseline.snapshot.definition.period.lastMonth} ·{' '}
               {baseline.snapshot.definition.drivers.map((d) => labels[d]).join(', ')}
             </p>
+            {!!baseline.snapshot.assembly.warnings.length && (
+              <div role="note" aria-label="Baseline input warnings">
+                <strong>Baseline input warnings</strong>
+                <Issues issues={baseline.snapshot.assembly.warnings} />
+              </div>
+            )}
             {baseline.fit.status === 'FITTED' && (
               <div className="analysis-metrics">
                 <div>
@@ -418,8 +471,13 @@ function SiteAnalysis({ base, manage }: { base: string; manage: boolean }) {
                 </div>
               </div>
             )}
+            <BaselineDiagnostics
+              fit={baseline.fit}
+              observations={baseline.snapshot.assembly.rows}
+              interpretation={baseline.snapshot.interpretation}
+            />
             <details>
-              <summary>Baseline provenance and diagnostics</summary>
+              <summary>Baseline provenance and unrounded data</summary>
               <p className="analysis-hash">Input hash: {baseline.inputHash}</p>
               <pre className="analysis-json">{JSON.stringify(baseline, null, 2)}</pre>
             </details>
@@ -447,7 +505,19 @@ function SiteAnalysis({ base, manage }: { base: string; manage: boolean }) {
         </>
       )}
       {run && <RunResults run={run} />}
-      {!manage && (
+      {run && run.snapshot.request.policy.nra !== 'NONE' && (
+        <NraReviewPanel
+          key={run.id}
+          base={base}
+          runId={run.id}
+          authorId={run.authorId}
+          context={run.snapshot.request.nraContext}
+          reviews={run.reviews}
+          canReview={approve && actorId !== run.authorId}
+          reload={async () => setRun(await request(`${base}/runs/${run.id}`, 'GET'))}
+        />
+      )}
+      {!manage && !archived && (
         <p className="notice">
           You can check readiness and read saved results. An Owner, Admin or Analyst can save baselines and runs.
         </p>
@@ -504,6 +574,17 @@ function RunForm({
               negativePrediction: f.get('negativePrediction'),
               extrapolation: f.get('extrapolation'),
             },
+            ...(nra === 'NONE'
+              ? {}
+              : {
+                  nraContext: {
+                    rationale: f.get('nraRationale'),
+                    evidence: String(f.get('nraEvidence') ?? '')
+                      .split('\n')
+                      .map((v) => v.trim())
+                      .filter(Boolean),
+                  },
+                }),
             references:
               nra === 'NONE' ? [] : months.map((month) => ({ month, referenceMonth: f.get(`reference-${month}`) })),
           });
@@ -566,6 +647,14 @@ function RunForm({
         {nra !== 'NONE' && (
           <fieldset className="form-grid" disabled={disabled}>
             <legend>NRA reference months · choose a saved baseline month for each reporting month</legend>
+            <label>
+              NRA rationale and assumptions
+              <textarea name="nraRationale" required maxLength={2000} />
+            </label>
+            <label>
+              NRA evidence references (one per line)
+              <textarea name="nraEvidence" required maxLength={5000} />
+            </label>
             {months.map((month) => (
               <label key={month}>
                 Reference for {month}

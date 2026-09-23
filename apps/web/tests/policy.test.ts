@@ -52,3 +52,7 @@ describe('boundary validation', () => {
     ).toBe(false);
   });
 });
+
+it('limits NRA review to Owners and Admins', () => {
+  for (const role of roles) expect(can(role, 'analysis:approve')).toBe(['OWNER', 'ADMIN'].includes(role));
+});

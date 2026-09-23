@@ -46,7 +46,8 @@ def in_range(address, region):
             and int(start[2]) <= int(match[2]) <= int(end[2]))
 
 
-def read_cells(content):
+def read_cells(content, sections=None):
+    sections = SECTIONS if sections is None else sections
     with zipfile.ZipFile(io.BytesIO(content)) as archive:
         entries = archive.infolist()
         if len(entries) > 500 or sum(e.file_size for e in entries) > 20_000_000:
@@ -82,7 +83,7 @@ def read_cells(content):
         cells = {}
         for cell in sheet.findall('m:sheetData/m:row/m:c', NS):
             address = cell.get('r', '')
-            if not any(in_range(address, region) for region in SECTIONS.values()):
+            if not any(in_range(address, region) for region in sections.values()):
                 continue
             if address in cells:
                 raise ValueError('Duplicate cell address.')
@@ -156,7 +157,7 @@ def extract(source):
             'sections': {key: {'range': region, 'cells': {a: c for a, c in cells.items() if in_range(a, region)}}
                          for key, region in SECTIONS.items()},
             'diagnostics': mean_range_diagnostic(cells),
-            'remainingReview': ['Missing single/multi reference workbooks', 'Reviewed units, periods and driver ordering',
+            'remainingReview': ['Single/multi reference review is recorded separately', 'Reviewed units, periods and driver ordering',
                                 'Native recalculation and expected results', 'Numerical tolerances and policy decisions']}
 
 

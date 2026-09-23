@@ -21,7 +21,7 @@ it('hashes files unchanged, flags altered evidence and never mistakes file prese
     const bytes = Buffer.from('synthetic bytes, deliberately not an approved workbook');
     for (const fixture of regressionFixtures) await writeFile(path.join(directory, fixture.file), bytes);
     const report = await inspectRegressionFixtures(directory);
-    expect(report.fixtures.map((f) => f.status)).toEqual(['unreviewed', 'unreviewed', 'changed']);
+    expect(report.fixtures.map((f) => f.status)).toEqual(['changed', 'changed', 'changed']);
     for (const fixture of report.fixtures) {
       expect(fixture.sha256).toBe(createHash('sha256').update(bytes).digest('hex'));
       expect(fixture.approved).toBe(false);

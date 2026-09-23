@@ -4,8 +4,16 @@ import { stat } from 'node:fs/promises';
 import path from 'node:path';
 
 export const regressionFixtures = [
-  { id: 'single', file: 'Single Routine Adjustment V2.xlsx', recordedSha256: null },
-  { id: 'multi', file: 'Multi Routine Adjustment V2.xlsx', recordedSha256: null },
+  {
+    id: 'single',
+    file: 'Single Routine Adjustment V2.xlsx',
+    recordedSha256: '40dfaa6aaaeed910fa49552bab2d9ef629adf91b6982796372cf8f941e7821cd',
+  },
+  {
+    id: 'multi',
+    file: 'Multi Routine Adjustment V2.xlsx',
+    recordedSha256: '96d03f58b3caf94429f86b257ddb316cb4f3bf96f4e11cf8c3bbaf7a4c2a77cb',
+  },
   {
     id: 'multi-nra',
     file: 'Multi Routine Adjustment Plus NRA V2.xlsx',

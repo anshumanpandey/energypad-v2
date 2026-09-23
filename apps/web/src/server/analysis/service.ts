@@ -3,8 +3,16 @@ import { FoundationService, type Actor } from '../foundation';
 import { DomainError, uuid } from '../../domain/policy';
 import { fitRegression, type RegressionResult } from '../../domain/analysis/regression';
 import { calculateReporting, projectReportingModel, type ReportingInput } from '../../domain/analysis/reporting';
+import { interpretRegression, type RegressionInterpretation } from '../../domain/analysis/interpretation';
 import { assemble } from './assembler';
-import { historyPageInput, baselineDefinition, runDefinition, snapshotHash, type BaselineDefinition } from './contract';
+import {
+  nraReviewInput,
+  historyPageInput,
+  baselineDefinition,
+  runDefinition,
+  snapshotHash,
+  type BaselineDefinition,
+} from './contract';
 const json = (v: unknown): Prisma.InputJsonValue => JSON.parse(JSON.stringify(v));
 type Assembly = Awaited<ReturnType<typeof assemble>>;
 type BaselineSnapshot = {
@@ -14,6 +22,7 @@ type BaselineSnapshot = {
   tolerancePolicy: null;
   definition: BaselineDefinition;
   assembly: Assembly;
+  interpretation?: RegressionInterpretation;
 };
 export class AnalysisService extends FoundationService {
   private async transaction<T>(work: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
@@ -30,15 +39,21 @@ export class AnalysisService extends FoundationService {
       }
     }
   }
-  private async access(tx: Prisma.TransactionClient, actor: Actor, org: string, siteId: string, write: boolean) {
+  private async access(
+    tx: Prisma.TransactionClient,
+    actor: Actor,
+    org: string,
+    siteId: string,
+    mode: 'write' | 'active' | 'history',
+  ) {
     uuid.parse(siteId);
-    if (write) await this.lock(tx, org);
-    const member = await this.membership(actor, org, write ? 'analysis:write' : undefined, tx);
+    if (mode === 'write') await this.lock(tx, org);
+    const member = await this.membership(actor, org, mode === 'write' ? 'analysis:write' : undefined, tx);
     const site = await tx.site.findFirst({
       where: {
         id: siteId,
         organisationId: org,
-        archivedAt: null,
+        ...(mode === 'history' ? {} : { archivedAt: null }),
         ...(member.role === 'SITE_MANAGER'
           ? { assignments: { some: { membershipId: member.id, organisationId: org } } }
           : {}),
@@ -73,7 +88,7 @@ export class AnalysisService extends FoundationService {
   async inspectReadiness(actor: Actor, org: string, siteId: string, input: unknown) {
     const data = baselineDefinition.parse(input);
     return this.transaction(async (tx) => {
-      await this.access(tx, actor, org, siteId, false);
+      await this.access(tx, actor, org, siteId, 'active');
       await this.scope(tx, org, siteId, data);
       const assembly = await assemble(tx, org, siteId, data);
       if (!assembly.issues.length) {
@@ -91,7 +106,7 @@ export class AnalysisService extends FoundationService {
   async createBaseline(actor: Actor, org: string, siteId: string, input: unknown) {
     const definition = baselineDefinition.parse(input);
     return this.transaction(async (tx) => {
-      await this.access(tx, actor, org, siteId, true);
+      await this.access(tx, actor, org, siteId, 'write');
       await this.scope(tx, org, siteId, definition);
       const assembly = await assemble(tx, org, siteId, definition);
       if (assembly.issues.length) return { status: 'BLOCKED' as const, issues: assembly.issues };
@@ -105,6 +120,7 @@ export class AnalysisService extends FoundationService {
         tolerancePolicy: null,
         definition,
         assembly,
+        interpretation: interpretRegression(fit),
       };
       const inputHash = snapshotHash({ snapshot, algorithm: fit.algorithm });
       const existing = await tx.baselineVersion.findUnique({
@@ -152,7 +168,7 @@ export class AnalysisService extends FoundationService {
     const request = runDefinition.parse(input);
     uuid.parse(baselineId);
     return this.transaction(async (tx) => {
-      await this.access(tx, actor, org, siteId, true);
+      await this.access(tx, actor, org, siteId, 'write');
       const baseline = await tx.baselineVersion.findFirst({ where: { id: baselineId, organisationId: org, siteId } });
       if (!baseline) throw new DomainError('NOT_FOUND', 'This baseline is not available.', 404);
       const frozen = baseline.snapshot as unknown as BaselineSnapshot;
@@ -227,9 +243,27 @@ export class AnalysisService extends FoundationService {
       return { status: 'SAVED' as const, run, reused: false };
     });
   }
+  async historySites(actor: Actor, org: string) {
+    return this.transaction(async (tx) => {
+      const member = await this.membership(actor, org, undefined, tx);
+      const sites = await tx.site.findMany({
+        where: {
+          organisationId: org,
+          ...(member.role === 'SITE_MANAGER'
+            ? { assignments: { some: { membershipId: member.id, organisationId: org } } }
+            : {}),
+        },
+        select: { id: true, name: true, archivedAt: true },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+      });
+      return sites
+        .map(({ archivedAt, ...site }) => ({ ...site, archived: archivedAt !== null }))
+        .sort((a, b) => Number(a.archived) - Number(b.archived));
+    });
+  }
   async options(actor: Actor, org: string, siteId: string) {
     return this.transaction(async (tx) => {
-      await this.access(tx, actor, org, siteId, false);
+      await this.access(tx, actor, org, siteId, 'active');
       const meters = await tx.meter.findMany({
         where: { organisationId: org, siteId, archivedAt: null },
         select: { id: true, code: true, name: true },
@@ -251,7 +285,7 @@ export class AnalysisService extends FoundationService {
   async readBaseline(actor: Actor, org: string, siteId: string, baselineId: string) {
     uuid.parse(baselineId);
     return this.transaction(async (tx) => {
-      await this.access(tx, actor, org, siteId, false);
+      await this.access(tx, actor, org, siteId, 'history');
       const baseline = await tx.baselineVersion.findFirst({ where: { id: baselineId, organisationId: org, siteId } });
       if (!baseline) throw new DomainError('NOT_FOUND', 'This baseline is not available.', 404);
       return baseline;
@@ -260,7 +294,7 @@ export class AnalysisService extends FoundationService {
   async history(actor: Actor, org: string, siteId: string, input: unknown = {}) {
     const page = historyPageInput.parse(input);
     return this.transaction(async (tx) => {
-      await this.access(tx, actor, org, siteId, false);
+      await this.access(tx, actor, org, siteId, 'history');
       const anchor = page.cursor
         ? await tx.baselineVersion.findFirst({
             where: { id: page.cursor, organisationId: org, siteId },
@@ -306,7 +340,7 @@ export class AnalysisService extends FoundationService {
     uuid.parse(baselineId);
     const page = historyPageInput.parse(input);
     return this.transaction(async (tx) => {
-      await this.access(tx, actor, org, siteId, false);
+      await this.access(tx, actor, org, siteId, 'history');
       if (
         !(await tx.baselineVersion.findFirst({
           where: { id: baselineId, organisationId: org, siteId },
@@ -337,13 +371,71 @@ export class AnalysisService extends FoundationService {
       return { items, nextCursor: rows.length > page.limit ? items[items.length - 1].id : null };
     });
   }
+  async reviewNra(actor: Actor, org: string, siteId: string, runId: string, input: unknown) {
+    const data = nraReviewInput.parse(input);
+    uuid.parse(runId);
+    return this.transaction(async (tx) => {
+      await this.access(tx, actor, org, siteId, 'write');
+      await this.membership(actor, org, 'analysis:approve', tx);
+      const run = await tx.analysisRun.findFirst({
+        where: { id: runId, organisationId: org, siteId },
+        include: { reviews: { orderBy: { revision: 'desc' }, take: 1 } },
+      });
+      if (!run) throw new DomainError('NOT_FOUND', 'This run is not available.', 404);
+      if (run.authorId === actor.userId)
+        throw new DomainError('INDEPENDENT_REVIEW', 'Another Owner or Admin must review this run.', 403);
+      const snapshot = run.snapshot as unknown as { request: unknown };
+      const parsed = runDefinition.safeParse(snapshot.request);
+      if (!parsed.success || parsed.data.policy.nra === 'NONE' || !parsed.data.nraContext)
+        throw new DomainError('NRA_CONTEXT', 'Save a new NRA run with rationale and evidence before review.', 409);
+      const existing = await tx.nraReview.findUnique({
+        where: { organisationId_requestId: { organisationId: org, requestId: data.requestId } },
+      });
+      if (existing) {
+        if (
+          existing.runId !== runId ||
+          existing.reviewerId !== actor.userId ||
+          existing.previousId !== data.previousId ||
+          existing.decision !== data.decision ||
+          existing.reason !== data.reason
+        )
+          throw new DomainError('REQUEST_CONFLICT', 'This review request has already been used.', 409);
+        return existing;
+      }
+      const prior = run.reviews[0];
+      if ((prior?.id ?? null) !== data.previousId)
+        throw new DomainError('STALE_REVIEW', 'Review status changed. Reload this run before deciding.', 409);
+      if (data.decision === 'REVOKED' && prior?.decision !== 'APPROVED')
+        throw new DomainError('INVALID_REVIEW', 'Only an approval can be revoked.', 409);
+      const review = await tx.nraReview.create({
+        data: {
+          ...data,
+          organisationId: org,
+          siteId,
+          meterId: run.meterId,
+          runId,
+          revision: (prior?.revision ?? 0) + 1,
+          reviewerId: actor.userId,
+          policyVersion: 'nra-review-v1',
+        },
+      });
+      await this.audit(tx, actor, org, 'analysis.nra_reviewed', review.id, {
+        siteId,
+        runId,
+        decision: review.decision,
+        revision: review.revision,
+        policyVersion: review.policyVersion,
+      });
+      return review;
+    });
+  }
   async readRun(actor: Actor, org: string, siteId: string, runId: string) {
     uuid.parse(runId);
     return this.transaction(async (tx) => {
-      await this.access(tx, actor, org, siteId, false);
+      await this.access(tx, actor, org, siteId, 'history');
       const run = await tx.analysisRun.findFirst({
         where: { id: runId, organisationId: org, siteId },
-        include: { result: true, baseline: true },
+        include: { result: true, baseline: true, reviews: { orderBy: { revision: 'asc' } } },
       });
       if (!run) throw new DomainError('NOT_FOUND', 'This run is not available.', 404);
       return run;

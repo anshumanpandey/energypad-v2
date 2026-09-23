@@ -48,6 +48,8 @@ async function handle(request: Request, context: Context) {
           return analysisService.readBaseline(actor, org, s[3], s[6]);
         if (s.length === 8 && s[5] === 'baselines' && s[7] === 'runs' && method === 'POST')
           return analysisService.run(actor, org, s[3], s[6], await readBody(request));
+        if (s.length === 8 && s[5] === 'runs' && s[7] === 'reviews' && method === 'POST')
+          return analysisService.reviewNra(actor, org, s[3], s[6], await readBody(request));
         if (s.length === 7 && s[5] === 'runs' && method === 'GET')
           return analysisService.readRun(actor, org, s[3], s[6]);
       }

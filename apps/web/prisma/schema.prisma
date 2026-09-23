@@ -792,6 +792,7 @@ model AnalysisRun {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   baseline BaselineVersion @relation(fields: [baselineId, organisationId, siteId, meterId], references: [id, organisationId, siteId, meterId])
   result AnalysisResult?
+  reviews NraReview[]
   @@unique([id, organisationId, siteId, meterId])
   @@unique([organisationId, inputHash])
 }
@@ -805,4 +806,23 @@ model AnalysisResult {
   output Json
   run AnalysisRun @relation(fields: [runId, organisationId, siteId, meterId], references: [id, organisationId, siteId, meterId])
   @@unique([runId, organisationId, siteId, meterId])
+}
+
+model NraReview {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  meterId String @db.Uuid
+  runId String @db.Uuid
+  requestId String @db.Uuid
+  previousId String? @db.Uuid
+  revision Int
+  decision String
+  reason String
+  reviewerId String @db.Uuid
+  policyVersion String @default("nra-review-v1")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  run AnalysisRun @relation(fields: [runId, organisationId, siteId, meterId], references: [id, organisationId, siteId, meterId])
+  @@unique([organisationId, requestId])
+  @@unique([runId, revision])
 }

@@ -89,3 +89,51 @@ Added `analysis:write` for Owner/Admin/Analyst and used it consistently in the s
 Validation: 133 unit tests passed; TypeScript and targeted ESLint passed. Isolated PostgreSQL integration verified Analyst baseline/NRA writes and audit attribution, denied admin/source writes, scope rejection, immediate demotion/revocation and continued read access after demotion to Viewer. No schema migration or workspace membership changes were made. Workbook and methodology approval remain open.
 
 The expanded Chromium workflow also passed: an Analyst sees save controls, creates a baseline and NRA run, lacks Settings/Team links and membership API access, then loses write access immediately after demotion to Viewer. Existing pagination, read-only/site-assignment, NRA and mobile checks remained green. Role changes occurred only in the disposable browser-test workspace.
+
+## Readable regression diagnostics
+
+Added saved-baseline coefficient, inference, residual and covariance tables, with explicit unavailable-statistic reasons and scientific notation for small nonzero probabilities. Source revision IDs determine residual month labels, so reordered observations cannot mislabel a row. Raw provenance and the experimental/unvalidated status remain available.
+
+Validation: 136 unit tests passed, including tiny probabilities, undefined/underflow inference, unavailable covariance and reordered source observations. TypeScript, targeted ESLint, formatting and whitespace checks passed. The expanded Chromium workflow passed coefficient/residual/covariance visibility, a 390px viewport with diagnostics expanded, and existing saving/history/permission scenarios. The mobile screenshot was inspected. Tests used a disposable database; no migration or current workspace data changes were needed. Workbook and methodology acceptance remain open.
+
+## Audit point 1 — saved baseline warnings
+
+The selected baseline panel now shows the warnings frozen in its snapshot, even when no readiness check or reporting run is open. Loading a different, clean baseline removes the previous warnings.
+
+Validation: TypeScript, targeted ESLint, formatting and whitespace checks passed. The expanded Chromium test passed direct saving of an estimated-input baseline without a readiness check, reload and baseline-only history selection, and switching to a clean baseline. The test waits for save completion before reloading to avoid interrupting the history request. Existing analysis, permission and mobile scenarios remained green. No migration or workspace data changes were required.
+
+## Audit point 2 — archived-site history
+
+Saved baseline/run reads and history pagination now permit archived sites under the existing authorization checks. The analysis selector labels archived sites and opens a history-only view. Active input options, readiness and new calculations remain blocked. Site archival still removes Site Manager assignments; this fix does not restore that access.
+
+Validation: all 136 unit tests, TypeScript, targeted ESLint and whitespace checks passed. Disposable PostgreSQL integration verified unchanged saved results after archive, all four history read paths, blocked active operations, scoped site discovery, denied outsiders/unassigned managers and immediate revocation. Expanded Chromium coverage passed archive → reload → load baseline → load saved run, absence of calculation controls, and rejected direct API calculations. No schema migration or workspace data changes were required.
+
+## Audit point 3 — NRA rationale, evidence and independent review
+
+New NRA runs capture required rationale/assumptions and evidence references in their immutable snapshot/hash. Owner/Admin reviewers other than the author can record approval, rejection and revocation with a mandatory reason. Decision history stores reviewer, timestamp and policy version; retry IDs and previous-decision checks prevent duplicate or stale writes. Changed context produces a new unreviewed run. Legacy runs remain readable and cannot be approved without a new contextualized run. Numerical results remain UNVALIDATED regardless of review state.
+
+Validation: 138 unit tests, TypeScript, targeted ESLint and formatting checks passed. PostgreSQL integration passed independent role enforcement, self-review denial, tenant/site scoping, concurrent retry reuse, stale/conflicting requests, audit-failure rollback, approval/revocation/rejection, immutable decisions and composite constraints, changed-context invalidation, legacy-context guard, demotion and archived-site denial. The expanded Chromium workflow passed NRA context capture, independent approval and approval history after reload, alongside existing analysis scenarios.
+
+Migration `202609220002_nra_reviews` was tested in disposable databases and applied successfully to the verified local `energiepad_v2` database. The existing persistent local database was restarted because it was stopped. Existing baselines, runs and results were preserved; no live review decisions were inserted. Workbook and methodology acceptance remain open.
+
+## Audit point 4 — versioned statistical interpretation
+
+New baselines now preserve the provisional interpretation policy and its p-value/R² verdicts in their immutable snapshots. The master specification's inclusive p bands and directly verified NRA K41 R² thresholds are documented in the compatibility register. UI reads saved verdicts, leaves historical baselines without a policy unlabelled, and does not classify undefined/underflow statistics as zero. Numerical outputs and workbook acceptance status are unchanged.
+
+Validation: 156 unit tests passed. After correcting a test-only readonly typing issue, TypeScript and targeted ESLint passed and the 21 interpretation/diagnostics cases passed again. Tests cover exact/adjacent thresholds at unrounded precision, unavailable statistics, configuration snapshot isolation, unchanged numeric results and legacy rendering. Disposable PostgreSQL integration verified persisted policy/verdict content and preserved existing immutability/reuse guarantees. Expanded Chromium coverage passed saved policy/R² display plus existing desktop/mobile, history, permissions and NRA review workflows. No migration or existing baseline rewrites were required.
+
+## Audit point 5 — persisted multi-driver scenarios
+
+Added a dedicated disposable-database suite for HDD+CDD, HDD+CDD+DAYLIGHT, reversed weather-driver order and mixed POPULATION+HDD+CDD. The independent orthogonal fixture yields intercept 100, slopes 2/3/4, SSE 2 and September expected consumption of 185/309 kWh with 5 kWh variance. A newer conflicting configuration and reversed stored weather months verify explicit version/month/column selection. Missing weather or observed drivers block saving without partial records.
+
+Validation: the new integration suite passed and is included in `test:integration`. The new Chromium scenario passed both models through readiness, missing-weather rejection, configuration selection, coefficient display, reporting and unchanged saved-run reloads, including API provenance assertions. The existing full analysis browser workflow also passed with the new fixture setup. Initial browser failures were test navigation timing and an overly strict meter-label locator; corrected targeted reruns passed. TypeScript, targeted ESLint, formatting and whitespace checks passed.
+
+Fixtures are seeded only in disposable databases, with a database-name guard preventing ordinary workspace seeding. No provider calls, production seed route, schema migration or calculation changes were introduced. Synthetic tests do not close the outstanding three-workbook compatibility gate (audit point 6).
+
+## Audit point 6 — three-reference characterization, acceptance still open
+
+Received Single and Multi Routine Adjustment V2 and recorded their unchanged source hashes. The new `sprint4:verify` CLI fresh-extracts all three pinned layouts, computes baseline/reporting outputs from source inputs and records 305 numeric comparisons plus 36 matching monthly significance flags. It never promotes cached agreement into approval; no tolerance is inferred and acceptance exits blocked. The single workbook lacks intercept inference references; multi caches a zero intercept p-value and differs in R² labels. Details, proposed tolerances and review prerequisites are in [the workbook review](SPRINT_4_WORKBOOK_REVIEW.md).
+
+Alternate-engine LibreOffice conversion confirmed a nonzero multi intercept p-value but retained some cached precedents. It is explicitly not evidence of a complete Excel rebuild. All originals remain unchanged. Native recalculation, reviewed expected results and explicit numerical/methodology approval are still required before adding the approved golden acceptance path.
+
+Validation: 164 unit tests and six Python evidence tests passed; TypeScript and targeted ESLint passed. Tests verify independent calculation from synthetic known coefficients, both routine cell layouts, cache mutation detection, missing/nonfinite data rejection, integrity checks and refusal of false approval/recalculation claims. No application data or existing result snapshots were changed.

@@ -49,7 +49,7 @@ These differences are reported without declaring an approved tolerance. The R² 
 
 ## Remaining acceptance evidence
 
-- Supply the single- and multi-driver reference workbooks, with source provenance and layout review.
+- Supplied 23 September: single- and multi-driver references are now hash-pinned and characterized. See [three-workbook review](SPRINT_4_WORKBOOK_REVIEW.md) for current evidence and remaining review.
 - Verify units, driver order, period interpretation, NRA basis and expected cell/array results for each reference.
 - Record native recalculation evidence. Preserve the original file and hash if a new version is issued.
 - Record approved numerical tolerances and methodology policies before accepting engine compatibility.

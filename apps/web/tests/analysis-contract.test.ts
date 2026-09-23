@@ -1,6 +1,8 @@
 import { expect, it } from 'vitest';
 import {
   baselineDefinition,
+  runDefinition,
+  nraReviewInput,
   periodMonths,
   analysisPeriod,
   snapshotHash,
@@ -40,4 +42,38 @@ it('bounds history requests and rejects malformed cursors', () => {
   for (const limit of [0, 101, -1, 1.5, Infinity, '20', null])
     expect(historyPageInput.safeParse({ limit }).success).toBe(false);
   for (const cursor of ['', 'not-a-uuid', null]) expect(historyPageInput.safeParse({ cursor }).success).toBe(false);
+});
+
+it('requires NRA context and rejects empty rationale, evidence and review reasons', () => {
+  const input = {
+    period: { firstMonth: '2020-05', lastMonth: '2020-05' },
+    policy: {
+      version: 'test',
+      nra: 'POPULATION',
+      significanceBasis: 'POST_NRA',
+      comparison: 'AT_LEAST',
+      sigmaMultiplier: 2,
+      zeroThreshold: 'UNDEFINED',
+      negativePrediction: 'BLOCK',
+      extrapolation: 'BLOCK',
+    },
+    references: [{ month: '2020-05', referenceMonth: '2020-01' }],
+  };
+  expect(runDefinition.safeParse(input).success).toBe(false);
+  const context = { rationale: 'Changed occupancy', evidence: ['Observation register'] };
+  expect(runDefinition.safeParse({ ...input, nraContext: context }).success).toBe(true);
+  for (const nraContext of [
+    { ...context, rationale: ' ' },
+    { ...context, evidence: [] },
+    { ...context, evidence: [' '] },
+  ])
+    expect(runDefinition.safeParse({ ...input, nraContext }).success).toBe(false);
+  expect(
+    runDefinition.safeParse({ ...input, policy: { ...input.policy, nra: 'NONE' }, references: [], nraContext: context })
+      .success,
+  ).toBe(false);
+  expect(
+    nraReviewInput.safeParse({ requestId: crypto.randomUUID(), previousId: null, decision: 'APPROVED', reason: ' ' })
+      .success,
+  ).toBe(false);
 });

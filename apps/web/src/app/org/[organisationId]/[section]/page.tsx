@@ -18,7 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { pageActor, accessible } from '@/server/page-auth';
-import { foundation, siteService } from '@/server/services';
+import { foundation, siteService, analysisService } from '@/server/services';
 import { can, canManageRole, roleLabels } from '@/domain/policy';
 import { InviteForm, MemberActions, OrganisationForm, RevokeInvite } from '@/components/forms';
 import { SitesWorkspace, PortfoliosWorkspace } from '@/components/sites-workspace';
@@ -51,7 +51,13 @@ export default async function WorkspacePage({
             <p>Check monthly inputs, preserve a baseline and explore reporting results.</p>
           </div>
         </div>
-        <AnalysisWorkspace orgId={org.id} sites={sites} manage={can(membership.role, 'analysis:write')} />
+        <AnalysisWorkspace
+          orgId={org.id}
+          sites={await accessible(() => analysisService.historySites(actor, org.id))}
+          manage={can(membership.role, 'analysis:write')}
+          approve={can(membership.role, 'analysis:approve')}
+          actorId={actor.userId}
+        />
       </>
     );
   if (section === 'energy')

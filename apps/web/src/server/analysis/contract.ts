@@ -67,10 +67,25 @@ export const baselineDefinition = z
     if (d.drivers.some((code) => driverDefinitions[code].field !== null) !== (d.weather !== null))
       ctx.addIssue({ code: 'custom', message: 'Choose a weather configuration exactly when using weather drivers.' });
   });
+export const nraContext = z
+  .object({
+    rationale: z.string().trim().min(1).max(2000),
+    evidence: z.array(z.string().trim().min(1).max(500)).min(1).max(10),
+  })
+  .strict();
+export const nraReviewInput = z
+  .object({
+    requestId: z.uuid(),
+    previousId: z.uuid().nullable(),
+    decision: z.enum(['APPROVED', 'REJECTED', 'REVOKED']),
+    reason: z.string().trim().min(1).max(2000),
+  })
+  .strict();
 export const runDefinition = z
   .object({
     period: analysisPeriod,
     policy: reportingInput.shape.policy,
+    nraContext: nraContext.nullable().optional(),
     references: z
       .array(
         z.object({ month: analysisPeriod.shape.firstMonth, referenceMonth: analysisPeriod.shape.firstMonth }).strict(),
@@ -79,6 +94,10 @@ export const runDefinition = z
   })
   .strict()
   .superRefine((d, ctx) => {
+    if (d.policy.nra !== 'NONE' && !d.nraContext)
+      ctx.addIssue({ code: 'custom', message: 'NRA requires rationale and at least one evidence reference.' });
+    if (d.policy.nra === 'NONE' && d.nraContext)
+      ctx.addIssue({ code: 'custom', message: 'Omit NRA context when no adjustment is selected.' });
     const wanted = periodMonths(d.period);
     if (
       new Set(d.references.map((r) => r.month)).size !== d.references.length ||

@@ -5,6 +5,8 @@ import { EnergyService } from '../src/server/energy';
 import { DriverService } from '../src/server/drivers';
 import { AnalysisService } from '../src/server/analysis/service';
 import { actorFor } from '../src/server/foundation';
+import { interpretRegression } from '../src/domain/analysis/interpretation';
+import type { RegressionResult } from '../src/domain/analysis/regression';
 import { snapshotHash, type BaselineDefinition } from '../src/server/analysis/contract';
 import type { ReportingInput } from '../src/domain/analysis/reporting';
 const { db, cleanup } = await testDatabase();
@@ -75,6 +77,13 @@ try {
   assert.equal(retry.status, 'SAVED');
   if (first.status !== 'SAVED' || retry.status !== 'SAVED') throw Error('Baseline failed');
   assert.equal(first.baseline.id, retry.baseline.id);
+  const fitted = first.baseline.fit as unknown as Extract<RegressionResult, { status: 'FITTED' }>;
+  const storedSnapshot = first.baseline.snapshot as unknown as {
+    interpretation: ReturnType<typeof interpretRegression>;
+  };
+  assert.deepEqual(storedSnapshot.interpretation, interpretRegression(fitted));
+  assert.equal(storedSnapshot.interpretation.policy.version, 'statistical-interpretation-v1');
+
   assert.equal((await analysis.readBaseline(owner, org.id, site.id, first.baseline.id)).id, first.baseline.id);
   await assert.rejects(analysis.readBaseline(outsider, org.id, site.id, first.baseline.id));
   await assert.rejects(analysis.readBaseline(owner, org.id, otherSite.id, first.baseline.id));
@@ -139,6 +148,10 @@ try {
   const analystRun = await analysis.run(analyst, org.id, site.id, analystBaseline.baseline.id, {
     ...request,
     policy: { ...policy, nra: 'POPULATION' },
+    nraContext: {
+      rationale: 'Occupancy changed; use the selected baseline month.',
+      evidence: ['Synthetic monthly population observations'],
+    },
     references: [{ month: '2020-05', referenceMonth: '2020-01' }],
   });
   assert.equal(analystRun.status, 'SAVED');
@@ -149,6 +162,131 @@ try {
       where: { actorUserId: analyst.userId, targetId: { in: [analystBaseline.baseline.id, analystRun.run.id] } },
     }),
     2,
+  );
+  const reviewRequest = {
+    requestId: crypto.randomUUID(),
+    previousId: null,
+    decision: 'APPROVED',
+    reason: 'Reviewed the reference observations and assumptions.',
+  };
+  await assert.rejects(analysis.reviewNra(analyst, org.id, site.id, analystRun.run.id, reviewRequest), { status: 403 });
+  await assert.rejects(analysis.reviewNra(outsider, org.id, site.id, analystRun.run.id, reviewRequest));
+  await assert.rejects(analysis.reviewNra(owner, org.id, otherSite.id, analystRun.run.id, reviewRequest), {
+    status: 404,
+  });
+  // Even an Owner cannot self-approve.
+  await assert.rejects(analysis.reviewNra(owner, org.id, site.id, run.run.id, reviewRequest), { status: 403 });
+  const [approved, approvedRetry] = await Promise.all([
+    analysis.reviewNra(owner, org.id, site.id, analystRun.run.id, reviewRequest),
+    analysis.reviewNra(owner, org.id, site.id, analystRun.run.id, reviewRequest),
+  ]);
+  assert.equal(approved.id, approvedRetry.id);
+  assert.equal(await db.auditEvent.count({ where: { targetId: approved.id, action: 'analysis.nra_reviewed' } }), 1);
+  assert.equal((await analysis.readRun(owner, org.id, site.id, analystRun.run.id)).compatibility, 'UNVALIDATED');
+  await assert.rejects(
+    analysis.reviewNra(owner, org.id, site.id, analystRun.run.id, { ...reviewRequest, reason: 'Changed retry' }),
+    { status: 409 },
+  );
+  await assert.rejects(
+    analysis.reviewNra(owner, org.id, site.id, analystRun.run.id, { ...reviewRequest, requestId: crypto.randomUUID() }),
+    { status: 409 },
+  );
+  await assert.rejects(
+    analysis.reviewNra({ ...owner, correlationId: 'invalid-uuid' }, org.id, site.id, analystRun.run.id, {
+      ...reviewRequest,
+      requestId: crypto.randomUUID(),
+      previousId: approved.id,
+      decision: 'REVOKED',
+    }),
+  );
+  assert.equal(await db.nraReview.count({ where: { runId: analystRun.run.id } }), 1);
+  const revoked = await analysis.reviewNra(owner, org.id, site.id, analystRun.run.id, {
+    ...reviewRequest,
+    requestId: crypto.randomUUID(),
+    previousId: approved.id,
+    decision: 'REVOKED',
+    reason: 'Evidence needs clarification.',
+  });
+  const rejected = await analysis.reviewNra(owner, org.id, site.id, analystRun.run.id, {
+    ...reviewRequest,
+    requestId: crypto.randomUUID(),
+    previousId: revoked.id,
+    decision: 'REJECTED',
+    reason: 'Reference month is unsuitable.',
+  });
+  assert.equal(rejected.revision, 3);
+  await assert.rejects(
+    analysis.reviewNra(owner, org.id, site.id, analystRun.run.id, {
+      ...reviewRequest,
+      requestId: crypto.randomUUID(),
+      previousId: rejected.id,
+      decision: 'REVOKED',
+    }),
+    { status: 409 },
+  );
+  await assert.rejects(db.nraReview.update({ where: { id: approved.id }, data: { reason: 'rewrite' } }));
+  await assert.rejects(db.nraReview.delete({ where: { id: approved.id } }));
+  await assert.rejects(db.$executeRawUnsafe('TRUNCATE TABLE "NraReview"'));
+  await assert.rejects(
+    db.nraReview.create({
+      data: {
+        ...approved,
+        id: crypto.randomUUID(),
+        requestId: crypto.randomUUID(),
+        siteId: otherSite.id,
+        previousId: rejected.id,
+        revision: 4,
+      },
+    }),
+  );
+  const changedContext = await analysis.run(analyst, org.id, site.id, analystBaseline.baseline.id, {
+    ...request,
+    policy: { ...policy, nra: 'POPULATION' },
+    references: [{ month: '2020-05', referenceMonth: '2020-01' }],
+    nraContext: { rationale: 'Revised assumptions for review.', evidence: ['Revised occupancy log'] },
+  });
+  if (changedContext.status !== 'SAVED') throw Error('Changed NRA failed');
+  assert.notEqual(changedContext.run.id, analystRun.run.id);
+  assert.equal((await analysis.readRun(owner, org.id, site.id, changedContext.run.id)).reviews.length, 0);
+  const admin = actorFor(
+    (await db.user.create({ data: { email: 'nra-admin@example.test', emailVerified: new Date() } })).id,
+  );
+  const adminMember = await db.membership.create({
+    data: { organisationId: org.id, userId: admin.userId, role: 'ADMIN' },
+  });
+  await analysis.reviewNra(admin, org.id, site.id, changedContext.run.id, {
+    ...reviewRequest,
+    requestId: crypto.randomUUID(),
+  });
+  await db.membership.update({ where: { id: adminMember.id }, data: { role: 'VIEWER' } });
+  await assert.rejects(
+    analysis.reviewNra(admin, org.id, site.id, changedContext.run.id, {
+      ...reviewRequest,
+      requestId: crypto.randomUUID(),
+    }),
+    { status: 403 },
+  );
+  const legacySnapshot = JSON.parse(JSON.stringify(analystRun.run.snapshot));
+  delete legacySnapshot.request.nraContext;
+  const legacyRun = await db.analysisRun.create({
+    data: {
+      organisationId: org.id,
+      siteId: site.id,
+      meterId: meter.id,
+      baselineId: analystBaseline.baseline.id,
+      authorId: analyst.userId,
+      snapshot: legacySnapshot,
+      inputHash: snapshotHash({ legacySnapshot }),
+      result: { create: { output: JSON.parse(JSON.stringify(analystRun.run.result!.output)) } },
+    },
+  });
+  await assert.rejects(
+    analysis.reviewNra(owner, org.id, site.id, legacyRun.id, { ...reviewRequest, requestId: crypto.randomUUID() }),
+    { code: 'NRA_CONTEXT' },
+  );
+  assert.equal((await analysis.readRun(owner, org.id, site.id, legacyRun.id)).reviews.length, 0);
+  console.log(
+    '✓ independent NRA review, atomic audit, retry/stale protection, immutable decisions and fresh review after corrections',
   );
   await assert.rejects(
     sites.updateOrganisation(analyst, org.id, { name: 'Changed', currency: 'GBP', timezone: 'UTC' }),
@@ -187,6 +325,10 @@ try {
   const nraRequest = {
     ...request,
     policy: { ...policy, nra: 'POPULATION' },
+    nraContext: {
+      rationale: 'Occupancy changed; use the selected baseline month.',
+      evidence: ['Synthetic monthly population observations'],
+    },
     references: [{ month: '2020-05', referenceMonth: '2020-01' }],
   };
   const nraRun = await analysis.run(owner, org.id, site.id, first.baseline.id, nraRequest);
@@ -443,6 +585,49 @@ try {
   await assert.rejects(analysis.runHistory(outsider, org.id, site.id, first.baseline.id, {}));
   await assert.rejects(analysis.runHistory(owner, org.id, site.id, first.baseline.id, { limit: 101 }));
   console.log('✓ complete history beyond 100 entries, timestamp ties, concurrent insert stability and scoped cursors');
+  const historyReader = actorFor(
+    (await db.user.create({ data: { email: 'history-reader@example.test', emailVerified: new Date() } })).id,
+  );
+  const historyMember = await db.membership.create({
+    data: { organisationId: org.id, userId: historyReader.userId, role: 'SITE_MANAGER' },
+  });
+  await db.siteAssignment.create({ data: { membershipId: historyMember.id, organisationId: org.id, siteId: site.id } });
+  assert.ok((await analysis.historySites(historyReader, org.id)).some((s) => s.id === site.id));
+  const beforeArchive = await analysis.readRun(owner, org.id, site.id, run.run.id);
+  await sites.archiveSite(owner, org.id, site.id);
+  await assert.rejects(
+    analysis.reviewNra(owner, org.id, site.id, analystRun.run.id, {
+      ...reviewRequest,
+      requestId: crypto.randomUUID(),
+      previousId: rejected.id,
+    }),
+    { status: 404 },
+  );
+  assert.ok((await analysis.historySites(owner, org.id)).some((s) => s.id === site.id && s.archived));
+  assert.deepEqual(await analysis.readRun(owner, org.id, site.id, run.run.id), beforeArchive);
+  assert.equal((await analysis.readBaseline(owner, org.id, site.id, first.baseline.id)).id, first.baseline.id);
+  assert.ok((await analysis.history(owner, org.id, site.id)).items.length);
+  assert.ok((await analysis.runHistory(owner, org.id, site.id, first.baseline.id)).items.length);
+  await assert.rejects(analysis.options(owner, org.id, site.id), { status: 404 });
+  await assert.rejects(analysis.inspectReadiness(owner, org.id, site.id, definition), { status: 404 });
+  await assert.rejects(analysis.createBaseline(owner, org.id, site.id, definition), { status: 404 });
+  await assert.rejects(analysis.run(owner, org.id, site.id, first.baseline.id, request), { status: 404 });
+  await assert.rejects(analysis.readRun(outsider, org.id, site.id, run.run.id));
+  await assert.rejects(analysis.historySites(outsider, org.id));
+  // Archiving revokes site assignments under the existing site policy.
+  assert.equal((await analysis.historySites(historyReader, org.id)).length, 0);
+  await assert.rejects(analysis.readRun(historyReader, org.id, site.id, run.run.id), { status: 404 });
+  await assert.rejects(analysis.history(historyReader, org.id, site.id), { status: 404 });
+  await assert.rejects(analysis.runHistory(historyReader, org.id, site.id, first.baseline.id), { status: 404 });
+  await assert.rejects(analysis.readBaseline(historyReader, org.id, site.id, first.baseline.id), { status: 404 });
+  // Exercise an explicitly retained assignment, without bypassing the read policy.
+  await db.siteAssignment.create({ data: { membershipId: historyMember.id, organisationId: org.id, siteId: site.id } });
+  assert.equal((await analysis.readRun(historyReader, org.id, site.id, run.run.id)).id, run.run.id);
+  assert.equal((await analysis.historySites(historyReader, org.id))[0].archived, true);
+  await db.membership.update({ where: { id: historyMember.id }, data: { revokedAt: new Date() } });
+  await assert.rejects(analysis.readRun(historyReader, org.id, site.id, run.run.id));
+  await assert.rejects(analysis.historySites(historyReader, org.id));
+  console.log('✓ archived history preserved, active calculations blocked, scoped discovery and revoked access denied');
 } finally {
   await cleanup();
 }

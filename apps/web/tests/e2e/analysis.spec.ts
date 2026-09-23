@@ -21,7 +21,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
       return !!link;
     })
     .toBe(true);
-  await page.goto(link);
+  await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   await page.getByLabel('Organisation name').fill('Analysis Browser Test');
   await page.getByRole('button', { name: 'Create workspace' }).click();
   await expect(page).toHaveURL(/\/overview$/);
@@ -79,6 +79,19 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await expect(page.getByText('Inputs ready for experimental fitting')).toBeVisible();
   await page.getByRole('button', { name: 'Save experimental baseline' }).click();
   await expect(page.getByRole('heading', { name: 'Selected baseline · revision 1' })).toBeVisible();
+  await page.getByText('Regression diagnostics', { exact: true }).click();
+  await expect(page.getByRole('table', { name: 'Model coefficients' })).toBeVisible();
+  await expect(page.getByRole('note', { name: 'Saved statistical interpretation' })).toContainText(
+    'R² verdict: Very strong',
+  );
+  await expect(page.getByRole('note', { name: 'Saved statistical interpretation' })).toContainText(
+    'statistical-interpretation-v1',
+  );
+  await expect(
+    page.getByRole('region', { name: 'Baseline residuals', exact: true }).getByRole('rowheader', { name: '2020-01' }),
+  ).toBeVisible();
+  await page.getByText('Coefficient covariance', { exact: true }).click();
+  await expect(page.getByRole('table', { name: 'Coefficient covariance matrix' })).toBeVisible();
   await page.getByLabel('Reporting first month').fill('2020-05');
   await page.getByLabel('Reporting last month').fill('2020-05');
   await page.getByRole('button', { name: 'Save reporting run' }).click();
@@ -99,6 +112,10 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await page.getByLabel('Reporting last month').fill('2020-06');
   await page.getByLabel('Outside baseline driver range').selectOption('ALLOW_WITH_WARNING');
   await page.getByLabel('Non-routine adjustment').selectOption('HOURS_AND_POPULATION');
+  await page
+    .getByLabel('NRA rationale and assumptions')
+    .fill('Hours and occupancy changed. Selected reference months represent normal operation.');
+  await page.getByLabel('NRA evidence references').fill('Test operating-hours and population logs');
   await page.getByLabel('Reference for 2020-05').fill('2020-03');
   await page.getByLabel('Reference for 2020-06').fill('2020-02');
   await page.getByRole('button', { name: 'Save reporting run' }).click();
@@ -139,6 +156,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     .first()
     .click();
   await expect(page.getByRole('heading', { name: 'Reporting results · experimental' })).toBeVisible();
+  await page.getByText('Regression diagnostics', { exact: true }).click();
+  await page.getByText('Coefficient covariance', { exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('analysis-mobile.png'), fullPage: true });
@@ -172,7 +191,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     await viewer.getByLabel('Email address').fill(viewerEmail);
     await viewer.getByRole('button', { name: 'Continue with email' }).click();
     await expect(viewer.getByRole('heading', { name: 'Check your inbox.' })).toBeVisible();
-    await viewer.goto(await localMailLink('sign-in link'));
+    await viewer.goto(await localMailLink('sign-in link'), { waitUntil: 'domcontentloaded', timeout: 60_000 });
     await viewer.getByRole('button', { name: 'Accept invitation' }).click();
     await expect(viewer).toHaveURL(/\/overview$/);
     await viewer.goto(`/org/${org}/analysis`);
@@ -249,11 +268,33 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     await viewer.getByLabel('Reporting first month').fill('2020-05');
     await viewer.getByLabel('Reporting last month').fill('2020-05');
     await viewer.getByLabel('Non-routine adjustment').selectOption('POPULATION');
+    await viewer
+      .getByLabel('NRA rationale and assumptions')
+      .fill('Occupancy changed from the baseline reference month.');
+    await viewer.getByLabel('NRA evidence references').fill('Test occupancy register');
     await viewer.getByLabel('Reference for 2020-05').fill('2020-02');
     await viewer.getByLabel('Outside baseline driver range').selectOption('ALLOW_WITH_WARNING');
     await viewer.getByRole('button', { name: 'Save reporting run' }).click();
     await expect(viewer.getByRole('heading', { name: 'NRA inputs used in this run' })).toBeVisible();
     await expect(viewer.getByRole('status').filter({ hasText: 'Experimental reporting run saved' })).toBeVisible();
+    await page.reload();
+    await page
+      .getByRole('button', { name: /^View run/ })
+      .first()
+      .click();
+    const reviewPanel = page.getByRole('region', { name: 'NRA review', exact: true });
+    await expect(reviewPanel).toContainText('Status: PENDING');
+    await page.getByLabel('Review reason').fill('Reference evidence and assumptions reviewed.');
+    await page.getByRole('button', { name: 'Record NRA review' }).click();
+    await expect(reviewPanel).toContainText('Status: APPROVED');
+    await expect(page.getByRole('status').filter({ hasText: 'NRA review recorded' })).toBeVisible();
+    await page.reload();
+    await page
+      .getByRole('button', { name: /^View run/ })
+      .first()
+      .click();
+    await expect(reviewPanel).toContainText('Status: APPROVED');
+    await expect(reviewPanel).toContainText('Numerical compatibility remains unvalidated');
     expect(
       (
         await page.request.patch(`${base}/members/${member.id}`, {
@@ -272,5 +313,78 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   } finally {
     await viewerContext.close();
   }
+  // Frozen input warnings must survive direct save and baseline-only history reads.
+  await page.reload();
+  await page.getByLabel('Baseline first month').fill('2020-01');
+  await page.getByLabel('Baseline last month').fill('2020-06');
+  await page.getByLabel('Population', { exact: true }).check();
+  await page.getByLabel('Estimated consumption').selectOption('ALLOW_WITH_WARNING');
+  await page.getByRole('button', { name: 'Save experimental baseline' }).click();
+  const selectedBaseline = page.getByRole('region', { name: 'Selected baseline', exact: true });
+  const baselineWarnings = selectedBaseline.getByRole('note', { name: 'Baseline input warnings' });
+  await expect(baselineWarnings).toContainText('2020-06: Consumption is estimated.');
+  await expect(page.getByRole('status').filter({ hasText: 'Experimental baseline saved' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Reporting results', exact: true })).toHaveCount(0);
+  await page.reload();
+  await page
+    .getByRole('button', { name: /^Load baseline/ })
+    .first()
+    .click();
+  await expect(baselineWarnings).toContainText('2020-06: Consumption is estimated.');
+  await expect(page.getByRole('region', { name: 'Reporting results', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Load older baselines', exact: true }).click();
+  await expect(page.getByRole('button', { name: /^Load baseline/ })).toHaveCount(2);
+  await page
+    .getByRole('button', { name: /^Load baseline/ })
+    .last()
+    .click();
+  await expect(selectedBaseline).toContainText('2020-02 – 2020-04');
+  await expect(baselineWarnings).toHaveCount(0);
+  const archivedBaselineId = (await (await page.request.get(`${base}/sites/${site.id}/analysis/history`)).json())
+    .items[0].id;
+  expect(
+    (await page.request.delete(`${base}/sites/${site.id}`, { headers: { origin: 'http://localhost:3101' } })).ok(),
+  ).toBe(true);
+  await page.reload();
+  await expect(page.getByLabel('Analysis site').getByRole('option', { selected: true })).toContainText('Archived');
+  await expect(
+    page.getByText('Archived site · Saved baselines and runs are available for review. New calculations are disabled.'),
+  ).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Baseline setup' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save experimental baseline' })).toHaveCount(0);
+  await page
+    .getByRole('button', { name: /^Load baseline/ })
+    .first()
+    .click();
+  await expect(baselineWarnings).toContainText('2020-06: Consumption is estimated.');
+  await expect(page.getByRole('button', { name: 'Save reporting run' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Load older baselines', exact: true }).click();
+  await page
+    .getByRole('button', { name: /^View run/ })
+    .first()
+    .click();
+  await expect(page.getByRole('heading', { name: 'Reporting results · experimental' })).toBeVisible();
+  expect((await page.request.get(`${base}/sites/${site.id}/analysis/options`)).status()).toBe(404);
+  expect(
+    (
+      await page.request.post(`${base}/sites/${site.id}/analysis/baselines/${archivedBaselineId}/runs`, {
+        headers: { origin: 'http://localhost:3101' },
+        data: {
+          period: { firstMonth: '2020-05', lastMonth: '2020-05' },
+          policy: {
+            version: 'archive-test',
+            nra: 'NONE',
+            significanceBasis: 'POST_NRA',
+            comparison: 'AT_LEAST',
+            sigmaMultiplier: 2,
+            zeroThreshold: 'UNDEFINED',
+            negativePrediction: 'BLOCK',
+            extrapolation: 'BLOCK',
+          },
+          references: [],
+        },
+      })
+    ).status(),
+  ).toBe(404);
   expect(errors).toEqual([]);
 });
