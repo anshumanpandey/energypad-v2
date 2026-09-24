@@ -2,6 +2,7 @@ import { ArrowUpRight, Check, ShieldCheck } from 'lucide-react';
 import { Brand } from '@/components/brand';
 import { SubmitButton } from '@/components/submit-button';
 import { login } from './actions';
+import { LoginError } from './login-error';
 export default async function Login({
   searchParams,
 }: {
@@ -41,13 +42,7 @@ export default async function Login({
           <span className="tag">Welcome to EnergiePad</span>
           <h2>Your workspace awaits.</h2>
           <p>Sign in or create your account with a secure email link. No password to remember.</p>
-          {params.error && (
-            <div role="alert" className="notice error">
-              {params.error === 'InvalidEmail'
-                ? 'Enter a valid email address.'
-                : 'We couldn’t sign you in. Request a fresh link, or try again in 15 minutes.'}
-            </div>
-          )}
+          <LoginError error={params.error} />
           <form action={login}>
             <input type="hidden" name="callbackUrl" value={params.callbackUrl ?? '/'} />
             <label>
