@@ -64,7 +64,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await page.route('**/analysis/history*', async (route) => {
     const url = new URL(route.request().url());
     url.searchParams.set('limit', '1');
-    await route.fulfill({ response: await route.fetch({ url: url.toString() }) });
+    // Keep the browser request lifecycle intact, including cancellation during navigation.
+    await route.continue({ url: url.toString() });
   });
   await page.goto(`/org/${org}/analysis`);
   await expect(page.getByRole('heading', { name: 'Advanced Analysis', exact: true })).toBeVisible();
@@ -188,10 +189,17 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     const viewer = await viewerContext.newPage();
     viewer.setDefaultTimeout(20_000);
     await viewer.goto(await localMailLink('Join '));
+    await expect(viewer).toHaveURL(/\/login\?callbackUrl=/);
+    const invitationPath = new URL(viewer.url()).searchParams.get('callbackUrl');
+    expect(invitationPath).toMatch(/^\/invite\/[a-f0-9]{64}$/);
+    await viewer.getByRole('link', { name: 'Previously used email links? Sign in with an email link.' }).click();
+    await expect(viewer.getByRole('heading', { name: 'Sign in with an email link.' })).toBeVisible();
+    await expect(viewer.locator('input[name="callbackUrl"]')).toHaveValue(invitationPath!);
     await viewer.getByLabel('Email address').fill(viewerEmail);
     await viewer.getByRole('button', { name: 'Continue with email' }).click();
     await expect(viewer.getByRole('heading', { name: 'Check your inbox.' })).toBeVisible();
     await viewer.goto(await localMailLink('sign-in link'), { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    await expect(viewer).toHaveURL(new RegExp(`${invitationPath}$`));
     await viewer.getByRole('button', { name: 'Accept invitation' }).click();
     await expect(viewer).toHaveURL(/\/overview$/);
     await viewer.goto(`/org/${org}/analysis`);

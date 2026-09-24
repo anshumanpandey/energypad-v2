@@ -530,7 +530,8 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   let browserJob: Record<string, unknown> | null = null;
   const weatherPath = `**/api/v1/organisations/${org}/sites/${site.id}/energy/weather`;
   await page.route(`${weatherPath}?year=2021`, async (route) => {
-    const response = await route.fetch();
+    // Retry connection resets from the development server; HTTP failures still fail the assertions.
+    const response = await route.fetch({ maxRetries: 2 });
     const body = await response.json();
     await route.fulfill({
       response,

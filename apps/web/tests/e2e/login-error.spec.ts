@@ -1,10 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test('login errors show once and do not persist after refresh', async ({ page }) => {
-  for (const error of ['Signin', 'Signin', 'InvalidEmail']) {
+  for (const error of ['Signin', 'Signin', 'InvalidEmail', 'Credentials', 'RateLimited']) {
     await page.goto(`/login?error=${error}&callbackUrl=%2Finvite%2Fexample#login`);
     await expect(page.getByRole('main').getByRole('alert')).toContainText(
-      error === 'InvalidEmail' ? 'Enter a valid email address.' : 'We couldn’t sign you in.',
+      {
+        InvalidEmail: 'Enter a valid email address.',
+        Credentials: 'Email or password is incorrect.',
+        RateLimited: 'Too many attempts.',
+      }[error] ?? 'We couldn’t sign you in.',
     );
     await expect(page).toHaveURL(/\/login\?callbackUrl=%2Finvite%2Fexample#login$/);
     await expect(page.locator('input[name="callbackUrl"]')).toHaveValue('/invite/example');
