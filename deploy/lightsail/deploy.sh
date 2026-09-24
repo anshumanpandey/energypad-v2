@@ -8,12 +8,22 @@ cd /opt/energiepad
 for file in runtime.env database.env migration.env; do
   [[ -s /etc/energiepad/$file ]] || { echo "Missing /etc/energiepad/$file" >&2; exit 1; }
 done
-# Reject incomplete production setup before accepting a large image stream.
-if ! grep -Eq '^AUTH_URL=https://[^[:space:]]+' /etc/energiepad/runtime.env; then
-  echo 'Configure an HTTPS AUTH_URL in /etc/energiepad/runtime.env before deployment.' >&2
-  exit 1
+# HTTP by IP is an explicit, temporary preview mode; normal deployments require HTTPS.
+required=(DATABASE_URL AUTH_SECRET OPEN_METEO_API_KEY)
+if grep -qx 'DEPLOYMENT_MODE=ip-preview' /etc/energiepad/runtime.env; then
+  if ! grep -Eq '^AUTH_URL=http://([0-9]{1,3}\.){3}[0-9]{1,3}$' /etc/energiepad/runtime.env; then
+    echo 'IP preview requires AUTH_URL=http://<IPv4 address>.' >&2
+    exit 1
+  fi
+  echo 'Deploying HTTP IP preview. Email sign-in requires configured Resend credentials.'
+else
+  if ! grep -Eq '^AUTH_URL=https://[^[:space:]]+' /etc/energiepad/runtime.env; then
+    echo 'Configure an HTTPS AUTH_URL in /etc/energiepad/runtime.env before deployment.' >&2
+    exit 1
+  fi
+  required+=(RESEND_API_KEY EMAIL_FROM)
 fi
-for variable in DATABASE_URL AUTH_SECRET RESEND_API_KEY EMAIL_FROM OPEN_METEO_API_KEY; do
+for variable in "${required[@]}"; do
   if ! grep -Eq "^${variable}=.+$" /etc/energiepad/runtime.env; then
     echo "Missing production setting: $variable" >&2
     exit 1

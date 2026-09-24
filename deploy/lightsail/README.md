@@ -79,7 +79,7 @@ published port; the app listens only on host loopback through Docker.
 
 ## Verification and recovery
 
-A deployment refuses incomplete production configuration, loads the streamed
+A deployment validates the selected mode, loads the streamed
 image, waits for Postgres, creates a `pg_dump` in `/var/backups/energiepad`, runs
 migrations and the idempotent plan seed, then waits for `/api/health` (including
 a database query) and starts the weather worker. Failed startup restores the
@@ -93,8 +93,9 @@ Inspect with `sudo docker compose --env-file /opt/energiepad/release.env -f
 before customer data is stored. Monitor disk usage: backups and previous images
 are retained intentionally, without automatic destructive pruning.
 
-The first deployment still requires production domain/mail configuration, a
-successful CI run, and an HTTPS sign-in smoke test. Deployment does not change Sprint 4's UNVALIDATED
+A normal production launch requires domain/mail configuration, a successful CI
+run, and an HTTPS sign-in smoke test. IP preview can run without those settings;
+email authentication remains unavailable until the mail provider is configured. Deployment does not change Sprint 4's UNVALIDATED
 scientific-output status.
 
 ## Current installation status
@@ -102,7 +103,9 @@ scientific-output status.
 The instance at `16.60.161.140` has Docker/Compose/nginx installed, the restricted
 `deploy` account and scripts installed, and a healthy Postgres database with the
 separate runtime role. Its current IPv4 is dynamic. Environment files are
-root-only; domain, Resend and sender settings are blank. The existing weather
+root-only; Resend and sender settings are blank. The user requested temporary
+HTTP access by public IP, so AUTH_URL is http://16.60.161.140 and
+DEPLOYMENT_MODE is ip-preview. The existing weather
 credential has been configured. The dedicated
 key is stored locally in the gitignored `apps/web/.local/deployment/` directory.
 No key or production credential belongs in this repository.
@@ -112,9 +115,24 @@ secrets are configured, the dedicated repository publishing key is authorized,
 and the app/workflow have been published. GitHub Actions is enabled. The current
 instance IP is still dynamic; attach a static IP and update `LIGHTSAIL_HOST` and
 `LIGHTSAIL_KNOWN_HOSTS` before relying on deployment across instance stop/start.
-Production domain, Resend and sender settings remain incomplete, so the server
-preflight intentionally refuses activation. Public app/TLS are not yet live.
+Domain/TLS configuration is deferred. The installed nginx proxy serves HTTP on
+port 80 and forwards to the loopback-only application port. Email sign-in still
+fails closed while Resend and sender settings are absent.
 
 Validation passed: production Docker image build, loopback container health check
 with PostgreSQL (`status: ok`), TypeScript, health-route lint, formatting, YAML
 parsing, shell syntax, SSH command restriction and missing-config preflight.
+
+## Temporary IP preview
+
+The explicit `DEPLOYMENT_MODE=ip-preview` setting in `/etc/energiepad/runtime.env`
+allows `AUTH_URL=http://<IPv4 address>` and does not require mail credentials to
+start the app. It does not bypass authentication or enable development mail
+capture. Without Resend configured, email sign-in and invitations cannot send.
+HTTP is unencrypted; use this mode only for the temporary preview requested by
+the operator. `nginx-ip-preview.conf` contains the current instance IP and
+suppresses access logging so auth/invitation tokens are not logged.
+
+To switch to normal production, configure a domain/TLS reverse proxy, set the
+HTTPS AUTH_URL and mail settings, remove DEPLOYMENT_MODE, and redeploy. Reinstall
+the root-owned deploy script through admin SSH when changing its validation.
