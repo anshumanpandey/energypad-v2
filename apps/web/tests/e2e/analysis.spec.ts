@@ -7,7 +7,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   const email = `analysis-${randomUUID()}@example.test`;
-  await page.goto('/login');
+  await page.goto('/login/email');
   await page.getByLabel('Email address').fill(email);
   await page.getByRole('button', { name: 'Continue with email' }).click();
   await expect(page.getByRole('heading', { name: 'Check your inbox.' })).toBeVisible();

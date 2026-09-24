@@ -5,10 +5,12 @@ import { createHash } from 'node:crypto';
 import { db } from './db';
 import { mailer } from './mail';
 import { email } from '../domain/policy';
+import { sessionCookie, sessionMaxAge } from './session-cookie';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
-  session: { strategy: 'database', maxAge: 7 * 86400, updateAge: 86400 },
+  session: { strategy: 'database', maxAge: sessionMaxAge, updateAge: 86400 },
+  cookies: { sessionToken: sessionCookie() },
   pages: { signIn: '/login', verifyRequest: '/login/check-email', error: '/login' },
   providers: [
     Resend({

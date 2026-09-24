@@ -23,9 +23,11 @@ npm run db:seed
 npm run dev
 ```
 
-Open **http://localhost:3100** (use this hostname to match `AUTH_URL`). Sign in with an email address. In development, with no `RESEND_API_KEY`, email messages are captured as private JSON files under `.local/mail`. Open the newest file and follow the URL in its `text` field. Nothing is delivered to an external recipient. The inbox is deliberately not exposed through HTTP. Treat these files as credentials and delete expired messages when no longer needed.
+Open **http://localhost:3100** (use this hostname to match `AUTH_URL`). Create an account at `/signup` using your email and a 12–128 character password, then sign in at `/login`. Signup immediately starts a session; no confirmation email or Resend configuration is required. Email addresses are normalized, passwords are salted and hashed with scrypt, and login/signup attempts are rate limited. Sessions remain server-side and last seven days. Accounts created this way are allowed workspace access without claiming that their email has been verified.
 
-After verification, create an organisation, invite a teammate, and open their invitation in a separate browser profile. Sign in with the **invited email** and accept. Settings and role management require Owner/Admin; only Owners can manage other Owners. Create another organisation from the sidebar and use the workspace selector to switch.
+Existing email-link accounts can continue at `/login/email`; signup cannot overwrite an existing account or set its password. Password reset/change is not implemented yet. In development, with no `RESEND_API_KEY`, email messages are captured as private JSON files under `.local/mail`. Open the newest file and follow the URL in its `text` field. Nothing is delivered to an external recipient. Treat these files as credentials and delete expired messages when no longer needed.
+
+After signing up, create an organisation, invite a teammate, and open their invitation in a separate browser profile. Sign in with the **invited email** and accept. Settings and role management require Owner/Admin; only Owners can manage other Owners. Create another organisation from the sidebar and use the workspace selector to switch.
 
 The plan seed is idempotent and creates only the four internal plan definitions. It does not create users, demo metrics, sites or credentials. Site/portfolio management, meters and site workbook imports are available. Energy data, analysis, reports, billing and legacy account migration remain later sprints.
 
@@ -62,7 +64,7 @@ Auth.js is pinned to `5.0.0-beta.32`; it is a deliberate pre-release dependency 
 
 ## Production configuration (not deployed)
 
-Set a dedicated PostgreSQL `DATABASE_URL`, an HTTPS `AUTH_URL`, a cryptographically random `AUTH_SECRET`, a Resend `RESEND_API_KEY` and `EMAIL_FROM` using a verified sender domain. Mail capture is disabled in production; missing delivery configuration fails closed. Restrict the application database role to normal DML, and use a separate migration role so the application cannot disable triggers. Set the trusted proxy/host configuration for the chosen host and redact auth callback/invitation URLs in ingress logs. The app does not log raw tokens.
+Set a dedicated PostgreSQL `DATABASE_URL`, an HTTPS `AUTH_URL`, a cryptographically random `AUTH_SECRET`, `RESEND_API_KEY` and `EMAIL_FROM` using a verified sender domain when enabling invitations or legacy email-link login. Password signup/login do not require email delivery. Mail capture is disabled in production; missing delivery configuration fails closed. Restrict the application database role to normal DML, and use a separate migration role so the application cannot disable triggers. Set the trusted proxy/host configuration for the chosen host and redact auth callback/invitation URLs in ingress logs. The app does not log raw tokens.
 
 Migrate and seed before starting the app. Production backup/restore, retention, legal policies, abuse controls at the ingress, observability and legacy cutover remain deployment/Sprint 8 work. This implementation does not send real email, deploy, configure billing, or import legacy accounts.
 

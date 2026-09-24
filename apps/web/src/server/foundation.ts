@@ -29,9 +29,14 @@ export class FoundationService {
     private appUrl: string,
   ) {}
 
-  private async verifiedUser(actor: Actor, tx: Tx = this.db) {
-    const user = await tx.user.findFirst({ where: { id: uuid.parse(actor.userId), emailVerified: { not: null } } });
-    if (!user) throw new DomainError('UNAUTHENTICATED', 'Sign in with a verified email to continue.', 401);
+  private async authenticatedUser(actor: Actor, tx: Tx = this.db) {
+    const user = await tx.user.findFirst({
+      where: {
+        id: uuid.parse(actor.userId),
+        OR: [{ emailVerified: { not: null } }, { passwordCredential: { isNot: null } }],
+      },
+    });
+    if (!user) throw new DomainError('UNAUTHENTICATED', 'Sign in to continue.', 401);
     return user;
   }
 
@@ -41,7 +46,7 @@ export class FoundationService {
         organisationId: uuid.parse(organisationId),
         userId: uuid.parse(actor.userId),
         revokedAt: null,
-        user: { emailVerified: { not: null } },
+        user: { OR: [{ emailVerified: { not: null } }, { passwordCredential: { isNot: null } }] },
       },
     });
     if (!member) throw notFound();
@@ -75,7 +80,7 @@ export class FoundationService {
   }
 
   async listOrganisations(actor: Actor) {
-    await this.verifiedUser(actor);
+    await this.authenticatedUser(actor);
     return this.db.membership.findMany({
       where: { userId: actor.userId, revokedAt: null },
       select: { role: true, organisation: { select: { id: true, name: true, planKey: true } } },
@@ -86,7 +91,7 @@ export class FoundationService {
   async createOrganisation(actor: Actor, input: unknown) {
     const data = organisationInput.parse(input);
     return this.db.$transaction(async (tx) => {
-      await this.verifiedUser(actor, tx);
+      await this.authenticatedUser(actor, tx);
       await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${actor.userId}::uuid FOR UPDATE`;
       const count = await tx.membership.count({ where: { userId: actor.userId, role: 'OWNER', revokedAt: null } });
       if (count >= 10) throw new DomainError('LIMIT_REACHED', 'Contact support to create more organisations.', 409);
@@ -257,7 +262,7 @@ export class FoundationService {
 
   async getInvitation(actor: Actor, input: unknown) {
     const { token } = tokenInput.parse(input);
-    const user = await this.verifiedUser(actor);
+    const user = await this.authenticatedUser(actor);
     const invite = await this.db.invitation.findFirst({
       where: {
         tokenHash: hashToken(token),
@@ -282,7 +287,7 @@ export class FoundationService {
     const candidate = await this.getInvitation(actor, { token });
     return this.db.$transaction(async (tx) => {
       await this.lock(tx, candidate.organisationId);
-      const user = await this.verifiedUser(actor, tx);
+      const user = await this.authenticatedUser(actor, tx);
       const invite = await tx.invitation.findFirst({
         where: {
           tokenHash: hashToken(token),

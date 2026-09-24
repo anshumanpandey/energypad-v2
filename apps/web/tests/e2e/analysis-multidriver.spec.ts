@@ -15,7 +15,7 @@ test('saved two/three-driver weather models preserve coefficients, provenance an
   };
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto('/login');
+  await page.goto('/login/email');
   await page.getByLabel('Email address').fill(f.email);
   await page.getByRole('button', { name: 'Continue with email' }).click();
   await expect(page.getByRole('heading', { name: 'Check your inbox.' })).toBeVisible();

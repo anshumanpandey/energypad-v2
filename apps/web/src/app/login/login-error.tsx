@@ -18,9 +18,14 @@ export function LoginError({ error }: { error?: string }) {
   if (!error) return null;
   return (
     <div role="alert" className="notice error">
-      {error === 'InvalidEmail'
-        ? 'Enter a valid email address.'
-        : 'We couldn’t sign you in. Request a fresh link, or try again in 15 minutes.'}
+      {{
+        InvalidEmail: 'Enter a valid email address.',
+        InvalidPassword: 'Use a password with 12–128 characters.',
+        Credentials: 'Email or password is incorrect.',
+        SignupFailed: 'Unable to create this account. Try signing in instead.',
+        RateLimited: 'Too many attempts. Please try again in 15 minutes.',
+        Unavailable: 'Sign-in is temporarily unavailable. Please try again.',
+      }[error] ?? 'We couldn’t sign you in. Request a fresh link, or try again in 15 minutes.'}
     </div>
   );
 }

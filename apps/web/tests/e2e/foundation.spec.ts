@@ -25,6 +25,9 @@ async function mailLink(email: string, type: 'signin' | 'invite') {
   return link;
 }
 async function signIn(page: Page, email: string) {
+  const url = new URL(page.url());
+  url.pathname = '/login/email';
+  await page.goto(url.toString());
   await page.getByLabel('Email address').fill(email);
   await page.getByRole('button', { name: 'Continue with email' }).click();
   await expect(page.getByRole('heading', { name: 'Check your inbox.' })).toBeVisible();

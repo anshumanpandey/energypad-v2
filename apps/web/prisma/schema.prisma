@@ -35,9 +35,17 @@ model User {
   platformRole  PlatformRole @default(USER)
   createdAt     DateTime     @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime     @updatedAt @db.Timestamptz(3)
+  passwordCredential PasswordCredential?
   accounts      Account[]
   sessions      Session[]
   memberships   Membership[]
+}
+
+model PasswordCredential {
+  userId String @id @db.Uuid
+  passwordHash String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
