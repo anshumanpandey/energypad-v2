@@ -1,6 +1,8 @@
 # Sprint 4 implementation and acceptance evidence — 22 September 2026
 
-Current status: experimental engine, immutable persistence and Advanced Analysis workflow delivered. Numerical compatibility is not accepted; missing reference workbooks, native recalculation and methodology/tolerance approval remain open. Sprint 3 real-export reconciliation remains open independently.
+Current decision update, 24 September 2026: the user approved **0.99 absolute difference**, with relative tolerance **0**, and confirmed that all three supplied workbooks have been fully recalculated. These resolve the earlier ambiguous-tolerance and user-confirmation requests below. Recalculation is recorded as user-attested; no Excel version/build or execution log is fabricated. Fresh comparison passes all 305 numerical values and all 36 significance decisions. Methodology/coverage approval remains separate from this numerical agreement.
+
+Current status: experimental engine, immutable persistence and Advanced Analysis workflow delivered. All three original workbooks are available and hash-pinned. Numerical compatibility is not accepted; native recalculation evidence and methodology/tolerance approval remain open. Sprint 3 real-export reconciliation remains open independently.
 
 The sections below record successive implementation stages; earlier “not yet implemented” statements describe their stage, not the current product.
 
@@ -137,3 +139,35 @@ Received Single and Multi Routine Adjustment V2 and recorded their unchanged sou
 Alternate-engine LibreOffice conversion confirmed a nonzero multi intercept p-value but retained some cached precedents. It is explicitly not evidence of a complete Excel rebuild. All originals remain unchanged. Native recalculation, reviewed expected results and explicit numerical/methodology approval are still required before adding the approved golden acceptance path.
 
 Validation: 164 unit tests and six Python evidence tests passed; TypeScript and targeted ESLint passed. Tests verify independent calculation from synthetic known coefficients, both routine cell layouts, cache mutation detection, missing/nonfinite data rejection, integrity checks and refusal of false approval/recalculation claims. No application data or existing result snapshots were changed.
+
+## Draft tolerance review report — 24 September 2026
+
+Added `sprint4:review`, which fresh-runs the pinned-source characterization and writes a private, exclusive Markdown review. It records every source cell/result, algorithm, assumption, coverage gap, draft tolerance and significance comparison. Differences and classification agreement are recomputed; missing values, unknown families, sign changes and zero/nonzero probabilities cannot disappear inside a numeric tolerance. No acceptance success path or application calculation change was introduced.
+
+The supplied originals remain hash-identical to the recorded references. The fresh report contains 305 numerical comparisons and 36 agreeing significance flags. Under the previously documented draft tolerances, the only flagged numerical item is Multi F43: cached zero versus engine p-value `4.339647335462425e-14`. This is review evidence, not an approved golden result.
+
+The user supplied “0.99” as an accepted tolerance; its absolute/relative/percentage interpretation is pending clarification. It has not replaced the draft contract. Native Excel recalculation and approval of the saved expected outputs are also awaiting confirmation. These dependencies continue to block final compatibility acceptance.
+
+Validation: 176 unit tests passed, including inclusive tolerance boundaries, exact degrees of freedom, independent sign/probability flags, unavailable/overflow values, malformed evidence and refusal of approval claims. The real-file CLI exited 2 (acceptance blocked), wrote mode-0600 output, and refused to overwrite its report while preserving source/report hashes. The plan and design status now distinguish the delivered experimental workflow from the remaining acceptance gate.
+
+## Native Excel evidence intake — 24 September 2026
+
+Added the `sprint4:evidence` CLI, a versioned manifest template, and [operator instructions](SPRINT_4_NATIVE_EVIDENCE.md). The read-only checker verifies bounded file hashes for original/recalculated/reviewer evidence, records Excel rebuild metadata and representative input-change/restore checks, and identifies missing or inconsistent records. Complete attestations are not numerical approval; the command always retains the compatibility gate and never runs Excel or changes application results.
+
+Validation: 180 unit tests passed; type checking, lint and formatting passed. Tests cover missing fixtures, tampered/missing files, duplicate fixture records, unsupported platform metadata, review chronology, unchanged perturbations, failed restoration, invalid numeric evidence, and complete synthetic attestations that still cannot approve compatibility. The real-file report verifies all three original hashes and reports the recalculated copies, Excel rebuild records, reviewer evidence and perturbation checks as missing. Report permissions are 0600.
+
+Next dependent step: supply and independently review those records, resolve the pending “0.99” tolerance definition and approve expected outputs/methodology, then wire the approved fixture registry into numerical golden acceptance. No native recalculation or approval was inferred from the instruction to continue.
+
+## Approved absolute tolerance and recalculation confirmation
+
+Policy `workbook-absolute-0.99-v1` records the user's explicit instruction: `abs(engine − expected) <= 0.99`, inclusive at raw precision, with no relative allowance. It applies to all known numerical result families. Significance classifications must still match exactly. Missing/duplicate/incomplete fixtures, unknown algorithms/hashes/families, unavailable values and numerical overflow cannot pass. Sign changes and zero/nonzero probabilities remain visible review advisories independent of numeric tolerance.
+
+The fresh hash-checked comparison covers all three supplied references: Single 82 values, Multi 91, NRA 132, with 12 significance flags each. Numerical status is PASS: 305/305 within tolerance and 36/36 classifications agree. Multi F43 remains an advisory (cached 0 versus engine `4.339647335462425e-14`). The originals match their previously recorded hashes. User confirmation of full recalculation is recorded separately from the extractor's truthful statement that it did not itself run Excel.
+
+The verification JSON includes `numericalVerification` and its versioned policy/provenance. The tool's overall compatibility status remains BLOCKED for the separate methodology/coverage gate, rather than claiming that a numerical comparison approves all untested statistics or label policies. Existing application snapshots remain unchanged.
+
+## Executable registered-cell compatibility test — 24 September 2026
+
+Implemented `workbook-cell-coverage-v1` and `npm run test:compatibility`. The registry specifies every required family/address pair and significance address independently of the extractor's emitted comparison list. The evaluator now rejects substituted cells/families, missing or duplicate coverage, changed sources and unknown algorithms while accepting reordered evidence. The command freshly recomputes from the supplied references and returns a usable numerical PASS/FAIL/BLOCKED exit code.
+
+Validation: 184 unit tests, type checking, lint and formatting passed. The real-source command exited 0 with all three fixtures passing: 305 numerical values and 36 exact significance flags. Command-level checks verified exit 2 for missing/changed copies, refusal to overwrite existing output, private report permissions and unchanged original workbook hashes. The 0.99 absolute policy and user-confirmed recalculation remain recorded. Numerical acceptance is now repeatable; approval of broader methodological choices and untested output coverage is still separate.

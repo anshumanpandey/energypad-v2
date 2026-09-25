@@ -241,7 +241,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
       ).ok(),
     ).toBe(true);
     expect((await viewer.request.get(`${base}/sites/${site.id}/analysis/history`)).status()).toBe(404);
-    await viewer.reload();
+    await viewer.reload({ waitUntil: 'domcontentloaded', timeout: 60_000 });
     await expect(viewer.getByRole('button', { name: /^View run/ })).toHaveCount(0);
     expect(
       (
@@ -251,7 +251,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
         })
       ).ok(),
     ).toBe(true);
-    await viewer.reload();
+    await viewer.reload({ waitUntil: 'domcontentloaded', timeout: 60_000 });
     await expect(viewer.getByRole('button', { name: /^View run/ })).toHaveCount(3);
     await expect(viewer.getByRole('button', { name: 'Save experimental baseline' })).toHaveCount(0);
     // An Analyst can work on models and NRA, while remaining outside organisation administration.
@@ -263,7 +263,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
         })
       ).ok(),
     ).toBe(true);
-    await viewer.reload();
+    await viewer.reload({ waitUntil: 'domcontentloaded', timeout: 60_000 });
     await expect(viewer.getByRole('button', { name: 'Save experimental baseline' })).toBeVisible();
     await expect(viewer.getByRole('link', { name: 'Settings', exact: true })).toHaveCount(0);
     await expect(viewer.getByRole('link', { name: 'Team members', exact: true })).toHaveCount(0);
@@ -316,7 +316,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
       data: savedBaseline.snapshot.definition,
     });
     expect(demotedWrite.status()).toBe(403);
-    await viewer.reload();
+    await viewer.reload({ waitUntil: 'domcontentloaded', timeout: 60_000 });
     await expect(viewer.getByRole('button', { name: 'Save experimental baseline' })).toHaveCount(0);
   } finally {
     await viewerContext.close();
@@ -348,6 +348,30 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     .click();
   await expect(selectedBaseline).toContainText('2020-02 – 2020-04');
   await expect(baselineWarnings).toHaveCount(0);
+
+  await page.goto(`/org/${org}/waste-savings?site=${site.id}`);
+  await page.getByRole('link', { name: 'Create an investigation from this evidence' }).click();
+  await expect(page.getByRole('heading', { name: 'Opportunities', exact: true })).toBeVisible();
+  await expect(page.getByLabel('Saved analysis run ID', { exact: true })).not.toHaveValue('');
+  await page.getByLabel('Investigation title').fill('Investigate operating schedule');
+  await page.getByLabel('Investigation rationale').fill('Compare the saved variance with actual opening hours.');
+  await page.getByRole('button', { name: 'Create investigation', exact: true }).click();
+  const register = page.getByRole('region', { name: 'Investigation register', exact: true });
+  await expect(register).toContainText('DETECTED');
+  await expect(page.getByLabel('Investigation title')).toHaveValue('');
+  await register.getByLabel('Review note').fill('Inspect original readings and opening hours.');
+  await register.getByRole('button', { name: 'Save investigation review' }).click();
+  await expect(register.getByText('REVIEWING', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(register.getByText('REVIEWING', { exact: true })).toBeVisible();
+  await register.getByLabel('Review note').fill('Insufficient evidence for this investigation.');
+  await register.getByRole('button', { name: 'Save investigation review' }).click();
+  await expect(register.getByText('REJECTED', { exact: true })).toBeVisible();
+  await register.getByText('Investigation history', { exact: true }).click();
+  await expect(register).toContainText('revision 3');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: testInfo.outputPath('opportunities-mobile.png'), fullPage: true });
+  await page.goto(`/org/${org}/analysis`);
   const archivedBaselineId = (await (await page.request.get(`${base}/sites/${site.id}/analysis/history`)).json())
     .items[0].id;
   expect(
@@ -394,5 +418,58 @@ test('experimental analysis readiness, immutable runs and mobile history', async
       })
     ).status(),
   ).toBe(404);
+
+  await page.goto(`/org/${org}/waste-savings?site=${site.id}`);
+  await expect(page.getByRole('heading', { name: 'Waste & Savings', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Impact summary' })).toContainText('UNVALIDATED');
+  await expect(page.getByRole('region', { name: 'Waste and savings monthly results' })).toContainText('POST_NRA');
+  await expect(page.getByText('Experimental · not verified savings', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Show impacts' }).click();
+  await expect(page.getByRole('region', { name: 'Impact summary' })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: testInfo.outputPath('waste-savings-mobile.png'), fullPage: true });
+  await page.goto(`/org/${org}/reports`);
+  await expect(page.getByRole('heading', { name: 'Reports', exact: true })).toBeVisible();
+  await page.getByRole('combobox', { name: 'Report site', exact: true }).selectOption(site.id);
+  await page.getByLabel('Report year').fill('2020');
+  await page.getByRole('button', { name: 'Preview report', exact: true }).click();
+  const preview = page.getByRole('region', { name: 'Report preview', exact: true });
+  await expect(preview).toContainText('Energy report');
+  await expect(preview).toContainText('2020-01 – 2020-12');
+  const energyDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download report JSON' }).click();
+  const energyFile = await (await energyDownload).path();
+  const energyExport = JSON.parse(await readFile(energyFile!, 'utf8'));
+  expect(energyExport.family).toBe('energy');
+  expect(energyExport.rows).toHaveLength(12);
+  await page.getByRole('combobox', { name: 'Report family', exact: true }).selectOption('baseline');
+  await page.getByRole('button', { name: 'Find saved versions' }).click();
+  await expect(page.locator('#report-versions option').first()).toHaveAttribute('value', /.+/);
+  await page.getByLabel('Baseline version ID').fill(archivedBaselineId);
+  await page.getByRole('button', { name: 'Preview report', exact: true }).click();
+  await expect(preview).toContainText('Baseline report');
+  await expect(preview).toContainText('UNVALIDATED');
+  await page.getByRole('combobox', { name: 'Report family', exact: true }).selectOption('savings');
+  await page.getByRole('button', { name: 'Find saved versions' }).click();
+  await expect(page.locator('#report-versions option').first()).toHaveAttribute('value', /.+/);
+  const reportRunId = await page.locator('#report-versions option').first().getAttribute('value');
+  await page.getByLabel('Analysis run ID', { exact: true }).fill(reportRunId!);
+  await page.getByRole('button', { name: 'Preview report', exact: true }).click();
+  await expect(preview).toContainText('Savings report');
+  await expect(preview).toContainText('not verified savings');
+  const csvDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download report CSV' }).click();
+  const csvFile = await (await csvDownload).path();
+  const csv = await readFile(csvFile!, 'utf8');
+  expect(csv).toContain('"/family","string","savings"');
+  expect(csv).toContain(reportRunId!);
+  expect(csv).toContain('UNVALIDATED');
+  expect((await page.request.get(`${base}/sites/${site.id}/reports?family=energy&year=2020&format=pdf`)).status()).toBe(
+    400,
+  );
+  expect(
+    (await page.request.get(`${base}/sites/${site.id}/reports?family=energy&year=2020&fingerprint=stale`)).status(),
+  ).toBe(409);
+  await page.screenshot({ path: testInfo.outputPath('reports-mobile.png'), fullPage: true });
   expect(errors).toEqual([]);
 });

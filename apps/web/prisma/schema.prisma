@@ -109,9 +109,11 @@ model Organisation {
   imports ImportBatch[]
   legacyTariffBatches LegacyTariffBatch[]
   energyCatalog EnergyCatalogVersion[]
+  emissionFactors EmissionFactorVersion[]
 }
 
 model Membership {
+  opportunities Opportunity[]
   id             String         @id @default(uuid()) @db.Uuid
   organisationId String         @db.Uuid
   userId         String         @db.Uuid
@@ -128,6 +130,8 @@ model Membership {
 }
 
 model Site {
+ monthlyPlans MonthlyPlanVersion[]
+ carbonWorkbookBatches CarbonWorkbookBatch[]
   events OperationalEvent[]
   eventImports EventImportBatch[]
   patterns OperatingPattern[]
@@ -156,6 +160,7 @@ model Site {
   archivedAt DateTime? @db.Timestamptz(3)
   attributes SiteAttributeHistory[]
   meters Meter[]
+  carbonRuns CarbonRun[]
   consumption ConsumptionRecord[]
   weatherConfigurations WeatherConfiguration[]
   driverObservations DriverObservation[]
@@ -251,6 +256,7 @@ model SiteAttributeHistory {
 }
 
 model Meter {
+ carbonTargets CarbonTargetVersion[]
   baselines BaselineVersion[]
   id String @id @default(uuid()) @db.Uuid
   organisationId String @db.Uuid
@@ -788,6 +794,7 @@ model BaselineVersion {
 }
 
 model AnalysisRun {
+  opportunities Opportunity[]
   id String @id @default(uuid()) @db.Uuid
   organisationId String @db.Uuid
   siteId String @db.Uuid
@@ -833,4 +840,173 @@ model NraReview {
   run AnalysisRun @relation(fields: [runId, organisationId, siteId, meterId], references: [id, organisationId, siteId, meterId])
   @@unique([organisationId, requestId])
   @@unique([runId, revision])
+}
+
+model EmissionFactorVersion {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  fuel String
+  geography String
+  basis String
+  unit String @default("kgCO2e/kWh")
+  factor Decimal @db.Decimal(18,9)
+  source String
+  validFrom DateTime @db.Date
+  validUntil DateTime @db.Date
+  revision Int @default(1)
+  supersedesId String? @db.Uuid
+  correctionReason String?
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  organisation Organisation @relation(fields: [organisationId], references: [id])
+  previous EmissionFactorVersion? @relation("EmissionFactorRevisions", fields: [supersedesId, organisationId], references: [id, organisationId], onDelete: NoAction, onUpdate: NoAction)
+  replacement EmissionFactorVersion? @relation("EmissionFactorRevisions")
+  @@unique([id, organisationId])
+  @@unique([supersedesId, organisationId])
+  @@index([organisationId, fuel, geography, basis])
+}
+
+model CarbonRun {
+ assessments CarbonTargetAssessment[]
+ @@unique([id, organisationId, siteId])
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ requestKey String @db.Uuid
+ algorithmVersion String
+ snapshot Json
+ authorId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+ @@unique([organisationId, requestKey])
+ @@index([organisationId, siteId, createdAt])
+}
+
+model CarbonTargetVersion {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ meterId String @db.Uuid
+ year Int
+ geography String
+ basis String
+ name String
+ limitKgCO2e Decimal @db.Decimal(30,12)
+ source String
+ revision Int @default(1)
+ supersedesId String? @db.Uuid
+ correctionReason String?
+ requestKey String @db.Uuid
+ authorId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ meter Meter @relation(fields: [meterId, siteId, organisationId], references: [id, siteId, organisationId])
+ previous CarbonTargetVersion? @relation("CarbonTargetRevisions", fields: [supersedesId, organisationId, siteId], references: [id, organisationId, siteId], onDelete: NoAction, onUpdate: NoAction)
+ replacement CarbonTargetVersion? @relation("CarbonTargetRevisions")
+ assessments CarbonTargetAssessment[]
+ @@unique([id, organisationId, siteId])
+ @@unique([supersedesId, organisationId, siteId])
+ @@unique([organisationId, requestKey])
+ @@index([organisationId, siteId])
+}
+model CarbonTargetAssessment {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ targetId String @db.Uuid
+ runId String @db.Uuid
+ status String
+ actualKgCO2e String
+ varianceKgCO2e String
+ algorithmVersion String
+ authorId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ target CarbonTargetVersion @relation(fields: [targetId, organisationId, siteId], references: [id, organisationId, siteId])
+ run CarbonRun @relation(fields: [runId, organisationId, siteId], references: [id, organisationId, siteId])
+ @@unique([targetId, runId])
+ @@index([organisationId, siteId])
+}
+
+model CarbonWorkbookBatch {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ kind String
+ fingerprint String
+ status String
+ result Json
+ receipt Json?
+ authorId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ committedAt DateTime? @db.Timestamptz(3)
+ site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+ @@index([organisationId, siteId, fingerprint])
+}
+
+model MonthlyPlanVersion {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ kind String
+ month String
+ fuel String
+ unit String
+ payload Json
+ requestKey String @db.Uuid
+ revision Int @default(1)
+ supersedesId String? @db.Uuid
+ correctionReason String?
+ authorId String @db.Uuid
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+ previous MonthlyPlanVersion? @relation("MonthlyPlanRevisions", fields: [supersedesId, organisationId, siteId], references: [id, organisationId, siteId], onDelete: NoAction, onUpdate: NoAction)
+ replacement MonthlyPlanVersion? @relation("MonthlyPlanRevisions")
+ @@unique([id, organisationId, siteId])
+ @@unique([supersedesId, organisationId, siteId])
+ @@unique([organisationId, requestKey, month])
+ @@index([organisationId, siteId, month])
+}
+
+model Opportunity {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  meterId String @db.Uuid
+  runId String @db.Uuid
+  ownerMembershipId String @db.Uuid
+  title String
+  rationale String
+  evidence Json
+  evidenceHash String
+  requestKey String @db.Uuid
+  requestHash String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  run AnalysisRun @relation(fields: [runId, organisationId, siteId, meterId], references: [id, organisationId, siteId, meterId])
+  owner Membership @relation(fields: [ownerMembershipId, organisationId], references: [id, organisationId])
+  events OpportunityEvent[]
+  @@unique([id, organisationId, siteId])
+  @@unique([organisationId, requestKey])
+  @@unique([organisationId, runId])
+  @@index([organisationId, siteId, createdAt])
+}
+
+model OpportunityEvent {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  opportunityId String @db.Uuid
+  previousId String? @db.Uuid
+  revision Int
+  status String
+  note String
+  actorId String @db.Uuid
+  requestKey String @db.Uuid
+  requestHash String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  opportunity Opportunity @relation(fields: [opportunityId, organisationId, siteId], references: [id, organisationId, siteId])
+  previous OpportunityEvent? @relation("OpportunityEventHistory", fields: [previousId, opportunityId, organisationId, siteId], references: [id, opportunityId, organisationId, siteId], onDelete: NoAction, onUpdate: NoAction)
+  next OpportunityEvent? @relation("OpportunityEventHistory")
+  @@unique([id, opportunityId, organisationId, siteId])
+  @@unique([previousId, opportunityId, organisationId, siteId])
+  @@unique([opportunityId, revision])
+  @@unique([organisationId, requestKey])
 }

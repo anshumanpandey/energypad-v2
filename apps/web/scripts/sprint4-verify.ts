@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { inspectRegressionFixtures, regressionFixtures } from '../src/server/analysis/fixture-readiness';
 import { characterizeNra } from '../src/server/analysis/nra-characterization';
 import { characterizeRoutine } from '../src/server/analysis/routine-characterization';
+import { assessWorkbookNumbers } from '../src/server/analysis/workbook-review';
 const [directory, output, ...extra] = process.argv.slice(2);
 let temporary: string | undefined;
 try {
@@ -37,12 +38,13 @@ try {
   const report = {
     ...readiness,
     characterizations,
+    numericalVerification: assessWorkbookNumbers(characterizations),
     acceptance: 'BLOCKED',
-    note: 'Cached-value characterization only. No approved fixture registry, native recalculation, reviewed expected outputs or tolerance approval has been supplied. No pass/fail numerical tolerance is inferred.',
+    note: 'User-approved absolute tolerance 0.99 with no relative allowance. User confirmed full recalculation of all three workbooks; the checker reads their saved results without independently observing Excel. Full compatibility acceptance remains separate from numerical agreement and pending methodology/coverage decisions.',
   };
   await writeFile(output, JSON.stringify(report, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
   console.log(
-    `Acceptance blocked. Characterized ${characterizations.length}/${regressionFixtures.length} references; ${characterizations.reduce((n, c) => n + c.comparisons.length, 0)} numeric comparisons. Report written without changing originals.`,
+    `Numerical comparison ${report.numericalVerification.status}; full compatibility acceptance remains blocked. Characterized ${characterizations.length}/${regressionFixtures.length} references; ${characterizations.reduce((n, c) => n + c.comparisons.length, 0)} numeric comparisons. Report written without changing originals.`,
   );
   process.exitCode = 2;
 } catch (error) {

@@ -34,6 +34,19 @@ export function PasswordForm({
           Use 12–128 characters. A longer passphrase works well.
         </small>
       )}
+      {mode === 'signup' && (
+        <label>
+          Confirm password
+          <input
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={12}
+            maxLength={128}
+          />
+        </label>
+      )}
       <SubmitButton>
         {mode === 'signup' ? 'Create account' : 'Sign in'} <ArrowUpRight size={17} />
       </SubmitButton>

@@ -87,8 +87,9 @@ export function EnergyImportWorkspace({
     <section className="panel stack-form">
       <h2>Import consumption workbook</h2>
       <p>
-        Import 1–120 monthly rows for one meter from XLSX (maximum 2 MB). Use plain values, month text such as 2020-01,
-        and net costs. Credential columns are discarded before staging.
+        Import 1–120 monthly rows for one meter from XLSX (maximum 2 MB). Use month text such as 2020-01, and net costs.
+        Formatted cells and saved formula results are supported; recalculate and save before uploading. Credential
+        columns are discarded before staging.
       </p>
       {m.feedback}
       <fieldset disabled={m.disabled} className="stack-form" style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>

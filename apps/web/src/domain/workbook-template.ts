@@ -5,6 +5,55 @@ import { energyImportFields, energyMappingInput, type EnergyMapping } from './en
 
 export const workbookFields = {
   consumption: energyImportFields,
+  monthlyTargets: [
+    'month',
+    'fuel',
+    'unit',
+    'energy',
+    'carbon',
+    'conversionFactor',
+    'source',
+    'externalLegacyId',
+    'supersedesId',
+    'reason',
+  ],
+  monitoring: [
+    'month',
+    'fuel',
+    'unit',
+    'energy',
+    'carbon',
+    'conversionFactor',
+    'source',
+    'energyUseCodes',
+    'externalLegacyId',
+    'supersedesId',
+    'reason',
+  ],
+  emissions: [
+    'fuel',
+    'geography',
+    'basis',
+    'unit',
+    'factor',
+    'source',
+    'firstDay',
+    'lastDay',
+    'supersedesId',
+    'reason',
+  ],
+  targets: [
+    'meterCode',
+    'year',
+    'geography',
+    'basis',
+    'unit',
+    'name',
+    'limitKgCO2e',
+    'source',
+    'supersedesId',
+    'reason',
+  ],
   drivers: ['month', 'driver', 'value', 'source'],
   patterns: [
     'firstDay',
@@ -23,7 +72,7 @@ export type WorkbookKind = keyof typeof workbookFields;
 export const workbookTemplate = z
   .object({
     version: z.literal(1),
-    kind: z.enum(['consumption', 'drivers', 'patterns']),
+    kind: z.enum(['consumption', 'drivers', 'patterns', 'emissions', 'targets', 'monthlyTargets', 'monitoring']),
     sheetName: z.string().trim().min(1).max(31),
     columns: z.record(z.string().max(100), z.string().trim().min(1).max(100)),
     defaults: z.record(z.string().max(100), z.string().max(500)),
@@ -86,13 +135,18 @@ export function saveEnergyTemplate(sheets: ImportSheet[], mapping: EnergyMapping
   templateMapping(sheets, template, 'consumption');
   return template;
 }
-export function mapNamedWorkbook(sheets: ImportSheet[], kind: 'drivers' | 'patterns', name?: string, input?: unknown) {
+export function mapNamedWorkbook(
+  sheets: ImportSheet[],
+  kind: Exclude<WorkbookKind, 'consumption'>,
+  name?: string,
+  input?: unknown,
+) {
   if (input === undefined) {
     const sheet = selectWorkbookSheet(sheets, name);
     return {
       sheets: [sheet],
       selection: {
-        version: 1,
+        version: 1 as const,
         kind,
         sheetName: sheet.name,
         columns: Object.fromEntries(

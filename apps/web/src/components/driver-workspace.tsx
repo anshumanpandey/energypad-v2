@@ -216,7 +216,8 @@ export function DriverWorkspace({
           <p>
             Import one selected XLSX sheet with these destination columns: <code>month, driver, value, source</code>.
             Use text months (YYYY-MM) and driver codes POPULATION or OPERATING_HOURS. Each row is one observation. Up to
-            240 rows, 2 MB; plain values only.
+            240 rows, 2 MB. Formatted cells and saved formula results are supported; recalculate and save before
+            uploading.
           </p>
           <form
             className="stack-form"

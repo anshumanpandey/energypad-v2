@@ -1,7 +1,17 @@
+import { opportunityService } from '@/server/services';
+import { analyticsReportService } from '@/server/services';
+import { reportResponse } from '@/server/analytics-reports';
+import { monthlyPlanCorrection } from '@/domain/monthly-plans';
+import { monthlyPlanService } from '@/server/services';
+import { carbonReportCsv } from '@/domain/carbon-report';
 import { parseTemplateText } from '@/domain/workbook-template';
 import { api, readBody, readBytes } from '@/server/http';
 import {
   foundation,
+  carbonService,
+  carbonImportService,
+  carbonTargetService,
+  emissionFactorService,
   analysisService,
   occupancyService,
   patternService,
@@ -29,6 +39,113 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'sites' && s[3] && s[4] === 'opportunities') {
+        const query = new URL(request.url).searchParams;
+        if (s.length === 5 && method === 'GET')
+          return opportunityService.listOpportunities(actor, org, s[3], { cursor: query.get('cursor') ?? undefined });
+        if (s.length === 5 && method === 'POST')
+          return opportunityService.createOpportunity(actor, org, s[3], await readBody(request));
+        if (s.length === 7 && s[6] === 'review' && method === 'POST')
+          return opportunityService.reviewOpportunity(actor, org, s[3], s[5], await readBody(request));
+      }
+
+      if (s[2] === 'sites' && s[3] && s[4] === 'reports' && s.length === 5 && method === 'GET') {
+        const query = new URL(request.url).searchParams;
+        const { format = 'json', fingerprint, ...input } = Object.fromEntries(query);
+        if (!['csv', 'json'].includes(format)) throw new DomainError('REPORT_FORMAT', 'Choose CSV or JSON.');
+        const report = await analyticsReportService.report(actor, org, s[3], input);
+        return reportResponse(report, format, fingerprint);
+      }
+
+      if (
+        ['sites', 'portfolios'].includes(s[2]) &&
+        s[3] &&
+        s[4] === 'carbon' &&
+        s[5] === 'report' &&
+        s.length === 6 &&
+        method === 'GET'
+      ) {
+        const query = new URL(request.url).searchParams;
+        const format = query.get('format') ?? 'json';
+        if (format !== 'json' && format !== 'csv') throw new DomainError('REPORT_FORMAT', 'Choose CSV or JSON.');
+        const report = await carbonService.report(actor, org, s[2] === 'sites' ? 'site' : 'portfolio', s[3], {
+          year: Number(query.get('year')),
+          geography: query.get('geography'),
+          basis: query.get('basis'),
+        });
+        return new Response(format === 'csv' ? carbonReportCsv(report) : JSON.stringify(report, null, 2) + '\n', {
+          headers: {
+            'Content-Type': format === 'csv' ? 'text/csv; charset=utf-8' : 'application/json; charset=utf-8',
+            'Content-Disposition': `attachment; filename="carbon-${report.subject.kind}-${report.subject.id}-${report.definition.year}.${format}"`,
+            'X-Content-Type-Options': 'nosniff',
+          },
+        });
+      }
+      if (s[2] === 'portfolios' && s[3] && s[4] === 'carbon' && s.length === 5 && method === 'GET') {
+        const query = new URL(request.url).searchParams;
+        return carbonService.portfolioSummary(actor, org, s[3], {
+          year: Number(query.get('year')),
+          geography: query.get('geography'),
+          basis: query.get('basis'),
+        });
+      }
+      if (s[2] === 'sites' && s[3] && s[4] === 'monthly-plans') {
+        if (s.length === 5 && method === 'GET')
+          return monthlyPlanService.list(actor, org, s[3], Number(new URL(request.url).searchParams.get('year')));
+        if (s.length === 5 && method === 'POST')
+          return monthlyPlanService.add(actor, org, s[3], await readBody(request));
+        if (s.length === 7 && s[6] === 'correct' && method === 'POST') {
+          const body = monthlyPlanCorrection.parse(await readBody(request));
+          return monthlyPlanService.add(actor, org, s[3], body.plan, s[5], body.reason);
+        }
+      }
+      if (s[2] === 'sites' && s[3] && s[4] === 'carbon' && s[5] === 'imports') {
+        if (s.length === 6 && method === 'POST') {
+          const query = new URL(request.url).searchParams;
+          return carbonImportService.upload(
+            actor,
+            org,
+            s[3],
+            query.get('kind'),
+            await readBytes(request, 2_000_000),
+            query.get('sheet') ?? undefined,
+            query.has('template') ? parseTemplateText(query.get('template')!) : undefined,
+          );
+        }
+        if (s.length === 8 && s[7] === 'commit' && method === 'POST') {
+          const body = (await readBody(request)) as { confirmed?: unknown } | null;
+          if (body?.confirmed !== true)
+            throw new DomainError('CONFIRMATION', 'Confirm the reviewed import before committing.');
+          return carbonImportService.commit(actor, org, s[3], s[6]);
+        }
+      }
+      if (s[2] === 'sites' && s[3] && s[4] === 'carbon' && s[5] === 'targets') {
+        if (s.length === 6 && method === 'GET') return carbonTargetService.list(actor, org, s[3]);
+        if (s.length === 6 && method === 'POST')
+          return carbonTargetService.add(actor, org, s[3], await readBody(request));
+        if (s.length === 8 && s[7] === 'correct' && method === 'POST')
+          return carbonTargetService.correct(actor, org, s[3], s[6], await readBody(request));
+        if (s.length === 8 && s[7] === 'assess' && method === 'POST')
+          return carbonTargetService.assess(actor, org, s[3], s[6], await readBody(request));
+      }
+      if (s[2] === 'sites' && s[3] && s[4] === 'carbon' && s[5] === 'summary' && s.length === 6 && method === 'GET') {
+        const query = new URL(request.url).searchParams;
+        return carbonService.summary(actor, org, s[3], {
+          year: Number(query.get('year')),
+          geography: query.get('geography'),
+          basis: query.get('basis'),
+        });
+      }
+      if (s[2] === 'sites' && s[3] && s[4] === 'carbon' && s.length === 5) {
+        if (method === 'GET') return carbonService.history(actor, org, s[3]);
+        if (method === 'POST') return carbonService.calculate(actor, org, s[3], await readBody(request));
+      }
+      if (s[2] === 'emission-factors') {
+        if (s.length === 3 && method === 'GET') return emissionFactorService.list(actor, org);
+        if (s.length === 3 && method === 'POST') return emissionFactorService.add(actor, org, await readBody(request));
+        if (s.length === 5 && s[4] === 'correct' && method === 'POST')
+          return emissionFactorService.correct(actor, org, s[3], await readBody(request));
+      }
       if (s[2] === 'sites' && s[3] && s[4] === 'analysis') {
         const query = new URL(request.url).searchParams;
         const historyPage = {
@@ -38,6 +155,8 @@ async function handle(request: Request, context: Context) {
         if (s.length === 8 && s[5] === 'baselines' && s[7] === 'runs' && method === 'GET')
           return analysisService.runHistory(actor, org, s[3], s[6], historyPage);
         if (s.length === 6 && s[5] === 'options' && method === 'GET') return analysisService.options(actor, org, s[3]);
+        if (s.length === 6 && s[5] === 'waste-runs' && method === 'GET')
+          return analysisService.wasteRuns(actor, org, s[3], historyPage);
         if (s.length === 6 && s[5] === 'history' && method === 'GET')
           return analysisService.history(actor, org, s[3], historyPage);
         if (s.length === 6 && s[5] === 'readiness' && method === 'POST')

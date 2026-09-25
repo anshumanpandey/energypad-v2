@@ -1,5 +1,7 @@
 # Sprint 4 workbook review — 23 September 2026
 
+Current decision update, 24 September 2026: the user approved **0.99 absolute difference**, with relative tolerance **0**, and confirmed that all three supplied workbooks have been fully recalculated. These resolve the earlier ambiguous-tolerance and user-confirmation requests below. Recalculation is recorded as user-attested; no Excel version/build or execution log is fabricated. Fresh comparison passes all 305 numerical values and all 36 significance decisions. Methodology/coverage approval remains separate from this numerical agreement.
+
 Status: all three original references located and characterized. **Acceptance remains blocked** pending reviewed Excel recalculation, expected results, tolerances and calculation decisions. This supersedes earlier missing-file reports; it does not approve the sources.
 
 ## Provenance
@@ -91,3 +93,27 @@ The current local report is `apps/web/.local/sprint4/verification-all-20260923.j
 ## Remaining acceptance work
 
 Obtain reviewed full recalculation from the intended Excel version, recording version/build, date, source and output hashes, calculation mode, full-rebuild action, unchanged inputs and representative input-change/restore checks. Review the zero p-value and differing labels above; approve expected result cells, per-family tolerances, units and policies CD01–05/CD09–15. Then version the approved registry and executable golden pass/fail suite. Until that evidence and approval exist, application results remain UNVALIDATED and audit point 6 stays open.
+
+## Review report command
+
+Run `npm run sprint4:review -- /path/to/workbooks /path/to/new-review.md` from `apps/web` to fresh-extract all recognized original references and generate a readable review report. Output is an exclusive mode-0600 Markdown file; sources and existing reports are never overwritten. Exit 2 records the still-open acceptance gate; exit 1 means execution failed.
+
+The report includes source hashes, algorithm versions, assumptions, coverage gaps, per-family draft limits, every numerical comparison and significance classification, and the pending evidence checklist. Differences and classification agreement are recomputed from the values. Zero/nonzero probabilities, opposite signs, unavailable/unrepresentable values and unknown result families remain flagged independently of the numerical tolerance. The command uses the draft contract above, not an approved tolerance or a golden acceptance result.
+
+## Native evidence intake
+
+Use the [native evidence instructions](SPRINT_4_NATIVE_EVIDENCE.md) and `sprint-4-native-evidence.template.json` to record separate recalculated copies and review evidence. `npm run sprint4:evidence -- <manifest.json> <new-report.json>` verifies hashes and checklist consistency without treating supplied attestations as proof or approval. The initial check confirms the three original hashes; native rebuild/review evidence remains missing.
+
+## Executable numerical compatibility test
+
+From `apps/web`:
+
+```sh
+npm run test:compatibility -- /path/to/workbooks /path/to/new-report.json
+```
+
+The command fresh-extracts all three hash-pinned workbooks, recomputes engine results, and checks the exact `(result family, cell address)` and significance-address sets registered in `workbook-cell-coverage-v1`. A missing/replaced cell cannot pass by keeping the same comparison count. Report order does not matter. Registry coverage is 82 Single, 91 Multi and 132 NRA numerical cells plus 12 significance cells per workbook.
+
+Exit 0 means the registered numerical comparison passed under the user's absolute tolerance 0.99, with exact significance agreement. Exit 1 means a numerical/classification failure or command/input/output error. Exit 2 means missing, changed or incomplete reference coverage. Unlike the earlier review commands, this is a numerical pass/fail test, not an always-blocked review report. The output includes source identities, registry/policy versions, per-fixture status, failures and advisories. It does not relabel application snapshots or approve unrelated methodology/coverage.
+
+Reports use mode 0600 and exclusive creation. The workbooks remain private external inputs and are not committed to the public repository. A runner must receive the reference directory explicitly; there is no silent skip or automatic download when fixtures are absent. Default `npm test` exercises the registry and failure modes with synthetic data; this separate command exercises the real workbooks.

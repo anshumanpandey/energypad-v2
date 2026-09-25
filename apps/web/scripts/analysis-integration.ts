@@ -1,3 +1,7 @@
+import { OpportunityService } from '../src/server/opportunities';
+import { AnalyticsReportService, reportFingerprint, reportResponse } from '../src/server/analytics-reports';
+import { CarbonService } from '../src/server/carbon';
+import { EmissionFactorService } from '../src/server/emission-factors';
 import assert from 'node:assert/strict';
 import { testDatabase } from './test-database';
 import { SiteService } from '../src/server/sites';
@@ -16,6 +20,8 @@ const sites = new SiteService(db, mail, url),
   energy = new EnergyService(db, mail, url),
   drivers = new DriverService(db, mail, url),
   analysis = new AnalysisService(db, mail, url);
+const reports = new AnalyticsReportService(db, mail, url);
+const opportunities = new OpportunityService(db, mail, url);
 try {
   const owner = actorFor(
     (await db.user.create({ data: { email: 'analysis@example.test', emailVerified: new Date() } })).id,
@@ -47,9 +53,9 @@ try {
     month,
     quantity,
     estimated: false,
-    netCost: null,
+    netCost: '20',
     vatPercent: null,
-    currency: null,
+    currency: 'GBP',
   });
   const observationIds: string[] = [];
   for (let i = 1; i <= 5; i++) {
@@ -116,6 +122,172 @@ try {
   assert.ok(run.run.result);
   assert.equal(await db.auditEvent.count({ where: { targetId: run.run.id, action: 'analysis.run_created' } }), 1);
   const saved = await analysis.readRun(owner, org.id, site.id, run.run.id);
+  const impact = await analysis.wasteSummary(owner, org.id, site.id, run.run.id);
+  const energyReport = await reports.report(owner, org.id, site.id, { family: 'energy', year: 2020 });
+  assert.equal(energyReport.summary.kwh, null); // Partial annual coverage must not become a total.
+  assert.equal(energyReport.rows.length, 12);
+  const baselineReport = await reports.report(owner, org.id, site.id, {
+    family: 'baseline',
+    baselineId: first.baseline.id,
+  });
+  assert.equal(baselineReport.status, 'UNVALIDATED');
+  assert.equal(baselineReport.period.firstMonth, definition.period.firstMonth);
+  const savingsInput = { family: 'savings', runId: run.run.id };
+  const savingsReport = await reports.report(owner, org.id, site.id, savingsInput);
+  const opportunityInput = {
+    runId: run.run.id,
+    title: 'Investigate operating hours',
+    rationale: 'Compare saved variance with the operating schedule.',
+    requestKey: crypto.randomUUID(),
+  };
+  const [opportunity, opportunityRetry] = await Promise.all([
+    opportunities.createOpportunity(owner, org.id, site.id, opportunityInput),
+    opportunities.createOpportunity(owner, org.id, site.id, opportunityInput),
+  ]);
+  assert.equal(opportunity.id, opportunityRetry.id);
+  assert.equal(opportunity.events.length, 1);
+  assert.equal(opportunity.events[0].status, 'DETECTED');
+  assert.deepEqual(opportunity.evidence, savingsReport);
+  assert.equal(await db.auditEvent.count({ where: { targetId: opportunity.id, action: 'opportunity.detected' } }), 1);
+  await assert.rejects(
+    opportunities.createOpportunity(owner, org.id, site.id, { ...opportunityInput, title: 'Changed request' }),
+    { status: 409 },
+  );
+  await assert.rejects(
+    opportunities.createOpportunity(owner, org.id, site.id, { ...opportunityInput, requestKey: crypto.randomUUID() }),
+    { status: 409 },
+  );
+  await assert.rejects(
+    opportunities.createOpportunity(owner, org.id, otherSite.id, {
+      ...opportunityInput,
+      requestKey: crypto.randomUUID(),
+    }),
+  );
+  await assert.rejects(opportunities.listOpportunities(outsider, org.id, site.id));
+  await assert.rejects(opportunities.listOpportunities(owner, org.id, otherSite.id, { cursor: opportunity.id }), {
+    status: 404,
+  });
+  const reviewInput = {
+    previousId: opportunity.events[0].id,
+    status: 'REVIEWING',
+    note: 'Inspect the original meter records.',
+    requestKey: crypto.randomUUID(),
+  };
+  const reviewed = await opportunities.reviewOpportunity(owner, org.id, site.id, opportunity.id, reviewInput);
+  assert.equal(reviewed.events.at(-1)!.status, 'REVIEWING');
+  assert.equal(
+    (await opportunities.reviewOpportunity(owner, org.id, site.id, opportunity.id, reviewInput)).events.length,
+    2,
+  );
+  await assert.rejects(
+    opportunities.reviewOpportunity(owner, org.id, site.id, opportunity.id, {
+      ...reviewInput,
+      requestKey: crypto.randomUUID(),
+    }),
+    { status: 409 },
+  );
+  await assert.rejects(opportunities.reviewOpportunity(owner, org.id, otherSite.id, opportunity.id, reviewInput), {
+    status: 404,
+  });
+  await assert.rejects(db.opportunity.update({ where: { id: opportunity.id }, data: { title: 'Rewrite history' } }));
+  await assert.rejects(
+    db.opportunityEvent.update({ where: { id: reviewed.events[1].id }, data: { note: 'Rewrite decision' } }),
+  );
+  await assert.rejects(
+    db.opportunityEvent.create({
+      data: {
+        organisationId: org.id,
+        siteId: site.id,
+        opportunityId: opportunity.id,
+        previousId: reviewed.events[1].id,
+        revision: 3,
+        status: 'VERIFIED',
+        note: 'Invalid promotion',
+        actorId: owner.userId,
+        requestKey: crypto.randomUUID(),
+        requestHash: 'test',
+      },
+    }),
+  );
+  const rejectedOpportunity = await opportunities.reviewOpportunity(owner, org.id, site.id, opportunity.id, {
+    previousId: reviewed.events[1].id,
+    status: 'REJECTED',
+    note: 'Evidence is insufficient for this investigation.',
+    requestKey: crypto.randomUUID(),
+  });
+  assert.equal(rejectedOpportunity.events.length, 3);
+  await assert.rejects(
+    opportunities.reviewOpportunity(owner, org.id, site.id, opportunity.id, {
+      previousId: rejectedOpportunity.events[2].id,
+      status: 'REVIEWING',
+      note: 'Cannot reopen a terminal state',
+      requestKey: crypto.randomUUID(),
+    }),
+    { status: 409 },
+  );
+
+  assert.equal(savingsReport.summary.postKwh, impact.impact.postKwh);
+  assert.equal(savingsReport.summary.postCost, impact.impact.postCost);
+  assert.deepEqual(savingsReport.period, request.period);
+  assert.deepEqual(await reportResponse(savingsReport, 'json', reportFingerprint(savingsReport)).json(), savingsReport);
+  for (const input of [
+    { family: 'energy', year: 2020 },
+    { family: 'baseline', baselineId: first.baseline.id },
+    savingsInput,
+  ]) {
+    await assert.rejects(reports.report(outsider, org.id, site.id, input));
+  }
+  await assert.rejects(reports.report(owner, org.id, otherSite.id, savingsInput));
+  await assert.rejects(
+    reports.report(owner, org.id, otherSite.id, { family: 'baseline', baselineId: first.baseline.id }),
+  );
+
+  assert.equal(impact.runId, run.run.id);
+  assert.equal(impact.impact.complete, true);
+  assert.notEqual(impact.impact.postCost, null);
+  assert.equal(impact.impact.postCarbon, null);
+  const factors = new EmissionFactorService(db, mail, url);
+  const carbon = new CarbonService(db, mail, url);
+  const factorInput = {
+    fuel: 'ELECTRICITY',
+    geography: 'GB',
+    basis: 'LOCATION_BASED',
+    unit: 'kgCO2e/kWh',
+    factor: '0.2',
+    source: 'Synthetic impact test',
+    firstDay: '2020-01-01',
+    lastDay: '2020-12-31',
+  };
+  const factor = await factors.add(owner, org.id, factorInput);
+  const carbonRun = await carbon.calculate(owner, org.id, site.id, {
+    meterId: meter.id,
+    year: 2020,
+    geography: 'GB',
+    basis: 'LOCATION_BASED',
+    requestKey: crypto.randomUUID(),
+  });
+  const pinnedImpact = await analysis.wasteSummary(owner, org.id, site.id, run.run.id, carbonRun.id);
+  const pinnedReport = await reports.report(owner, org.id, site.id, { ...savingsInput, carbonRunId: carbonRun.id });
+  assert.equal(pinnedReport.summary.postCarbon, pinnedImpact.impact.postCarbon);
+
+  assert.notEqual(pinnedImpact.impact.postCarbon, null);
+  await assert.rejects(analysis.wasteSummary(outsider, org.id, site.id, run.run.id, carbonRun.id));
+  await factors.add(owner, org.id, { ...factorInput, factor: '0.9' }, factor.id, 'Correct factor');
+  assert.deepEqual(await analysis.wasteSummary(owner, org.id, site.id, run.run.id, carbonRun.id), pinnedImpact);
+  assert.deepEqual(
+    await reports.report(owner, org.id, site.id, { ...savingsInput, carbonRunId: carbonRun.id }),
+    pinnedReport,
+  );
+  assert.deepEqual(
+    await reports.report(owner, org.id, site.id, { family: 'baseline', baselineId: first.baseline.id }),
+    baselineReport,
+  );
+
+  assert.equal((await analysis.wasteRuns(owner, org.id, site.id)).items[0].id, run.run.id);
+  await assert.rejects(analysis.wasteSummary(outsider, org.id, site.id, run.run.id));
+  await assert.rejects(analysis.wasteSummary(owner, org.id, otherSite.id, run.run.id));
+  await assert.rejects(analysis.wasteRuns(outsider, org.id, site.id));
+
   await assert.rejects(analysis.readRun(outsider, org.id, site.id, run.run.id));
   await assert.rejects(analysis.readRun(owner, org.id, otherSite.id, run.run.id));
   for (const role of ['VIEWER', 'SITE_MANAGER'] as const) {
@@ -125,9 +297,27 @@ try {
     const member = await db.membership.create({ data: { organisationId: org.id, userId: actor.userId, role } });
     await assert.rejects(analysis.createBaseline(actor, org.id, site.id, definition));
     if (role === 'SITE_MANAGER') {
+      await assert.rejects(analysis.wasteSummary(actor, org.id, site.id, run.run.id));
+      for (const input of [
+        { family: 'energy', year: 2020 },
+        { family: 'baseline', baselineId: first.baseline.id },
+        savingsInput,
+      ])
+        await assert.rejects(reports.report(actor, org.id, site.id, input));
+
+      await assert.rejects(analysis.wasteRuns(actor, org.id, site.id));
+      await assert.rejects(opportunities.listOpportunities(actor, org.id, site.id));
       await assert.rejects(analysis.readRun(actor, org.id, site.id, run.run.id));
       await db.siteAssignment.create({ data: { membershipId: member.id, organisationId: org.id, siteId: site.id } });
     }
+    assert.equal((await analysis.wasteSummary(actor, org.id, site.id, run.run.id)).runId, run.run.id);
+    assert.deepEqual(await reports.report(actor, org.id, site.id, savingsInput), savingsReport);
+    assert.equal((await opportunities.listOpportunities(actor, org.id, site.id)).items[0].id, opportunity.id);
+    await assert.rejects(opportunities.createOpportunity(actor, org.id, site.id, opportunityInput), { status: 403 });
+    await assert.rejects(opportunities.reviewOpportunity(actor, org.id, site.id, opportunity.id, reviewInput), {
+      status: 403,
+    });
+
     assert.equal((await analysis.readRun(actor, org.id, site.id, run.run.id)).id, run.run.id);
     await db.membership.update({ where: { id: member.id }, data: { revokedAt: new Date() } });
     await assert.rejects(analysis.readRun(actor, org.id, site.id, run.run.id));
@@ -320,6 +510,16 @@ try {
   if (corrected.status !== 'SAVED') throw Error('Correction failed');
   assert.notEqual(corrected.run.id, run.run.id);
   assert.notEqual(corrected.run.inputHash, run.run.inputHash);
+  assert.deepEqual(await analysis.wasteSummary(owner, org.id, site.id, run.run.id, carbonRun.id), pinnedImpact);
+  assert.deepEqual(
+    await reports.report(owner, org.id, site.id, { ...savingsInput, carbonRunId: carbonRun.id }),
+    pinnedReport,
+  );
+  assert.deepEqual(
+    await reports.report(owner, org.id, site.id, { family: 'baseline', baselineId: first.baseline.id }),
+    baselineReport,
+  );
+
   assert.deepEqual(await analysis.readRun(owner, org.id, site.id, run.run.id), saved);
   // Baseline observations are frozen: changing current source revisions must not alter an old baseline's NRA inputs.
   const nraRequest = {
@@ -627,6 +827,21 @@ try {
   await db.membership.update({ where: { id: historyMember.id }, data: { revokedAt: new Date() } });
   await assert.rejects(analysis.readRun(historyReader, org.id, site.id, run.run.id));
   await assert.rejects(analysis.historySites(historyReader, org.id));
+
+  await assert.rejects(reports.report(historyReader, org.id, site.id, savingsInput));
+  assert.deepEqual(await reports.report(owner, org.id, site.id, savingsInput), savingsReport);
+  const changedEnergy = await reports.report(owner, org.id, site.id, { family: 'energy', year: 2020 });
+  assert.throws(() => reportResponse(changedEnergy, 'json', reportFingerprint(energyReport)), { status: 409 });
+
+  const archivedOpportunities = await opportunities.listOpportunities(owner, org.id, site.id);
+  assert.deepEqual(archivedOpportunities.items[0].evidence, savingsReport);
+  assert.equal(archivedOpportunities.items[0].events.length, 3);
+  await assert.rejects(opportunities.reviewOpportunity(owner, org.id, site.id, opportunity.id, reviewInput), {
+    status: 404,
+  });
+  await assert.rejects(opportunities.createOpportunity(owner, org.id, site.id, opportunityInput), { status: 404 });
+  await assert.rejects(opportunities.listOpportunities(historyReader, org.id, site.id));
+  console.log('✓ opportunity evidence, immutable review history, retries, stale transitions and scoped access');
   console.log('✓ archived history preserved, active calculations blocked, scoped discovery and revoked access denied');
 } finally {
   await cleanup();

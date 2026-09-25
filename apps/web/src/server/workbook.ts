@@ -5,6 +5,35 @@ import { siteInput, type ImportMapping, type ImportSheet, type RowIssue, type Si
 const reject = (message: string) => new DomainError('INVALID_WORKBOOK', message);
 export const credentialHeader = (value: string) =>
   /password|passwd|pwd|secret|token|credential|apikey/.test(value.toLowerCase().replace(/[^a-z]/g, ''));
+// Read values rather than display text: number formats must not round imported quantities.
+function importCell(cell: ExcelJS.Cell): string {
+  let value = cell.value;
+  const location = `${cell.worksheet.name}!${cell.address}`;
+  if (cell.type === ExcelJS.ValueType.Formula) {
+    // ExcelJS's value getter drops falsy results; its result getter preserves zero and false.
+    const result = cell.result;
+    if (result === undefined || result === null)
+      throw reject(
+        `${location}: formula has no saved result. Recalculate and save the workbook in Excel before importing.`,
+      );
+    value = result;
+  }
+  if (value && typeof value === 'object' && 'error' in value)
+    throw reject(`${location}: cell contains an Excel error. Fix the error and save the workbook before importing.`);
+  let text: string;
+  if (value === null || value === undefined) text = '';
+  else if (value instanceof Date) {
+    if (!Number.isFinite(value.getTime())) throw reject(`${location}: invalid date.`);
+    // A month-only date format represents a monthly key; other dates retain their calendar day.
+    const format = (cell.numFmt ?? '').replace(/"[^"]*"|\\.|\[[^\]]*\]/g, '').toLowerCase();
+    text = value.toISOString().slice(0, /y/.test(format) && /m/.test(format) && !/[dhs]/.test(format) ? 7 : 10);
+  } else if (typeof value === 'object' && 'richText' in value) text = value.richText.map((part) => part.text).join('');
+  else if (typeof value === 'object' && 'text' in value) text = value.text;
+  else if (typeof value === 'string' || typeof value === 'boolean') text = String(value);
+  else if (typeof value === 'number' && Number.isFinite(value)) text = String(value);
+  else throw reject(`${location}: unsupported cell value.`);
+  return text.trim();
+}
 export async function readWorkbook(bytes: Uint8Array): Promise<ImportSheet[]> {
   if (bytes.length > 2_000_000) throw reject('Upload an XLSX file smaller than 2 MB.');
   let total = 0,
@@ -26,6 +55,15 @@ export async function readWorkbook(bytes: Uint8Array): Promise<ImportSheet[]> {
       const xml = new TextDecoder().decode(content);
       if (/<!DOCTYPE|<!ENTITY/i.test(xml)) throw reject('Unsupported XML declarations.');
       if (/^xl\/worksheets\/sheet[^/]*\.xml$/.test(name)) {
+        // ExcelJS treats an empty string formula cache as missing. A space preserves its
+        // presence during loading and is trimmed back to empty by importCell.
+        files[name] = new TextEncoder().encode(
+          xml.replace(/<c\b[^>]*(?<!\/)>[\s\S]*?<\/c>/g, (cell) =>
+            /^<c\b[^>]*\bt=["']str["']/.test(cell) && /<f(?:\s|>)/.test(cell)
+              ? cell.replace(/<v\s*\/>|<v>\s*<\/v>/, '<v> </v>')
+              : cell,
+          ),
+        );
         for (const match of xml.matchAll(/<c\b[^>]*\br=["']([A-Z]+)([0-9]+)["']/g)) {
           const column = [...match[1]].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
           if (column > 50 || Number(match[2]) > 2001) throw reject('Sheet dimensions exceed the import limit.');
@@ -47,12 +85,7 @@ export async function readWorkbook(bytes: Uint8Array): Promise<ImportSheet[]> {
   for (const sheet of book.worksheets) {
     if (sheet.columnCount > 50 || sheet.rowCount > 2001)
       throw reject('Use at most 50 columns and 2,000 rows per sheet.');
-    const headers = Array.from({ length: sheet.columnCount }, (_, i) =>
-      sheet
-        .getRow(1)
-        .getCell(i + 1)
-        .text.trim(),
-    );
+    const headers = Array.from({ length: sheet.columnCount }, (_, i) => importCell(sheet.getRow(1).getCell(i + 1)));
     if (headers.some((h) => h.length > 100)) throw reject('Column headings must be at most 100 characters.');
     const allowed = headers.map((h, i) => (credentialHeader(h) ? -1 : i)).filter((i) => i >= 0);
     const rows: ImportSheet['rows'] = [];
@@ -60,9 +93,7 @@ export async function readWorkbook(bytes: Uint8Array): Promise<ImportSheet[]> {
       if (number === 1) return;
       const cells = allowed.map((i) => {
         const cell = row.getCell(i + 1);
-        if (cell.formula || cell.type === ExcelJS.ValueType.Error)
-          throw reject('Replace formulas and error cells with plain values before importing.');
-        const value = cell.text.trim();
+        const value = importCell(cell);
         if (value.length > 500) throw reject('Each cell must contain at most 500 characters.');
         return value;
       });

@@ -47,6 +47,9 @@ export function WorkspaceShell({
     { key: 'overview', name: 'Overview', icon: LayoutDashboard },
     { key: 'sites', name: 'Sites', icon: Building2 },
     { key: 'energy', name: 'Energy', icon: Zap },
+    { key: 'targets', name: 'Targets & Monitoring', icon: Layers3 },
+    { key: 'site-performance', name: 'Site Performance', icon: Layers3 },
+    { key: 'waste-savings', name: 'Waste & Savings', icon: Zap },
     { key: 'carbon', name: 'Carbon', icon: Leaf },
     { key: 'opportunities', name: 'Opportunities', icon: Lightbulb },
     { key: 'ai-analyst', name: 'AI Analyst', icon: Sparkles },
@@ -60,11 +63,13 @@ export function WorkspaceShell({
     { key: 'members', name: 'Team members', icon: Users, permission: 'members:manage' as const },
     { key: 'audit', name: 'Activity log', icon: ScrollText, permission: 'audit:read' as const },
   ].filter((item) => can(role, item.permission));
-  const activeSection = section === 'analysis' ? 'energy' : section;
+  const activeSection = section === 'analysis' ? 'energy' : section === 'carbon-trends' ? 'carbon' : section;
   const title =
     section === 'analysis'
       ? 'Advanced Analysis'
-      : ([...nav, ...admin].find((item) => item.key === section)?.name ?? 'Workspace');
+      : section === 'carbon-trends'
+        ? 'Carbon trends'
+        : ([...nav, ...admin].find((item) => item.key === section)?.name ?? 'Workspace');
   return (
     <div className="workspace">
       <a className="skip-link" href="#main">

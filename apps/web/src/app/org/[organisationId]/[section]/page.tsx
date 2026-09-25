@@ -1,10 +1,18 @@
+import { Opportunities } from '@/components/opportunities';
+import { AnalyticsReports } from '@/components/analytics-reports';
+import { CarbonTrends } from '@/components/carbon-trends';
+import { MonthlyPlans } from '@/components/monthly-plans';
+import { SitePerformance } from '@/components/site-performance';
+import { WasteSavings } from '@/components/waste-savings';
+import { Overview } from '@/components/overview';
 import Link from 'next/link';
+import { PortfolioCarbon } from '@/components/portfolio-carbon';
+import { CarbonWorkspace } from '@/components/carbon-workspace';
+import { EmissionFactorWorkspace } from '@/components/emission-factor-workspace';
+import { emissionFactorService } from '@/server/services';
 import { notFound } from 'next/navigation';
 import {
-  ArrowUpRight,
-  Building2,
   Check,
-  Users,
   ShieldCheck,
   BarChart3,
   Zap,
@@ -13,7 +21,6 @@ import {
   Sparkles,
   CreditCard,
   FileText,
-  CircleDashed,
   Settings,
   ArrowRight,
 } from 'lucide-react';
@@ -29,8 +36,10 @@ import { EnergyWorkspace } from '@/components/energy-workspace';
 
 export default async function WorkspacePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ organisationId: string; section: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { organisationId, section } = await params;
   const { actor } = await pageActor();
@@ -41,6 +50,108 @@ export default async function WorkspacePage({
   } = await accessible(() => foundation.getWorkspace(actor, organisationId));
   const base = `/org/${org.id}`;
   const manage = can(membership.role, 'members:manage');
+
+  if (section === 'opportunities') {
+    const query = await searchParams;
+    const available = await accessible(() => analysisService.historySites(actor, org.id));
+    const site = typeof query.site === 'string' ? query.site : undefined;
+    if (site && !available.some((s) => s.id === site)) notFound();
+    return (
+      <Opportunities
+        organisationId={org.id}
+        sites={available}
+        canWrite={can(membership.role, 'analysis:write')}
+        initialSite={site}
+        initialRun={typeof query.run === 'string' ? query.run : undefined}
+        initialCarbon={typeof query.carbon === 'string' ? query.carbon : undefined}
+      />
+    );
+  }
+  if (section === 'carbon-trends')
+    return <CarbonTrends actor={actor} organisationId={org.id} query={await searchParams} />;
+  if (section === 'targets')
+    return (
+      <MonthlyPlans
+        organisationId={org.id}
+        sites={await accessible(() => analysisService.historySites(actor, org.id))}
+        canWrite={can(membership.role, 'analysis:write')}
+      />
+    );
+  if (section === 'site-performance')
+    return <SitePerformance actor={actor} organisationId={org.id} currency={org.currency} query={await searchParams} />;
+  if (section === 'waste-savings')
+    return <WasteSavings actor={actor} organisationId={org.id} query={await searchParams} />;
+  if (section === 'reports')
+    return (
+      <>
+        <div className="page-heading">
+          <div>
+            <span className="eyebrow">REPORTS AND EXPORTS</span>
+            <h1>Reports</h1>
+            <p>Preview and export energy, savings, baseline and carbon evidence.</p>
+          </div>
+        </div>
+        <section className="panel stack-form">
+          <h2>Carbon reports</h2>
+          <p>
+            Choose a site or portfolio, check its year, geography and reporting basis, then download CSV or JSON from
+            the result. Exports recheck your access and the latest coverage.
+          </p>
+          <p>
+            CSV includes coverage and monthly evidence rows. JSON preserves exact decimal strings and complete saved run
+            evidence. Incomplete totals remain unavailable in both formats.
+          </p>
+          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+            <Link href={`${base}/carbon`}>
+              Open site carbon reports <ArrowRight size={14} />
+            </Link>
+            <Link href={`${base}/portfolio`}>
+              Open portfolio carbon reports <ArrowRight size={14} />
+            </Link>
+          </div>
+        </section>
+        <AnalyticsReports
+          organisationId={org.id}
+          sites={await accessible(() => analysisService.historySites(actor, org.id))}
+        />
+      </>
+    );
+  if (section === 'carbon') {
+    const factors = await accessible(() => emissionFactorService.list(actor, org.id));
+    return (
+      <>
+        <div className="page-heading">
+          <div>
+            <span className="eyebrow">CARBON DATA</span>
+            <h1>Carbon</h1>
+            <p>Calculate emissions from versioned consumption and factors, and preserve their history.</p>
+          </div>
+        </div>
+        <p className="page-note">
+          <Link href={`${base}/carbon-trends`}>
+            Compare monthly and annual carbon trends <ArrowRight size={14} />
+          </Link>
+        </p>
+        <CarbonWorkspace
+          orgId={org.id}
+          sites={sites}
+          manage={can(membership.role, 'analysis:write')}
+          canFactors={can(membership.role, 'organisation:update')}
+        />
+        <EmissionFactorWorkspace
+          orgId={org.id}
+          manage={can(membership.role, 'organisation:update')}
+          records={factors.map((f) => ({
+            ...f,
+            factor: f.factor.toString(),
+            validFrom: f.validFrom.toISOString(),
+            validUntil: f.validUntil.toISOString(),
+            createdAt: f.createdAt.toISOString(),
+          }))}
+        />
+      </>
+    );
+  }
   if (section === 'analysis')
     return (
       <>
@@ -78,162 +189,8 @@ export default async function WorkspacePage({
         </p>
       </>
     );
-  if (section === 'overview') {
-    const members = manage ? await foundation.listMembers(actor, org.id) : null;
-    return (
-      <>
-        <div className="page-heading">
-          <div>
-            <span className="eyebrow">YOUR ENERGY WORKSPACE</span>
-            <h1>A better view starts here.</h1>
-            <p>Welcome to {org.name}. Let’s build your energy workspace.</p>
-          </div>
-          <span className="tag">{org.plan.name} plan</span>
-        </div>
-        <section className="welcome-banner">
-          <div>
-            <span className="eyebrow">CONNECTED PEOPLE. SMARTER PLACES.</span>
-            <h2>
-              Good energy starts
-              <br />
-              with a great team.
-            </h2>
-            <p>
-              Your workspace is ready. Bring the right people together
-              <br className="desktop-only" /> and lay the groundwork for better performance.
-            </p>
-            {manage ? (
-              <Button asChild>
-                <Link href={`${base}/members`}>
-                  Build your team <ArrowUpRight size={17} />
-                </Link>
-              </Button>
-            ) : (
-              <Button asChild>
-                <Link href={`${base}/sites`}>
-                  Explore your sites <ArrowUpRight size={17} />
-                </Link>
-              </Button>
-            )}
-          </div>
-          <div className="energy-art" aria-hidden="true">
-            <div className="orbit orbit-one" />
-            <div className="orbit orbit-two" />
-            <div className="art-building">
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-            <span className="art-node node-one">
-              <Building2 size={22} />
-            </span>
-            <span className="art-node node-two">
-              <Users size={22} />
-            </span>
-            <span className="art-node node-three">
-              <ShieldCheck size={23} />
-            </span>
-            <span className="art-caption">
-              <span /> A connected workspace
-            </span>
-          </div>
-        </section>
-        <section className="stat-grid" aria-label="Workspace summary">
-          <div className="stat-card">
-            <span className="stat-icon">
-              <Building2 size={20} />
-            </span>
-            <span>{membership.role === 'SITE_MANAGER' ? 'Assigned sites' : 'Connected sites'}</span>
-            <strong>{sites.length.toString().padStart(2, '0')}</strong>
-            <small>{sites.length ? 'Available in your workspace' : 'Your site portfolio starts here'}</small>
-          </div>
-          <div className="stat-card">
-            <span className="stat-icon">
-              <Users size={20} />
-            </span>
-            <span>{members ? 'Team members' : 'Your role'}</span>
-            <strong className={members ? '' : 'stat-word'}>
-              {members ? members.length.toString().padStart(2, '0') : roleLabels[membership.role]}
-            </strong>
-            <small>{members ? 'People with workspace access' : 'Access follows your organisation role'}</small>
-          </div>
-          <div className="stat-card">
-            <span className="stat-icon">
-              <ShieldCheck size={20} />
-            </span>
-            <span>Workspace plan</span>
-            <strong className="stat-word">{org.plan.name}</strong>
-            <small>
-              {org.plan.siteLimit ? `Up to ${org.plan.siteLimit} sites` : 'Custom site allowance'} · {org.currency}{' '}
-              reporting
-            </small>
-          </div>
-        </section>
-        <div className="overview-grid">
-          <section className="panel setup-panel">
-            <div className="section-heading">
-              <h2>Make yourself at home</h2>
-              <span className="tag subtle">Getting started</span>
-            </div>
-            <p className="muted">A few small steps toward a connected workspace.</p>
-            <div className="setup-row">
-              <span className="step-circle complete">
-                <Check size={17} />
-              </span>
-              <div>
-                <strong>Workspace created</strong>
-                <p>{org.name} is ready to go.</p>
-              </div>
-              <span className="mini-label">Done</span>
-            </div>
-            <div className="setup-row">
-              <span className={`step-circle ${members && members.length > 1 ? 'complete' : ''}`}>
-                {members && members.length > 1 ? <Check size={17} /> : '2'}
-              </span>
-              <div>
-                <strong>Bring your team on board</strong>
-                <p>Give each person the right level of access.</p>
-              </div>
-              {manage && (
-                <Link href={`${base}/members`} aria-label="Manage your team">
-                  <ArrowRight size={18} />
-                </Link>
-              )}
-            </div>
-            <div className="setup-row">
-              <span className={`step-circle ${sites.length ? 'complete' : ''}`}>
-                {sites.length ? <Check size={17} /> : '3'}
-              </span>
-              <div>
-                <strong>Connect your first site</strong>
-                <p>Add sites manually or import a workbook from Data.</p>
-              </div>
-              <Link href={`${base}/sites`} aria-label="Manage your sites">
-                <ArrowRight size={18} />
-              </Link>
-            </div>
-          </section>
-          <section className="panel foundation-panel">
-            <span className="large-icon">
-              <CircleDashed size={25} />
-            </span>
-            <span className="eyebrow">A SOLID FOUNDATION</span>
-            <h2>Ready for what’s next.</h2>
-            <p>
-              Manage your organisation, team, sites and meters, or import a site workbook. Energy analysis and reporting
-              follow in the next stages.
-            </p>
-            <Link href={`${base}/sites`} className="text-link">
-              Explore your workspace <ArrowUpRight size={15} />
-            </Link>
-          </section>
-        </div>
-      </>
-    );
-  }
+  if (section === 'overview')
+    return <Overview actor={actor} organisationId={org.id} sites={sites} query={await searchParams} />;
   if (section === 'members') {
     const members = await accessible(() => foundation.listMembers(actor, org.id));
     const invitations = await foundation.listInvitations(actor, org.id);
@@ -416,8 +373,14 @@ export default async function WorkspacePage({
         <Heading
           eyebrow="YOUR PORTFOLIOS"
           title="Portfolio"
-          text="Group sites into portfolios. Performance comparisons arrive with analytics."
+          text="Group sites into portfolios and compare carbon coverage across their active meters."
         />
+        <p className="page-note">
+          <Link href={`${base}/carbon-trends${portfolios[0] ? `?scope=portfolio:${portfolios[0].id}` : ''}`}>
+            Compare site and portfolio carbon trends <ArrowRight size={14} />
+          </Link>
+        </p>
+        <PortfolioCarbon orgId={org.id} portfolios={portfolios} />
         <PortfoliosWorkspace orgId={org.id} portfolios={portfolios} manage={manage} />
       </>
     );

@@ -1,6 +1,8 @@
 # Sprint 4 calculation compatibility — implementation design
 
-Status: experimental engine, persistence and workflow delivered; analytical acceptance remains blocked. Sprint 3 real-export reconciliation remains open. This design and fixture inventory do not close that gate, approve numerical policies, or expose calculated results in the application.
+Current decision update, 24 September 2026: the user approved **0.99 absolute difference**, with relative tolerance **0**, and confirmed that all three supplied workbooks have been fully recalculated. These resolve the earlier ambiguous-tolerance and user-confirmation requests below. Recalculation is recorded as user-attested; no Excel version/build or execution log is fabricated. Fresh comparison passes all 305 numerical values and all 36 significance decisions. Methodology/coverage approval remains separate from this numerical agreement.
+
+Status: experimental engine, persistence and workflow delivered; analytical acceptance remains blocked. Sprint 3 real-export reconciliation remains open. The application exposes experimental results; this design and fixture inventory do not approve their numerical compatibility. All three original references are now available and hash-pinned.
 
 ## First delivered step: reproducible fixture readiness
 

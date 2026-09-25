@@ -9,6 +9,14 @@ test('password signup and login work without email confirmation', async ({ page 
   await expect(page.getByRole('heading', { name: 'Create your account.' })).toBeVisible();
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
+  await expect(page.getByLabel('Confirm password', { exact: true })).toHaveAttribute('required', '');
+  await page.getByLabel('Confirm password', { exact: true }).fill('Different password 123!');
+  await page.getByRole('button', { name: 'Create account', exact: true }).click();
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('Passwords do not match');
+  expect((await page.request.get('/api/v1/organisations')).status()).toBe(401);
+  await page.getByLabel('Email address').fill(email);
+  await page.getByLabel('Password', { exact: true }).fill(password);
+  await page.getByLabel('Confirm password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Create account', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Create your organisation' })).toBeVisible();
   await page.getByLabel('Organisation name').fill('Password test workspace');
@@ -19,6 +27,7 @@ test('password signup and login work without email confirmation', async ({ page 
   await expect(page).toHaveURL(workspace);
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByLabel('Confirm password', { exact: true })).toHaveCount(0);
   expect((await page.request.get('/api/v1/organisations')).status()).toBe(401);
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password', { exact: true }).fill('Wrong password 123');
@@ -37,6 +46,7 @@ test('password signup and login work without email confirmation', async ({ page 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password', { exact: true }).fill('Replacement password 123');
+  await page.getByLabel('Confirm password', { exact: true }).fill('Replacement password 123');
   await page.getByRole('button', { name: 'Create account', exact: true }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText('Unable to create this account');
 });

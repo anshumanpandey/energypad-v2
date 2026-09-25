@@ -22,6 +22,7 @@ async function passwordAction(form: FormData, mode: 'login' | 'signup') {
   const password = passwordInput.safeParse(form.get('password'));
   if (!address.success) fail('InvalidEmail');
   if (!password.success) fail(mode === 'signup' ? 'InvalidPassword' : 'Credentials');
+  if (mode === 'signup' && form.get('confirmPassword') !== password.data) fail('PasswordMismatch');
   let session;
   try {
     // nginx replaces this header with the direct client IP; never trust forwarded chains.

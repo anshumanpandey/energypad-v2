@@ -21,6 +21,7 @@ export function LoginError({ error }: { error?: string }) {
       {{
         InvalidEmail: 'Enter a valid email address.',
         InvalidPassword: 'Use a password with 12–128 characters.',
+        PasswordMismatch: 'Passwords do not match. Please enter the same password in both fields.',
         Credentials: 'Email or password is incorrect.',
         SignupFailed: 'Unable to create this account. Try signing in instead.',
         RateLimited: 'Too many attempts. Please try again in 15 minutes.',

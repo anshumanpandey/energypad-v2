@@ -49,6 +49,10 @@ export async function api(request: Request, work: (actor: Actor) => Promise<unkn
     const session = await auth();
     if (!session?.user?.id) throw new DomainError('UNAUTHENTICATED', 'Sign in to continue.', 401);
     const result = await work({ userId: session.user.id, correlationId });
+    if (result instanceof Response) {
+      for (const [key, value] of Object.entries(headers)) result.headers.set(key, value);
+      return result;
+    }
     return Response.json(result, { status, headers });
   } catch (error) {
     let issue =

@@ -154,12 +154,16 @@ try {
     await service.createSite(owner, org.id, { code: 'REPLACEMENT', name: 'Replacement' });
     await service.archivePortfolio(owner, org.id, portfolio.id);
   });
-  await check('formulas and malformed workbooks are rejected', async () => {
+  await check('cached formulas are accepted; missing results and malformed workbooks are rejected', async () => {
     await denied(service.upload(owner, org.id, new Uint8Array([1, 2, 3])));
     const book = new ExcelJS.Workbook(),
       sheet = book.addWorksheet('Sites');
     sheet.addRow(['name']);
     sheet.addRow([{ formula: '1+1', result: 2 }]);
+    const bytes = new Uint8Array(await book.xlsx.writeBuffer());
+    assert.equal((await readWorkbook(bytes))[0].rows[0].cells[0], '2');
+    await service.upload(owner, org.id, bytes);
+    sheet.getCell('A2').value = { formula: '1+1' };
     await denied(service.upload(owner, org.id, new Uint8Array(await book.xlsx.writeBuffer())));
     await denied(service.importDetail(owner, org.id, randomUUID()));
   });

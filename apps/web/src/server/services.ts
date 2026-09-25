@@ -47,3 +47,38 @@ export const eventService = new EventService(db, mailer, process.env.AUTH_URL ??
 
 import { AnalysisService } from './analysis/service';
 export const analysisService = new AnalysisService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { EmissionFactorService } from './emission-factors';
+export const emissionFactorService = new EmissionFactorService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+);
+
+import { CarbonService } from './carbon';
+export const carbonService = new CarbonService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { CarbonTargetService } from './carbon-targets';
+export const carbonTargetService = new CarbonTargetService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { CarbonImportService } from './carbon-imports';
+export const carbonImportService = new CarbonImportService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+  emissionFactorService,
+  carbonTargetService,
+);
+
+import { MonthlyPlanService } from './monthly-plans';
+export const monthlyPlanService = new MonthlyPlanService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { AnalyticsReportService } from './analytics-reports';
+export const analyticsReportService = new AnalyticsReportService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+);
+
+import { OpportunityService } from './opportunities';
+export const opportunityService = new OpportunityService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');

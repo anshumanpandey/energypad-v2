@@ -1,3 +1,6 @@
+import { wasteSavings } from '../../domain/waste-savings';
+import type { CarbonSnapshot } from '../../domain/carbon';
+import type { ReportingResult } from '../../domain/analysis/reporting';
 import { Prisma } from '@prisma/client';
 import { FoundationService, type Actor } from '../foundation';
 import { DomainError, uuid } from '../../domain/policy';
@@ -427,6 +430,89 @@ export class AnalysisService extends FoundationService {
         policyVersion: review.policyVersion,
       });
       return review;
+    });
+  }
+  async wasteRuns(actor: Actor, org: string, siteId: string, input: unknown = {}) {
+    const page = historyPageInput.parse(input);
+    return this.transaction(async (tx) => {
+      await this.access(tx, actor, org, siteId, 'history');
+      const scope = { organisationId: org, siteId };
+      const anchor = page.cursor ? await tx.analysisRun.findFirst({ where: { ...scope, id: page.cursor } }) : null;
+      if (page.cursor && !anchor) throw new DomainError('NOT_FOUND', 'This cursor is not available.', 404);
+      const rows = await tx.analysisRun.findMany({
+        where: {
+          ...scope,
+          ...(anchor
+            ? { OR: [{ createdAt: { lt: anchor.createdAt } }, { createdAt: anchor.createdAt, id: { gt: anchor.id } }] }
+            : {}),
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        take: page.limit + 1,
+        select: { id: true, meterId: true, baselineId: true, createdAt: true, compatibility: true },
+      });
+      const items = rows.slice(0, page.limit);
+      return { items, nextCursor: rows.length > page.limit ? items[items.length - 1].id : null };
+    });
+  }
+  async wasteSummary(actor: Actor, org: string, siteId: string, runId: string, carbonRunId?: string) {
+    uuid.parse(runId);
+    if (carbonRunId) uuid.parse(carbonRunId);
+    return this.transaction(async (tx) => {
+      await this.access(tx, actor, org, siteId, 'history');
+      const run = await tx.analysisRun.findFirst({
+        where: { id: runId, organisationId: org, siteId },
+        include: { result: true, baseline: true },
+      });
+      if (!run?.result) throw new DomainError('NOT_FOUND', 'This saved result is not available.', 404);
+      const output = run.result.output as unknown as ReportingResult;
+      const readings = await tx.consumptionRecord.findMany({
+        where: {
+          organisationId: org,
+          siteId,
+          meterId: run.meterId,
+          id: { in: output.rows.flatMap((r) => (r.status === 'CALCULATED' ? [r.consumptionId] : [])) },
+        },
+        orderBy: { id: 'asc' },
+      });
+      const carbon = carbonRunId
+        ? await tx.carbonRun.findFirst({ where: { id: carbonRunId, organisationId: org, siteId } })
+        : null;
+      if (carbonRunId && !carbon) throw new DomainError('NOT_FOUND', 'This carbon run is not available.', 404);
+      const snapshot = carbon?.snapshot as unknown as CarbonSnapshot | undefined;
+      if (snapshot && snapshot.definition.meterId !== run.meterId)
+        throw new DomainError('SCOPE', 'Choose a carbon run for the same meter.');
+      return {
+        runId: run.id,
+        baselineId: run.baselineId,
+        meterId: run.meterId,
+        inputHash: run.inputHash,
+        createdAt: run.createdAt.toISOString(),
+        compatibility: run.compatibility,
+        output,
+        model: run.baseline.fit,
+        evidence: {
+          runSnapshot: run.snapshot,
+          baseline: run.baseline,
+          readings,
+          carbonSnapshot: snapshot ?? null,
+        },
+        carbonRunId: carbon?.id ?? null,
+        carbonAlgorithm: carbon?.algorithmVersion ?? null,
+        carbonDefinition: snapshot?.definition ?? null,
+        impact: wasteSavings(
+          output,
+          readings.map((r) => ({
+            id: r.id,
+            revision: r.revision,
+            normalizedKwh: r.normalizedKwh.toString(),
+            netCost: r.netCost?.toString() ?? null,
+            currency: r.currency,
+            estimated: r.estimated,
+            conversionVersion: r.conversionVersion,
+          })),
+          snapshot ?? null,
+        ),
+      };
     });
   }
   async readRun(actor: Actor, org: string, siteId: string, runId: string) {

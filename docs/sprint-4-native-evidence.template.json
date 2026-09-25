@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "fixtures": [
+    {
+      "fixtureId": "single",
+      "original": {
+        "file": "Single Routine Adjustment V2.xlsx",
+        "sha256": "40dfaa6aaaeed910fa49552bab2d9ef629adf91b6982796372cf8f941e7821cd"
+      },
+      "recalculated": null,
+      "excel": null,
+      "review": null,
+      "perturbationChecks": []
+    },
+    {
+      "fixtureId": "multi",
+      "original": {
+        "file": "Multi Routine Adjustment V2.xlsx",
+        "sha256": "96d03f58b3caf94429f86b257ddb316cb4f3bf96f4e11cf8c3bbaf7a4c2a77cb"
+      },
+      "recalculated": null,
+      "excel": null,
+      "review": null,
+      "perturbationChecks": []
+    },
+    {
+      "fixtureId": "multi-nra",
+      "original": {
+        "file": "Multi Routine Adjustment Plus NRA V2.xlsx",
+        "sha256": "427df495d5858f091616ea3709125a305a2d7212ac6ce8ac5b54c9100f53caed"
+      },
+      "recalculated": null,
+      "excel": null,
+      "review": null,
+      "perturbationChecks": []
+    }
+  ]
+}

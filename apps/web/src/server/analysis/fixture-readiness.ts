@@ -28,9 +28,12 @@ export const calculationReviewDependencies = [
   {
     code: 'NATIVE_RECALCULATION',
     detail:
-      'Record native recalculation evidence for the reference workbooks. CD11 shifting-range claim was withdrawn after direct XML inspection; the NRA source still requires result/methodology review.',
+      'User confirmed full recalculation of all three supplied workbooks. This is user-attested; Excel version/build and action logs were not independently observed. CD11 shifting-range claim was withdrawn after direct XML inspection; the NRA source still requires result/methodology review.',
   },
-  { code: 'TOLERANCES', detail: 'Record approved absolute/relative tolerances for each numerical result family.' },
+  {
+    code: 'TOLERANCES',
+    detail: 'Resolved by user: absolute 0.99, relative 0, all numerical result families (workbook-absolute-0.99-v1).',
+  },
   {
     code: 'CALCULATION_POLICIES',
     detail:

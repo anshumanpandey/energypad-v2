@@ -2035,3 +2035,40 @@ small {
 .analysis-workspace .panel {
   min-width: 0;
 }
+
+.overview-kpis {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.overview-kpis .stat-card,
+.overview-kpis .stat-card:last-child {
+  display: flex;
+  grid-column: auto;
+  align-items: flex-start;
+  min-width: 0;
+}
+.overview-kpis .stat-card small,
+.overview-kpis .stat-card:last-child > small {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: none;
+  text-align: left;
+}
+.overview-kpis .stat-card a {
+  margin-top: auto;
+}
+@media (max-width: 600px) {
+  .overview-kpis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.waste-savings {
+  overflow-wrap: anywhere;
+}
+.waste-savings .stat-card > strong {
+  font-size: 1.4rem;
+}
+.waste-savings details p,
+.waste-savings li {
+  margin-bottom: 12px;
+}

@@ -12,7 +12,16 @@ async function workbook(months: string[], badUnit = false) {
   const book = new ExcelJS.Workbook();
   const sheet = book.addWorksheet('Readings');
   sheet.addRow(['month', 'quantity', 'unit', 'password']);
-  for (const month of months) sheet.addRow([month, '100', badUnit ? 'm3' : 'kWh', 'synthetic-secret']);
+  for (const month of months) {
+    const row = sheet.addRow([
+      new Date(`${month}-01T00:00:00Z`),
+      { formula: '50*2', result: 100 },
+      badUnit ? 'm3' : 'kWh',
+      'synthetic-secret',
+    ]);
+    row.getCell(1).numFmt = 'mmm-yy';
+    row.getCell(2).numFmt = '#,##0.00';
+  }
   return new Uint8Array(await book.xlsx.writeBuffer());
 }
 const mapping = {

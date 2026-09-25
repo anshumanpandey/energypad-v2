@@ -44,7 +44,14 @@ export function WorkbookTemplateFields({ kind }: { kind: Exclude<WorkbookKind, '
             {
               version: 1,
               kind,
-              sheetName: kind === 'drivers' ? 'Drivers' : 'Patterns',
+              sheetName: {
+                drivers: 'Drivers',
+                patterns: 'Patterns',
+                emissions: 'Emissions',
+                targets: 'Targets',
+                monthlyTargets: 'Monthly Targets',
+                monitoring: 'Monitoring',
+              }[kind],
               columns: Object.fromEntries(workbookFields[kind].map((field) => [field, field])),
               defaults: {},
             },
