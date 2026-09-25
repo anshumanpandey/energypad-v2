@@ -95,3 +95,6 @@ export const aiGenerationService = new AIGenerationService(
   configuredAnswerProvider(),
   Number(process.env.AI_DAILY_ATTEMPT_LIMIT ?? 20),
 );
+
+import { BillingService } from './billing';
+export const billingService = new BillingService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');

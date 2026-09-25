@@ -1,3 +1,5 @@
+import { BillingOverview } from '@/components/billing-overview';
+import { billingService } from '@/server/services';
 import { PortfolioEnergy } from '@/components/portfolio-energy';
 import { AIEvidence } from '@/components/ai-evidence';
 import { Opportunities } from '@/components/opportunities';
@@ -21,7 +23,6 @@ import {
   Leaf,
   Lightbulb,
   Sparkles,
-  CreditCard,
   FileText,
   Settings,
   ArrowRight,
@@ -408,7 +409,10 @@ export default async function WorkspacePage({
       </>
     );
   }
-  if (section === 'billing' && !can(membership.role, 'billing:manage')) notFound();
+  if (section === 'billing') {
+    if (!can(membership.role, 'billing:manage')) notFound();
+    return <BillingOverview data={await accessible(() => billingService.overview(actor, org.id))} />;
+  }
   const future = {
     energy: {
       icon: <Zap size={32} />,
@@ -433,12 +437,6 @@ export default async function WorkspacePage({
       title: 'AI Analyst',
       headline: 'Explore the story behind your energy',
       text: 'Ask questions and investigate performance using verified analytical results when the AI Analyst becomes available.',
-    },
-    billing: {
-      icon: <CreditCard size={32} />,
-      title: 'Billing',
-      headline: 'Manage your subscription',
-      text: 'Plan selection, trials, payments and subscription management are not available yet. Your current plan does not represent an active paid subscription.',
     },
     analysis: {
       icon: <BarChart3 size={32} />,

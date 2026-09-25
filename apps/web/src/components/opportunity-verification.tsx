@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { VerificationRunPicker } from './verification-run-picker';
 import { Button } from './ui/button';
 import type { AnalyticsReport } from '@/domain/analytics-report';
 export type VerificationRecord = {
@@ -26,12 +27,14 @@ export type VerificationPayload = {
   references: string[];
 };
 export function VerificationForm({
+  optionsPath,
   previous,
   eventId,
   workVersionId,
   disabled,
   onSave,
 }: {
+  optionsPath: string;
   previous?: VerificationRecord;
   eventId: string;
   workVersionId: string;
@@ -39,13 +42,15 @@ export function VerificationForm({
   onSave: (payload: VerificationPayload) => Promise<void>;
 }) {
   const [error, setError] = useState('');
+  const [implementationDate, setImplementationDate] = useState(previous?.implementationDate.slice(0, 10) ?? '');
+  const [runId, setRunId] = useState('');
   return (
     <form
       className="stack-form"
       aria-label="Verification evidence"
       onSubmit={async (e) => {
         e.preventDefault();
-        if (disabled) return;
+        if (disabled || !runId) return;
         setError('');
         const data = new FormData(e.currentTarget);
         try {
@@ -53,7 +58,7 @@ export function VerificationForm({
             previousId: previous?.id ?? null,
             eventId,
             workVersionId,
-            runId: String(data.get('runId')),
+            runId,
             ...(data.get('carbonRunId') ? { carbonRunId: String(data.get('carbonRunId')) } : {}),
             implementationDate: String(data.get('implementationDate')),
             note: String(data.get('note')),
@@ -76,22 +81,36 @@ export function VerificationForm({
       </p>
       <fieldset disabled={disabled} className="stack-form">
         <label>
-          Verification reporting run ID
-          <input name="runId" required />
-        </label>
-        <label>
-          Verification carbon run ID (optional)
-          <input name="carbonRunId" />
-        </label>
-        <label>
           Implementation completion date
           <input
             type="date"
             name="implementationDate"
             required
-            defaultValue={previous?.implementationDate.slice(0, 10)}
+            value={implementationDate}
+            onChange={(event) => {
+              setImplementationDate(event.target.value);
+              setRunId('');
+            }}
           />
         </label>
+        {implementationDate ? (
+          <VerificationRunPicker
+            key={implementationDate}
+            path={optionsPath}
+            implementationDate={implementationDate}
+            onSelect={setRunId}
+          />
+        ) : (
+          <p>Enter the implementation completion date to find saved reporting runs.</p>
+        )}
+        {runId && (
+          <VerificationRunPicker
+            key={`${implementationDate}-${runId}`}
+            path={optionsPath}
+            implementationDate={implementationDate}
+            runId={runId}
+          />
+        )}
         <label>
           Supporting references (one per line)
           <textarea name="references" required maxLength={5000} defaultValue={previous?.references.join('\n')} />
@@ -100,7 +119,9 @@ export function VerificationForm({
           Verification explanation
           <textarea name="note" required minLength={10} maxLength={4000} />
         </label>
-        <Button type="submit">Save verification evidence</Button>
+        <Button type="submit" disabled={!runId}>
+          Save verification evidence
+        </Button>
       </fieldset>
       {error && <p role="alert">{error}</p>}
     </form>

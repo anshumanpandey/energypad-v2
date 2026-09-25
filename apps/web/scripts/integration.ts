@@ -1,3 +1,4 @@
+import { BillingService } from '../src/server/billing';
 import assert from 'node:assert/strict';
 import { testDatabase } from './test-database';
 import { actorFor, FoundationService, hashToken } from '../src/server/foundation';
@@ -53,6 +54,36 @@ try {
     await db.membership.create({ data: { userId: actor.userId, organisationId: org.id, role } });
   const siteA = await db.site.create({ data: { organisationId: org.id, code: 'A', name: 'Assigned site' } });
   const siteB = await db.site.create({ data: { organisationId: org.id, code: 'B', name: 'Unassigned site' } });
+  await check('owner-only billing overview, active capacity, plan changes and revoked access', async () => {
+    const billing = new BillingService(db, { async send() {} }, 'http://localhost:3100');
+    const initial = await billing.overview(owner, org.id);
+    assert.equal(initial.subscription.status, 'NOT_CONNECTED');
+    assert.deepEqual(initial.sites, { active: 2, limit: 5, remaining: 3, overLimit: false });
+    assert.equal(initial.features.find((feature) => feature.key === 'ai')!.included, false);
+    for (const actor of [admin, manager, analyst, viewer]) await denied(billing.overview(actor, org.id), 'FORBIDDEN');
+    await denied(billing.overview(stranger, org.id), 'NOT_FOUND');
+    await denied(billing.overview(owner, other.id), 'NOT_FOUND');
+    await db.site.update({ where: { id: siteB.id }, data: { archivedAt: new Date() } });
+    assert.equal((await billing.overview(owner, org.id)).sites.active, 1);
+    await db.site.update({ where: { id: siteB.id }, data: { archivedAt: null } });
+    await db.plan.update({ where: { key: 'STARTER' }, data: { siteLimit: 1 } });
+    assert.deepEqual((await billing.overview(owner, org.id)).sites, {
+      active: 2,
+      limit: 1,
+      remaining: 0,
+      overLimit: true,
+    });
+    await db.plan.update({ where: { key: 'STARTER' }, data: { siteLimit: 5 } });
+    await db.organisation.update({ where: { id: org.id }, data: { planKey: 'ENTERPRISE' } });
+    const enterprise = await billing.overview(owner, org.id);
+    assert.deepEqual(enterprise.sites, { active: 2, limit: null, remaining: null, overLimit: false });
+    assert.equal(enterprise.features.find((feature) => feature.key === 'ai')!.included, true);
+    await db.organisation.update({ where: { id: org.id }, data: { planKey: 'STARTER' } });
+    await db.membership.update({ where: { id: ownerMember.id }, data: { revokedAt: new Date() } });
+    await denied(billing.overview(owner, org.id), 'NOT_FOUND');
+    await db.membership.update({ where: { id: ownerMember.id }, data: { revokedAt: null } });
+  });
+
   const foreignSite = await db.site.create({
     data: { organisationId: other.id, code: 'X', name: 'Other tenant site' },
   });

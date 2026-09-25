@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { supportingEvidenceInput } from '../src/domain/opportunity-supporting';
+import { supportingEvidenceInput, supportingLogQuery } from '../src/domain/opportunity-supporting';
 const id = '10000000-0000-4000-8000-000000000001';
 const common = {
   previousId: null,
@@ -56,4 +56,21 @@ describe('supporting evidence contracts', () => {
     expect(supportingEvidenceInput.safeParse({ ...tip, month: '2026-13' }).success).toBe(false);
     expect(supportingEvidenceInput.safeParse({ ...tip, verifiedKwh: 100 }).success).toBe(false);
   });
+});
+
+it('bounds operational log searches and rejects invalid scope inputs', () => {
+  expect(supportingLogQuery.parse({})).toEqual({ query: '', historical: false });
+  expect(supportingLogQuery.parse({ query: ' LOG ', historical: true, id })).toMatchObject({
+    query: 'LOG',
+    historical: true,
+    id,
+  });
+  for (const value of [
+    { cursor: 'bad' },
+    { id: 'bad' },
+    { query: 'x'.repeat(101) },
+    { historical: 'false' },
+    { organisationId: id },
+  ])
+    expect(supportingLogQuery.safeParse(value).success).toBe(false);
 });

@@ -267,3 +267,23 @@ Addressed recheck point 3: Carbon now lists authorized archived sites and provid
 ### Sprint 5 recheck — carbon preview/export consistency
 
 Addressed recheck point 4 with stable site/portfolio preview fingerprints and HTTP 409 rejection when export evidence or scope changes. Report authorization, current summary and immutable source retrieval now share a repeatable-read transaction. UI downloads require the preview fingerprint; unchanged repeated downloads remain available. All four Sprint 5 recheck implementation findings are addressed. Methodology approval and production reconciliation remain separate gates; OpenAI work remains deferred.
+
+### Sprint 6 audit follow-up — operational-log discovery
+
+Addressed audit point 1 with scoped cursor pagination, code/operation search, historical revision selection and exact-ID lookup. Selected revisions remain available while navigating, and attachments retain immutable evidence. Next: audit point 2, optional saved carbon evidence in savings previews. OpenAI integration remains deferred; methodology approval remains a separate gate.
+
+### Sprint 6 audit point 2 — saved carbon evidence
+
+Savings previews now accept explicitly selected saved carbon evidence with existing scope and reading-revision compatibility checks. Retry identity, citations and fingerprint-checked source downloads preserve the selection; unavailable carbon stays unavailable. Next: audit point 3, scoped verification run selection. OpenAI integration remains deferred and methodology approval remains separate.
+
+### Sprint 6 audit point 3 — verification run picker
+
+Replaced manual verification run IDs with scoped, paged reporting and optional carbon selectors. Choices expose the meter, exact baseline, period and status, account for implementation date, and explain ineligible or missing evidence. Submission checks and archived read-only behavior remain enforced. Next: audit point 4, valid payload size limits. OpenAI remains deferred; methodology approval is separate.
+
+### Sprint 6 audit point 4 — request byte budgets
+
+Opportunity creation, review, action plans, verification and supporting evidence now have bounded byte caps sized for schema-maximal text including JSON escaping. Existing field validation and streamed overflow rejection remain intact. All four independent Sprint 6 audit items are addressed; methodology approval and deferred OpenAI acceptance are still separate gates. Next: prepare Sprint 7 and identify unresolved commercial-policy decisions.
+
+### Sprint 7 started — assigned plan and usage
+
+Billing now exposes an owner-only overview and API showing the assigned plan, active-site capacity and existing feature entitlements. It explicitly distinguishes assignment from a paid subscription and makes no external billing calls. See SPRINT_7_DESIGN.md and SPRINT_7_ACCEPTANCE.md. Next: settle commercial policy and build subscription-state/entitlement foundations, followed by Stripe test-mode integration. Prices, trial and lifecycle rules remain unapproved; Sprint 6 methodology and deferred OpenAI gates remain separate.

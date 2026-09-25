@@ -5,10 +5,15 @@ export const aiEvidenceInput = z
   .object({
     tool: z.enum(['saved_baseline', 'saved_savings', 'saved_opportunity']),
     resourceId: z.uuid(),
+    carbonRunId: z.uuid().optional(),
     question: z.string().trim().min(5).max(2000),
     requestKey: z.uuid(),
   })
-  .strict();
+  .strict()
+  .refine((data) => !data.carbonRunId || data.tool === 'saved_savings', {
+    path: ['carbonRunId'],
+    message: 'Carbon evidence is available only for saved savings runs.',
+  });
 export type EvidenceTool = z.infer<typeof aiEvidenceInput>['tool'];
 export type EvidenceFact = {
   id: string;
@@ -22,6 +27,7 @@ export type EvidenceCitation = {
   tool: EvidenceTool;
   resourceId: string;
   fingerprint: string;
+  carbonRunId?: string;
   period: { firstMonth: string; lastMonth: string };
   status: string;
 };
@@ -42,6 +48,9 @@ export function evidencePreview(
 ): EvidencePreview {
   const savings = tool === 'saved_savings';
   const opportunity = tool === 'saved_opportunity';
+  const carbonRunId = savings
+    ? z.object({ carbonRunId: z.uuid().nullish() }).parse(report.evidence).carbonRunId
+    : undefined;
   if (
     report.family !== (opportunity ? 'opportunity' : savings ? 'savings' : 'baseline') ||
     report.summary[opportunity ? 'opportunityId' : savings ? 'runId' : 'baselineId'] !== resourceId
@@ -84,7 +93,17 @@ export function evidencePreview(
     version: 'ai-evidence-v1',
     mode: 'EVIDENCE_PREVIEW',
     facts,
-    citations: [{ id: 'source-1', tool, resourceId, fingerprint, period: report.period, status: report.status }],
+    citations: [
+      {
+        id: 'source-1',
+        tool,
+        resourceId,
+        ...(carbonRunId ? { carbonRunId } : {}),
+        fingerprint,
+        period: report.period,
+        status: report.status,
+      },
+    ],
     limitations: [
       'This is a deterministic evidence preview. No AI answer has been generated.',
       report.note,

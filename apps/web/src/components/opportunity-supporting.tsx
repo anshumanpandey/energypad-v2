@@ -1,10 +1,12 @@
 'use client';
+import { OperationalLogPicker } from './operational-log-picker';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import type { WorkVersion } from './opportunity-work';
 export type SupportingOptions = {
   energyUses: { id: string; code: string; name: string }[];
-  logs: { id: string; eventCode: string; operation: string; revision: number }[];
+  logs: { id: string; eventCode: string; operation: string; revision: number; superseded?: boolean }[];
+  nextCursor?: string | null;
 };
 export type SupportingRecord = {
   id: string;
@@ -33,6 +35,7 @@ export type SupportingRecord = {
   };
 };
 export function SupportingEvidence({
+  logOptionsPath,
   records,
   options,
   eventId,
@@ -41,6 +44,7 @@ export function SupportingEvidence({
   disabled,
   onSave,
 }: {
+  logOptionsPath: string;
   records: SupportingRecord[];
   options: SupportingOptions;
   eventId: string;
@@ -184,17 +188,7 @@ export function SupportingEvidence({
               </select>
             </label>
             {kind === 'LOG' ? (
-              <label>
-                Operational log revision
-                <select name="operationalEventId" required>
-                  <option value="">Select a log (latest 100 current records)</option>
-                  {options.logs.map((log) => (
-                    <option key={log.id} value={log.id}>
-                      {log.eventCode} · {log.operation} · revision {log.revision}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <OperationalLogPicker path={logOptionsPath} initial={options} disabled={disabled} />
             ) : (
               <>
                 <label>

@@ -1,6 +1,8 @@
-import { supportingEvidenceInput } from '../domain/opportunity-supporting';
+import { supportingEvidenceInput, supportingLogQuery } from '../domain/opportunity-supporting';
 import {
   verificationInput,
+  verificationOptionsInput,
+  type VerificationOptions,
   checkVerificationPeriod,
   verificationEligibility,
   requireVerifiedEligibility,
@@ -133,22 +135,64 @@ export class OpportunityService extends AnalyticsReportService {
       );
     return owners;
   }
-  async supportingOptions(actor: Actor, org: string, siteId: string) {
-    return this.db.$transaction(async (tx) => {
-      await this.opportunityAccess(tx, actor, org, siteId, true);
-      const energyUses = await tx.siteEnergyUse.findMany({
-        where: { organisationId: org, siteId },
-        select: { id: true, code: true, name: true },
-        orderBy: { code: 'asc' },
-      });
-      const logs = await tx.operationalEvent.findMany({
-        where: { organisationId: org, siteId, replacement: { is: null } },
-        select: { id: true, eventCode: true, operation: true, revision: true },
-        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
-        take: 100,
-      });
-      return { energyUses, logs };
-    });
+  async supportingOptions(actor: Actor, org: string, siteId: string, input: unknown = {}) {
+    const data = supportingLogQuery.parse(input);
+    return this.db.$transaction(
+      async (tx) => {
+        await this.opportunityAccess(tx, actor, org, siteId, true);
+        const energyUses = await tx.siteEnergyUse.findMany({
+          where: { organisationId: org, siteId },
+          select: { id: true, code: true, name: true },
+          orderBy: { code: 'asc' },
+        });
+        const scope: Prisma.OperationalEventWhereInput = {
+          organisationId: org,
+          siteId,
+          ...(data.id
+            ? { id: data.id }
+            : {
+                ...(data.historical ? {} : { replacement: { is: null } }),
+                ...(data.query
+                  ? {
+                      OR: [
+                        { eventCode: { contains: data.query, mode: 'insensitive' } },
+                        { operation: { contains: data.query, mode: 'insensitive' } },
+                      ],
+                    }
+                  : {}),
+              }),
+        };
+        const anchor = data.cursor
+          ? await tx.operationalEvent.findFirst({ where: { AND: [scope, { id: data.cursor }] } })
+          : null;
+        if (data.cursor && !anchor)
+          throw new DomainError('NOT_FOUND', 'This log cursor is unavailable for these filters.', 404);
+        const rows = await tx.operationalEvent.findMany({
+          where: {
+            AND: [
+              scope,
+              ...(anchor
+                ? [
+                    {
+                      OR: [
+                        { createdAt: { lt: anchor.createdAt } },
+                        { createdAt: anchor.createdAt, id: { gt: anchor.id } },
+                      ],
+                    },
+                  ]
+                : []),
+            ],
+          },
+          select: { id: true, eventCode: true, operation: true, revision: true, replacement: { select: { id: true } } },
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+          take: 26,
+        });
+        if (data.id && !rows.length) throw new DomainError('NOT_FOUND', 'This operational log is unavailable.', 404);
+        const logs = rows.slice(0, 25).map(({ replacement, ...log }) => ({ ...log, superseded: replacement !== null }));
+        return { energyUses, logs, nextCursor: rows.length > 25 ? logs.at(-1)!.id : null };
+      },
+      { isolationLevel: 'RepeatableRead' },
+    );
   }
   async saveSupportingEvidence(actor: Actor, org: string, siteId: string, id: string, input: unknown) {
     uuid.parse(id);
@@ -417,6 +461,118 @@ export class OpportunityService extends AnalyticsReportService {
         return tx.opportunity.findUniqueOrThrow({ where: { id: opportunity.id }, include });
       },
       { timeout: 20000 },
+    );
+  }
+  async verificationOptions(
+    actor: Actor,
+    org: string,
+    siteId: string,
+    id: string,
+    input: unknown,
+  ): Promise<VerificationOptions> {
+    uuid.parse(id);
+    const data = verificationOptionsInput.parse(input);
+    return this.db.$transaction(
+      async (tx) => {
+        await this.opportunityAccess(tx, actor, org, siteId, true);
+        const opportunity = await tx.opportunity.findFirst({ where: { id, organisationId: org, siteId } });
+        if (!opportunity) throw new DomainError('NOT_FOUND', 'This opportunity is not available.', 404);
+        const original = await tx.analysisRun.findUniqueOrThrow({ where: { id: opportunity.runId } });
+        const meter = await tx.meter.findUniqueOrThrow({ where: { id: opportunity.meterId } });
+        const scope = {
+          organisationId: org,
+          siteId,
+          meterId: opportunity.meterId,
+          baselineId: original.baselineId,
+          result: { isNot: null },
+        };
+        const source = opportunity.evidence as unknown as AnalyticsReport;
+        const describe = (run: {
+          id: string;
+          snapshot: unknown;
+          compatibility: string;
+          result: { output: unknown } | null;
+        }) => {
+          const snapshot = run.snapshot as { request: { period: AnalyticsReport['period'] } };
+          const output = run.result!.output as import('../domain/analysis/reporting').ReportingResult;
+          let reason: string | null = null;
+          try {
+            if (run.id === original.id) throw new Error('The original investigation run cannot be used.');
+            checkVerificationPeriod(source, { ...source, period: snapshot.request.period }, data.implementationDate);
+          } catch (error) {
+            reason = error instanceof Error ? error.message : 'Ineligible period.';
+          }
+          return {
+            id: run.id,
+            label: `${snapshot.request.period.firstMonth} – ${snapshot.request.period.lastMonth} · ${output.status} · ${run.compatibility} · ${run.id}`,
+            eligible: reason === null,
+            reason,
+          };
+        };
+        const base = { meter: `${meter.name} (${meter.code})`, baselineId: original.baselineId };
+        const after = (anchor: { createdAt: Date; id: string } | null) =>
+          anchor
+            ? {
+                OR: [{ createdAt: { lt: anchor.createdAt } }, { createdAt: anchor.createdAt, id: { gt: anchor.id } }],
+              }
+            : {};
+        const orderBy = [{ createdAt: 'desc' as const }, { id: 'asc' as const }];
+        if (!data.runId) {
+          const anchor = data.cursor ? await tx.analysisRun.findFirst({ where: { ...scope, id: data.cursor } }) : null;
+          if (data.cursor && !anchor) throw new DomainError('NOT_FOUND', 'This run cursor is not available.', 404);
+          const rows = await tx.analysisRun.findMany({
+            where: { ...scope, ...after(anchor) },
+            include: { result: true },
+            orderBy,
+            take: 26,
+          });
+          return { ...base, items: rows.slice(0, 25).map(describe), nextCursor: rows.length > 25 ? rows[24].id : null };
+        }
+        const run = await tx.analysisRun.findFirst({ where: { ...scope, id: data.runId }, include: { result: true } });
+        if (!run) throw new DomainError('NOT_FOUND', 'This reporting run is not available.', 404);
+        const option = describe(run);
+        if (!option.eligible) throw new DomainError('VERIFICATION_PERIOD', option.reason!);
+        const carbonScope = {
+          organisationId: org,
+          siteId,
+          snapshot: { path: ['definition', 'meterId'], equals: opportunity.meterId },
+        };
+        const anchor = data.cursor
+          ? await tx.carbonRun.findFirst({ where: { ...carbonScope, id: data.cursor } })
+          : null;
+        if (data.cursor && !anchor) throw new DomainError('NOT_FOUND', 'This carbon cursor is not available.', 404);
+        const rows = await tx.carbonRun.findMany({ where: { ...carbonScope, ...after(anchor) }, orderBy, take: 26 });
+        const output = run.result!.output as unknown as import('../domain/analysis/reporting').ReportingResult;
+        const calculated = output.rows.filter((row) => row.status === 'CALCULATED');
+        return {
+          ...base,
+          nextCursor: rows.length > 25 ? rows[24].id : null,
+          items: rows.slice(0, 25).map((row) => {
+            const snapshot = row.snapshot as unknown as import('../domain/carbon').CarbonSnapshot;
+            const eligible =
+              calculated.length > 0 &&
+              calculated.every(
+                (reading) =>
+                  reading.status === 'CALCULATED' &&
+                  snapshot.rows.some(
+                    (carbon) =>
+                      carbon.month === reading.month &&
+                      carbon.readingId === reading.consumptionId &&
+                      !carbon.issue &&
+                      carbon.factor !== undefined &&
+                      carbon.factorId,
+                  ),
+              );
+            return {
+              id: row.id,
+              label: `${snapshot.definition.year} · ${snapshot.definition.geography} · ${snapshot.definition.basis} · ${row.createdAt.toISOString()} · ${row.id}`,
+              eligible,
+              reason: eligible ? null : 'Carbon factors must match every calculated month and saved reading revision.',
+            };
+          }),
+        };
+      },
+      { isolationLevel: 'RepeatableRead' },
     );
   }
   async submitVerification(actor: Actor, org: string, siteId: string, id: string, input: unknown) {

@@ -49,3 +49,23 @@ export function requireVerifiedEligibility(report: AnalyticsReport): never {
   const eligibility = verificationEligibility(report);
   throw new DomainError('VERIFICATION_BLOCKED', eligibility.issues.map((i) => i.message).join(' '), 409);
 }
+
+export const verificationOptionsInput = z
+  .object({
+    implementationDate: z.iso.date(),
+    cursor: z.uuid().optional(),
+    runId: z.uuid().optional(),
+  })
+  .strict();
+export type VerificationOption = {
+  id: string;
+  label: string;
+  eligible: boolean;
+  reason: string | null;
+};
+export type VerificationOptions = {
+  meter: string;
+  baselineId: string;
+  items: VerificationOption[];
+  nextCursor: string | null;
+};

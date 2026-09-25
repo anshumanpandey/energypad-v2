@@ -1,3 +1,5 @@
+import { billingService } from '@/server/services';
+import { opportunityBodyLimits } from '@/server/opportunity-body-limits';
 import { aiGenerationService } from '@/server/services';
 import { aiEvidenceService } from '@/server/services';
 import { opportunityService } from '@/server/services';
@@ -41,6 +43,7 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'billing' && s.length === 3 && method === 'GET') return billingService.overview(actor, org);
       if (s[2] === 'sites' && s[3] && s[4] === 'ai-evidence' && s.length === 7 && s[6] === 'source' && method === 'GET')
         return aiEvidenceService.citedOpportunitySource(actor, org, s[3], s[5]);
       if (
@@ -73,23 +76,70 @@ async function handle(request: Request, context: Context) {
       }
 
       if (s[2] === 'sites' && s[3] && s[4] === 'opportunities') {
-        if (s.length === 6 && s[5] === 'supporting-options' && method === 'GET')
-          return opportunityService.supportingOptions(actor, org, s[3]);
+        if (s.length === 6 && s[5] === 'supporting-options' && method === 'GET') {
+          const query = new URL(request.url).searchParams;
+          const historical = query.get('historical');
+          if (historical !== null && !['true', 'false'].includes(historical))
+            throw new DomainError('VALIDATION_ERROR', 'Choose a valid history filter.');
+          return opportunityService.supportingOptions(actor, org, s[3], {
+            cursor: query.get('cursor') ?? undefined,
+            query: query.get('query') ?? '',
+            historical: historical === 'true',
+            id: query.get('id') ?? undefined,
+          });
+        }
         if (s.length === 7 && s[6] === 'supporting-evidence' && method === 'POST')
-          return opportunityService.saveSupportingEvidence(actor, org, s[3], s[5], await readBody(request, 65_536));
+          return opportunityService.saveSupportingEvidence(
+            actor,
+            org,
+            s[3],
+            s[5],
+            await readBody(request, opportunityBodyLimits.supporting),
+          );
+        if (s.length === 7 && s[6] === 'verification-options' && method === 'GET') {
+          const query = new URL(request.url).searchParams;
+          return opportunityService.verificationOptions(actor, org, s[3], s[5], {
+            implementationDate: query.get('implementationDate'),
+            cursor: query.get('cursor') ?? undefined,
+            runId: query.get('runId') ?? undefined,
+          });
+        }
         if (s.length === 7 && s[6] === 'verification' && method === 'POST')
-          return opportunityService.submitVerification(actor, org, s[3], s[5], await readBody(request));
+          return opportunityService.submitVerification(
+            actor,
+            org,
+            s[3],
+            s[5],
+            await readBody(request, opportunityBodyLimits.verification),
+          );
         if (s.length === 6 && s[5] === 'owners' && method === 'GET')
           return opportunityService.opportunityOwners(actor, org, s[3]);
         if (s.length === 7 && s[6] === 'work' && method === 'POST')
-          return opportunityService.saveOpportunityWork(actor, org, s[3], s[5], await readBody(request, 65_536));
+          return opportunityService.saveOpportunityWork(
+            actor,
+            org,
+            s[3],
+            s[5],
+            await readBody(request, opportunityBodyLimits.work),
+          );
         const query = new URL(request.url).searchParams;
         if (s.length === 5 && method === 'GET')
           return opportunityService.listOpportunities(actor, org, s[3], { cursor: query.get('cursor') ?? undefined });
         if (s.length === 5 && method === 'POST')
-          return opportunityService.createOpportunity(actor, org, s[3], await readBody(request));
+          return opportunityService.createOpportunity(
+            actor,
+            org,
+            s[3],
+            await readBody(request, opportunityBodyLimits.create),
+          );
         if (s.length === 7 && s[6] === 'review' && method === 'POST')
-          return opportunityService.reviewOpportunity(actor, org, s[3], s[5], await readBody(request));
+          return opportunityService.reviewOpportunity(
+            actor,
+            org,
+            s[3],
+            s[5],
+            await readBody(request, opportunityBodyLimits.review),
+          );
       }
 
       if (s[2] === 'sites' && s[3] && s[4] === 'reports' && s.length === 5 && method === 'GET') {

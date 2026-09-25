@@ -12,6 +12,7 @@ export function AIEvidence({
   organisationId: string;
   sites: { id: string; name: string; archived: boolean }[];
 }) {
+  const [tool, setTool] = useState('saved_savings');
   const [site, setSite] = useState(sites[0]?.id ?? '');
   const [items, setItems] = useState<Interaction[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -81,6 +82,9 @@ export function AIEvidence({
               const payload = {
                 tool: fields.get('tool'),
                 resourceId: fields.get('resourceId'),
+                ...(fields.get('carbonRunId')?.toString().trim()
+                  ? { carbonRunId: fields.get('carbonRunId')!.toString().trim() }
+                  : {}),
                 question: fields.get('question'),
               };
               const identity = JSON.stringify([site, payload]);
@@ -91,6 +95,7 @@ export function AIEvidence({
               try {
                 await request(path, 'POST', { ...payload, requestKey: keys.current.get(identity) });
                 form.reset();
+                setTool('saved_savings');
                 setCursor(null);
                 setLoading(true);
                 setGeneration((g) => g + 1);
@@ -128,7 +133,7 @@ export function AIEvidence({
             <fieldset disabled={pending || loading} className="stack-form">
               <label>
                 Saved result type
-                <select name="tool">
+                <select name="tool" value={tool} onChange={(e) => setTool(e.target.value)}>
                   <option value="saved_savings">Saved savings run</option>
                   <option value="saved_baseline">Saved baseline</option>
                   <option value="saved_opportunity">Opportunity investigation</option>
@@ -138,6 +143,17 @@ export function AIEvidence({
                 Saved result ID
                 <input name="resourceId" required />
               </label>
+              {tool === 'saved_savings' && (
+                <div>
+                  <label>
+                    Saved carbon run ID (optional)
+                    <input key={site} name="carbonRunId" aria-describedby="carbon-evidence-help" />
+                  </label>
+                  <p id="carbon-evidence-help">
+                    Select a saved run for the same meter and reading revisions. Leave blank to keep carbon unavailable.
+                  </p>
+                </div>
+              )}
               <label>
                 Question for this evidence
                 <textarea name="question" required minLength={5} maxLength={2000} />
@@ -178,12 +194,14 @@ export function AIEvidence({
                     format: 'json',
                     fingerprint: citation.fingerprint,
                   });
+                  if (citation.carbonRunId) params.set('carbonRunId', citation.carbonRunId);
                   return (
                     <div key={citation.id} id={`${item.id}-${citation.id}`}>
                       <strong>
                         {citation.status} · {citation.period.firstMonth} – {citation.period.lastMonth}
                       </strong>
                       <p>Saved source: {citation.resourceId}</p>
+                      {citation.carbonRunId && <p>Saved carbon source: {citation.carbonRunId}</p>}
                       <a
                         href={
                           citation.tool === 'saved_opportunity'

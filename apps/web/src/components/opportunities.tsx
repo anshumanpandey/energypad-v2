@@ -283,6 +283,7 @@ export function Opportunities({
             {!loading && !items.length && <p>No investigations on this page.</p>}
             {items.map((item) => {
               const current = item.events.at(-1)!;
+              const carbonRunId = (item.evidence.evidence as { carbonRunId?: string | null } | null)?.carbonRunId;
               const work = item.workVersions.at(-1);
               const owner = work?.owner ?? item.owner;
               const decisions = (
@@ -311,7 +312,12 @@ export function Opportunities({
                     {item.evidence.summary.postKwh ?? 'Unavailable'} kWh. Positive indicates saving; negative indicates
                     waste. This is source evidence, not a forecast of recoverable savings.
                   </p>
-                  <Link href={`/org/${organisationId}/waste-savings?site=${site}&run=${item.runId}`}>
+                  <Link
+                    href={{
+                      pathname: `/org/${organisationId}/waste-savings`,
+                      query: { site, run: item.runId, ...(carbonRunId ? { carbon: carbonRunId } : {}) },
+                    }}
+                  >
                     Review saved analysis
                   </Link>
                   <a href={`/api/v1/organisations/${organisationId}/sites/${site}/opportunities/${item.id}/report`}>
@@ -378,6 +384,7 @@ export function Opportunities({
                     key={`${item.id}-${current.id}-${work?.id}-${item.supportingEvidence.length}`}
                     records={item.supportingEvidence}
                     options={supportingOptions}
+                    logOptionsPath={`${path}/supporting-options`}
                     eventId={current.id}
                     work={work}
                     editable={canWrite && !archived && !['VERIFIED', 'REJECTED'].includes(current.status)}
@@ -388,6 +395,7 @@ export function Opportunities({
                   {canWrite && !archived && work && ['IMPLEMENTED', 'VERIFICATION'].includes(current.status) && (
                     <VerificationForm
                       key={`${item.id}-${current.id}-verification`}
+                      optionsPath={`${path}/${item.id}/verification-options`}
                       previous={item.verifications.at(-1)}
                       eventId={current.id}
                       workVersionId={work.id}

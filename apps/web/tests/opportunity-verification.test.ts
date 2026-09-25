@@ -4,6 +4,7 @@ import {
   verificationEligibility,
   requireVerifiedEligibility,
   verificationInput,
+  verificationOptionsInput,
 } from '../src/domain/opportunity-verification';
 import type { AnalyticsReport } from '../src/domain/analytics-report';
 const id = 'b2ccdcb4-255e-484b-81a4-287aa7b2f618';
@@ -21,6 +22,12 @@ const report: AnalyticsReport = {
   evidence: {},
 };
 describe('verification evidence gates', () => {
+  it('validates picker dates and scoped cursors without accepting caller-defined scope', () => {
+    const query = { implementationDate: '2020-12-31', runId: id, cursor: id };
+    expect(verificationOptionsInput.safeParse(query).success).toBe(true);
+    for (const extra of [{ implementationDate: '2020-02-30' }, { cursor: 'bad' }, { siteId: id }, { baselineId: id }])
+      expect(verificationOptionsInput.safeParse({ ...query, ...extra }).success).toBe(false);
+  });
   it('requires dated, scoped evidence with references', () => {
     const input = {
       previousId: null,

@@ -1,6 +1,6 @@
 # Sprint 6 acceptance
 
-Current review: [Sprint 6 audit, 25 September 2026](SPRINT_6_AUDIT.md). Three functional gaps remain in log selection, carbon evidence previews and request-size limits, plus a verification run-picker usability follow-up. Methodology approval remains a separate gate; OpenAI work is deferred by user direction. The slices below are historical implementation and validation records.
+Current review: [Sprint 6 recheck, 25 September 2026](SPRINT_6_RECHECK.md). All four original audit findings are addressed. Both recheck follow-ups are addressed: carbon-evidence review navigation and retry/refresh recovery for verification pickers. Methodology approval remains a separate acceptance gate; OpenAI work remains deferred by user direction. The slices below are historical implementation and validation records.
 
 ## First slice: evidence-backed opportunity investigations
 
@@ -100,3 +100,69 @@ The deterministic evidence preview allowlist now includes `saved_opportunity`. I
 Migration: `202609250006_opportunity_evidence_tool`, tested in isolation and applied to the verified local database at 127.0.0.1:55432/energiepad_v2. The report reads under a repeatable-read transaction, with immutable preview persistence and atomic audit inherited from the evidence foundation. No calculations are rerun and no workflow states are advanced. OpenAI live acceptance and provider-specific follow-ups remain deferred; methodological approval is still separate.
 
 Validation: all 246 unit tests, analysis/database integration tests, the browser workflow, typecheck, lint, formatting and diff checks passed. Browser coverage downloads the current investigation report and the retained preview source with supporting and verification history. Integration coverage confirms stage-change fingerprint rejection, unchanged retained downloads, private preview ownership, wrong-site/outsider denial and archived-history access. No external AI calls or production deployment were performed.
+
+## Operational-log discovery (audit point 1)
+
+Supporting evidence now pages through operational logs in groups of 25, searches event codes/operations without case sensitivity, and optionally includes superseded revisions. Exact revision-ID lookup selects an authorized current or historical revision directly. Search/paging retains the selected revision even when it is outside the results. Historical entries are labelled as superseded. Search and lookup buttons do not submit evidence; Enter in those inputs performs the lookup instead of submitting the enclosing form.
+
+GET `/api/v1/organisations/:org/sites/:site/opportunities/supporting-options` accepts `cursor`, `query` (up to 100 characters), `historical=true|false` and optional exact `id`. Responses retain `energyUses`/`logs` and add `nextCursor` and revision status. Cursors are checked inside the selected tenant/site/search scope; ordering uses creation time and ID to handle ties. Queries run under repeatable-read isolation and preserve active-site/analysis-write access checks. Exact lookup cannot expose a different site's revision. Attachment continues to reauthorize and pin the selected source independently of the picker.
+
+Integration coverage traverses 106 current records with tied timestamps without duplicates or gaps, finds a superseded revision, rejects foreign or mismatched-filter cursors/IDs and confirms an existing attachment is unchanged by source corrections. No database migration or external provider is required. OpenAI work remains deferred; audit points 2–4 and methodological approval remain open.
+
+Validation for audit point 1: all 253 unit tests, analysis/database integration, the full analysis/opportunity browser workflow, typecheck, lint, formatting and diff checks passed. Browser coverage loads an older page, searches historical revisions, retains selection through an empty search, looks up the exact superseded revision and attaches its original comments to the action. No production deployment was performed.
+
+## Saved carbon evidence in savings previews (audit point 2)
+
+The savings preview form now accepts an optional saved carbon run ID. Other tools reject carbon selection. The existing savings report service enforces tenant/site and meter scope and matches exact consumption revisions before supplying carbon facts. Missing selection or incompatible reading revisions leave carbon facts unavailable.
+
+Preview request hashes include the carbon selection, so changing or removing it on a retry conflicts. Citations obtain the carbon ID from the validated report; JSON source downloads include both saved IDs and the expected report fingerprint. Original immutable snapshots remain authoritative after factor or reading corrections. Existing previews without carbon IDs remain readable. No schema migration, external provider or methodology change is required.
+
+Integration coverage checks compatible carbon values, wrong-site/meter denial, incompatible reading revisions, unchanged retries, changed-selection conflicts and source download fidelity. Unit coverage restricts carbon selection to savings and preserves carbon identity and values in citations. Browser coverage selects a saved carbon run, downloads its cited source, checks form reset and confirms the field is absent for baseline previews.
+
+Next: audit point 3, verification run selection. Audit point 4 and methodological approval remain open; OpenAI work remains deferred.
+
+Validation for audit point 2: all 254 unit tests, analysis/database integration, the full analysis browser workflow (including archived carbon evidence), typecheck, lint, formatting and diff checks passed. No production deployment was performed.
+
+## Verification run selection (audit point 3)
+
+Verification forms now ask for the implementation date before loading saved reporting runs for the opportunity's meter and exact baseline. Options show period, calculation status, validation status and saved ID. Original or overlapping runs and runs that start before a full calendar month after implementation are disabled with reasons. Lists load 25 entries at a time and retain the selection while older pages load. Empty eligible results explain how to create a suitable run or inspect older pages.
+
+Selecting a reporting run loads optional saved carbon choices for its meter. Only snapshots with factors matching every calculated month and exact consumption revision are selectable. No carbon selection remains valid. Changing the date clears both selections; changing the reporting run clears carbon selection. The picker does not change the independent methodology gate.
+
+GET opportunity `verification-options` requires an ISO implementation date and accepts an optional reporting run ID (for carbon choices) and cursor. Scope and cursor membership are rechecked in a repeatable-read transaction with active-site analysis-write access. Archived sites expose existing verification history without a form; picker requests are denied. Submission retains its independent period, baseline, meter, permission and stale-evidence checks.
+
+Integration coverage verifies eligible/ineligible dates, original runs, foreign scope, incompatible baselines, invalid cursors, matching/incompatible carbon snapshots, reporting pagination with tied timestamps and archived-site denial. The browser workflow covers date filtering, disabled submission with no selection, visible baseline information, reporting selection, optional missing carbon, submission and revision.
+
+Next: audit point 4, aligning request-size limits with valid text inputs. OpenAI integration remains deferred; methodology approval remains separate.
+
+Validation for audit point 3: all 255 unit tests, analysis/database integration, the full analysis browser workflow, typecheck, lint, formatting and diff checks passed. No deployment or external provider calls were performed.
+
+## Request byte budgets (audit point 4)
+
+All five opportunity write endpoints now use named, route-specific caps: creation and review 32 KiB each, action plans 320 KiB, verification 64 KiB, and supporting evidence 160 KiB. The action-plan budget covers twenty maximal titles/completion records and the note; the programme budget covers twenty maximal answers and all provenance fields. Verification covers all ten references and the full explanation. Creation/review are included because escaped text could also exceed their former default caps.
+
+Budgets allow six serialized JSON bytes per UTF-16 code unit plus keys, IDs and syntax. This covers UTF-8 text, escaped controls, astral characters and lone-surrogate escaping without reducing accepted field lengths. The finite caps still apply to transport padding and untrimmed excess whitespace. Streaming byte counting, HTTP 413 responses and schema-level validation are unchanged; other API routes keep their existing caps. The checked-in Lightsail preview proxy's 20 MiB cap exceeds these request budgets.
+
+Forty-nine focused tests use the actual HTTP body reader: seven payload families at schema maxima under six encodings, each route cap exactly and one byte over, streamed oversized input with a false Content-Length and cancellation, and preservation of content-type/JSON/schema errors. This change does not require database mutations or UI changes.
+
+All four independent Sprint 6 audit items are addressed. Methodology approval remains separate, and OpenAI integration/live acceptance remain deferred. Next: Sprint 7 planning and its outstanding commercial-policy decisions.
+
+Validation for audit point 4: all 304 unit tests (42 files), typecheck, lint, formatting and diff checks passed. The boundary suite exercises the real streamed HTTP body reader. Database/browser suites were not rerun for this transport-cap change; their passing results for audit point 3 remain the preceding baseline. No deployment was performed.
+
+## Investigation review navigation (recheck point 1)
+
+“Review saved analysis” now includes the optional carbon run retained in the investigation's evidence, alongside the site and saved reporting run. The link uses structured URL query parameters; investigations without a saved carbon run omit the parameter. Destination authorization and reading-revision checks remain unchanged.
+
+Browser regression coverage creates a carbon-backed investigation, corrects its emission factor, calculates a newer carbon run, and follows the link to confirm the original run IDs and exact pre/post carbon values. A separate investigation without carbon confirms the optional parameter stays absent. Recheck point 2, verification picker retry/refresh, remains open.
+
+Validation for recheck point 1: the full analysis browser workflow passed, including original carbon values after factor correction/new calculation and the no-carbon link case. Typecheck, lint, formatting and diff checks passed. No database schema changes, production deployment or external provider calls were made.
+
+## Verification picker recovery (recheck point 2)
+
+Reporting and optional carbon selectors now provide Retry after a failed initial request and Refresh for successful/empty lists. Refresh starts at the first page and replaces its cursor; selecting an older immutable run is preserved separately from loaded options. Older-page results are deduplicated. Date/reporting-run changes still reset dependent choices, while refresh retains the current choices and unsaved references/explanation.
+
+Each request has a generation guard, and picker state is keyed by the complete scoped URL. Responses from an older request or unmounted date/run scope cannot replace the current options. Buttons are non-submitting and respect loading/form-disabled states. Server scope, eligibility and submission checks remain unchanged.
+
+Browser regression covers failed initial reporting/carbon requests and retry, discovering newly saved reporting and compatible carbon runs via refresh, retaining selections and draft text, ignoring a delayed refresh after a date change, and submitting the selected carbon evidence. Both numbered recheck follow-ups are now addressed; methodology approval and deferred OpenAI acceptance remain separate.
+
+Validation for recheck point 2: the full analysis browser workflow passed, including persistent simulated outages until Retry, new-run discovery, delayed-response isolation, selection/draft preservation and the submitted carbon run ID. Typecheck, lint (without warnings), formatting and diff checks passed. No database schema changes, production deployment or external provider calls were performed.

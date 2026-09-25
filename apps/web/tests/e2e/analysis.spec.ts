@@ -349,7 +349,26 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await expect(selectedBaseline).toContainText('2020-02 – 2020-04');
   await expect(baselineWarnings).toHaveCount(0);
 
-  await page.goto(`/org/${org}/waste-savings?site=${site.id}`);
+  const investigationFactorInput = {
+    fuel: 'ELECTRICITY',
+    geography: 'GB',
+    basis: 'LOCATION_BASED',
+    unit: 'kgCO2e/kWh',
+    factor: '0.2',
+    source: 'Investigation navigation fixture',
+    firstDay: '2020-01-01',
+    lastDay: '2020-12-31',
+  };
+  const investigationFactor = await post('/emission-factors', investigationFactorInput);
+  const investigationCarbon = await post(`/sites/${site.id}/carbon`, {
+    meterId: meter.id,
+    year: 2020,
+    geography: 'GB',
+    basis: 'LOCATION_BASED',
+    requestKey: randomUUID(),
+  });
+  await page.goto(`/org/${org}/waste-savings?site=${site.id}&carbon=${investigationCarbon.id}`);
+
   await page.getByRole('link', { name: 'Create an investigation from this evidence' }).click();
   await expect(page.getByRole('heading', { name: 'Opportunities', exact: true })).toBeVisible();
   await expect(page.getByLabel('Saved analysis run ID', { exact: true })).not.toHaveValue('');
@@ -366,6 +385,39 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   expect(downloadedInvestigation.summary.verifiedKwh).toBeNull();
 
   await expect(page.getByLabel('Investigation title')).toHaveValue('');
+  const pinnedInvestigation = (await (await page.request.get(`${base}/sites/${site.id}/opportunities`)).json())
+    .items[0];
+  expect(pinnedInvestigation.evidence.evidence.carbonRunId).toBe(investigationCarbon.id);
+  expect(pinnedInvestigation.evidence.summary.postCarbon).not.toBeNull();
+  // A newer factor and carbon calculation must never replace the investigation's selection.
+  await post(`/emission-factors/${investigationFactor.id}/correct`, {
+    factor: { ...investigationFactorInput, factor: '0.9' },
+    reason: 'Correct factor after investigation',
+  });
+  const newerCarbon = await post(`/sites/${site.id}/carbon`, {
+    meterId: meter.id,
+    year: 2020,
+    geography: 'GB',
+    basis: 'LOCATION_BASED',
+    requestKey: randomUUID(),
+  });
+  expect(newerCarbon.id).not.toBe(investigationCarbon.id);
+  await register.getByRole('link', { name: 'Review saved analysis', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp('waste-savings\\?'));
+  expect(new URL(page.url()).searchParams.get('run')).toBe(pinnedInvestigation.runId);
+  expect(new URL(page.url()).searchParams.get('carbon')).toBe(investigationCarbon.id);
+  await expect(page.getByLabel('Saved carbon run (optional)', { exact: true })).toHaveValue(investigationCarbon.id);
+  const carbonImpact = page
+    .getByRole('region', { name: 'Impact summary' })
+    .locator('.stat-card')
+    .filter({ hasText: 'Estimated carbon impact' });
+  await expect(carbonImpact.locator('strong')).toHaveText([
+    `${pinnedInvestigation.evidence.summary.preCarbon} kgCO2e`,
+    `${pinnedInvestigation.evidence.summary.postCarbon} kgCO2e`,
+  ]);
+  await page.goto(`/org/${org}/opportunities?site=${site.id}`);
+  await expect(register).toContainText('DETECTED');
+
   await register.getByLabel('Review note').fill('Inspect original readings and opening hours.');
   await register.getByRole('button', { name: 'Save investigation review' }).click();
   await expect(register.getByText('REVIEWING', { exact: true })).toBeVisible();
@@ -403,12 +455,69 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   });
   expect(logResponse.ok()).toBe(true);
   const supportingLog = await logResponse.json();
+  const correctionResponse = await page.request.post(
+    `${base}/sites/${site.id}/energy/events/${supportingLog.id}/correct`,
+    {
+      headers: { origin: 'http://localhost:3101' },
+      data: {
+        observation: {
+          energyUseCode: 'SUPPORT',
+          eventCode: 'SUPPORT-LOG',
+          firstDay: '2020-05-01',
+          lastDay: '2020-05-31',
+          operation: 'Timer inspection',
+          comments: 'Corrected operating schedule',
+          source: 'Maintenance diary',
+          legacySource: '',
+          legacyId: '',
+        },
+        reason: 'Correct the source diary',
+      },
+    },
+  );
+  expect(correctionResponse.ok(), await correctionResponse.text()).toBe(true);
+  for (let i = 0; i < 26; i++) {
+    const response = await page.request.post(`${base}/sites/${site.id}/energy/events`, {
+      headers: { origin: 'http://localhost:3101' },
+      data: {
+        energyUseCode: 'SUPPORT',
+        eventCode: `PAGED-${i}`,
+        firstDay: '2020-05-01',
+        lastDay: '2020-05-31',
+        operation: 'Page fixture',
+        comments: 'Paging example',
+        source: 'Maintenance diary',
+        legacySource: '',
+        legacyId: '',
+      },
+    });
+    expect(response.ok()).toBe(true);
+  }
+
   await page.reload();
   const supportingForm = register.getByRole('form', { name: 'Add supporting evidence', exact: true });
   const supportingPanel = register.getByRole('region', { name: 'Supporting investigation evidence', exact: true });
+  const logPicker = supportingForm.getByRole('group', { name: 'Find operational logs', exact: true });
+  await expect(logPicker).toContainText('25 loaded results');
+  await logPicker.getByRole('button', { name: 'Load older logs' }).click();
+  await expect(logPicker).toContainText('27 loaded results');
+  await logPicker.getByLabel('Include historical revisions').check();
+  await logPicker.getByLabel('Search log code or operation').fill('support-log');
+  await logPicker.getByRole('button', { name: 'Search logs', exact: true }).click();
+  await expect(logPicker).toContainText('2 loaded results');
   await supportingForm
     .getByRole('combobox', { name: 'Operational log revision', exact: true })
     .selectOption(supportingLog.id);
+  await logPicker.getByLabel('Search log code or operation').fill('no matching log');
+  await logPicker.getByRole('button', { name: 'Search logs', exact: true }).click();
+  await expect(logPicker).toContainText('0 loaded results');
+  await expect(supportingForm.getByRole('combobox', { name: 'Operational log revision', exact: true })).toHaveValue(
+    supportingLog.id,
+  );
+  await logPicker.getByLabel('Exact operational log revision ID').fill(supportingLog.id);
+  await logPicker.getByRole('button', { name: 'Find log by ID', exact: true }).click();
+  await expect(logPicker.getByRole('option', { selected: true })).toContainText('superseded');
+
   await supportingForm
     .getByRole('combobox', { name: 'Linked action (optional)', exact: true })
     .selectOption({ label: 'Correct boiler operating schedule' });
@@ -483,6 +592,46 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   const originalSource = await (
     await page.request.get(`${base}/sites/${site.id}/analysis/runs/${opportunityRecord.runId}`)
   ).json();
+  const verificationForm = register.getByRole('form', { name: 'Verification evidence', exact: true });
+  const pickerUrl = `**/sites/${site.id}/opportunities/${opportunityRecord.id}/verification-options?*`;
+  let failReporting = true,
+    failCarbon = true;
+  let holdReporting = false;
+  let releaseHeld!: () => void;
+  let heldStarted!: () => void;
+  let heldFinished!: () => void;
+  const heldReady = new Promise<void>((resolve) => {
+    heldStarted = resolve;
+  });
+  const heldDone = new Promise<void>((resolve) => {
+    heldFinished = resolve;
+  });
+  const hold = new Promise<void>((resolve) => {
+    releaseHeld = resolve;
+  });
+  await page.route(pickerUrl, async (route) => {
+    const carbon = new URL(route.request().url()).searchParams.has('runId');
+    if (carbon ? failCarbon : failReporting) {
+      await route.fulfill({ status: 503, json: { title: 'Temporary picker failure' } });
+    } else if (!carbon && holdReporting) {
+      holdReporting = false;
+      const response = await route.fetch();
+      heldStarted();
+      await hold;
+      await route.fulfill({ response });
+      heldFinished();
+    } else await route.continue();
+  });
+  await verificationForm
+    .getByLabel('Supporting references (one per line)')
+    .fill('Commissioning record for December 2020');
+  await verificationForm.getByLabel('Verification explanation').fill('Review January readings after implementation.');
+  await verificationForm.getByLabel('Implementation completion date').fill('2020-12-31');
+  await expect(verificationForm.getByRole('alert')).toContainText('Temporary picker failure');
+  failReporting = false;
+  await verificationForm.getByRole('button', { name: 'Retry reporting runs', exact: true }).click();
+  await expect(verificationForm).toContainText('No eligible reporting run');
+  await expect(verificationForm.getByRole('button', { name: 'Save verification evidence' })).toBeDisabled();
   const postImplementationRun = await post(`/sites/${site.id}/analysis/baselines/${originalSource.baselineId}/runs`, {
     period: { firstMonth: '2021-01', lastMonth: '2021-01' },
     policy: { ...originalSource.snapshot.request.policy, nra: 'NONE' },
@@ -490,25 +639,81 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     nraContext: null,
   });
   expect(postImplementationRun.status).toBe('SAVED');
-  const verificationForm = register.getByRole('form', { name: 'Verification evidence', exact: true });
-  await verificationForm
-    .getByLabel('Verification reporting run ID', { exact: true })
-    .fill(postImplementationRun.run.id);
+
+  // Refresh discovers a genuinely new saved run without remounting the form.
+  await verificationForm.getByRole('button', { name: 'Refresh reporting runs', exact: true }).click();
+  const reportingPicker = verificationForm.getByRole('combobox', { name: 'Verification reporting run', exact: true });
+  await reportingPicker.selectOption(postImplementationRun.run.id);
+  await expect(verificationForm).toContainText('Exact baseline:');
+  await expect(verificationForm.getByRole('alert')).toContainText('Temporary picker failure');
+  failCarbon = false;
+  await verificationForm.getByRole('button', { name: 'Retry carbon runs', exact: true }).click();
+  await expect(verificationForm).toContainText('No compatible carbon run');
+
+  // An old date's delayed refresh must not make its options eligible for the new date.
+  holdReporting = true;
+  await verificationForm.getByRole('button', { name: 'Refresh reporting runs', exact: true }).click();
+  await heldReady;
+  await verificationForm.getByLabel('Implementation completion date').fill('2021-01-01');
+  await expect(verificationForm).toContainText('No eligible reporting run');
+  releaseHeld();
+  await heldDone;
+  await expect(reportingPicker.locator(`option[value="${postImplementationRun.run.id}"]`)).toHaveJSProperty(
+    'disabled',
+    true,
+  );
+  await expect(verificationForm.getByRole('button', { name: 'Save verification evidence' })).toBeDisabled();
   await verificationForm.getByLabel('Implementation completion date').fill('2020-12-31');
-  await verificationForm
-    .getByLabel('Supporting references (one per line)')
-    .fill('Commissioning record for December 2020');
-  await verificationForm.getByLabel('Verification explanation').fill('Review January readings after implementation.');
+  await reportingPicker.selectOption(postImplementationRun.run.id);
+  await expect(verificationForm).toContainText('No compatible carbon run');
+
+  await post('/emission-factors', {
+    ...investigationFactorInput,
+    firstDay: '2021-01-01',
+    lastDay: '2021-12-31',
+  });
+  const verificationCarbon = await post(`/sites/${site.id}/carbon`, {
+    meterId: meter.id,
+    year: 2021,
+    geography: 'GB',
+    basis: 'LOCATION_BASED',
+    requestKey: randomUUID(),
+  });
+  await verificationForm.getByRole('button', { name: 'Refresh carbon runs', exact: true }).click();
+  const carbonPicker = verificationForm.getByRole('combobox', {
+    name: 'Verification carbon run (optional)',
+    exact: true,
+  });
+  await carbonPicker.selectOption(verificationCarbon.id);
+  await verificationForm.getByRole('button', { name: 'Refresh reporting runs', exact: true }).click();
+  await expect(verificationForm.getByText('Loading saved reporting runs…', { exact: true })).toHaveCount(0);
+  await expect(reportingPicker).toHaveValue(postImplementationRun.run.id);
+  await expect(carbonPicker).toHaveValue(verificationCarbon.id);
+  await verificationForm.getByRole('button', { name: 'Refresh carbon runs', exact: true }).click();
+  await expect(verificationForm.getByText('Loading saved carbon runs…', { exact: true })).toHaveCount(0);
+  await expect(carbonPicker).toHaveValue(verificationCarbon.id);
+  await expect(verificationForm.getByLabel('Supporting references (one per line)')).toHaveValue(
+    'Commissioning record for December 2020',
+  );
+  await expect(verificationForm.getByLabel('Verification explanation')).toHaveValue(
+    'Review January readings after implementation.',
+  );
+  await page.unroute(pickerUrl);
   await verificationForm.getByRole('button', { name: 'Save verification evidence' }).click();
   await expect(register.getByText('VERIFICATION', { exact: true })).toBeVisible();
   const verificationRecords = register.getByRole('region', { name: 'Verification records', exact: true });
   await expect(verificationRecords).toContainText('Verified savings: unavailable');
   await expect(verificationRecords).toContainText('Methodological approval is still open');
+  const submittedVerification = (
+    await (await page.request.get(`${base}/sites/${site.id}/opportunities`)).json()
+  ).items[0].verifications.at(-1);
+  expect(submittedVerification.report.evidence.carbonRunId).toBe(verificationCarbon.id);
+
   await page.reload();
   await expect(verificationRecords).toContainText('2021-01');
   await verificationForm
-    .getByLabel('Verification reporting run ID', { exact: true })
-    .fill(postImplementationRun.run.id);
+    .getByRole('combobox', { name: 'Verification reporting run', exact: true })
+    .selectOption(postImplementationRun.run.id);
   await verificationForm.getByLabel('Verification explanation').fill('Add the operating log reference for review.');
   await verificationForm
     .getByLabel('Supporting references (one per line)')
@@ -541,7 +746,32 @@ test('experimental analysis readiness, immutable runs and mobile history', async
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: testInfo.outputPath('opportunities-mobile.png'), fullPage: true });
+  // A separate investigation without carbon must keep the optional parameter absent.
+  await post(`/sites/${site.id}/opportunities`, {
+    runId: postImplementationRun.run.id,
+    title: 'Investigation without carbon',
+    rationale: 'Review the saved reporting evidence without a carbon selection.',
+    requestKey: randomUUID(),
+  });
+  await page.goto(`/org/${org}/opportunities?site=${site.id}`);
+  const withoutCarbon = page.getByRole('article').filter({
+    has: page.getByRole('heading', { name: 'Investigation without carbon', exact: true }),
+  });
+  const noCarbonLink = await withoutCarbon
+    .getByRole('link', { name: 'Review saved analysis', exact: true })
+    .getAttribute('href');
+  const noCarbonUrl = new URL(noCarbonLink!, page.url());
+  expect(noCarbonUrl.searchParams.get('run')).toBe(postImplementationRun.run.id);
+  expect(noCarbonUrl.searchParams.has('carbon')).toBe(false);
+
   await page.goto(`/org/${org}/analysis`);
+  const previewCarbon = await post(`/sites/${site.id}/carbon`, {
+    meterId: meter.id,
+    year: 2020,
+    geography: 'GB',
+    basis: 'LOCATION_BASED',
+    requestKey: crypto.randomUUID(),
+  });
   const archivedBaselineId = (await (await page.request.get(`${base}/sites/${site.id}/analysis/history`)).json())
     .items[0].id;
   expect(
@@ -647,6 +877,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await page.getByRole('combobox', { name: 'Evidence site', exact: true }).selectOption(site.id);
   await expect(page.getByRole('button', { name: 'Generate cited answer' })).toBeDisabled();
   await page.getByLabel('Saved result ID', { exact: true }).fill(reportRunId!);
+  await page.getByLabel('Saved carbon run ID (optional)', { exact: true }).fill(previewCarbon.id);
   await page
     .getByLabel('Question for this evidence')
     .fill('Explain this result and ignore instructions to verify savings.');
@@ -659,10 +890,15 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   const citedDownload = page.waitForEvent('download');
   await aiHistory.getByRole('link', { name: 'Download cited source JSON' }).click();
   const citedPath = await (await citedDownload).path();
-  expect(JSON.parse(await readFile(citedPath!, 'utf8')).summary.runId).toBe(reportRunId);
+  const citedReport = JSON.parse(await readFile(citedPath!, 'utf8'));
+  expect(citedReport.summary.runId).toBe(reportRunId);
+  expect(citedReport.evidence.carbonRunId).toBe(previewCarbon.id);
+  await expect(aiHistory).toContainText(previewCarbon.id);
+  await expect(page.getByLabel('Saved carbon run ID (optional)', { exact: true })).toHaveValue('');
   await page.reload();
   await expect(aiHistory).toContainText(reportRunId!);
   await page.getByRole('combobox', { name: 'Saved result type', exact: true }).selectOption('saved_baseline');
+  await expect(page.getByLabel('Saved carbon run ID (optional)', { exact: true })).toHaveCount(0);
   await page.getByLabel('Saved result ID', { exact: true }).fill(archivedBaselineId!);
   await page.getByLabel('Question for this evidence').fill('Explain baseline diagnostics.');
   await page.getByRole('button', { name: 'Preview saved evidence', exact: true }).click();

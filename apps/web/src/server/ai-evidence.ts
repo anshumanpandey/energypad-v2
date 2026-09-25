@@ -46,7 +46,7 @@ export class AIEvidenceService extends OpportunityService {
             siteId,
             data.tool === 'saved_baseline'
               ? { family: 'baseline', baselineId: data.resourceId }
-              : { family: 'savings', runId: data.resourceId },
+              : { family: 'savings', runId: data.resourceId, carbonRunId: data.carbonRunId },
           );
     if (report.organisationId !== org || report.siteId !== siteId)
       throw new DomainError('NOT_FOUND', 'This evidence is not available.', 404);

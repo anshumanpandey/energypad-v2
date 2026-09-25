@@ -304,6 +304,46 @@ try {
     (await db.opportunitySupportingEvidence.findUniqueOrThrow({ where: { id: pinned.id } })).snapshot,
     pinned.snapshot,
   );
+  await db.$transaction(async (tx) => {
+    for (let i = 0; i < 105; i++)
+      await tx.operationalEvent.create({
+        data: {
+          ...evidenceLog,
+          id: crypto.randomUUID(),
+          eventCode: `PAGE-${String(i).padStart(3, '0')}`,
+          createdAt: new Date('2090-01-01T00:00:00Z'),
+        },
+      });
+  });
+  const firstLogs = await opportunities.supportingOptions(owner, org.id, site.id);
+  assert.equal(firstLogs.logs.length, 25);
+  assert.ok(firstLogs.nextCursor);
+  const allLogs = [...firstLogs.logs];
+  let logCursor: string | null = firstLogs.nextCursor;
+  while (logCursor) {
+    const page = await opportunities.supportingOptions(owner, org.id, site.id, { cursor: logCursor });
+    allLogs.push(...page.logs);
+    logCursor = page.nextCursor;
+  }
+  assert.equal(allLogs.length, 106);
+  assert.equal(new Set(allLogs.map((l) => l.id)).size, 106);
+  assert.ok(!allLogs.some((l) => l.id === evidenceLog.id));
+  const searched = await opportunities.supportingOptions(owner, org.id, site.id, { query: 'log-1', historical: true });
+  assert.equal(searched.logs.length, 2);
+  assert.equal(searched.logs.find((l) => l.id === evidenceLog.id)!.superseded, true);
+  assert.equal(
+    (await opportunities.supportingOptions(owner, org.id, site.id, { id: evidenceLog.id })).logs[0].superseded,
+    true,
+  );
+  await assert.rejects(opportunities.supportingOptions(owner, org.id, site.id, { id: foreignLog.id }), { status: 404 });
+  await assert.rejects(opportunities.supportingOptions(owner, org.id, site.id, { cursor: foreignLog.id }), {
+    status: 404,
+  });
+  await assert.rejects(
+    opportunities.supportingOptions(owner, org.id, site.id, { query: 'log-1', cursor: firstLogs.nextCursor! }),
+    { status: 404 },
+  );
+  await assert.rejects(opportunities.supportingOptions(outsider, org.id, site.id, { id: evidenceLog.id }));
   const programme = {
     previousId: null,
     eventId: supportInput.eventId,
@@ -548,8 +588,99 @@ try {
   assert.equal(pinnedReport.summary.postCarbon, pinnedImpact.impact.postCarbon);
 
   assert.notEqual(pinnedImpact.impact.postCarbon, null);
+  const carbonPreviewInput = { ...aiInput, carbonRunId: carbonRun.id, requestKey: crypto.randomUUID() };
+  const carbonPreview = await ai.previewEvidence(owner, org.id, site.id, carbonPreviewInput);
+  const carbonResult = carbonPreview.result as unknown as import('../src/domain/ai-evidence').EvidencePreview;
+  assert.equal(carbonResult.citations[0].carbonRunId, carbonRun.id);
+  const withoutCarbon = await ai.previewEvidence(owner, org.id, site.id, {
+    ...aiInput,
+    requestKey: crypto.randomUUID(),
+  });
+  const withoutCarbonResult = withoutCarbon.result as unknown as import('../src/domain/ai-evidence').EvidencePreview;
+  assert.deepEqual(
+    withoutCarbonResult.facts.slice(-2).map((fact) => fact.value),
+    [null, null],
+  );
+  assert.equal(withoutCarbonResult.citations[0].carbonRunId, undefined);
+
+  assert.equal(carbonResult.facts.find((fact) => fact.id === 'postCarbon')!.value, pinnedReport.summary.postCarbon);
+  assert.equal((await ai.previewEvidence(owner, org.id, site.id, carbonPreviewInput)).id, carbonPreview.id);
+  await assert.rejects(
+    ai.previewEvidence(owner, org.id, site.id, {
+      ...aiInput,
+      requestKey: carbonPreviewInput.requestKey,
+    }),
+    { status: 409 },
+  );
+  await assert.rejects(
+    ai.previewEvidence(owner, org.id, site.id, {
+      ...carbonPreviewInput,
+      carbonRunId: crypto.randomUUID(),
+    }),
+    { status: 409 },
+  );
+  await assert.rejects(ai.previewEvidence(outsider, org.id, site.id, carbonPreviewInput));
+  const carbonSnapshot = carbonRun.snapshot as unknown as import('../src/domain/carbon').CarbonSnapshot;
+  // Independent immutable fixtures exercise the report dispatcher's scope/revision checks.
+  for (const variant of ['site', 'meter', 'readings'] as const) {
+    const fixture = await db.carbonRun.create({
+      data: {
+        organisationId: org.id,
+        siteId: variant === 'site' ? otherSite.id : site.id,
+        authorId: owner.userId,
+        requestKey: crypto.randomUUID(),
+        algorithmVersion: carbonRun.algorithmVersion,
+        snapshot: JSON.parse(
+          JSON.stringify({
+            ...carbonSnapshot,
+            definition: { ...carbonSnapshot.definition, meterId: variant === 'meter' ? crypto.randomUUID() : meter.id },
+            rows: carbonSnapshot.rows.map((row) => ({
+              ...row,
+              readingId: variant === 'readings' ? crypto.randomUUID() : row.readingId,
+            })),
+          }),
+        ),
+      },
+    });
+    const input = { ...carbonPreviewInput, carbonRunId: fixture.id, requestKey: crypto.randomUUID() };
+    if (variant === 'readings') {
+      const mismatch = await ai.previewEvidence(owner, org.id, site.id, input);
+      const result = mismatch.result as unknown as import('../src/domain/ai-evidence').EvidencePreview;
+      assert.deepEqual(
+        result.facts.slice(-2).map((fact) => fact.value),
+        [null, null],
+      );
+      assert.equal(result.citations[0].carbonRunId, fixture.id);
+    } else {
+      await assert.rejects(
+        ai.previewEvidence(owner, org.id, site.id, input),
+        variant === 'site' ? { status: 404 } : { code: 'SCOPE' },
+      );
+    }
+  }
+  const citedCarbonReport = await reports.report(owner, org.id, site.id, {
+    family: 'savings',
+    runId: carbonResult.citations[0].resourceId,
+    carbonRunId: carbonResult.citations[0].carbonRunId,
+  });
+  assert.deepEqual(
+    await reportResponse(citedCarbonReport, 'json', carbonResult.citations[0].fingerprint).json(),
+    JSON.parse(JSON.stringify(pinnedReport)),
+  );
+
   await assert.rejects(analysis.wasteSummary(outsider, org.id, site.id, run.run.id, carbonRun.id));
   await factors.add(owner, org.id, { ...factorInput, factor: '0.9' }, factor.id, 'Correct factor');
+  assert.equal(
+    reportFingerprint(
+      await reports.report(owner, org.id, site.id, {
+        family: 'savings',
+        runId: run.run.id,
+        carbonRunId: carbonRun.id,
+      }),
+    ),
+    carbonResult.citations[0].fingerprint,
+  );
+
   assert.deepEqual(await analysis.wasteSummary(owner, org.id, site.id, run.run.id, carbonRun.id), pinnedImpact);
   assert.deepEqual(
     await reports.report(owner, org.id, site.id, { ...savingsInput, carbonRunId: carbonRun.id }),
@@ -856,6 +987,81 @@ try {
     period: { firstMonth: '2021-01', lastMonth: '2021-01' },
   });
   if (verificationRun.status !== 'SAVED') throw Error('Verification reporting fixture failed');
+  const pickerInput = { implementationDate: '2020-12-31' };
+  const picker = await opportunities.verificationOptions(owner, org.id, site.id, workOpportunity.id, pickerInput);
+  assert.equal(picker.baselineId, analystBaseline.baseline.id);
+  assert.equal(picker.items.find((item) => item.id === verificationRun.run.id)!.eligible, true);
+  assert.ok(picker.items.some((item) => !item.eligible));
+  const latePicker = await opportunities.verificationOptions(owner, org.id, site.id, workOpportunity.id, {
+    implementationDate: '2021-01-01',
+  });
+  assert.equal(latePicker.items.find((item) => item.id === verificationRun.run.id)!.eligible, false);
+  await assert.rejects(opportunities.verificationOptions(outsider, org.id, site.id, workOpportunity.id, pickerInput));
+  await assert.rejects(
+    opportunities.verificationOptions(owner, org.id, otherSite.id, workOpportunity.id, pickerInput),
+    { status: 404 },
+  );
+  await assert.rejects(
+    opportunities.verificationOptions(owner, org.id, site.id, workOpportunity.id, {
+      ...pickerInput,
+      runId: run.run.id,
+    }),
+  );
+  await assert.rejects(
+    opportunities.verificationOptions(owner, org.id, site.id, workOpportunity.id, {
+      ...pickerInput,
+      cursor: crypto.randomUUID(),
+    }),
+    { status: 404 },
+  );
+  await factors.add(owner, org.id, { ...factorInput, firstDay: '2021-01-01', lastDay: '2021-12-31' });
+  const verificationCarbon = await carbon.calculate(owner, org.id, site.id, {
+    meterId: meter.id,
+    year: 2021,
+    geography: 'GB',
+    basis: 'LOCATION_BASED',
+    requestKey: crypto.randomUUID(),
+  });
+  const carbonOptions = await opportunities.verificationOptions(owner, org.id, site.id, workOpportunity.id, {
+    ...pickerInput,
+    runId: verificationRun.run.id,
+  });
+  assert.equal(carbonOptions.items.find((item) => item.id === verificationCarbon.id)!.eligible, true);
+  assert.equal(carbonOptions.items.find((item) => item.id === carbonRun.id)!.eligible, false);
+  // More than one page, tied timestamps, and immutable result copies.
+  const templateRun = await db.analysisRun.findUniqueOrThrow({
+    where: { id: verificationRun.run.id },
+    include: { result: true },
+  });
+  const { id: templateId, result: templateResult, ...templateData } = templateRun;
+  void templateId;
+  for (let index = 0; index < 26; index++) {
+    await db.analysisRun.create({
+      data: {
+        ...templateData,
+        snapshot: templateData.snapshot!,
+        inputHash: snapshotHash({ pickerFixture: index }),
+        createdAt: new Date('2090-01-01'),
+        result: {
+          create: { output: templateResult!.output! },
+        },
+      },
+    });
+  }
+  const seenPicker = new Set<string>();
+  let pickerCursor: string | null = null;
+  do {
+    const page = await opportunities.verificationOptions(owner, org.id, site.id, workOpportunity.id, {
+      ...pickerInput,
+      ...(pickerCursor ? { cursor: pickerCursor } : {}),
+    });
+    for (const item of page.items) {
+      assert.equal(seenPicker.has(item.id), false);
+      seenPicker.add(item.id);
+    }
+    pickerCursor = page.nextCursor;
+  } while (pickerCursor);
+  assert.equal(seenPicker.size, picker.items.length + 26);
   const verificationInput = {
     previousId: null,
     eventId: implementedWork.events.at(-1)!.id,
@@ -1474,6 +1680,9 @@ try {
   assert.ok((await analysis.historySites(historyReader, org.id)).some((s) => s.id === site.id));
   const beforeArchive = await analysis.readRun(owner, org.id, site.id, run.run.id);
   await sites.archiveSite(owner, org.id, site.id);
+  await assert.rejects(opportunities.verificationOptions(owner, org.id, site.id, workOpportunity.id, pickerInput), {
+    status: 404,
+  });
   await assert.rejects(
     analysis.reviewNra(owner, org.id, site.id, analystRun.run.id, {
       ...reviewRequest,

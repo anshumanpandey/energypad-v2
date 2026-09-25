@@ -44,3 +44,12 @@ export const supportingEvidenceInput = z
     if ('legacyId' in data && Boolean(data.legacyId) !== Boolean(data.legacySource))
       ctx.addIssue({ code: 'custom', message: 'Provide both legacy source and identity.', path: ['legacyId'] });
   });
+
+export const supportingLogQuery = z
+  .object({
+    cursor: z.uuid().optional(),
+    query: z.string().trim().max(100).default(''),
+    historical: z.boolean().default(false),
+    id: z.uuid().optional(),
+  })
+  .strict();
