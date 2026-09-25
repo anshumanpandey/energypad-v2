@@ -223,3 +223,47 @@ Audit point 6 adds Reports previews and CSV/JSON exports for site energy, immuta
 ### Sprint 6 progress — opportunity investigation intake
 
 The first Sprint 6 slice converts a saved Waste & Savings run into an owned investigation with frozen analytical evidence. Opportunities now supports a paged site register, detected/reviewing/rejected states, required review notes, immutable event history, idempotent creation/decisions and transactional audit. Source corrections do not rewrite evidence; archived history and assigned-site permissions are enforced. Analysis remains UNVALIDATED. Approval/actions/implementation, verification, legacy investigation evidence links and AI tooling remain upcoming slices. See SPRINT_6_ACCEPTANCE.md.
+
+### Sprint 6 progress — ownership, actions and operational approval
+
+Versioned action plans now support owner reassignment, action owners/dates, owner/admin approval, implementation progress and completion evidence. Approval pins the plan; approved scope is fixed, later progress/assignments append revisions, and implemented status requires all actions complete. Permissions, stale work/stage checks, immutable history and atomic audit preserve traceability. Operational approval leaves analytical compatibility and verified savings unchanged. Next: verification records and guarded outcomes. See SPRINT_6_ACCEPTANCE.md.
+
+### Sprint 6 progress — verification evidence and guarded outcomes
+
+Implemented opportunities now accept immutable verification submissions and revisions with a separate later reporting run, exact baseline/meter lineage, actual implementation date, supporting references and pinned action-plan/report evidence. Owners/admins can reject the outcome; source corrections preserve the submitted history. Verified savings remains blocked in the service and database pending methodology approval, independently of the accepted 0.99 absolute workbook tolerance. Next: operational log/checklist/programme and curated-tip evidence links. See SPRINT_6_ACCEPTANCE.md.
+
+### Sprint 6 progress — operational logs, programme answers and curated tips
+
+Opportunity investigations now preserve existing operational-log revisions, programme/checklist questions and answer lists, and sourced monthly tips. Supporting records pin site/end-use and optional saved-action evidence, retain legacy provenance, and support immutable amendments with audit and scoped access. Recommendations remain distinct from measured savings. This is the manual evidence-linking foundation; bulk legacy reconciliation and a global tip catalogue are not included. Next: tenant-scoped AI tools, citations and audit foundations. See SPRINT_6_ACCEPTANCE.md.
+
+### Sprint 6 progress — AI evidence tool boundary
+
+AI Analyst now exposes deterministic saved-baseline and saved-savings evidence previews with server-issued citations, preserved validation/missing-data status, private paged history and immutable transactional interaction audit. Strict tool inputs and fact-selection contracts reject caller-defined scope, SQL, invented values and unknown citations; current site access is checked on retrieval, retries and downloads. Prompt fingerprints and explicit zero provider/token usage are recorded. No model is connected and no AI answer is generated. Next: provider integration and grounded generation, provider/failure audit and live adversarial validation; see SPRINT_6_ACCEPTANCE.md.
+
+### Sprint 6 progress — provider-backed grounded answer path
+
+Implemented the configurable server-side OpenAI Responses adapter and constrained fact-selection answers, with citation validation, server-owned values/limitations, immutable request/outcome records, provider usage/error metadata, entitlement checks, a daily attempt cap and duplicate-call protection. AI Analyst now exposes generation and private attempt history when configured and entitled. Local API key/model are absent, so live acceptance remains open; mocks cover provider and browser paths. Next: configure the selected model/key and run live adversarial acceptance, then pending-attempt reconciliation and broader analytical tools. See SPRINT_6_ACCEPTANCE.md.
+
+### Sprint 6 progress — opportunity evidence reports; OpenAI deferred
+
+Per user direction, skip OpenAI API configuration/live integration and proceed with independent work. Added current investigation JSON exports and deterministic `saved_opportunity` previews spanning original analysis, actions, supporting records and verification history. Preview citations retain the exact full report and remain downloadable after subsequent changes, subject to current site access and author privacy. Verified savings remains unavailable. Next: review the remaining Sprint 6 acceptance gaps with OpenAI work explicitly deferred.
+
+### Sprint 6 review — remaining independent work
+
+The [25 September audit](SPRINT_6_AUDIT.md) identifies three functional gaps: operational-log selection is limited to the latest 100 current records, savings evidence previews cannot select saved carbon evidence, and valid longer multibyte entries can exceed API request-size limits. A verification run picker is an additional usability follow-up. Next: address audit point 1 with scoped pagination/search and historical revision selection. Methodology approval remains separate; OpenAI configuration, live acceptance and provider-specific follow-ups remain deferred.
+
+### Sprint 5 recheck — portfolio energy and cost
+
+Addressed point 1 of `SPRINT_5_RECHECK.md`: Portfolio now includes scoped monthly/annual energy and net-cost totals, fuel/site filters, coverage and source-reading evidence. Current portfolio/site/meter scope and assigned-site restrictions are enforced in one repeatable-read query; missing data and mixed currencies cannot become misleading totals. Remaining Sprint 5 recheck points are older carbon-run selection, archived-site carbon history and carbon preview/export consistency. Sprint 6 OpenAI work remains deferred.
+
+### Sprint 5 recheck — older carbon calculations
+
+Addressed recheck point 2 with cursor-paged carbon history and exact saved-run lookup. Loaded historical results remain selectable for matching target assessments, preserve their original snapshots after corrections, and retain current tenant/site authorization. The latest-50 list endpoint remains compatible for other consumers. Remaining recheck points: archived-site Carbon UI access and carbon preview/export consistency.
+
+### Sprint 5 recheck — archived carbon history
+
+Addressed recheck point 3: Carbon now lists authorized archived sites and provides read-only calculation, target-revision and assessment history. A scoped context read replaces the active-only Energy dependency. Site write controls are hidden and existing server guards reject writes; revoked access remains denied. Recheck point 4, carbon preview/export consistency, remains open.
+
+### Sprint 5 recheck — carbon preview/export consistency
+
+Addressed recheck point 4 with stable site/portfolio preview fingerprints and HTTP 409 rejection when export evidence or scope changes. Report authorization, current summary and immutable source retrieval now share a repeatable-read transaction. UI downloads require the preview fingerprint; unchanged repeated downloads remain available. All four Sprint 5 recheck implementation findings are addressed. Methodology approval and production reconciliation remain separate gates; OpenAI work remains deferred.

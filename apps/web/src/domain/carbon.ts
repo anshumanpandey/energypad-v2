@@ -37,6 +37,7 @@ export type CarbonSnapshot = {
 
 export const carbonSummaryInput = carbonInput.omit({ meterId: true, requestKey: true });
 export type CarbonSummary = {
+  fingerprint?: string;
   definition: z.infer<typeof carbonSummaryInput>;
   checkedAt: string;
   status: 'COMPLETE' | 'INCOMPLETE' | 'EMPTY';
@@ -55,6 +56,7 @@ export type CarbonSummary = {
 };
 
 export type PortfolioCarbonSummary = {
+  fingerprint?: string;
   portfolio: { id: string; name: string };
   definition: z.infer<typeof carbonSummaryInput>;
   checkedAt: string;

@@ -108,11 +108,15 @@ test('carbon factors save, reset and retain corrected versions', async ({ page }
   const siteReport = JSON.parse(await readFile((await siteDownload.path())!, 'utf8'));
   expect(siteReport.reportVersion).toBe('carbon-report-v1');
   expect(siteReport.totalKgCO2e).toBe('0');
+  expect(siteReport.fingerprint).toMatch(/^[a-f0-9]{64}$/);
   expect(siteReport.evidence).toHaveLength(1);
   expect(siteReport.evidence[0].snapshot.rows).toHaveLength(12);
   const reportUrl = `${base}/sites/${site.id}/carbon/report?year=2020&geography=GB&basis=LOCATION_BASED`;
   const reportResponse = await page.request.get(reportUrl);
   expect(reportResponse.headers()['cache-control']).toBe('no-store');
+  const repeatDownload = await page.request.get(`${reportUrl}&fingerprint=${siteReport.fingerprint}`);
+  expect(repeatDownload.ok()).toBe(true);
+  expect(repeatDownload.headers()['x-report-fingerprint']).toBe(siteReport.fingerprint);
   expect(reportResponse.headers()['content-disposition']).toContain('attachment;');
   expect((await page.request.get(`${reportUrl}&format=xml`)).status()).toBe(400);
 
@@ -121,6 +125,9 @@ test('carbon factors save, reset and retain corrected versions', async ({ page }
   await page.getByRole('button', { name: 'Check site summary' }).click();
   await expect(summary).toContainText('BLOCKED');
   await expect(summary).toContainText('Total unavailable');
+  await page.getByLabel('Summary year').fill('2020');
+  await page.getByRole('button', { name: 'Check site summary' }).click();
+  await expect(summary).toContainText('Active-meter sum: 0 kgCO2e');
   const registered = await (await page.request.get(`${base}/emission-factors`)).json();
   const currentFactor = registered.find((f: { revision: number }) => f.revision === 2);
   await post(`${base}/emission-factors/${currentFactor.id}/correct`, {
@@ -136,6 +143,9 @@ test('carbon factors save, reset and retain corrected versions', async ({ page }
     },
     reason: 'Check outdated summary detection',
   });
+  await summary.getByRole('button', { name: 'Download carbon JSON' }).click();
+  await expect(summary.getByRole('alert')).toContainText('Refresh the summary');
+  expect((await page.request.get(`${reportUrl}&fingerprint=${siteReport.fingerprint}`)).status()).toBe(409);
   await page.getByLabel('Summary year').fill('2020');
   await page.getByRole('button', { name: 'Check site summary' }).click();
   await expect(summary).toContainText('OUTDATED');
@@ -210,6 +220,19 @@ test('carbon factors save, reset and retain corrected versions', async ({ page }
   });
   expect(assignResponse.ok(), await assignResponse.text()).toBe(true);
   await page.goto(`/org/${orgId}/portfolio`);
+  await page.getByLabel('Energy reporting year').fill('2020');
+  await page.getByRole('button', { name: 'Check portfolio energy', exact: true }).click();
+  const energyResults = page.getByRole('region', { name: 'Portfolio energy results' });
+  await expect(energyResults).toContainText('Annual consumption: 1200 kWh');
+  await expect(energyResults).toContainText('Annual net cost: Unavailable');
+  await energyResults.getByText('Carbon browser site · CARBON', { exact: false }).click();
+  await expect(energyResults).toContainText('conversionVersion');
+  await page.getByRole('combobox', { name: 'Energy fuel', exact: true }).selectOption('GAS');
+  await expect(energyResults).toHaveCount(0);
+  await page.getByRole('button', { name: 'Check portfolio energy', exact: true }).click();
+  await expect(energyResults).toContainText('Annual consumption: Unavailable');
+  await page.getByRole('combobox', { name: 'Energy fuel', exact: true }).selectOption('ALL');
+
   await page.getByLabel('Portfolio reporting year').fill('2020');
   await page.getByLabel('Portfolio geography').fill('gb');
   await page.getByRole('button', { name: 'Check portfolio carbon', exact: true }).click();
@@ -217,6 +240,18 @@ test('carbon factors save, reset and retain corrected versions', async ({ page }
   await expect(portfolioResults).toContainText('Included-meter sum: 240 kgCO2e');
   await expect(portfolioResults).toContainText('1 of 1 included sites ready');
   await post(`${base}/sites`, { code: 'GAP', name: 'Site without meters', portfolioId: portfolio.id });
+  await portfolioResults.getByRole('button', { name: 'Download carbon CSV' }).click();
+  await expect(portfolioResults.getByRole('alert')).toContainText('Refresh the summary');
+  await page.getByRole('button', { name: 'Check portfolio energy', exact: true }).click();
+  await expect(energyResults).toContainText('Annual consumption: Unavailable');
+  await page.getByRole('combobox', { name: 'Energy site', exact: true }).selectOption(site.id);
+  await page.getByRole('button', { name: 'Check portfolio energy', exact: true }).click();
+  await expect(energyResults).toContainText('Annual consumption: 1200 kWh');
+  await expect(energyResults).toContainText('Filtered to one site');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await energyResults.screenshot({ path: testInfo.outputPath('portfolio-energy-mobile.png') });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+
   await page.getByRole('button', { name: 'Check portfolio carbon', exact: true }).click();
   await expect(portfolioResults).toContainText('Total unavailable');
   await expect(portfolioResults).toContainText('1 of 2 included sites ready');
@@ -276,4 +311,65 @@ test('carbon factors save, reset and retain corrected versions', async ({ page }
   await page.getByLabel('Trend geography', { exact: true }).fill('US');
   await page.getByRole('button', { name: 'Compare carbon trends' }).click();
   await expect(page.getByRole('img', { name: 'Monthly carbon comparison chart in kgCO2e' })).toHaveCount(0);
+  // A historical zero run remains available after corrections and more than 50 newer calculations.
+  for (let i = 0; i < 51; i++)
+    await post(`${base}/sites/${site.id}/carbon`, {
+      meterId: meter.id,
+      year: 2021,
+      geography: 'GB',
+      basis: 'LOCATION_BASED',
+      requestKey: randomUUID(),
+    });
+  await page.goto(`/org/${orgId}/carbon`);
+  await page.getByRole('combobox', { name: 'Carbon site', exact: true }).selectOption(site.id);
+  const historyPicker = page.getByRole('region', { name: 'Find saved carbon calculations' });
+  await expect(historyPicker).toContainText('Loaded 20 calculations');
+  await historyPicker.getByRole('button', { name: 'Load older calculations' }).click();
+  await expect(historyPicker).toContainText('Loaded 40 calculations');
+  const oldId = siteReport.evidence[0].id;
+  await historyPicker.getByLabel('Saved carbon run ID').fill(oldId);
+  await historyPicker.getByRole('button', { name: 'Open saved calculation' }).click();
+  await expect(historyPicker).toContainText('Saved calculation opened.');
+  await expect(page.locator('summary').filter({ hasText: 'Electricity meter · 2020 · 0 kgCO2e' })).toBeVisible();
+  const currentTarget = page
+    .locator('article')
+    .filter({ has: page.getByRole('heading', { name: 'Annual browser target · Revision 2', exact: true }) });
+  await currentTarget
+    .getByRole('combobox', { name: 'Saved calculation for Annual browser target', exact: true })
+    .selectOption(oldId);
+  await historyPicker.getByRole('button', { name: 'Load older calculations' }).click();
+  await expect(historyPicker.getByRole('button', { name: 'Load older calculations' })).toBeDisabled();
+  await expect(currentTarget.getByRole('combobox')).toHaveValue(oldId);
+  await currentTarget.getByRole('button', { name: 'Assess target', exact: true }).click();
+  await expect(currentTarget).toContainText('Actual 0 kgCO2e');
+  await expect(currentTarget).toContainText(`Run ${oldId}`);
+  await historyPicker.getByLabel('Saved carbon run ID').fill(randomUUID());
+  await historyPicker.getByRole('button', { name: 'Open saved calculation' }).click();
+  await expect(historyPicker.getByRole('alert')).toContainText('unavailable');
+  await historyPicker.screenshot({ path: testInfo.outputPath('carbon-history-mobile.png') });
+  const archiveResponse = await page.request.delete(`${base}/sites/${site.id}`, {
+    headers: { origin: new URL(page.url()).origin },
+  });
+  expect(archiveResponse.ok(), await archiveResponse.text()).toBe(true);
+  await page.reload();
+  await page
+    .getByRole('combobox', { name: 'Carbon site', exact: true })
+    .selectOption({ label: 'Carbon browser site (archived)' });
+  await expect(page.getByText('Archived site · Carbon history is read-only.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Calculate and save', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save target', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Correct target', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Assess target', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Commit carbon import', exact: true })).toHaveCount(0);
+  await page.getByLabel('Show superseded targets').check();
+  await expect(
+    page.getByRole('heading', { name: 'Annual browser target · Revision 1 (superseded)', exact: true }),
+  ).toBeVisible();
+  await expect(currentTarget).toContainText(`Run ${oldId}`);
+  await historyPicker.getByLabel('Saved carbon run ID').fill(oldId);
+  await historyPicker.getByRole('button', { name: 'Open saved calculation' }).click();
+  await expect(historyPicker).toContainText('Saved calculation opened.');
+  await expect(page.locator('summary').filter({ hasText: 'Electricity meter · 2020 · 0 kgCO2e' })).toBeVisible();
+  await page.getByRole('heading', { name: 'Archived carbon history' }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: testInfo.outputPath('archived-carbon-mobile.png') });
 });

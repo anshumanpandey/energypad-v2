@@ -2,11 +2,19 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import type { CarbonSummary } from '@/domain/carbon';
-export function CarbonReportDownload({ path, definition }: { path: string; definition: CarbonSummary['definition'] }) {
+export function CarbonReportDownload({
+  path,
+  definition,
+  fingerprint,
+}: {
+  fingerprint?: string;
+  path: string;
+  definition: CarbonSummary['definition'];
+}) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   async function download(format: 'csv' | 'json') {
-    if (pending) return;
+    if (pending || !fingerprint) return;
     setPending(true);
     setError('');
     try {
@@ -15,6 +23,7 @@ export function CarbonReportDownload({ path, definition }: { path: string; defin
         geography: definition.geography,
         basis: definition.basis,
         format,
+        fingerprint,
       });
       const response = await fetch(`/api/v1/${path}/report?${query}`);
       if (!response.ok) {
@@ -38,14 +47,25 @@ export function CarbonReportDownload({ path, definition }: { path: string; defin
   return (
     <div style={{ marginTop: 16, marginBottom: 16 }}>
       <p>
-        Exports recheck current permissions and coverage, which may differ from the displayed check. JSON preserves
-        exact decimal strings and full run evidence; CSV includes coverage and monthly evidence rows.
+        Downloads recheck permissions and must match this summary. If evidence changes, refresh and review the summary
+        before downloading. JSON preserves exact decimal strings and full run evidence; CSV includes coverage and
+        monthly evidence rows.
       </p>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <Button type="button" variant="secondary" disabled={pending} onClick={() => void download('csv')}>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={pending || !fingerprint}
+          onClick={() => void download('csv')}
+        >
           Download carbon CSV
         </Button>
-        <Button type="button" variant="secondary" disabled={pending} onClick={() => void download('json')}>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={pending || !fingerprint}
+          onClick={() => void download('json')}
+        >
           Download carbon JSON
         </Button>
       </div>

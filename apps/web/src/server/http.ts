@@ -5,10 +5,10 @@ import { auth } from './auth';
 import { DomainError } from '../domain/policy';
 import type { Actor } from './foundation';
 
-export async function readBody(request: Request): Promise<unknown> {
+export async function readBody(request: Request, limit = 16_384): Promise<unknown> {
   if (!request.headers.get('content-type')?.includes('application/json'))
     throw new DomainError('CONTENT_TYPE', 'Send a JSON request.', 415);
-  const text = (await readBytes(request, 16_384)).toString('utf8');
+  const text = (await readBytes(request, limit)).toString('utf8');
   try {
     return JSON.parse(text);
   } catch {

@@ -203,11 +203,30 @@ try {
   assert.equal(snapshot(complete).rows[0].factorId, firstFactor.id);
   assert.equal((await carbon.calculate(actor, org.id, site.id, { ...definition, requestKey: key })).id, complete.id);
   await assert.rejects(carbon.calculate(actor, org.id, site.id, { ...definition, year: 2021, requestKey: key }));
+  const previewBeforeFactorCorrection = await getSummary();
+  assert.ok((await carbon.benchmark(actor, org.id, { ...summaryDefinition, siteId: undefined })).rows.length);
+  const unchangedReport = await carbon.report(
+    actor,
+    org.id,
+    'site',
+    site.id,
+    summaryDefinition,
+    previewBeforeFactorCorrection.fingerprint,
+  );
+  assert.equal(unchangedReport.fingerprint, previewBeforeFactorCorrection.fingerprint);
+  assert.equal(
+    (await carbon.report(actor, org.id, 'site', site.id, summaryDefinition, unchangedReport.fingerprint)).fingerprint,
+    unchangedReport.fingerprint,
+  );
   await factors.correct(actor, org.id, firstFactor.id, {
     factor: { ...factor, factor: '0.3' },
     reason: 'Correct synthetic value',
   });
   assert.equal((await getSummary()).meters[0].status, 'OUTDATED');
+  await assert.rejects(
+    carbon.report(actor, org.id, 'site', site.id, summaryDefinition, previewBeforeFactorCorrection.fingerprint),
+    { code: 'REPORT_CHANGED' },
+  );
   assert.equal((await getSummary()).totalKgCO2e, null);
   const staleTrend = await carbon.trends(actor, org.id, trendDefinition);
   assert.equal(staleTrend.series[1].months[0].kgCO2e, null);
@@ -220,12 +239,17 @@ try {
     '180',
   );
   assert.equal((await carbon.calculate(actor, org.id, site.id, { ...definition, requestKey: key })).id, complete.id);
+  const previewBeforeReadingCorrection = await getSummary();
   await energy.correctReading(actor, org.id, site.id, snapshot(complete).rows[0].readingId!, {
     reading: { meterId: meter.id, month: '2020-01', quantity: '200' },
     reason: 'Correct synthetic consumption',
     useLatestConversion: false,
   });
   assert.equal((await getSummary()).meters[0].status, 'OUTDATED');
+  await assert.rejects(
+    carbon.report(actor, org.id, 'site', site.id, summaryDefinition, previewBeforeReadingCorrection.fingerprint),
+    { code: 'REPORT_CHANGED' },
+  );
   const newReading = await carbon.calculate(actor, org.id, site.id, { ...definition, requestKey: randomUUID() });
   assert.equal(snapshot(newReading).totalKgCO2e, '330');
   assert.equal((await getSummary()).totalKgCO2e, '330');
@@ -234,17 +258,33 @@ try {
   const otherPortfolio = await sites.savePortfolio(actor, org.id, { name: 'Other portfolio' });
   await db.site.update({ where: { id: site.id }, data: { portfolioId: portfolio.id } });
   const portfolioSummary = () => carbon.portfolioSummary(actor, org.id, portfolio.id, summaryDefinition);
+  const portfolioEnergy = () => carbon.portfolioEnergy(actor, org.id, portfolio.id, { year: 2020 });
+  const originalEnergy = await portfolioEnergy();
+  assert.equal(originalEnergy.kwh, '1300');
+  assert.equal(originalEnergy.netCost, null);
+  assert.equal(originalEnergy.sites[0].energy.months[0].evidence[0].revision, 2);
+  assert.equal((await carbon.portfolioEnergy(actor, org.id, otherPortfolio.id, { year: 2020 })).status, 'EMPTY');
+  assert.equal((await carbon.portfolioEnergy(actor, org.id, portfolio.id, { year: 2020, fuel: 'GAS' })).kwh, null);
+  await assert.rejects(carbon.portfolioEnergy(stranger, org.id, portfolio.id, { year: 2020 }));
+  await assert.rejects(carbon.portfolioEnergy(actor, org.id, portfolio.id, { year: 2020, siteId: emptySite.id }));
+
   assert.equal((await portfolioSummary()).totalKgCO2e, '330');
   assert.equal((await portfolioSummary()).sites[0].summary.meters[0].runId, newReading.id);
   const noSites = await carbon.portfolioSummary(actor, org.id, otherPortfolio.id, summaryDefinition);
   assert.equal(noSites.status, 'EMPTY');
   assert.equal(noSites.totalKgCO2e, null);
+  const previewBeforeSiteAdded = await portfolioSummary();
   const additionalSite = await sites.createSite(actor, org.id, {
     code: 'SECOND',
     name: 'Second carbon site',
     portfolioId: portfolio.id,
   });
   assert.equal((await portfolioSummary()).status, 'INCOMPLETE');
+  await assert.rejects(
+    carbon.report(actor, org.id, 'portfolio', portfolio.id, summaryDefinition, previewBeforeSiteAdded.fingerprint),
+    { code: 'REPORT_CHANGED' },
+  );
+  assert.equal((await portfolioEnergy()).kwh, null);
   assert.equal((await portfolioSummary()).totalKgCO2e, null);
   const additionalMeter = await sites.saveMeter(actor, org.id, additionalSite.id, {
     code: 'E',
@@ -269,10 +309,30 @@ try {
   });
   const multiSite = await portfolioSummary();
   assert.equal(multiSite.totalKgCO2e, '330.003');
+  assert.equal((await portfolioEnergy()).kwh, '1300.012');
+  assert.equal(
+    (
+      await carbon.portfolioEnergy(actor, org.id, portfolio.id, {
+        year: 2020,
+        siteId: additionalSite.id,
+        fuel: 'ELECTRICITY',
+      })
+    ).kwh,
+    '0.012',
+  );
+  await db.meter.update({ where: { id: additionalMeter.id }, data: { archivedAt: new Date() } });
+  assert.equal((await portfolioEnergy()).kwh, null);
+  await db.meter.update({ where: { id: additionalMeter.id }, data: { archivedAt: null } });
+
   const portfolioReport = await carbon.report(actor, org.id, 'portfolio', portfolio.id, summaryDefinition);
   assert.equal(portfolioReport.reportVersion, 'carbon-report-v1');
   assert.equal(portfolioReport.totalKgCO2e, '330.003');
   assert.equal(portfolioReport.evidence.length, 2);
+  assert.equal(
+    (await carbon.report(actor, org.id, 'portfolio', portfolio.id, summaryDefinition, multiSite.fingerprint))
+      .fingerprint,
+    multiSite.fingerprint,
+  );
   assert.ok(portfolioReport.evidence.every((r) => r.algorithmVersion === 'monthly-exact-factor-v1'));
   const siteReport = await carbon.report(actor, org.id, 'site', site.id, summaryDefinition);
   assert.equal(siteReport.evidence.length, 1);
@@ -282,11 +342,17 @@ try {
   assert.ok(multiSite.sites.every((s) => s.summary.checkedAt === multiSite.checkedAt));
   await db.site.update({ where: { id: additionalSite.id }, data: { archivedAt: new Date() } });
   assert.equal((await portfolioSummary()).totalKgCO2e, '330');
+  assert.equal((await portfolioEnergy()).kwh, '1300');
   await db.site.update({
     where: { id: additionalSite.id },
     data: { archivedAt: null, portfolioId: otherPortfolio.id },
   });
   assert.equal((await portfolioSummary()).sites.length, 1);
+  await assert.rejects(
+    carbon.report(actor, org.id, 'portfolio', portfolio.id, summaryDefinition, multiSite.fingerprint),
+    { code: 'REPORT_CHANGED' },
+  );
+  assert.equal((await portfolioEnergy()).sites.length, 1);
   await db.site.update({ where: { id: additionalSite.id }, data: { portfolioId: portfolio.id } });
   await assert.rejects(carbon.portfolioSummary(stranger, org.id, portfolio.id, summaryDefinition));
 
@@ -366,7 +432,25 @@ try {
   await db.siteAssignment.create({
     data: { membershipId: managerMembership.id, organisationId: org.id, siteId: additionalSite.id },
   });
+
+  const assignedEnergy = await carbon.portfolioEnergy(stranger, org.id, portfolio.id, { year: 2020 });
+  assert.equal(assignedEnergy.scope, 'ASSIGNED_ACTIVE_SITES');
+  assert.deepEqual(
+    assignedEnergy.availableSites.map((s) => s.id),
+    [additionalSite.id],
+  );
+  assert.deepEqual(
+    assignedEnergy.sites.map((s) => s.id),
+    [additionalSite.id],
+  );
+  assert.ok(!JSON.stringify(assignedEnergy).includes(site.name));
+  await assert.rejects(carbon.portfolioEnergy(stranger, org.id, portfolio.id, { year: 2020, siteId: site.id }));
   const assignedSummary = await carbon.portfolioSummary(stranger, org.id, portfolio.id, summaryDefinition);
+  assert.equal(
+    (await carbon.report(stranger, org.id, 'portfolio', portfolio.id, summaryDefinition, assignedSummary.fingerprint))
+      .fingerprint,
+    assignedSummary.fingerprint,
+  );
   assert.equal(assignedSummary.scope, 'ASSIGNED_ACTIVE_SITES');
   assert.deepEqual(
     assignedSummary.sites.map((s) => s.id),
@@ -406,6 +490,93 @@ try {
   await assert.rejects(carbon.portfolioSummary(stranger, org.id, otherPortfolio.id, summaryDefinition));
   await db.portfolio.update({ where: { id: otherPortfolio.id }, data: { archivedAt: new Date() } });
   await assert.rejects(carbon.portfolioSummary(actor, org.id, otherPortfolio.id, summaryDefinition));
+  await assert.rejects(carbon.portfolioEnergy(actor, org.id, otherPortfolio.id, { year: 2020 }));
+  // More than 50 immutable runs remain traversable, including tied timestamps.
+  const historicalSnapshot = JSON.stringify(complete.snapshot);
+  await db.$transaction(async (tx) => {
+    for (let i = 0; i < 55; i++) {
+      const id = randomUUID();
+      await tx.carbonRun.create({
+        data: {
+          id,
+          organisationId: org.id,
+          siteId: site.id,
+          authorId: actor.userId,
+          requestKey: id,
+          algorithmVersion: complete.algorithmVersion,
+          snapshot: complete.snapshot!,
+          createdAt: new Date('2090-01-01T00:00:00Z'),
+        },
+      });
+    }
+  });
+  const firstPage = await carbon.historyPage(actor, org.id, site.id);
+  assert.equal(firstPage.items.length, 20);
+  assert.ok(firstPage.nextCursor);
+  assert.ok(!firstPage.items.some((r) => r.id === complete.id));
+  const traversed = [...firstPage.items];
+  let cursor: string | null = firstPage.nextCursor;
+  while (cursor) {
+    const page = await carbon.historyPage(actor, org.id, site.id, { cursor });
+    traversed.push(...page.items);
+    cursor = page.nextCursor;
+  }
+  assert.equal(new Set(traversed.map((r) => r.id)).size, traversed.length);
+  assert.equal(traversed.length, await db.carbonRun.count({ where: { organisationId: org.id, siteId: site.id } }));
+  assert.equal(JSON.stringify(traversed.find((r) => r.id === complete.id)!.snapshot), historicalSnapshot);
+  assert.equal(
+    JSON.stringify((await carbon.readRun(actor, org.id, site.id, complete.id)).snapshot),
+    historicalSnapshot,
+  );
+  assert.deepEqual(
+    (await carbon.historyPage(actor, org.id, site.id, { cursor: firstPage.nextCursor! })).items.map((r) => r.id),
+    traversed.slice(20, 40).map((r) => r.id),
+  );
+  await assert.rejects(carbon.historyPage(actor, org.id, additionalSite.id, { cursor: complete.id }));
+  await assert.rejects(carbon.readRun(actor, org.id, additionalSite.id, complete.id));
+  await assert.rejects(carbon.readRun(actor, org.id, site.id, randomUUID()));
+  await assert.rejects(carbon.historyPage(stranger, org.id, site.id));
+  await assert.rejects(carbon.readRun(stranger, org.id, site.id, complete.id));
+  const outsider = actorFor((await db.user.create({ data: { email: 'carbon-outsider@example.test' } })).id);
+  await assert.rejects(carbon.historyPage(outsider, org.id, site.id));
+  await assert.rejects(carbon.readRun(outsider, org.id, site.id, complete.id));
+  const historicalAssessment = await targets.assess(actor, org.id, site.id, correctedTarget.id, { runId: complete.id });
+  assert.equal(historicalAssessment.actualKgCO2e.toString(), '180');
+  assert.equal(
+    (await targets.assess(actor, org.id, site.id, correctedTarget.id, { runId: complete.id })).id,
+    historicalAssessment.id,
+  );
+  await db.site.update({ where: { id: site.id }, data: { archivedAt: new Date() } });
+  assert.equal((await carbon.readRun(actor, org.id, site.id, complete.id)).id, complete.id);
+  assert.ok((await carbon.historyPage(actor, org.id, site.id)).items.length);
+  const archivedContext = await carbon.historyContext(actor, org.id, site.id);
+  assert.equal(archivedContext.archived, true);
+  assert.ok(archivedContext.meters.some((m) => m.id === meter.id && m.name === meter.name));
+  const archivedTargets = await targets.list(actor, org.id, site.id);
+  assert.ok(archivedTargets.some((t) => t.id === target.id));
+  assert.ok(
+    archivedTargets.some(
+      (t) => t.id === correctedTarget.id && t.assessments.some((a) => a.id === historicalAssessment.id),
+    ),
+  );
+  await assert.rejects(carbon.historyContext(outsider, org.id, site.id));
+  await assert.rejects(carbon.historyContext(stranger, org.id, site.id));
+  await assert.rejects(carbon.calculate(actor, org.id, site.id, { ...definition, requestKey: randomUUID() }));
+  await assert.rejects(targets.add(actor, org.id, site.id, { ...targetInput, year: 2022, requestKey: randomUUID() }));
+  await assert.rejects(targets.correct(actor, org.id, site.id, correctedTarget.id, correction));
+  await assert.rejects(targets.assess(actor, org.id, site.id, correctedTarget.id, { runId: complete.id }));
+  // Current assignments, including revocation, govern historical access.
+  assert.equal((await carbon.historyContext(stranger, org.id, additionalSite.id)).archived, false);
+  await db.site.update({ where: { id: additionalSite.id }, data: { archivedAt: new Date() } });
+  assert.equal((await carbon.historyContext(stranger, org.id, additionalSite.id)).archived, true);
+  await db.siteAssignment.deleteMany({ where: { membershipId: managerMembership.id } });
+  await assert.rejects(carbon.historyContext(stranger, org.id, additionalSite.id));
+  await assert.rejects(targets.list(stranger, org.id, additionalSite.id));
+  await assert.rejects(
+    carbon.report(stranger, org.id, 'portfolio', portfolio.id, summaryDefinition, assignedSummary.fingerprint),
+  );
+  await db.membership.update({ where: { id: managerMembership.id }, data: { revokedAt: new Date() } });
+  await assert.rejects(carbon.historyContext(stranger, org.id, additionalSite.id));
   console.log(
     '✓ carbon: complete and blocked coverage, exact totals, factor boundaries, immutable snapshots, corrections, retry idempotency, tenant/role/site scope and audit',
   );

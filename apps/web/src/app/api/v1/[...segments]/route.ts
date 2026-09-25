@@ -1,3 +1,5 @@
+import { aiGenerationService } from '@/server/services';
+import { aiEvidenceService } from '@/server/services';
 import { opportunityService } from '@/server/services';
 import { analyticsReportService } from '@/server/services';
 import { reportResponse } from '@/server/analytics-reports';
@@ -39,7 +41,48 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'sites' && s[3] && s[4] === 'ai-evidence' && s.length === 7 && s[6] === 'source' && method === 'GET')
+        return aiEvidenceService.citedOpportunitySource(actor, org, s[3], s[5]);
+      if (
+        s[2] === 'sites' &&
+        s[3] &&
+        s[4] === 'opportunities' &&
+        s.length === 7 &&
+        s[6] === 'report' &&
+        method === 'GET'
+      )
+        return reportResponse(
+          await opportunityService.opportunityReport(actor, org, s[3], s[5]),
+          'json',
+          new URL(request.url).searchParams.get('fingerprint'),
+        );
+      if (s[2] === 'sites' && s[3] && s[4] === 'ai-answers') {
+        if (s.length === 6 && s[5] === 'availability' && method === 'GET')
+          return aiGenerationService.availability(actor, org, s[3]);
+        if (s.length === 5 && method === 'GET') return aiGenerationService.generationHistory(actor, org, s[3]);
+        if (s.length === 5 && method === 'POST')
+          return aiGenerationService.generate(actor, org, s[3], await readBody(request));
+      }
+
+      if (s[2] === 'sites' && s[3] && s[4] === 'ai-evidence' && s.length === 5) {
+        if (method === 'POST') return aiEvidenceService.previewEvidence(actor, org, s[3], await readBody(request));
+        if (method === 'GET')
+          return aiEvidenceService.evidenceHistory(actor, org, s[3], {
+            cursor: new URL(request.url).searchParams.get('cursor') ?? undefined,
+          });
+      }
+
       if (s[2] === 'sites' && s[3] && s[4] === 'opportunities') {
+        if (s.length === 6 && s[5] === 'supporting-options' && method === 'GET')
+          return opportunityService.supportingOptions(actor, org, s[3]);
+        if (s.length === 7 && s[6] === 'supporting-evidence' && method === 'POST')
+          return opportunityService.saveSupportingEvidence(actor, org, s[3], s[5], await readBody(request, 65_536));
+        if (s.length === 7 && s[6] === 'verification' && method === 'POST')
+          return opportunityService.submitVerification(actor, org, s[3], s[5], await readBody(request));
+        if (s.length === 6 && s[5] === 'owners' && method === 'GET')
+          return opportunityService.opportunityOwners(actor, org, s[3]);
+        if (s.length === 7 && s[6] === 'work' && method === 'POST')
+          return opportunityService.saveOpportunityWork(actor, org, s[3], s[5], await readBody(request, 65_536));
         const query = new URL(request.url).searchParams;
         if (s.length === 5 && method === 'GET')
           return opportunityService.listOpportunities(actor, org, s[3], { cursor: query.get('cursor') ?? undefined });
@@ -68,17 +111,33 @@ async function handle(request: Request, context: Context) {
         const query = new URL(request.url).searchParams;
         const format = query.get('format') ?? 'json';
         if (format !== 'json' && format !== 'csv') throw new DomainError('REPORT_FORMAT', 'Choose CSV or JSON.');
-        const report = await carbonService.report(actor, org, s[2] === 'sites' ? 'site' : 'portfolio', s[3], {
-          year: Number(query.get('year')),
-          geography: query.get('geography'),
-          basis: query.get('basis'),
-        });
+        const report = await carbonService.report(
+          actor,
+          org,
+          s[2] === 'sites' ? 'site' : 'portfolio',
+          s[3],
+          {
+            year: Number(query.get('year')),
+            geography: query.get('geography'),
+            basis: query.get('basis'),
+          },
+          query.get('fingerprint'),
+        );
         return new Response(format === 'csv' ? carbonReportCsv(report) : JSON.stringify(report, null, 2) + '\n', {
           headers: {
             'Content-Type': format === 'csv' ? 'text/csv; charset=utf-8' : 'application/json; charset=utf-8',
             'Content-Disposition': `attachment; filename="carbon-${report.subject.kind}-${report.subject.id}-${report.definition.year}.${format}"`,
             'X-Content-Type-Options': 'nosniff',
+            'X-Report-Fingerprint': report.fingerprint!,
           },
+        });
+      }
+      if (s[2] === 'portfolios' && s[3] && s[4] === 'energy' && s.length === 5 && method === 'GET') {
+        const query = new URL(request.url).searchParams;
+        return carbonService.portfolioEnergy(actor, org, s[3], {
+          year: Number(query.get('year')),
+          fuel: query.get('fuel') ?? 'ALL',
+          ...(query.get('siteId') ? { siteId: query.get('siteId') } : {}),
         });
       }
       if (s[2] === 'portfolios' && s[3] && s[4] === 'carbon' && s.length === 5 && method === 'GET') {
@@ -136,6 +195,22 @@ async function handle(request: Request, context: Context) {
           basis: query.get('basis'),
         });
       }
+      if (s[2] === 'sites' && s[3] && s[4] === 'carbon' && s[5] === 'history' && s.length === 6 && method === 'GET') {
+        const query = new URL(request.url).searchParams;
+        return carbonService.historyPage(actor, org, s[3], { cursor: query.get('cursor') ?? undefined });
+      }
+      if (
+        s[2] === 'sites' &&
+        s[3] &&
+        s[4] === 'carbon' &&
+        s[5] === 'runs' &&
+        s[6] &&
+        s.length === 7 &&
+        method === 'GET'
+      )
+        return carbonService.readRun(actor, org, s[3], s[6]);
+      if (s[2] === 'sites' && s[3] && s[4] === 'carbon' && s[5] === 'context' && s.length === 6 && method === 'GET')
+        return carbonService.historyContext(actor, org, s[3]);
       if (s[2] === 'sites' && s[3] && s[4] === 'carbon' && s.length === 5) {
         if (method === 'GET') return carbonService.history(actor, org, s[3]);
         if (method === 'POST') return carbonService.calculate(actor, org, s[3], await readBody(request));

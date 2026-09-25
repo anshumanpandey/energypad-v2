@@ -1,3 +1,6 @@
+import { carbonContentFingerprint } from './carbon-fingerprint';
+import { historyPageInput } from './analysis/contract';
+import { portfolioEnergyInput, aggregatePortfolioEnergy, type PortfolioEnergyResult } from '../domain/portfolio-energy';
 import {
   carbonTrendInput,
   carbonTrendPoints,
@@ -39,6 +42,24 @@ export class CarbonService extends FoundationService {
     });
     if (!site) throw new DomainError('NOT_FOUND', 'This site is not available.', 404);
   }
+  async historyContext(actor: Actor, org: string, siteId: string) {
+    return this.db.$transaction(
+      async (tx) => {
+        await this.access(tx, actor, org, siteId, false);
+        const site = await tx.site.findFirstOrThrow({
+          where: { id: siteId, organisationId: org },
+          select: { archivedAt: true },
+        });
+        const meters = await tx.meter.findMany({
+          where: { organisationId: org, siteId },
+          select: { id: true, name: true, archivedAt: true },
+          orderBy: [{ code: 'asc' }, { id: 'asc' }],
+        });
+        return { archived: site.archivedAt !== null, meters };
+      },
+      { isolationLevel: 'RepeatableRead' },
+    );
+  }
   async history(actor: Actor, org: string, siteId: string) {
     return this.db.$transaction(
       async (tx) => {
@@ -51,6 +72,41 @@ export class CarbonService extends FoundationService {
       },
       { isolationLevel: 'RepeatableRead' },
     );
+  }
+  async historyPage(actor: Actor, org: string, siteId: string, input: unknown = {}) {
+    const page = historyPageInput.parse(input);
+    return this.db.$transaction(
+      async (tx) => {
+        await this.access(tx, actor, org, siteId, false);
+        const scope = { organisationId: org, siteId };
+        const anchor = page.cursor ? await tx.carbonRun.findFirst({ where: { ...scope, id: page.cursor } }) : null;
+        if (page.cursor && !anchor) throw new DomainError('NOT_FOUND', 'This history cursor is unavailable.', 404);
+        const rows = await tx.carbonRun.findMany({
+          where: {
+            ...scope,
+            ...(anchor
+              ? {
+                  OR: [{ createdAt: { lt: anchor.createdAt } }, { createdAt: anchor.createdAt, id: { lt: anchor.id } }],
+                }
+              : {}),
+          },
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          take: page.limit + 1,
+        });
+        const items = rows.slice(0, page.limit);
+        return { items, nextCursor: rows.length > page.limit ? items.at(-1)!.id : null };
+      },
+      { isolationLevel: 'RepeatableRead' },
+    );
+  }
+  async readRun(actor: Actor, org: string, siteId: string, id: string) {
+    uuid.parse(id);
+    return this.db.$transaction(async (tx) => {
+      await this.access(tx, actor, org, siteId, false);
+      const run = await tx.carbonRun.findFirst({ where: { id, organisationId: org, siteId } });
+      if (!run) throw new DomainError('NOT_FOUND', 'This saved calculation is unavailable.', 404);
+      return run;
+    });
   }
   async summary(actor: Actor, org: string, siteId: string, input: unknown): Promise<CarbonSummary> {
     const definition = carbonSummaryInput.parse(input);
@@ -246,6 +302,8 @@ export class CarbonService extends FoundationService {
     siteId: string,
     definition: CarbonSummary['definition'],
   ): Promise<CarbonSummary> {
+    // Callers such as benchmarking carry extra optional filters; only carbon scope belongs in this contract.
+    definition = { year: definition.year, geography: definition.geography, basis: definition.basis };
     const meters = await tx.meter.findMany({
       where: { organisationId: org, siteId, archivedAt: null },
       orderBy: [{ name: 'asc' }, { id: 'asc' }],
@@ -344,22 +402,41 @@ export class CarbonService extends FoundationService {
       });
     }
     const ready = rows.length > 0 && rows.every((r) => r.status === 'READY');
-    return {
+    const summary: CarbonSummary = {
       definition,
       checkedAt: new Date().toISOString(),
       status: !rows.length ? 'EMPTY' : ready ? 'COMPLETE' : 'INCOMPLETE',
       totalKgCO2e: ready ? total.toFixed() : null,
       meters: rows,
     };
+    const site = await tx.site.findFirstOrThrow({
+      where: { organisationId: org, id: siteId },
+      select: { id: true, name: true, code: true, archivedAt: true },
+    });
+    return {
+      ...summary,
+      fingerprint: carbonContentFingerprint({
+        version: 'carbon-preview-v1',
+        organisationId: org,
+        site: { id: site.id, name: site.name, code: site.code, archived: site.archivedAt !== null },
+        algorithm: carbonAlgorithmVersion,
+        summary,
+        readingIds: readings
+          .filter((r) => meters.some((m) => m.id === r.meterId))
+          .map((r) => r.id)
+          .sort(),
+        factorIds: [...factorIds].sort(),
+      }),
+    };
   }
-  async portfolioSummary(
+  async portfolioEnergy(
     actor: Actor,
     org: string,
     portfolioId: string,
     input: unknown,
-  ): Promise<PortfolioCarbonSummary> {
+  ): Promise<PortfolioEnergyResult> {
     uuid.parse(portfolioId);
-    const definition = carbonSummaryInput.parse(input);
+    const definition = portfolioEnergyInput.parse(input);
     return this.db.$transaction(
       async (tx) => {
         const member = await this.membership(actor, org, undefined, tx);
@@ -369,7 +446,7 @@ export class CarbonService extends FoundationService {
           select: { id: true, name: true },
         });
         if (!portfolio) throw new DomainError('NOT_FOUND', 'This portfolio is unavailable.', 404);
-        const sites = await tx.site.findMany({
+        const availableSites = await tx.site.findMany({
           where: {
             organisationId: org,
             portfolioId,
@@ -379,28 +456,119 @@ export class CarbonService extends FoundationService {
           select: { id: true, name: true, code: true },
           orderBy: [{ name: 'asc' }, { id: 'asc' }],
         });
-        if (assignedOnly && !sites.length) throw new DomainError('NOT_FOUND', 'This portfolio is unavailable.', 404);
-        const rows: PortfolioCarbonSummary['sites'] = [];
-        let total = new Decimal(0);
-        for (const site of sites) {
-          const summary = await this.summaryWithin(tx, org, site.id, definition);
-          rows.push({ ...site, summary });
-          if (summary.totalKgCO2e !== null) total = total.add(summary.totalKgCO2e);
-        }
-        const complete = rows.length > 0 && rows.every((r) => r.summary.status === 'COMPLETE');
-        const checkedAt = new Date().toISOString();
+        if (
+          (assignedOnly && !availableSites.length) ||
+          (definition.siteId && !availableSites.some((s) => s.id === definition.siteId))
+        )
+          throw new DomainError('NOT_FOUND', 'This portfolio or site is unavailable.', 404);
+        const selected = availableSites.filter((s) => !definition.siteId || s.id === definition.siteId);
+        const meters = await tx.meter.findMany({
+          where: {
+            organisationId: org,
+            siteId: { in: selected.map((s) => s.id) },
+            archivedAt: null,
+            ...(definition.fuel === 'ALL' ? {} : { fuel: definition.fuel }),
+          },
+          select: { id: true, siteId: true, name: true, fuel: true },
+          orderBy: { id: 'asc' },
+        });
+        const readings = await tx.consumptionRecord.findMany({
+          where: {
+            organisationId: org,
+            siteId: { in: selected.map((s) => s.id) },
+            meterId: { in: meters.map((m) => m.id) },
+            replacement: { is: null },
+            periodStart: { lt: new Date(`${definition.year + 1}-01-01`) },
+            periodEnd: { gt: new Date(`${definition.year}-01-01`) },
+          },
+          orderBy: [{ periodStart: 'asc' }, { id: 'asc' }],
+        });
+        const sites = selected.map((site) => {
+          const included = meters.filter((m) => m.siteId === site.id);
+          return {
+            ...site,
+            meters: included,
+            energy: overviewEnergy(
+              definition.year,
+              included.map((m) => m.id),
+              readings,
+            ),
+          };
+        });
         return {
           portfolio,
           definition,
-          checkedAt,
+          availableSites,
+          sites,
+          checkedAt: new Date().toISOString(),
           scope: assignedOnly ? 'ASSIGNED_ACTIVE_SITES' : 'PORTFOLIO_ACTIVE_SITES',
-          status: !rows.length ? 'EMPTY' : complete ? 'COMPLETE' : 'INCOMPLETE',
-          totalKgCO2e: complete ? total.toFixed() : null,
-          sites: rows.map((row) => ({ ...row, summary: { ...row.summary, checkedAt } })),
+          ...aggregatePortfolioEnergy(definition.year, sites),
         };
       },
       { isolationLevel: 'RepeatableRead', timeout: 30000 },
     );
+  }
+  async portfolioSummary(
+    actor: Actor,
+    org: string,
+    portfolioId: string,
+    input: unknown,
+  ): Promise<PortfolioCarbonSummary> {
+    uuid.parse(portfolioId);
+    const definition = carbonSummaryInput.parse(input);
+    return this.db.$transaction((tx) => this.portfolioSummaryWithin(tx, actor, org, portfolioId, definition), {
+      isolationLevel: 'RepeatableRead',
+      timeout: 30000,
+    });
+  }
+  private async portfolioSummaryWithin(
+    tx: Prisma.TransactionClient,
+    actor: Actor,
+    org: string,
+    portfolioId: string,
+    definition: CarbonSummary['definition'],
+  ): Promise<PortfolioCarbonSummary> {
+    const member = await this.membership(actor, org, undefined, tx);
+    const assignedOnly = member.role === 'SITE_MANAGER';
+    const portfolio = await tx.portfolio.findFirst({
+      where: { id: portfolioId, organisationId: org, archivedAt: null },
+      select: { id: true, name: true },
+    });
+    if (!portfolio) throw new DomainError('NOT_FOUND', 'This portfolio is unavailable.', 404);
+    const sites = await tx.site.findMany({
+      where: {
+        organisationId: org,
+        portfolioId,
+        archivedAt: null,
+        ...(assignedOnly ? { assignments: { some: { membershipId: member.id, organisationId: org } } } : {}),
+      },
+      select: { id: true, name: true, code: true },
+      orderBy: [{ name: 'asc' }, { id: 'asc' }],
+    });
+    if (assignedOnly && !sites.length) throw new DomainError('NOT_FOUND', 'This portfolio is unavailable.', 404);
+    const rows: PortfolioCarbonSummary['sites'] = [];
+    let total = new Decimal(0);
+    for (const site of sites) {
+      const summary = await this.summaryWithin(tx, org, site.id, definition);
+      rows.push({ ...site, summary });
+      if (summary.totalKgCO2e !== null) total = total.add(summary.totalKgCO2e);
+    }
+    const complete = rows.length > 0 && rows.every((r) => r.summary.status === 'COMPLETE');
+    const checkedAt = new Date().toISOString();
+    const summary: PortfolioCarbonSummary = {
+      portfolio,
+      definition,
+      checkedAt,
+      scope: assignedOnly ? 'ASSIGNED_ACTIVE_SITES' : 'PORTFOLIO_ACTIVE_SITES',
+      status: !rows.length ? 'EMPTY' : complete ? 'COMPLETE' : 'INCOMPLETE',
+      totalKgCO2e: complete ? total.toFixed() : null,
+      sites: rows.map((row) => ({ ...row, summary: { ...row.summary, checkedAt } })),
+    };
+
+    return {
+      ...summary,
+      fingerprint: carbonContentFingerprint({ version: 'carbon-preview-v1', organisationId: org, summary }),
+    };
   }
   async trends(actor: Actor, org: string, input: unknown) {
     const definition = carbonTrendInput.parse(input);
@@ -516,63 +684,83 @@ export class CarbonService extends FoundationService {
     kind: 'site' | 'portfolio',
     id: string,
     input: unknown,
+    expectedFingerprint?: string | null,
   ): Promise<CarbonReport> {
     const definition = carbonSummaryInput.parse(input);
-    let report: Omit<CarbonReport, 'evidence'>;
-    const note =
-      'Sum of included active meters; overlapping main/submeter measurements are not deducted. Missing, blocked or outdated coverage withholds totals. Monthly evidence remains historical even if inputs later change. This export is a point-in-time report, not a live view.';
-    if (kind === 'portfolio') {
-      const summary = await this.portfolioSummary(actor, org, id, definition);
-      report = {
-        reportVersion: 'carbon-report-v1',
-        organisationId: org,
-        subject: { kind, ...summary.portfolio },
-        scope: summary.scope,
-        checkedAt: summary.checkedAt,
-        definition,
-        status: summary.status,
-        totalKgCO2e: summary.totalKgCO2e,
-        unit: 'kgCO2e',
-        note,
-        sites: summary.sites,
-      };
-    } else {
-      const site = await this.getSite(actor, org, id);
-      const summary = await this.summary(actor, org, id, definition);
-      report = {
-        reportVersion: 'carbon-report-v1',
-        organisationId: org,
-        subject: { kind, id: site.id, name: site.name },
-        scope: 'SITE_ACTIVE_METERS',
-        checkedAt: summary.checkedAt,
-        definition,
-        status: summary.status,
-        totalKgCO2e: summary.totalKgCO2e,
-        unit: 'kgCO2e',
-        note,
-        sites: [{ ...site, summary }],
-      };
-    }
-    // Only immutable runs explicitly referenced by the authorized summary may enter the export.
-    const runIds = [
-      ...new Set(report.sites.flatMap((site) => site.summary.meters.flatMap((m) => (m.runId ? [m.runId] : [])))),
-    ];
-    const runs = await this.db.carbonRun.findMany({
-      where: { organisationId: org, siteId: { in: report.sites.map((s) => s.id) }, id: { in: runIds } },
-      orderBy: { id: 'asc' },
-    });
-    if (runs.length !== runIds.length)
-      throw new DomainError('REPORT_EVIDENCE', 'Report evidence is unavailable. Refresh and try again.', 409);
-    return {
-      ...report,
-      evidence: runs.map((run) => ({
-        id: run.id,
-        siteId: run.siteId,
-        algorithmVersion: run.algorithmVersion,
-        createdAt: run.createdAt.toISOString(),
-        snapshot: run.snapshot as unknown as CarbonSnapshot,
-      })),
-    };
+    uuid.parse(id);
+    return this.db.$transaction(
+      async (tx) => {
+        let report: Omit<CarbonReport, 'evidence'>;
+        const note =
+          'Sum of included active meters; overlapping main/submeter measurements are not deducted. Missing, blocked or outdated coverage withholds totals. Monthly evidence remains historical even if inputs later change. This export is a point-in-time report, not a live view.';
+        if (kind === 'portfolio') {
+          const summary = await this.portfolioSummaryWithin(tx, actor, org, id, definition);
+          report = {
+            fingerprint: summary.fingerprint,
+            reportVersion: 'carbon-report-v1',
+            organisationId: org,
+            subject: { kind, ...summary.portfolio },
+            scope: summary.scope,
+            checkedAt: summary.checkedAt,
+            definition,
+            status: summary.status,
+            totalKgCO2e: summary.totalKgCO2e,
+            unit: 'kgCO2e',
+            note,
+            sites: summary.sites,
+          };
+        } else {
+          await this.access(tx, actor, org, id, false);
+          const site = await tx.site.findFirst({
+            where: { id, organisationId: org, archivedAt: null },
+            select: { id: true, name: true, code: true },
+          });
+          if (!site) throw new DomainError('NOT_FOUND', 'This active site is unavailable.', 404);
+          const summary = await this.summaryWithin(tx, org, id, definition);
+          report = {
+            fingerprint: summary.fingerprint,
+            reportVersion: 'carbon-report-v1',
+            organisationId: org,
+            subject: { kind, id: site.id, name: site.name },
+            scope: 'SITE_ACTIVE_METERS',
+            checkedAt: summary.checkedAt,
+            definition,
+            status: summary.status,
+            totalKgCO2e: summary.totalKgCO2e,
+            unit: 'kgCO2e',
+            note,
+            sites: [{ ...site, summary }],
+          };
+        }
+        if (expectedFingerprint && report.fingerprint !== expectedFingerprint)
+          throw new DomainError(
+            'REPORT_CHANGED',
+            'Carbon evidence changed. Refresh the summary and review it before downloading.',
+            409,
+          );
+        // Only immutable runs explicitly referenced by the authorized summary may enter the export.
+        const runIds = [
+          ...new Set(report.sites.flatMap((site) => site.summary.meters.flatMap((m) => (m.runId ? [m.runId] : [])))),
+        ];
+        const runs = await tx.carbonRun.findMany({
+          where: { organisationId: org, siteId: { in: report.sites.map((s) => s.id) }, id: { in: runIds } },
+          orderBy: { id: 'asc' },
+        });
+        if (runs.length !== runIds.length)
+          throw new DomainError('REPORT_EVIDENCE', 'Report evidence is unavailable. Refresh and try again.', 409);
+        return {
+          ...report,
+          evidence: runs.map((run) => ({
+            id: run.id,
+            siteId: run.siteId,
+            algorithmVersion: run.algorithmVersion,
+            createdAt: run.createdAt.toISOString(),
+            snapshot: run.snapshot as unknown as CarbonSnapshot,
+          })),
+        };
+      },
+      { isolationLevel: 'RepeatableRead', timeout: 30000 },
+    );
   }
   async calculate(actor: Actor, org: string, siteId: string, input: unknown) {
     const definition = carbonInput.parse(input);

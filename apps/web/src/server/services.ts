@@ -82,3 +82,16 @@ export const analyticsReportService = new AnalyticsReportService(
 
 import { OpportunityService } from './opportunities';
 export const opportunityService = new OpportunityService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { AIEvidenceService } from './ai-evidence';
+export const aiEvidenceService = new AIEvidenceService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { AIGenerationService } from './ai-generation';
+import { configuredAnswerProvider } from './ai-provider';
+export const aiGenerationService = new AIGenerationService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+  configuredAnswerProvider(),
+  Number(process.env.AI_DAILY_ATTEMPT_LIMIT ?? 20),
+);

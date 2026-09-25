@@ -15,18 +15,19 @@ export function CarbonWorkspace({
   canFactors,
 }: {
   orgId: string;
-  sites: { id: string; name: string }[];
+  sites: { id: string; name: string; archived: boolean }[];
   manage: boolean;
   canFactors: boolean;
 }) {
   const [siteId, setSiteId] = useState(sites[0]?.id ?? '');
+  const archived = sites.find((s) => s.id === siteId)?.archived ?? false;
   return (
     <section className="panel">
-      <h2>Calculate annual emissions</h2>
+      <h2>{archived ? 'Archived carbon history' : 'Calculate annual emissions'}</h2>
       <p>
-        Calculate one meter at a time. Every month needs consumption and one factor covering the entire month. Mid-month
-        factor changes require resolution; consumption is not prorated. Estimated readings remain identified in the
-        result.
+        {archived
+          ? 'Browse retained calculations, target revisions and assessments for this archived site.'
+          : 'Calculate one meter at a time. Every month needs consumption and one factor covering the entire month. Mid-month factor changes require resolution; consumption is not prorated. Estimated readings remain identified in the result.'}
       </p>
       <label>
         Carbon site
@@ -35,15 +36,26 @@ export function CarbonWorkspace({
           {sites.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
+              {s.archived ? ' (archived)' : ''}
             </option>
           ))}
         </select>
       </label>
-      {siteId && <SiteCarbon key={siteId} orgId={orgId} siteId={siteId} manage={manage} canFactors={canFactors} />}
+      {siteId && (
+        <SiteCarbon
+          key={`${siteId}-${archived}`}
+          orgId={orgId}
+          siteId={siteId}
+          archived={archived}
+          manage={manage && !archived}
+          canFactors={canFactors}
+        />
+      )}
     </section>
   );
 }
 function SiteCarbon({
+  archived: initiallyArchived,
   orgId,
   siteId,
   manage,
@@ -51,11 +63,21 @@ function SiteCarbon({
 }: {
   orgId: string;
   siteId: string;
+  archived: boolean;
   manage: boolean;
   canFactors: boolean;
 }) {
+  const [archived, setArchived] = useState(initiallyArchived);
+  const writable = manage && !archived;
   const [meters, setMeters] = useState<{ id: string; name: string; archivedAt: string | null }[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
+  const [openedRun, setOpenedRun] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const historyMutation = useMutation();
+  const mergeRuns = (current: Run[], added: Run[]) =>
+    [...new Map([...current, ...added].map((r) => [r.id, r])).values()].sort(
+      (a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id),
+    );
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -64,11 +86,13 @@ function SiteCarbon({
   const base = `organisations/${orgId}/sites/${siteId}`;
   useEffect(() => {
     let cancelled = false;
-    Promise.all([request(`${base}/energy`, 'GET'), request(`${base}/carbon`, 'GET')])
+    Promise.all([request(`${base}/carbon/context`, 'GET'), request(`${base}/carbon/history`, 'GET')])
       .then(([energy, history]) => {
         if (!cancelled) {
           setMeters(energy.meters);
-          setRuns(history);
+          setArchived(energy.archived);
+          setRuns(history.items);
+          setNextCursor(history.nextCursor);
           setLoading(false);
         }
       })
@@ -100,9 +124,16 @@ function SiteCarbon({
     );
   return (
     <>
-      <CarbonSummaryPanel key={runs[0]?.id ?? 'empty'} base={base} />
+      {archived ? (
+        <p role="status">
+          Archived site · Carbon history is read-only. Saved calculations, target revisions and assessments remain
+          available.
+        </p>
+      ) : (
+        <CarbonSummaryPanel key={runs[0]?.id ?? 'empty'} base={base} />
+      )}
       {mutation.feedback}
-      {manage && (
+      {writable && (
         <form
           className="stack-form"
           onSubmit={(event) => {
@@ -115,7 +146,8 @@ function SiteCarbon({
             const requestKey = attempt.current.key;
             void mutation.run(async () => {
               const run = await request(`${base}/carbon`, 'POST', { ...definition, requestKey });
-              setRuns((current) => [run, ...current.filter((r) => r.id !== run.id)].slice(0, 50));
+              setRuns((current) => mergeRuns(current, [run]));
+              setOpenedRun(run.id);
               attempt.current = null;
             }, 'Calculation saved. Review coverage and results below.');
           }}
@@ -159,16 +191,60 @@ function SiteCarbon({
           </Button>
         </form>
       )}
-      {manage && <CarbonImports base={base} canFactors={canFactors} onCommitted={() => setRetry(retry + 1)} />}
-      <CarbonTargets key={retry} base={base} meters={meters} runs={runs} manage={manage} />
+      {writable && <CarbonImports base={base} canFactors={canFactors} onCommitted={() => setRetry(retry + 1)} />}
+      <section aria-label="Find saved carbon calculations" className="stack-form">
+        <h3>Find saved calculations</h3>
+        <p>
+          Loaded {runs.length} calculations. Older pages and calculations opened by ID also become available for
+          matching target assessments. Saved inputs are never recalculated when browsing.
+        </p>
+        {historyMutation.feedback}
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={!nextCursor || historyMutation.disabled}
+          onClick={() => {
+            if (!nextCursor) return;
+            void historyMutation.run(async () => {
+              const page = await request(`${base}/carbon/history?cursor=${encodeURIComponent(nextCursor)}`, 'GET');
+              setRuns((current) => mergeRuns(current, page.items));
+              setNextCursor(page.nextCursor);
+            }, 'Older calculations loaded.');
+          }}
+        >
+          Load older calculations
+        </Button>
+        {!nextCursor && <p>All history pages loaded.</p>}
+        <form
+          className="stack-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const id = String(new FormData(event.currentTarget).get('runId') ?? '').trim();
+            void historyMutation.run(async () => {
+              const run = await request(`${base}/carbon/runs/${encodeURIComponent(id)}`, 'GET');
+              setRuns((current) => mergeRuns(current, [run]));
+              setOpenedRun(run.id);
+            }, 'Saved calculation opened.');
+          }}
+        >
+          <label>
+            Saved carbon run ID
+            <input name="runId" required />
+          </label>
+          <Button type="submit" disabled={historyMutation.disabled}>
+            Open saved calculation
+          </Button>
+        </form>
+      </section>
+      <CarbonTargets key={retry} base={base} meters={meters} runs={runs} manage={writable} />
       <h3>Saved calculations</h3>
       <p>
-        Latest 50 runs for this site. Saved results retain their original inputs after corrections; calculate again to
-        use current versions.
+        Loaded runs for this site, newest first. Saved results retain their original inputs after corrections; calculate
+        again to use current versions.
       </p>
       {!runs.length && <p>No saved calculations yet.</p>}
       {runs.map((run) => (
-        <details key={run.id} open={runs[0]?.id === run.id}>
+        <details key={run.id} open={(openedRun ?? runs[0]?.id) === run.id}>
           <summary>
             {run.snapshot.meter.name} · {run.snapshot.definition.year} ·{' '}
             {run.snapshot.status === 'COMPLETE'

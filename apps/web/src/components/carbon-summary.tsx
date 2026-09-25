@@ -75,7 +75,12 @@ export function CarbonSummaryPanel({ base }: { base: string }) {
             {summary.meters.filter((m) => m.status === 'READY').length} of {summary.meters.length} active meters ready.
             Checked {summary.checkedAt}. Check again after changing inputs.
           </p>
-          <CarbonReportDownload key={summary.checkedAt} path={`${base}/carbon`} definition={summary.definition} />
+          <CarbonReportDownload
+            key={summary.checkedAt}
+            path={`${base}/carbon`}
+            definition={summary.definition}
+            fingerprint={summary.fingerprint}
+          />
           <div style={{ overflowX: 'auto' }}>
             <table className="import-preview-table">
               <thead>

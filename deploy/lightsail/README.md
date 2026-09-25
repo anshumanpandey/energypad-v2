@@ -136,3 +136,14 @@ suppresses access logging so auth/invitation tokens are not logged.
 To switch to normal production, configure a domain/TLS reverse proxy, set the
 HTTPS AUTH_URL and mail settings, remove DEPLOYMENT_MODE, and redeploy. Reinstall
 the root-owned deploy script through admin SSH when changing its validation.
+
+### Optional AI answers
+
+To enable the grounded-answer provider, add `OPENAI_API_KEY` and `OPENAI_MODEL`
+(a model supporting Responses structured outputs) to `/etc/energiepad/runtime.env`
+and restart the app service during a deployment. `AI_DAILY_ATTEMPT_LIMIT` defaults
+to 20 attempts per workspace per UTC day. The workspace must also have an AI-enabled
+plan. Leave the key/model absent to keep generation disabled while retaining evidence
+previews. Pending attempts are never automatically resent; inspect reservations and
+provider records before manually initiating a new request. No AI secrets are required
+for CI tests, which use stubs.

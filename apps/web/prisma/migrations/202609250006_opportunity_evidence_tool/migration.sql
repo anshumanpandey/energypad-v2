@@ -1,0 +1,2 @@
+ALTER TABLE "AIInteraction" DROP CONSTRAINT "AIInteraction_preview_check";
+ALTER TABLE "AIInteraction" ADD CONSTRAINT "AIInteraction_preview_check" CHECK (mode = 'EVIDENCE_PREVIEW' AND tool IN ('saved_baseline','saved_savings','saved_opportunity') AND "promptCharacters" BETWEEN 5 AND 2000 AND (result->>'mode') IS NOT DISTINCT FROM 'EVIDENCE_PREVIEW' AND (result->'usage') IS NOT DISTINCT FROM '{"provider":null,"model":null,"inputTokens":0,"outputTokens":0,"providerCalls":0,"toolCalls":1}'::jsonb);

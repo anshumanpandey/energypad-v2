@@ -9,7 +9,7 @@ export type ReportInput = z.infer<typeof reportInput>;
 export type ReportValue = string | number | boolean | null;
 export type AnalyticsReport = {
   reportVersion: 'analytics-report-v1';
-  family: ReportInput['family'];
+  family: ReportInput['family'] | 'opportunity';
   organisationId: string;
   siteId: string;
   period: { firstMonth: string; lastMonth: string };

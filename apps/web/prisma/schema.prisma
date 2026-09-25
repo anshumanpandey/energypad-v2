@@ -113,6 +113,7 @@ model Organisation {
 }
 
 model Membership {
+  opportunityWork OpportunityWorkVersion[]
   opportunities Opportunity[]
   id             String         @id @default(uuid()) @db.Uuid
   organisationId String         @db.Uuid
@@ -130,6 +131,7 @@ model Membership {
 }
 
 model Site {
+ aiInteractions AIInteraction[]
  monthlyPlans MonthlyPlanVersion[]
  carbonWorkbookBatches CarbonWorkbookBatch[]
   events OperationalEvent[]
@@ -794,6 +796,7 @@ model BaselineVersion {
 }
 
 model AnalysisRun {
+  verifications OpportunityVerification[]
   opportunities Opportunity[]
   id String @id @default(uuid()) @db.Uuid
   organisationId String @db.Uuid
@@ -967,6 +970,9 @@ model MonthlyPlanVersion {
 }
 
 model Opportunity {
+  supportingEvidence OpportunitySupportingEvidence[]
+  verifications OpportunityVerification[]
+  workVersions OpportunityWorkVersion[]
   id String @id @default(uuid()) @db.Uuid
   organisationId String @db.Uuid
   siteId String @db.Uuid
@@ -990,6 +996,10 @@ model Opportunity {
 }
 
 model OpportunityEvent {
+  verificationId String? @db.Uuid
+  verification OpportunityVerification? @relation(fields: [verificationId, opportunityId, organisationId, siteId], references: [id, opportunityId, organisationId, siteId], onDelete: NoAction, onUpdate: NoAction)
+  workVersionId String? @db.Uuid
+  workVersion OpportunityWorkVersion? @relation(fields: [workVersionId, opportunityId, organisationId, siteId], references: [id, opportunityId, organisationId, siteId], onDelete: NoAction, onUpdate: NoAction)
   id String @id @default(uuid()) @db.Uuid
   organisationId String @db.Uuid
   siteId String @db.Uuid
@@ -1009,4 +1019,134 @@ model OpportunityEvent {
   @@unique([previousId, opportunityId, organisationId, siteId])
   @@unique([opportunityId, revision])
   @@unique([organisationId, requestKey])
+}
+
+model OpportunityWorkVersion {
+  verifications OpportunityVerification[]
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  opportunityId String @db.Uuid
+  previousId String? @db.Uuid
+  revision Int
+  ownerMembershipId String @db.Uuid
+  actions Json
+  note String
+  authorId String @db.Uuid
+  requestKey String @db.Uuid
+  requestHash String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  opportunity Opportunity @relation(fields: [opportunityId, organisationId, siteId], references: [id, organisationId, siteId])
+  owner Membership @relation(fields: [ownerMembershipId, organisationId], references: [id, organisationId])
+  previous OpportunityWorkVersion? @relation("OpportunityWorkHistory", fields: [previousId, opportunityId, organisationId, siteId], references: [id, opportunityId, organisationId, siteId], onDelete: NoAction, onUpdate: NoAction)
+  next OpportunityWorkVersion? @relation("OpportunityWorkHistory")
+  events OpportunityEvent[]
+  @@unique([id, opportunityId, organisationId, siteId])
+  @@unique([previousId, opportunityId, organisationId, siteId])
+  @@unique([opportunityId, revision])
+  @@unique([organisationId, requestKey])
+}
+
+model OpportunityVerification {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  opportunityId String @db.Uuid
+  meterId String @db.Uuid
+  runId String @db.Uuid
+  workVersionId String @db.Uuid
+  previousId String? @db.Uuid
+  revision Int
+  implementationDate DateTime @db.Date
+  note String
+  references Json
+  report Json
+  reportHash String
+  eligibility Json
+  authorId String @db.Uuid
+  requestKey String @db.Uuid
+  requestHash String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  opportunity Opportunity @relation(fields: [opportunityId, organisationId, siteId], references: [id, organisationId, siteId])
+  run AnalysisRun @relation(fields: [runId, organisationId, siteId, meterId], references: [id, organisationId, siteId, meterId])
+  workVersion OpportunityWorkVersion @relation(fields: [workVersionId, opportunityId, organisationId, siteId], references: [id, opportunityId, organisationId, siteId])
+  previous OpportunityVerification? @relation("OpportunityVerificationHistory", fields: [previousId, opportunityId, organisationId, siteId], references: [id, opportunityId, organisationId, siteId], onDelete: NoAction, onUpdate: NoAction)
+  next OpportunityVerification? @relation("OpportunityVerificationHistory")
+  events OpportunityEvent[]
+  @@unique([id, opportunityId, organisationId, siteId])
+  @@unique([previousId, opportunityId, organisationId, siteId])
+  @@unique([opportunityId, revision])
+  @@unique([organisationId, requestKey])
+}
+
+model OpportunitySupportingEvidence {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  opportunityId String @db.Uuid
+  previousId String? @db.Uuid
+  revision Int
+  kind String
+  snapshot Json
+  snapshotHash String
+  note String
+  authorId String @db.Uuid
+  requestKey String @db.Uuid
+  requestHash String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  opportunity Opportunity @relation(fields: [opportunityId, organisationId, siteId], references: [id, organisationId, siteId])
+  previous OpportunitySupportingEvidence? @relation("SupportingHistory", fields: [previousId, opportunityId, organisationId, siteId], references: [id, opportunityId, organisationId, siteId], onDelete: NoAction, onUpdate: NoAction)
+  next OpportunitySupportingEvidence? @relation("SupportingHistory")
+  @@unique([id, opportunityId, organisationId, siteId])
+  @@unique([previousId, opportunityId, organisationId, siteId])
+  @@unique([organisationId, requestKey])
+  @@index([opportunityId, createdAt])
+}
+
+model AIInteraction {
+  generations AIGeneration[]
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  authorId String @db.Uuid
+  mode String
+  tool String
+  resourceId String @db.Uuid
+  promptHash String
+  promptCharacters Int
+  result Json
+  resultHash String
+  requestKey String @db.Uuid
+  requestHash String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+  @@unique([organisationId, requestKey])
+  @@index([organisationId, siteId, authorId, createdAt])
+  @@unique([id, organisationId, siteId])
+}
+
+model AIGeneration {
+ id String @id @default(uuid()) @db.Uuid
+ organisationId String @db.Uuid
+ siteId String @db.Uuid
+ authorId String @db.Uuid
+ previewId String @db.Uuid
+ promptHash String
+ promptVersion String
+ model String
+ requestKey String @db.Uuid
+ requestHash String
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ preview AIInteraction @relation(fields:[previewId,organisationId,siteId],references:[id,organisationId,siteId])
+ outcome AIGenerationOutcome?
+ @@unique([organisationId,requestKey])
+ @@index([organisationId,createdAt])
+}
+model AIGenerationOutcome {
+ id String @id @default(uuid()) @db.Uuid
+ generationId String @unique @db.Uuid
+ status String
+ result Json
+ createdAt DateTime @default(now()) @db.Timestamptz(3)
+ generation AIGeneration @relation(fields:[generationId],references:[id])
 }

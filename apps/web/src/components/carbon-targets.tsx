@@ -263,7 +263,9 @@ export function CarbonTargets({
                       </select>
                     </label>
                     {!eligible.length && (
-                      <p>No complete matching run among the latest 50 calculations. Calculate this meter first.</p>
+                      <p>
+                        No complete matching run is loaded. Load older calculations or open a saved run by ID above.
+                      </p>
                     )}
                     <Button type="submit" disabled={mutation.disabled || !eligible.length}>
                       Assess target

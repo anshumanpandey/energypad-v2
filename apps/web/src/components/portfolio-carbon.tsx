@@ -105,6 +105,7 @@ export function PortfolioCarbon({ orgId, portfolios }: { orgId: string; portfoli
             key={result.checkedAt}
             path={`organisations/${orgId}/portfolios/${result.portfolio.id}/carbon`}
             definition={result.definition}
+            fingerprint={result.fingerprint}
           />
           <div style={{ overflowX: 'auto' }}>
             <table className="import-preview-table">

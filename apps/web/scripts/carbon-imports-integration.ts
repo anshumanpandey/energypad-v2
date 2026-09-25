@@ -202,6 +202,10 @@ try {
     data: { revokedAt: new Date() },
   });
   await assert.rejects(imports.commit(stranger, org.id, site.id, ready.id));
+  await sites.archiveSite(actor, org.id, site.id);
+  await assert.rejects(imports.upload(actor, org.id, site.id, 'emissions', bytes, undefined, template));
+  await assert.rejects(imports.upload(actor, org.id, site.id, 'targets', validTargets, undefined, targetTemplate));
+  await assert.rejects(imports.commit(actor, org.id, site.id, ready.id));
   console.log(
     '✓ carbon workbooks: mapped named sheets, cached formulas/precision, preview rollback, intra-batch conflicts, atomic stale-commit rollback, correction lineage, immutable receipts, duplicate retries and permissions',
   );

@@ -1,5 +1,6 @@
 import type { CarbonSnapshot, CarbonSummary, PortfolioCarbonSummary } from './carbon';
 export type CarbonReport = {
+  fingerprint?: string;
   reportVersion: 'carbon-report-v1';
   organisationId: string;
   subject: { kind: 'site' | 'portfolio'; id: string; name: string };

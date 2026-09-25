@@ -1,3 +1,5 @@
+import { PortfolioEnergy } from '@/components/portfolio-energy';
+import { AIEvidence } from '@/components/ai-evidence';
 import { Opportunities } from '@/components/opportunities';
 import { AnalyticsReports } from '@/components/analytics-reports';
 import { CarbonTrends } from '@/components/carbon-trends';
@@ -51,6 +53,10 @@ export default async function WorkspacePage({
   const base = `/org/${org.id}`;
   const manage = can(membership.role, 'members:manage');
 
+  if (section === 'ai-analyst')
+    return (
+      <AIEvidence organisationId={org.id} sites={await accessible(() => analysisService.historySites(actor, org.id))} />
+    );
   if (section === 'opportunities') {
     const query = await searchParams;
     const available = await accessible(() => analysisService.historySites(actor, org.id));
@@ -60,6 +66,7 @@ export default async function WorkspacePage({
       <Opportunities
         organisationId={org.id}
         sites={available}
+        canApprove={can(membership.role, 'analysis:approve')}
         canWrite={can(membership.role, 'analysis:write')}
         initialSite={site}
         initialRun={typeof query.run === 'string' ? query.run : undefined}
@@ -134,7 +141,7 @@ export default async function WorkspacePage({
         </p>
         <CarbonWorkspace
           orgId={org.id}
-          sites={sites}
+          sites={await accessible(() => analysisService.historySites(actor, org.id))}
           manage={can(membership.role, 'analysis:write')}
           canFactors={can(membership.role, 'organisation:update')}
         />
@@ -373,13 +380,14 @@ export default async function WorkspacePage({
         <Heading
           eyebrow="YOUR PORTFOLIOS"
           title="Portfolio"
-          text="Group sites into portfolios and compare carbon coverage across their active meters."
+          text="Compare portfolio energy, cost and carbon coverage across active sites and meters."
         />
         <p className="page-note">
           <Link href={`${base}/carbon-trends${portfolios[0] ? `?scope=portfolio:${portfolios[0].id}` : ''}`}>
             Compare site and portfolio carbon trends <ArrowRight size={14} />
           </Link>
         </p>
+        <PortfolioEnergy orgId={org.id} portfolios={portfolios} />
         <PortfolioCarbon orgId={org.id} portfolios={portfolios} />
         <PortfoliosWorkspace orgId={org.id} portfolios={portfolios} manage={manage} />
       </>

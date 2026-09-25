@@ -1,5 +1,7 @@
 # Sprint 5 completeness audit — 2026-09-24
 
+Follow-up: the [25 September recheck](SPRINT_5_RECHECK.md) identifies additional portfolio energy/cost, carbon-history access and export-consistency work. Its numbered findings are separate from the resolved original findings below.
+
 Status: all six numbered implementation gaps addressed as of 2026-09-24. Statistical-method approval and broader production acceptance remain separate gates; see the current summary in `SPRINT_5_ACCEPTANCE.md`. Original findings are retained below for traceability.
 
 Scope: Sprint 5 in `V2_IMPLEMENTATION_PLAN.md`, FP15/24/25/26/28/29 in `FEATURE_PARITY.md`, the retained analytics in `LEGACY_FEATURE_INVENTORY.md`, and the master product specification. Numbering below is stable for follow-up fixes.
