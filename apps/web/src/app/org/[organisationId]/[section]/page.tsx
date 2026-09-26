@@ -119,6 +119,7 @@ export default async function WorkspacePage({
           </div>
         </section>
         <AnalyticsReports
+          canArchive={can(membership.role, 'analysis:write')}
           organisationId={org.id}
           sites={await accessible(() => analysisService.historySites(actor, org.id))}
         />

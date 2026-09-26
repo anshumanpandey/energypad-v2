@@ -49,3 +49,5 @@ Point 1 follow-up: a concrete decision proposal is now available in SAVINGS_METH
 Point 2 follow-up: paged private history and audited stale-attempt closure are implemented; see the final section of SPRINT_6_ACCEPTANCE.md. Closure preserves unknown provider outcome/charges and never resends. Live-provider acceptance remains deferred, so point 2 is only partially closed.
 
 Point 3 follow-up (26 September): prepared PRODUCTION_RECONCILIATION.md with source intake, explicit mapping decisions, read-only preview commands and evidence/acceptance fields. Source export/schema paths, target workspace and reviewed mappings have been requested. The real-source gate remains open; no production import is authorized by preparing this record.
+
+Point 4 follow-up (26 September): SPRINT_7_COMMERCIAL_DECISIONS.md now separates existing plan definitions, missing offer values, proposed lifecycle behavior, quotas and provider setup. Prices/currency/trial decisions have been requested. Commercial activation remains unconfigured; the proposal has not been approved.

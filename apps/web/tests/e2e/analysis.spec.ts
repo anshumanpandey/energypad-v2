@@ -834,6 +834,15 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await page.getByLabel('Report year').fill('2020');
   await page.getByRole('button', { name: 'Preview report', exact: true }).click();
   const preview = page.getByRole('region', { name: 'Report preview', exact: true });
+  await page.getByRole('button', { name: 'Retain current preview', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Report retained:' })).toBeVisible();
+  const archivedDownload = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download retained JSON', exact: true }).first().click();
+  const archivedPath = await (await archivedDownload).path();
+  const archivedReport = JSON.parse(await readFile(archivedPath!, 'utf8'));
+  expect(archivedReport.family).toBe('energy');
+  expect(archivedReport.siteId).toBe(site.id);
+
   await expect(preview).toContainText('Energy report');
   await expect(preview).toContainText('2020-01 – 2020-12');
   const energyDownload = page.waitForEvent('download');

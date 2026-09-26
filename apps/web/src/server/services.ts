@@ -98,3 +98,10 @@ export const aiGenerationService = new AIGenerationService(
 
 import { BillingService } from './billing';
 export const billingService = new BillingService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
+
+import { ReportArchiveService } from './report-archives';
+export const reportArchiveService = new ReportArchiveService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+);

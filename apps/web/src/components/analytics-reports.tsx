@@ -2,14 +2,17 @@
 import { useState } from 'react';
 import type { AnalyticsReport, ReportValue } from '@/domain/analytics-report';
 import { reportFields } from '@/domain/analytics-report';
+import { ReportArchives } from './report-archives';
 import { Button } from './ui/button';
 const label = (key: string) => key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
 const display = (value: ReportValue) => (value === null ? 'Unavailable' : String(value));
 export function AnalyticsReports({
   organisationId,
   sites,
+  canArchive = false,
 }: {
   organisationId: string;
+  canArchive?: boolean;
   sites: { id: string; name: string; archived: boolean }[];
 }) {
   const [family, setFamily] = useState('energy');
@@ -194,6 +197,12 @@ export function AnalyticsReports({
           Preview report
         </Button>
       </form>
+      <ReportArchives
+        key={`${organisationId}:${site}`}
+        path={`organisations/${organisationId}/sites/${site}/report-archives`}
+        source={pending ? null : source}
+        canCapture={canArchive}
+      />
       {pending && <p role="status">Preparing report…</p>}
       {error && <p role="alert">{error}</p>}
       {report && (

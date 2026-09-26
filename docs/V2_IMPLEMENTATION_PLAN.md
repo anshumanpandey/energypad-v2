@@ -295,3 +295,35 @@ Centralized billing inclusion, site/import capacity and AI eligibility under an 
 ### Sprint 7 — server price catalogue foundation
 
 Added a validated test-mode price-to-plan catalogue and offline configuration checker. Exact mappings retain version/content identity and fail closed for unmapped prices. No real prices, checkout, provider verification or subscription mutations are enabled. Next: durable subscription records and provider validation after commercial mappings are available; lifecycle policy and OpenAI deferral remain unchanged.
+
+### Sprint 7 — subscription evidence schema
+
+Added and isolated-tested customer/subscription identity bindings and immutable subscription observation revisions with composite scope and sequential lineage constraints. No application writer, payment integration or access change is enabled. Next: trusted provider validation and audited subscription ingestion; prices and lifecycle decisions remain required for activation.
+
+### Sprint 7 — audited subscription observations
+
+Implemented the owner-authorized internal observation service for pre-bound subscriptions. Current-state reader results are scope/price checked, hashed, revisioned and audited atomically with post-fetch authorization and stale-fetch rejection. Test providers establish the storage contract only; real Stripe transport, price amounts, signed webhooks and commercial policy remain open. No payment or entitlement activation occurred.
+
+### Sprint 7 — Stripe read-only transport
+
+Implemented test-mode account/subscription/price retrieval for the observation reader contract, with identity/shape checks and bounded transport. Mocked HTTP acceptance passes; real provider credentials and activation are not configured. Next: signed event receipt handling and durable reconciliation. Approved commercial terms remain required before checkout/access activation.
+
+### Sprint 7 — signed webhook receipts
+
+Added a disabled-by-default test webhook inbox with raw signature verification, scoped event deduplication and immutable durable receipts. No tenant is inferred from event metadata and no access is changed. Next: durable processing/retry outcomes and binding-based current-state reconciliation; commercial policy/checkout remains pending.
+
+### Sprint 7 — durable reconciliation worker
+
+Added owner-operated scoped reconciliation of bound test receipts, with durable claims/retries, current-state observation, crash recovery and atomic revision auditing. Unbound/unsupported receipts remain in the inbox. Real Stripe acceptance, trusted customer/subscription binding creation, commercial policy and checkout remain open; no system-principal scheduler or effective subscription access is active.
+
+### Sprint 7 — reviewed subscription binding
+
+Added operator-only reviewed manifest intake and atomic provider-verified customer/subscription binding with initial evidence and audit. Reassignment/conflicting bindings are rejected. Real Stripe test-account acceptance now requires server-side test configuration and reviewed workspace/customer/subscription IDs; no credentials are configured. Checkout and commercial access activation remain pending approved terms.
+
+### Sprint 7 — executable test-account readiness
+
+Added a local configuration gate and concrete real-provider acceptance runbook. Current readiness is BLOCKED: test credentials/account/webhook secret/catalogue are absent. No real-account acceptance can be claimed until configuration and reviewed test identities are supplied. Next external step is supplying those prerequisites; payment activation remains disabled.
+
+### Sprint 7 — retained report foundation
+
+Added explicit preview retention and immutable JSON/CSV retrieval for energy, baseline and savings reports, with scoped history, exact fingerprint matching, retry safety and atomic auditing. This progresses independently of blocked real Stripe acceptance. Next report increment: define scheduled-report execution and delivery contracts, including recipient authorization, cadence/time zone and retry handling. No scheduling or email is enabled by this archive slice.

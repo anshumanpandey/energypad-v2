@@ -1,3 +1,4 @@
+import { reportArchiveService } from '@/server/services';
 import { billingService } from '@/server/services';
 import { opportunityBodyLimits } from '@/server/opportunity-body-limits';
 import { aiGenerationService } from '@/server/services';
@@ -149,6 +150,19 @@ async function handle(request: Request, context: Context) {
             s[5],
             await readBody(request, opportunityBodyLimits.review),
           );
+      }
+
+      if (s[2] === 'sites' && s[3] && s[4] === 'report-archives') {
+        const query = new URL(request.url).searchParams;
+        if (s.length === 5 && method === 'POST')
+          return reportArchiveService.capture(actor, org, s[3], await readBody(request));
+        if (s.length === 5 && method === 'GET')
+          return reportArchiveService.history(actor, org, s[3], query.get('cursor') ?? undefined);
+        if (s.length === 6 && method === 'GET') {
+          const format = query.get('format') ?? 'json';
+          if (!['json', 'csv'].includes(format)) throw new DomainError('REPORT_FORMAT', 'Choose CSV or JSON.');
+          return reportResponse(await reportArchiveService.read(actor, org, s[3], s[5]), format);
+        }
       }
 
       if (s[2] === 'sites' && s[3] && s[4] === 'reports' && s.length === 5 && method === 'GET') {

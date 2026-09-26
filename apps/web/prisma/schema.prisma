@@ -90,6 +90,7 @@ model Plan {
 }
 
 model Organisation {
+  billingCustomers BillingCustomer[]
   legacyEnergyBatches LegacyEnergyBatch[]
   legacyEnergyRows LegacyEnergyRow[]
   id          String   @id @default(uuid()) @db.Uuid
@@ -131,6 +132,7 @@ model Membership {
 }
 
 model Site {
+ reportArchives ReportArchive[]
  aiInteractions AIInteraction[]
  monthlyPlans MonthlyPlanVersion[]
  carbonWorkbookBatches CarbonWorkbookBatch[]
@@ -1149,4 +1151,114 @@ model AIGenerationOutcome {
  result Json
  createdAt DateTime @default(now()) @db.Timestamptz(3)
  generation AIGeneration @relation(fields:[generationId],references:[id])
+}
+
+// Inert provider evidence storage. Does not grant plan access.
+model BillingCustomer {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  providerAccountId String
+  mode String
+  providerCustomerId String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  subscriptions BillingSubscription[]
+  @@unique([id, organisationId, providerAccountId, mode])
+  @@unique([providerAccountId, mode, providerCustomerId])
+  @@unique([organisationId, providerAccountId, mode])
+}
+
+model BillingSubscription {
+  jobs BillingReconciliationJob[]
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  customerId String @db.Uuid
+  providerAccountId String
+  mode String
+  providerSubscriptionId String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  customer BillingCustomer @relation(fields: [customerId, organisationId, providerAccountId, mode], references: [id, organisationId, providerAccountId, mode], onDelete: Restrict)
+  revisions BillingSubscriptionRevision[]
+  @@unique([providerAccountId, mode, providerSubscriptionId])
+  @@unique([id, organisationId])
+}
+
+model BillingSubscriptionRevision {
+  jobs BillingReconciliationJob[]
+  id String @id @default(uuid()) @db.Uuid
+  subscriptionId String @db.Uuid
+  organisationId String @db.Uuid
+  revision Int
+  previousId String? @db.Uuid
+  observationKey String
+  providerStatus String
+  providerPriceId String
+  catalogueVersion String
+  catalogueFingerprint String
+  mappedPlanKey PlanKey
+  evidence Json
+  evidenceHash String
+  observedAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  subscription BillingSubscription @relation(fields: [subscriptionId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  previous BillingSubscriptionRevision? @relation("BillingRevisionLineage", fields: [previousId, subscriptionId, organisationId], references: [id, subscriptionId, organisationId], onDelete: NoAction, onUpdate: NoAction)
+  next BillingSubscriptionRevision[] @relation("BillingRevisionLineage")
+  @@unique([id, subscriptionId, organisationId])
+  @@unique([subscriptionId, revision])
+  @@unique([subscriptionId, observationKey])
+  @@unique([previousId])
+}
+
+// Authenticated transport receipts only; receipt is not processing or entitlement approval.
+model BillingWebhookReceipt {
+  job BillingReconciliationJob?
+  id String @id @default(uuid()) @db.Uuid
+  providerAccountId String
+  mode String
+  providerEventId String
+  eventType String
+  providerSubscriptionId String?
+  providerCustomerId String?
+  providerCreatedAt DateTime @db.Timestamptz(3)
+  payloadHash String
+  receivedAt DateTime @default(now()) @db.Timestamptz(3)
+  @@unique([providerAccountId, mode, providerEventId])
+  @@index([providerAccountId, mode, receivedAt])
+}
+
+model BillingReconciliationJob {
+  id String @id @default(uuid()) @db.Uuid
+  receiptId String @unique @db.Uuid
+  organisationId String @db.Uuid
+  subscriptionId String @db.Uuid
+  status String @default("PENDING")
+  attempts Int @default(0)
+  availableAt DateTime @default(now()) @db.Timestamptz(3)
+  leaseToken String? @db.Uuid
+  leaseUntil DateTime? @db.Timestamptz(3)
+  lastCode String?
+  revisionId String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  receipt BillingWebhookReceipt @relation(fields: [receiptId], references: [id], onDelete: Restrict)
+  subscription BillingSubscription @relation(fields: [subscriptionId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  revision BillingSubscriptionRevision? @relation(fields: [revisionId, subscriptionId, organisationId], references: [id, subscriptionId, organisationId], onDelete: Restrict)
+  @@index([organisationId, status, availableAt])
+}
+
+model ReportArchive {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  authorId String @db.Uuid
+  family String
+  definition Json
+  report Json
+  fingerprint String
+  requestKey String @db.Uuid
+  requestHash String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  site Site @relation(fields: [siteId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  @@unique([organisationId, requestKey])
+  @@index([organisationId, siteId, createdAt, id])
 }
