@@ -31,7 +31,8 @@
     "sprint4:verify": "node --import tsx scripts/sprint4-verify.ts",
     "sprint4:review": "node --import tsx scripts/sprint4-review.ts",
     "sprint4:evidence": "node --import tsx scripts/sprint4-evidence.ts",
-    "test:compatibility": "node --import tsx scripts/test-workbook-compatibility.ts"
+    "test:compatibility": "node --import tsx scripts/test-workbook-compatibility.ts",
+    "billing:check": "node --import tsx scripts/billing-catalogue-check.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",

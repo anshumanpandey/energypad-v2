@@ -287,3 +287,11 @@ Opportunity creation, review, action plans, verification and supporting evidence
 ### Sprint 7 started — assigned plan and usage
 
 Billing now exposes an owner-only overview and API showing the assigned plan, active-site capacity and existing feature entitlements. It explicitly distinguishes assignment from a paid subscription and makes no external billing calls. See SPRINT_7_DESIGN.md and SPRINT_7_ACCEPTANCE.md. Next: settle commercial policy and build subscription-state/entitlement foundations, followed by Stripe test-mode integration. Prices, trial and lifecycle rules remain unapproved; Sprint 6 methodology and deferred OpenAI gates remain separate.
+
+### Sprint 7 — shared assigned-plan policy
+
+Centralized billing inclusion, site/import capacity and AI eligibility under an explicitly versioned local-assignment resolver. Persisted capacity overrides and existing feature grants remain intact; invalid configuration fails closed. Payment state and commercial quotas remain open. Next: settle commercial policy and add durable subscription state and server-owned price mapping before Stripe test-mode checkout. OpenAI execution remains deferred.
+
+### Sprint 7 — server price catalogue foundation
+
+Added a validated test-mode price-to-plan catalogue and offline configuration checker. Exact mappings retain version/content identity and fail closed for unmapped prices. No real prices, checkout, provider verification or subscription mutations are enabled. Next: durable subscription records and provider validation after commercial mappings are available; lifecycle policy and OpenAI deferral remain unchanged.

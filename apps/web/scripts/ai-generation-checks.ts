@@ -71,8 +71,22 @@ export async function checkAIGeneration(
     const pending = await slow.generate(owner, org, site, concurrentInput);
     assert.equal(pending.outcome, null);
     assert.equal(calls, 2);
+    const realNow = Date.now;
+    try {
+      Date.now = () => realNow() + 48 * 60 * 60 * 1000;
+      await service.reconcile(owner, org, site, pending.id);
+    } finally {
+      Date.now = realNow;
+    }
     release(reply);
-    await first;
+    const late = await first;
+    assert.equal((late.outcome!.result as { code: string }).code, 'INTERRUPTED_OUTCOME_UNKNOWN');
+    const lateAudit = await db.auditEvent.findFirstOrThrow({
+      where: { action: 'ai.generation_late_completion', targetId: pending.id },
+    });
+    assert.equal((lateAudit.metadata as { usage: { inputTokens: number } }).usage.inputTokens, 50);
+    assert.equal((await slow.generate(owner, org, site, concurrentInput)).outcome!.id, late.outcome!.id);
+    assert.equal(calls, 2);
     for (const selection of [
       { status: 'ANSWER', factIds: ['invented'] },
       { status: 'ANSWER', factIds: ['postKwh'], value: 100 },
@@ -152,6 +166,70 @@ export async function checkAIGeneration(
     await assert.rejects(service.generate(reader, org, site, { ...input, requestKey: crypto.randomUUID() }), {
       status: 404,
     });
+
+    const interrupted = await service.generate(owner, org, site, interruptedInput);
+    await assert.rejects(service.reconcile(owner, org, site, interrupted.id), { code: 'AI_STILL_PENDING' });
+    const oldTime = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    const oldRows = [];
+    for (let i = 0; i < 25; i++)
+      oldRows.push(
+        await db.aIGeneration.create({
+          data: {
+            organisationId: org,
+            siteId: site,
+            authorId: owner.userId,
+            previewId,
+            promptHash: 'fixture',
+            promptVersion: 'fixture',
+            model: 'test-model',
+            requestKey: crypto.randomUUID(),
+            requestHash: 'fixture',
+            createdAt: oldTime,
+          },
+        }),
+      );
+    const seen: string[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await service.generationHistoryPage(owner, org, site, cursor);
+      seen.push(...page.items.map((row) => row.id));
+      cursor = page.nextCursor ?? undefined;
+    } while (cursor);
+    assert.equal(new Set(seen).size, seen.length);
+    for (const row of oldRows) assert.ok(seen.includes(row.id));
+    await assert.rejects(service.generationHistoryPage(reader, org, site, oldRows[0].id), { status: 404 });
+    await assert.rejects(service.generationHistoryPage(owner, org, otherSite, oldRows[0].id), { status: 404 });
+    await assert.rejects(service.reconcile(reader, org, site, oldRows[0].id), { status: 404 });
+    await assert.rejects(service.reconcile(outsider, org, site, oldRows[0].id), { status: 404 });
+    await assert.rejects(service.reconcile(owner, org, otherSite, oldRows[0].id), { status: 404 });
+    const callsBeforeRecovery = calls;
+    const recovered = await Promise.all([
+      service.reconcile(owner, org, site, oldRows[0].id),
+      service.reconcile(owner, org, site, oldRows[0].id),
+    ]);
+    assert.equal(recovered[0].id, recovered[1].id);
+    assert.equal((recovered[0].result as { code: string }).code, 'INTERRUPTED_OUTCOME_UNKNOWN');
+    assert.equal(calls, callsBeforeRecovery);
+    assert.equal(
+      await db.auditEvent.count({ where: { action: 'ai.generation_reconciled', targetId: oldRows[0].id } }),
+      1,
+    );
+    await db.$executeRawUnsafe(
+      `CREATE FUNCTION fail_recovery_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.action = 'ai.generation_reconciled' THEN RAISE EXCEPTION 'Test recovery failure'; END IF; RETURN NEW; END $$`,
+    );
+    await db.$executeRawUnsafe(
+      `CREATE TRIGGER test_recovery_audit BEFORE INSERT ON "AuditEvent" FOR EACH ROW EXECUTE FUNCTION fail_recovery_audit()`,
+    );
+    try {
+      await assert.rejects(service.reconcile(owner, org, site, oldRows[1].id));
+    } finally {
+      await db.$executeRawUnsafe('DROP TRIGGER test_recovery_audit ON "AuditEvent"');
+      await db.$executeRawUnsafe('DROP FUNCTION fail_recovery_audit()');
+    }
+    assert.equal(await db.aIGenerationOutcome.count({ where: { generationId: oldRows[1].id } }), 0);
+    console.log(
+      '✓ private paged AI history, tied timestamps, scoped cursors, stale recovery, concurrent reconciliation and atomic audit',
+    );
 
     const member = await db.membership.findUniqueOrThrow({
       where: { organisationId_userId: { organisationId: org, userId: owner.userId } },

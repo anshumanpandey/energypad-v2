@@ -166,3 +166,15 @@ Each request has a generation guard, and picker state is keyed by the complete s
 Browser regression covers failed initial reporting/carbon requests and retry, discovering newly saved reporting and compatible carbon runs via refresh, retaining selections and draft text, ignoring a delayed refresh after a date change, and submitting the selected carbon evidence. Both numbered recheck follow-ups are now addressed; methodology approval and deferred OpenAI acceptance remain separate.
 
 Validation for recheck point 2: the full analysis browser workflow passed, including persistent simulated outages until Retry, new-run discovery, delayed-response isolation, selection/draft preservation and the submitted carbon run ID. Typecheck, lint (without warnings), formatting and diff checks passed. No database schema changes, production deployment or external provider calls were performed.
+
+## Pre–Sprint 7 point 2 — interrupted AI attempts and older history
+
+Added author-private, tenant/site-scoped cursor history in pages of 20 through GET `ai-answers/history`. Cursors are scoped and validated; timestamp ties use IDs. Reads use repeatable-read isolation. The original latest-20 endpoint remains compatible. The UI loads older attempts, refreshes the first page and resets state when the site path changes.
+
+POST `ai-answers/:id/reconcile` lets the original currently authorized author close a reservation older than 24 hours as FAILED / INTERRUPTED_OUTCOME_UNKNOWN. It does not send another provider request, infer zero charges, refund attempt quotas or delete evidence. The conservative 24-hour stale threshold exceeds the provider's 45-second request timeout. Recent attempts return 409. Existing outcomes are returned idempotently. Closure and audit are atomic under the organisation lock.
+
+Normal completion uses the same lock. If a late provider response arrives after reconciliation, it cannot overwrite the retained outcome; its status, returned usage and response metadata are retained in a late-completion audit. Reusing the original request key still does not resend. A failed audit rolls back its associated state change. Reconciliation is an explicit unknown-outcome closure, not a claim to have recovered a provider answer or reconciled an invoice.
+
+Database tests cover tied-page traversal, private cursors, wrong-site/user/tenant access, fresh-attempt rejection, concurrent reconciliation, audit rollback, late completion with retained usage, and retry without another provider call. Browser coverage uses stubs for older history and recovery. Live-provider adversarial acceptance remains open under the prior OpenAI deferral; no API key/model was configured or live request made. Point 2's operational gaps are addressed but its live-acceptance gate is not closed.
+
+Validation: all 329 unit tests, the analysis PostgreSQL integration suite (including recovery/late-completion races and history privacy), the full analysis browser workflow (3.5 minutes), typecheck, lint, formatting and diff checks passed. No schema migration, production deployment or external AI calls were performed.

@@ -60,6 +60,15 @@ async function handle(request: Request, context: Context) {
           new URL(request.url).searchParams.get('fingerprint'),
         );
       if (s[2] === 'sites' && s[3] && s[4] === 'ai-answers') {
+        if (s.length === 6 && s[5] === 'history' && method === 'GET')
+          return aiGenerationService.generationHistoryPage(
+            actor,
+            org,
+            s[3],
+            new URL(request.url).searchParams.get('cursor') ?? undefined,
+          );
+        if (s.length === 7 && s[6] === 'reconcile' && method === 'POST')
+          return aiGenerationService.reconcile(actor, org, s[3], s[5]);
         if (s.length === 6 && s[5] === 'availability' && method === 'GET')
           return aiGenerationService.availability(actor, org, s[3]);
         if (s.length === 5 && method === 'GET') return aiGenerationService.generationHistory(actor, org, s[3]);

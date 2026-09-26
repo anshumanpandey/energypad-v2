@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { FoundationService, type Actor } from './foundation';
+import { resolvePlanAccess, requireSiteCapacity } from '../domain/plan-access';
 import { DomainError, uuid } from '../domain/policy';
 import {
   siteInput,
@@ -31,8 +32,7 @@ export class SiteService extends FoundationService {
   private async capacity(tx: Tx, org: string, amount: number) {
     const organisation = await tx.organisation.findUniqueOrThrow({ where: { id: org }, include: { plan: true } });
     const count = await tx.site.count({ where: { organisationId: org, archivedAt: null } });
-    if (organisation.plan.siteLimit !== null && count + amount > organisation.plan.siteLimit)
-      throw new DomainError('SITE_LIMIT', 'This import or site would exceed your plan’s active site limit.', 409);
+    requireSiteCapacity(resolvePlanAccess(organisation), count, amount);
   }
   private async insertSite(tx: Tx, actor: Actor, org: string, data: SiteInput, batchId?: string) {
     const { attributes, ...fields } = data;

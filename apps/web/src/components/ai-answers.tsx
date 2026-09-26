@@ -17,8 +17,12 @@ type Answer = {
     };
   };
 };
-export function AIAnswers({ path, previews }: { path: string; previews: { id: string }[] }) {
+export function AIAnswers(props: { path: string; previews: { id: string }[] }) {
+  return <ScopedAIAnswers key={props.path} {...props} />;
+}
+function ScopedAIAnswers({ path, previews }: { path: string; previews: { id: string }[] }) {
   const [available, setAvailable] = useState({ configured: false, entitled: false, dailyLimit: 20 });
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [busy, setBusy] = useState(false),
     [loading, setLoading] = useState(true),
@@ -27,11 +31,13 @@ export function AIAnswers({ path, previews }: { path: string; previews: { id: st
   const keys = useRef(new Map<string, string>());
   useEffect(() => {
     let active = true;
-    void Promise.all([request(`${path}/availability`, 'GET'), request(path, 'GET')])
+    void Promise.all([request(`${path}/availability`, 'GET'), request(`${path}/history`, 'GET')])
       .then(([config, history]) => {
         if (active) {
           setAvailable(config);
-          setAnswers(history);
+          setAnswers(history.items);
+          setNextCursor(history.nextCursor);
+          setError('');
         }
       })
       .catch((e) => {
@@ -105,7 +111,7 @@ export function AIAnswers({ path, previews }: { path: string; previews: { id: st
         </fieldset>
       </form>
       {error && <p role="alert">{error}</p>}
-      <h3>My latest 20 answer attempts</h3>
+      <h3>My answer attempts</h3>
       <Button
         disabled={busy || loading}
         onClick={() => {
@@ -115,6 +121,29 @@ export function AIAnswers({ path, previews }: { path: string; previews: { id: st
       >
         Refresh answer history
       </Button>
+      {nextCursor && (
+        <Button
+          type="button"
+          disabled={busy || loading}
+          onClick={async () => {
+            setBusy(true);
+            setError('');
+            try {
+              const page = await request(`${path}/history?cursor=${encodeURIComponent(nextCursor)}`, 'GET');
+              setAnswers((previous) => [
+                ...new Map<string, Answer>([...previous, ...page.items].map((row: Answer) => [row.id, row])).values(),
+              ]);
+              setNextCursor(page.nextCursor);
+            } catch (e) {
+              setError(e instanceof Error ? e.message : 'Unable to load history.');
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Load older attempts
+        </Button>
+      )}
       {answers.map((answer) => (
         <article key={answer.id} className="stack-form">
           <strong>
@@ -124,6 +153,32 @@ export function AIAnswers({ path, previews }: { path: string; previews: { id: st
             <p>
               The request is pending or interrupted. Refresh its status; retries with the same request key do not make
               another provider call.
+            </p>
+          )}
+          {!answer.outcome && (
+            <Button
+              type="button"
+              disabled={busy || loading}
+              onClick={async () => {
+                setBusy(true);
+                setError('');
+                try {
+                  const outcome = await request(`${path}/${answer.id}/reconcile`, 'POST', {});
+                  setAnswers((rows) => rows.map((row) => (row.id === answer.id ? { ...row, outcome } : row)));
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : 'Unable to close attempt.');
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Close interrupted attempt (after 24 hours)
+            </Button>
+          )}
+          {answer.outcome?.result.code === 'INTERRUPTED_OUTCOME_UNKNOWN' && (
+            <p>
+              Provider outcome and charges are unknown. No request was resent. This attempt still counts toward usage
+              limits.
             </p>
           )}
           {answer.outcome?.status === 'FAILED' && <p>No answer was published. Reason: {answer.outcome.result.code}</p>}

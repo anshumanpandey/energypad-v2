@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { AIEvidenceService } from './ai-evidence';
 import { type Actor, type Mailer } from './foundation';
 import type { PrismaClient } from '@prisma/client';
-import { DomainError, hasFeature } from '../domain/policy';
+import { resolvePlanAccess } from '../domain/plan-access';
+import { DomainError } from '../domain/policy';
 import { type EvidencePreview, resolveEvidenceSelection } from '../domain/ai-evidence';
 import { snapshotHash } from './analysis/contract';
 import { type AnswerProvider, ProviderFailure, selectionSchema, promptVersion } from './ai-provider';
@@ -23,8 +24,12 @@ export class AIGenerationService extends AIEvidenceService {
   async availability(actor: Actor, org: string, siteId: string) {
     return this.db.$transaction(async (tx) => {
       await this.evidenceAccess(tx, actor, org, siteId);
-      const tenant = await tx.organisation.findUniqueOrThrow({ where: { id: org } });
-      return { configured: !!this.provider, entitled: hasFeature(tenant.planKey, 'ai'), dailyLimit: this.dailyLimit };
+      const tenant = await tx.organisation.findUniqueOrThrow({ where: { id: org }, include: { plan: true } });
+      return {
+        configured: !!this.provider,
+        entitled: resolvePlanAccess(tenant).features.ai,
+        dailyLimit: this.dailyLimit,
+      };
     });
   }
   async generationHistory(actor: Actor, org: string, siteId: string) {
@@ -36,6 +41,60 @@ export class AIGenerationService extends AIEvidenceService {
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
         take: 20,
       });
+    });
+  }
+  async generationHistoryPage(actor: Actor, org: string, siteId: string, cursor?: string) {
+    const id = cursor === undefined ? undefined : z.uuid().parse(cursor);
+    return this.db.$transaction(
+      async (tx) => {
+        await this.evidenceAccess(tx, actor, org, siteId);
+        const scope = { organisationId: org, siteId, authorId: actor.userId };
+        const anchor = id ? await tx.aIGeneration.findFirst({ where: { ...scope, id } }) : null;
+        if (id && !anchor) throw new DomainError('NOT_FOUND', 'This history cursor is unavailable.', 404);
+        const rows = await tx.aIGeneration.findMany({
+          where: {
+            ...scope,
+            ...(anchor
+              ? {
+                  OR: [{ createdAt: { lt: anchor.createdAt } }, { createdAt: anchor.createdAt, id: { gt: anchor.id } }],
+                }
+              : {}),
+          },
+          include: { outcome: true },
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+          take: 21,
+        });
+        const items = rows.slice(0, 20);
+        return { items, nextCursor: rows.length > 20 ? items.at(-1)!.id : null };
+      },
+      { isolationLevel: 'RepeatableRead' },
+    );
+  }
+  async reconcile(actor: Actor, org: string, siteId: string, id: string) {
+    z.uuid().parse(id);
+    return this.db.$transaction(async (tx) => {
+      await this.lock(tx, org);
+      await this.evidenceAccess(tx, actor, org, siteId);
+      const row = await tx.aIGeneration.findFirst({
+        where: { id, organisationId: org, siteId, authorId: actor.userId },
+        include: { outcome: true },
+      });
+      if (!row) throw new DomainError('NOT_FOUND', 'This answer attempt is unavailable.', 404);
+      if (row.outcome) return row.outcome;
+      if (Date.now() - row.createdAt.getTime() < 24 * 60 * 60 * 1000)
+        throw new DomainError('AI_STILL_PENDING', 'Wait 24 hours before closing an interrupted attempt.', 409);
+      const outcome = await tx.aIGenerationOutcome.create({
+        data: {
+          generationId: row.id,
+          status: 'FAILED',
+          result: { code: 'INTERRUPTED_OUTCOME_UNKNOWN', usage: null, providerCalls: null },
+        },
+      });
+      await this.audit(tx, actor, org, 'ai.generation_reconciled', row.id, {
+        siteId,
+        code: 'INTERRUPTED_OUTCOME_UNKNOWN',
+      });
+      return outcome;
     });
   }
   async generate(actor: Actor, org: string, siteId: string, input: unknown) {
@@ -53,8 +112,8 @@ export class AIGenerationService extends AIEvidenceService {
           throw new DomainError('REQUEST_CONFLICT', 'This request key was used for a different answer.', 409);
         return { row: retry, fresh: false };
       }
-      const tenant = await tx.organisation.findUniqueOrThrow({ where: { id: org } });
-      if (!hasFeature(tenant.planKey, 'ai'))
+      const tenant = await tx.organisation.findUniqueOrThrow({ where: { id: org }, include: { plan: true } });
+      if (!resolvePlanAccess(tenant).features.ai)
         throw new DomainError('AI_ENTITLEMENT', 'AI answers are not included in this workspace plan.', 403);
       if (!this.provider)
         throw new DomainError('AI_NOT_CONFIGURED', 'An AI provider and model must be configured.', 503);
@@ -137,6 +196,19 @@ export class AIGenerationService extends AIEvidenceService {
     }
     // Finalize usage even if the caller loses access during the external call. Never expose the result without reauthorization.
     const outcome = await this.db.$transaction(async (tx) => {
+      await this.lock(tx, org);
+      const existing = await tx.aIGenerationOutcome.findUnique({ where: { generationId: reserved.row.id } });
+      if (existing) {
+        await this.audit(tx, actor, org, 'ai.generation_late_completion', reserved.row.id, {
+          siteId,
+          status,
+          usage: JSON.parse(JSON.stringify(result.usage ?? null)),
+          responseId: typeof result.responseId === 'string' ? result.responseId : null,
+          model: reserved.row.model,
+          resultHash: snapshotHash(result),
+        });
+        return existing;
+      }
       const row = await tx.aIGenerationOutcome.create({
         data: { generationId: reserved.row.id, status, result: JSON.parse(JSON.stringify(result)) },
       });

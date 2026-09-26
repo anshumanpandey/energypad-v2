@@ -1,5 +1,6 @@
 import { FoundationService, type Actor } from './foundation';
-import { hasFeature, type Feature } from '../domain/policy';
+import { type Feature } from '../domain/policy';
+import { resolvePlanAccess, siteCapacity } from '../domain/plan-access';
 
 const features: { key: Feature; name: string }[] = [
   { key: 'core', name: 'Core energy management' },
@@ -21,22 +22,16 @@ export class BillingService extends FoundationService {
           include: { plan: true },
         });
         const activeSites = await tx.site.count({ where: { organisationId, archivedAt: null } });
-        const limit = organisation.plan.siteLimit;
+        const access = resolvePlanAccess(organisation);
         return {
           organisationId,
           plan: { key: organisation.planKey, name: organisation.plan.name },
           subscription: { status: 'NOT_CONNECTED' as const },
-          sites: {
-            active: activeSites,
-            limit,
-            remaining: limit === null ? null : Math.max(0, limit - activeSites),
-            overLimit: limit !== null && activeSites > limit,
-          },
-          // Use the same feature policy as application access checks. The database
-          // plan's siteLimit is authoritative for site creation/import capacity.
+          policy: { version: access.version, source: access.source },
+          sites: siteCapacity(access, activeSites),
           features: features.map((feature) => ({
             ...feature,
-            included: hasFeature(organisation.planKey, feature.key),
+            included: access.features[feature.key],
           })),
         };
       },

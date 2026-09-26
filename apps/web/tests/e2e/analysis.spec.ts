@@ -910,6 +910,17 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await page.route('**/ai-answers/availability', (route) =>
     route.fulfill({ json: { configured: true, entitled: true, dailyLimit: 20 } }),
   );
+  const oldAttempt = { id: randomUUID(), createdAt: '2020-01-01T00:00:00.000Z', outcome: null as unknown };
+  await page.route('**/ai-answers/history*', async (route) => {
+    const older = new URL(route.request().url()).searchParams.has('cursor');
+    await route.fulfill({
+      json: { items: older ? [oldAttempt] : mockAnswers, nextCursor: older ? null : oldAttempt.id },
+    });
+  });
+  await page.route('**/ai-answers/*/reconcile', (route) => {
+    oldAttempt.outcome = { status: 'FAILED', result: { code: 'INTERRUPTED_OUTCOME_UNKNOWN', usage: null } };
+    return route.fulfill({ json: oldAttempt.outcome });
+  });
   await page.route('**/ai-answers', async (route) => {
     if (route.request().method() === 'POST') {
       expect(route.request().postDataJSON().previewId).toBe(pinnedPreview.id);
@@ -938,6 +949,11 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await expect(answerPanel).toContainText('Baseline sample size');
   await expect(answerPanel).toContainText('30 input / 10 output');
   await expect(answerPanel.getByLabel('Question for AI', { exact: true })).toHaveValue('');
+  await answerPanel.getByRole('button', { name: 'Load older attempts' }).click();
+  await expect(answerPanel).toContainText('PENDING');
+  await answerPanel.getByRole('button', { name: 'Close interrupted attempt (after 24 hours)' }).click();
+  await expect(answerPanel).toContainText('Provider outcome and charges are unknown');
+  await expect(answerPanel.getByRole('button', { name: 'Close interrupted attempt (after 24 hours)' })).toHaveCount(0);
 
   await page.getByRole('combobox', { name: 'Saved result type', exact: true }).selectOption('saved_opportunity');
   await page.getByLabel('Saved result ID', { exact: true }).fill(downloadedInvestigation.summary.opportunityId);
