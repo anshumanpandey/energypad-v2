@@ -31,6 +31,18 @@ test('frozen runtime permits existing-session reads and rejects all write entry 
   const health = await request.get('/api/health');
   expect(health.status()).toBe(200);
   expect(health.headers()['x-write-freeze']).toBe('enabled');
+  await page.goto(`/org/${fixture.organisationId}/import-retention?beforeDate=2020-02-01`);
+  await expect(page.getByRole('region', { name: 'Site imports', exact: true })).toBeVisible();
+  await expect(page.getByText('Deletion is not enabled.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Download inventory JSON' })).toHaveCount(0);
+  const inventory = await (await page.request.get(`${api}/import-inventory?before=2020-02-01T00:00:00Z`)).json();
+  expect(
+    (
+      await page.request.get(
+        `${api}/import-inventory/export?before=${inventory.before}&fingerprint=${inventory.fingerprint}`,
+      )
+    ).status(),
+  ).toBe(503);
   await page.goto('/signup');
   await page.getByLabel('Email address', { exact: true }).fill('blocked-freeze@example.test');
   await page.getByLabel('Password', { exact: true }).fill('Blocked-Test123!');

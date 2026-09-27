@@ -119,3 +119,10 @@ export const reportDeliveryWorker = new ReportDeliveryWorker(
   mailer,
   process.env.AUTH_URL ?? 'http://localhost:3100',
 );
+
+import { ImportInventoryService } from './import-inventory';
+export const importInventoryService = new ImportInventoryService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+);

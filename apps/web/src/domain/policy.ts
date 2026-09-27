@@ -10,6 +10,7 @@ export const roleLabels: Record<Role, string> = {
   VIEWER: 'Viewer',
 };
 export const permissionRoles = {
+  'retention:read': ['OWNER', 'ADMIN'],
   'analysis:approve': ['OWNER', 'ADMIN'],
   'analysis:write': ['OWNER', 'ADMIN', 'ANALYST'],
   'organisation:update': ['OWNER', 'ADMIN'],

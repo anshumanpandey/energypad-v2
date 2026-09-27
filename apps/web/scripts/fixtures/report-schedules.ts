@@ -79,6 +79,45 @@ export async function seedReportSchedules(db: PrismaClient) {
       createdAt: new Date('2020-01-01T00:00:00Z'),
     })),
   });
+  await db.importBatch.createMany({
+    data: [
+      {
+        organisationId: org.id,
+        createdBy: user.id,
+        fingerprint: crypto.randomUUID(),
+        sheets: [],
+        status: 'READY',
+        createdAt: new Date('2020-01-01T00:00:00Z'),
+      },
+      {
+        organisationId: org.id,
+        createdBy: user.id,
+        fingerprint: crypto.randomUUID(),
+        sheets: [],
+        status: 'INVALID',
+        createdAt: new Date('2020-02-01T00:00:00Z'),
+      },
+      {
+        organisationId: org.id,
+        createdBy: user.id,
+        fingerprint: crypto.randomUUID(),
+        sheets: [],
+        status: 'READY',
+        createdAt: new Date('2020-01-01T00:00:00Z'),
+        committedAt: new Date('2020-01-02T00:00:00Z'),
+      },
+    ],
+  });
+  await db.importBatch.createMany({
+    data: Array.from({ length: 50 }, () => ({
+      organisationId: org.id,
+      createdBy: user.id,
+      fingerprint: crypto.randomUUID(),
+      sheets: [],
+      status: 'COMMITTED',
+      createdAt: new Date('2019-01-01T00:00:00Z'),
+    })),
+  });
   return {
     sessionToken,
     email,

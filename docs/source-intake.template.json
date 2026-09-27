@@ -1,0 +1,10 @@
+{
+  "sourceSystem": "<source system and environment>",
+  "extractedAt": "<ISO 8601 timestamp with timezone>",
+  "scope": "<intended sites, periods and reviewed exclusions>",
+  "targetOrganisationId": "<target workspace UUID>",
+  "files": [
+    { "label": "Original export", "role": "export", "path": "/private/review/original-export.csv" },
+    { "label": "Original schema", "role": "schema", "path": "/private/review/original-schema.sql" }
+  ]
+}

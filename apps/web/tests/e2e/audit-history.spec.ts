@@ -7,11 +7,22 @@ test('activity history exposes older records through scoped pages and API', asyn
   const api = `/api/v1/organisations/${fixture.organisationId}/audit`;
   expect((await request.get(`${api}/history`)).status()).toBe(401);
   expect((await request.get(`${api}/export`)).status()).toBe(401);
+  const inventory = `/api/v1/organisations/${fixture.organisationId}/import-inventory`;
+  const cutoff = '?before=2020-02-01T00:00:00Z';
+  expect((await request.get(inventory + cutoff)).status()).toBe(401);
   await page.goto('/login');
   await page.getByLabel('Email address', { exact: true }).fill(fixture.email);
   await page.getByLabel('Password', { exact: true }).fill(fixture.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/overview$/);
+  const inventoryResponse = await page.request.get(inventory + cutoff);
+  expect(inventoryResponse.status()).toBe(200);
+  expect(inventoryResponse.headers()['cache-control']).toContain('no-store');
+  const inventoryBody = await inventoryResponse.json();
+  expect(inventoryBody.summaries).toHaveLength(7);
+  expect(inventoryBody.deletionEnabled).toBe(false);
+  for (const query of ['', '?before=invalid', cutoff + '&before=2020-03-01T00:00:00Z', '?before=2999-01-01T00:00:00Z'])
+    expect((await page.request.get(inventory + query)).status()).toBe(400);
   await page.goto(path);
   await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
   await expect(page.locator('.audit-row')).toHaveCount(100);

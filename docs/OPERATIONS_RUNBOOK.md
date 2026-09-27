@@ -18,7 +18,7 @@ The command queries containers labelled for Compose project `energiepad`, exclud
 | 1    | ATTENTION | Inspect the service's issue codes using the table below. Startup can legitimately report attention until all probes pass. |
 | 2    | UNKNOWN   | Docker is unavailable, access is denied, collection timed out or output was invalid. Do not treat this as healthy.        |
 
-`restartCount` is cumulative container evidence, not a restart rate. Compare successive observations to detect increasing counts. A healthy current probe does not erase earlier failures. The check does not assess backup freshness, disk capacity, pending migrations, external HTTPS, mail, queues or provider accuracy.
+`restartCount` is cumulative container evidence, not a restart rate. Compare successive observations to detect increasing counts. A healthy current probe does not erase earlier failures. The container check does not assess backup freshness, disk capacity, pending migrations, external HTTPS, mail, queues or provider accuracy. Use the separate backup check below for backup-filesystem evidence.
 
 ## Triage
 
@@ -73,3 +73,24 @@ flag when no checksum exists. Never bypass an existing checksum mismatch.
 ## Planned maintenance freeze
 
 Follow [WRITE_FREEZE.md](WRITE_FREEZE.md) for activation and release. A fresh worker `paused` snapshot is deliberately healthy when `APP_WRITE_FREEZE` is active; stale progress still fails. `X-Write-Freeze: enabled` reports runtime configuration, not a verified drain of every application, legacy or external writer. Existing-session reads remain available, while authentication and audited downloads pause. Frozen deployment failures skip automatic image rollback; select a reviewed freeze-compatible recovery release.
+
+## Backup freshness and capacity
+
+Run `deploy/lightsail/check-backups.py` on the host with read access to the private backup directory. It does not connect to Docker, a database or any provider, and never modifies or deletes files. Supply both thresholds explicitly using the approved operational policy. For example, **only if** 24 hours and 5 GiB are the chosen limits:
+
+```sh
+sudo python3 -B deploy/lightsail/check-backups.py --max-age-hours 24 --min-free-bytes 5368709120
+```
+
+`--directory` defaults to `/var/backups/energiepad`. Output contains aggregate counts, free bytes, thresholds, latest completion age and issue codes; it omits paths, release identities and archive contents. Exit 0/HEALTHY means these checks passed, 1/ATTENTION means intervention is needed, and 2/UNKNOWN means collection failed. No schedule, notification or policy is configured by this command.
+
+| Issue                   | Operator action                                                                                                                                                                                                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NO_COMPLETED_BACKUP     | Confirm the intended directory and backup process. Legacy standalone dumps do not count as published bundles.                                                                                                                                                                                   |
+| STALE_BACKUP            | Investigate backup cadence and failed attempts. Deployment-only backups become stale when no deployment occurs.                                                                                                                                                                                 |
+| LOW_DISK_SPACE          | Review host capacity before further backup/deployment work. Do not automatically prune recovery evidence or database volumes.                                                                                                                                                                   |
+| PENDING_BACKUP          | Check for an active backup or interrupted attempt. Pending directories never count as completed recovery points; this signal can be transient during deployment.                                                                                                                                |
+| INVALID_BUNDLE_METADATA | Inspect the bundle privately: required regular files, bounded JSON/checksum metadata, matching archive size/checksum declaration and timezone-aware completion time must agree. Symlink bundles/files and future timestamps are rejected. A separate fresh bundle does not suppress this issue. |
+| COLLECTION_FAILED       | Verify permissions, directory and filesystem availability. Treat UNKNOWN as unavailable evidence, not success.                                                                                                                                                                                  |
+
+Age uses the manifest's completion time, not filesystem modification time; it is not an RPO measurement of the database snapshot. Free space describes only the filesystem containing the backup directory, not every Docker volume. This lightweight check does not hash archive bytes, invoke archive validation, assess encryption/off-instance copies, or prove restoration. `integrityVerified` and `restoreVerified` remain false even on HEALTHY. Use checksum verification and the actual isolated restore rehearsal for those separate gates. Run against the trusted root-owned backup directory; the metadata check is not a hostile-filesystem security boundary. Retention/deletion policy and automated backup cadence remain open decisions.

@@ -407,3 +407,35 @@ Added the missing cutover procedure with evidence gates, rehearsal, writer freez
 ### Sprint 8 — restart-safe application write freeze
 
 Added runtime read-only database connections, maintenance guards and notices, read-only existing-session authentication, paused worker health and frozen-deployment rollback protection. Unit, isolated database/worker and frozen/normal browser checks passed. The operator procedure requires a compatible release, complete writer drain and container recreation; no local or production freeze was enabled. Next operational gates remain actual restore evidence, host rollout and real-source reconciliation. Billing, live AI and automatic delivery remain deferred.
+
+### Sprint 8 — backup freshness and capacity checks
+
+Added a read-only backup check with explicit age/capacity thresholds, sanitized evidence and actionable stale/missing/incomplete/invalid/low-space outcomes. Six tests pass and run in CI. HEALTHY does not certify archive integrity or restoration; no retention policy, schedule, deletion or production rollout is enabled. Actual restore evidence, host rollout and real-source reconciliation remain open.
+
+### Sprint 8 — real restore smoke test CI gate
+
+Added a separate PostgreSQL container smoke test for successful synthetic archive restoration, exact table counts and rejection of unresolved migration history. Deployment now waits for this CI job. Three local orchestration tests pass; actual Docker execution is pending because local socket access is denied. This does not replace the outstanding production-backup restoration, application reconciliation and host rollout evidence.
+
+### Sprint 8 — import-retention inventory
+
+Added an Owner/Admin-only read API for aggregate workbook-import counts and dates across seven categories, with explicit cutoff validation, tenant-scoped snapshot reads and no imported payload exposure. Unit and database checks passed, including revocation and operation during a write freeze. This supplies evidence for retention decisions; it enables no deletion or scheduled cleanup. Approved retention/hold policies and a broader data export/deletion workflow remain open.
+
+### Sprint 8 — import-retention workspace page
+
+Added an Owner/Admin page linked from Settings and Data with explicit UTC cutoff selection, per-category cards, inconsistent-record notices, empty states and query validation. URL-based filtering supports refresh and clearing, and the page uses the existing authorized inventory service without mutation. No retention policy, deletion or cleanup schedule is activated.
+
+### Sprint 8 — audited retention inventory downloads
+
+Added explicit JSON evidence downloads with current access checks, aggregate fingerprint matching and atomic audit receipts. Changed summaries require a fresh review; maintenance pauses downloads while inventory reads remain usable. Query and database acceptance passed, including audit-failure rollback. No retention/deletion policy or production deployment is included.
+
+### Sprint 8 — inconsistent import record investigation
+
+Added a metadata-only drill-down from inconsistent inventory counts, with 50-record pages, scoped cursor validation and Older/Latest navigation. Owner/Admin access is rechecked for each page; uploaded content remains excluded. This supports investigation without repairs or deletion and preserves normal read-only maintenance behavior.
+
+### Sprint 8 — original source intake manifest
+
+Added a read-only migration intake CLI that records full original export/schema hashes and sizes with explicit source, extraction time, scope and target metadata. Publication is private and exclusive; originals remain untouched and approval flags remain false. Six synthetic tests pass and are wired into CI. Real source files, reviewed mappings and independent reconciliation totals remain required.
+
+### Sprint 8 — preserved-source verification
+
+Added read-only verification of original export/schema files against their intake manifest, with exact hash/size comparisons, bounded contract validation, sanitized per-file outcomes and manifest-byte binding. All 11 intake/verification tests pass and are included in CI. Matching files do not establish source authenticity or reconciliation approval; real-source intake, mappings and independent totals remain open.

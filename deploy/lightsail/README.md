@@ -207,3 +207,11 @@ for CI tests, which use stubs.
 ### Planned write freeze
 
 See [WRITE_FREEZE.md](../../docs/WRITE_FREEZE.md) for the runtime flag, draining and recreation procedure, verification and recovery. Install a freeze-capable release and matching host scripts before activation. Existing sessions retain authorized reads; authentication, mutations and audited downloads pause. A fresh worker `paused` state is healthy only while frozen. The health header reports configuration, not proof that all writers were drained. This change does not enable the freeze.
+
+### Backup status check
+
+The read-only `check-backups.py` checks completed-bundle metadata freshness and free space on the backup filesystem with required operator-supplied thresholds. See [Operations runbook](../../docs/OPERATIONS_RUNBOOK.md#backup-freshness-and-capacity) for invocation, status codes and limitations. It neither deletes backups nor schedules new ones, and a passing result does not certify restore readiness.
+
+### Synthetic restore CI gate
+
+CI runs `bash deploy/lightsail/test-restore-docker.sh` in a separate job after installing `postgres:18-bookworm`; deployments require it to pass. The script creates only isolated synthetic source/restore containers and private temporary archives, checks restored table counts and requires rejection of unresolved migration history. It never reads runtime environment files or production backups. Local execution requires authorized Docker access and the image already installed. This verifies the rehearsal mechanism, not production recovery readiness; the trusted-backup exercise remains required.

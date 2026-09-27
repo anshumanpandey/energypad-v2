@@ -1,3 +1,5 @@
+import { inventoryQuery, inventoryExportQuery, inventoryReviewQuery } from '@/domain/import-inventory';
+import { importInventoryService } from '@/server/services';
 import { reportDeliveryWorker } from '@/server/services';
 import { auditExportCsv } from '@/domain/audit-export';
 import { reportScheduleService } from '@/server/services';
@@ -47,6 +49,28 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'import-inventory' && s[3] === 'inconsistent' && s.length === 4 && method === 'GET')
+        return importInventoryService.inconsistentBatches(
+          actor,
+          org,
+          inventoryReviewQuery(new URL(request.url).searchParams),
+        );
+      if (s[2] === 'import-inventory' && s[3] === 'export' && s.length === 4 && method === 'GET') {
+        const query = inventoryExportQuery(new URL(request.url).searchParams);
+        const report = await importInventoryService.exportInventory(actor, org, query.before, query.fingerprint);
+        return Response.json(report, {
+          headers: {
+            'Content-Disposition': 'attachment; filename="import-retention-inventory.json"',
+            'X-Content-Type-Options': 'nosniff',
+          },
+        });
+      }
+      if (s[2] === 'import-inventory' && s.length === 3 && method === 'GET')
+        return importInventoryService.overview(
+          actor,
+          org,
+          inventoryQuery(new URL(request.url).searchParams).toISOString(),
+        );
       if (s[2] === 'billing' && s.length === 3 && method === 'GET') return billingService.overview(actor, org);
       if (s[2] === 'sites' && s[3] && s[4] === 'ai-evidence' && s.length === 7 && s[6] === 'source' && method === 'GET')
         return aiEvidenceService.citedOpportunitySource(actor, org, s[3], s[5]);

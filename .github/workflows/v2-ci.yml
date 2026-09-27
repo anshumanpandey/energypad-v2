@@ -1,9 +1,9 @@
 name: V2 CI and Lightsail deployment
 on:
   push:
-    paths: ['apps/web/**', '.github/workflows/v2-ci.yml', 'deploy/lightsail/**']
+    paths: ['apps/web/**', '.github/workflows/v2-ci.yml', 'deploy/lightsail/**', 'scripts/migration/**']
   pull_request:
-    paths: ['apps/web/**', '.github/workflows/v2-ci.yml', 'deploy/lightsail/**']
+    paths: ['apps/web/**', '.github/workflows/v2-ci.yml', 'deploy/lightsail/**', 'scripts/migration/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -46,9 +46,13 @@ jobs:
         run: for script in ../../deploy/lightsail/*.sh; do bash -n "$script"; done
       - name: Test operational safeguards
         run: |
+          python3 -B ../../scripts/migration/test-source-manifest.py
+          python3 -B ../../scripts/migration/test-verify-manifest.py
           python3 -B ../../deploy/lightsail/test-diagnose.py
           python3 -B ../../deploy/lightsail/test-restore-rehearsal.py
+          python3 -B ../../deploy/lightsail/test-restore-docker-driver.py
           python3 -B ../../deploy/lightsail/test-backup.py
+          python3 -B ../../deploy/lightsail/test-check-backups.py
           python3 -B ../../deploy/lightsail/test-deploy-freeze.py
       - run: npm ci
       - run: npm audit --audit-level=high
@@ -68,8 +72,20 @@ jobs:
           path: apps/web/test-results/
           retention-days: 7
 
+  restore-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Install isolated rehearsal image
+        run: docker pull postgres:18-bookworm
+      - name: Exercise real synthetic backup and restore
+        run: bash deploy/lightsail/test-restore-docker.sh
+
   deploy:
-    needs: foundation
+    needs: [foundation, restore-smoke]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30

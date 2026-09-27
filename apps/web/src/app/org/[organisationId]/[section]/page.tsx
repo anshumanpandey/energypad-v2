@@ -1,3 +1,4 @@
+import { ImportRetention } from '@/components/import-retention';
 import { BillingOverview } from '@/components/billing-overview';
 import { auditFilters, auditHistoryUrl } from '@/domain/audit-history';
 import { billingService } from '@/server/services';
@@ -285,6 +286,19 @@ export default async function WorkspacePage({
       </>
     );
   }
+  if (section === 'import-retention') {
+    if (!can(membership.role, 'retention:read')) notFound();
+    return (
+      <>
+        <Heading
+          eyebrow="DATA MANAGEMENT"
+          title="Import retention"
+          text="Review stored import batches before defining retention rules."
+        />
+        <ImportRetention actor={actor} orgId={org.id} query={await searchParams} />
+      </>
+    );
+  }
   if (section === 'settings') {
     if (!can(membership.role, 'organisation:update')) notFound();
     return (
@@ -301,6 +315,9 @@ export default async function WorkspacePage({
               <Settings size={19} />
             </div>
             <OrganisationForm organisation={org} />
+            <p>
+              <Link href={`${base}/import-retention`}>Review import retention</Link>
+            </p>
           </section>
           <section className="panel plan-summary">
             <span className="tag">Current plan</span>
@@ -510,6 +527,9 @@ export default async function WorkspacePage({
     return (
       <>
         <Heading eyebrow="SITE IMPORT" title="Data" text="Upload, map, validate and import your sites." />
+        <p>
+          <Link href={`${base}/import-retention`}>Review import retention</Link>
+        </p>
         <ImportWorkspace orgId={org.id} batches={batches} />
       </>
     );

@@ -2089,3 +2089,73 @@ small {
 .report-schedules .checkbox-label input {
   flex-shrink: 0;
 }
+
+.retention-filter {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.retention-filter label {
+  display: grid;
+  gap: 0.5rem;
+}
+.retention-filter > a {
+  align-self: flex-end;
+  padding: 0.7rem 0;
+}
+.retention-grid {
+  margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 1rem;
+}
+.retention-card {
+  min-width: 0;
+}
+.retention-card dl {
+  margin: 1rem 0;
+}
+.retention-card dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.6rem;
+}
+.retention-card dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.retention-highlight {
+  background: #eef7f4;
+  border-radius: 0.5rem;
+}
+.retention-card p {
+  overflow-wrap: anywhere;
+}
+
+.retention-batch {
+  border-top: 1px solid #e0e7e2;
+  padding: 1rem 0;
+}
+.retention-batch dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 1rem;
+}
+.retention-batch dt {
+  font-size: 0.8rem;
+  color: #53665d;
+}
+.retention-batch dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+}
+#inconsistent-batches {
+  margin-bottom: 1.5rem;
+  scroll-margin-top: 1rem;
+}

@@ -53,3 +53,11 @@ NRA review uses `analysis:approve` for Owner/Admin only, with an independent rev
 ## Sprint 8 maintenance write freeze
 
 The operator-controlled `APP_WRITE_FREEZE` flag defaults off and fails closed for unexpected nonempty values. Runtime PostgreSQL connections enforce default read-only transactions as a backstop to HTTP/action guards. This is not an administrator-proof database boundary: trusted code or external clients can override their own settings. Existing sessions are read without renewal or expired-session cleanup, retaining their original expiry and current membership checks. New authentication, sign-out, mutations and audited downloads pause. Worker processing pauses before acquiring jobs. Activation requires draining old connections and recreating every writer; see [WRITE_FREEZE.md](WRITE_FREEZE.md). No freeze is enabled by this implementation.
+
+## Import retention inventory
+
+`retention:read` is limited to current Owner/Admin membership. `/api/v1/organisations/:org/import-inventory` checks that membership and reads seven workspace-scoped aggregate queries in one repeatable-read transaction. It selects only lifecycle metadata and aggregate dates/counts, never imported payloads, authors or batch IDs. Platform-admin status is not a tenant bypass. The read is no-store and requires an explicit cutoff, conferring no deletion eligibility or mutation permission. It remains available during write freeze without creating audit records. See [IMPORT_RETENTION.md](IMPORT_RETENTION.md).
+
+Retention inventory JSON exports separately require current Owner/Admin access and the displayed aggregate fingerprint. Audit creation and evidence preparation share a transaction; a stale fingerprint or failed receipt prevents output. The fingerprint binds only aggregate evidence and is never an authorization credential. Downloads are no-store attachments without import contents, and pause during write freeze.
+
+Inconsistent-import investigation separately exposes only batch ID, stored status and creation/commit timestamps to current Owner/Admin members. Its 50-record pages bind cursors to the workspace, allowlisted category and inconsistent subset; it selects no imported contents or authors. Each page rechecks membership and remains a read-only operation during maintenance. IDs do not grant mutation rights.
