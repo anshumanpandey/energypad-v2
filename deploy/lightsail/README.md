@@ -32,6 +32,13 @@ The admin owns installed scripts and Compose configuration. Changes to these
 files require an admin to reinstall them; application deployments cannot alter
 the host configuration.
 
+The backup publication update requires both `backup.py` installed as root-owned
+`/usr/local/sbin/energiepad-backup` and the matching `energiepad-deploy` script.
+Bootstrap installs them together. Existing hosts can install the helper first,
+then the deploy script, using mode 0755 under an admin account. Python 3.11+
+is required (Ubuntu 24.04 supplies Python 3.12). The CI SSH key cannot perform
+this host update. No host update is performed by editing this repository.
+
 Attach a Lightsail static IPv4 before relying on DNS or CI across stop/start.
 For a fresh server, run `sudo python3 initialize.py`: it generates separate
 owner/runtime passwords and an auth secret, creates the database and runtime
@@ -79,14 +86,63 @@ published port; the app listens only on host loopback through Docker.
 
 ## Verification and recovery
 
+Run `sudo python3 -B deploy/lightsail/diagnose.py` from the checked-out release for
+a read-only container-health summary. See `docs/OPERATIONS_RUNBOOK.md` for exit
+statuses, triage and evidence handling. This tool does not send notifications or
+restart services, and the CI deployment key remains restricted to deployment.
+
+An isolated restore rehearsal is available as `restore-rehearsal.sh`; see
+`docs/SPRINT_8_ACCEPTANCE.md` for usage, evidence requirements and remaining gates.
+It restores a trusted dump into a disposable, network-isolated PostgreSQL 18
+container and never targets the running application database.
+
+The web health endpoint returns 503 after two seconds when its database probe
+does not finish. Inspect structured `database_health_changed` events with
+`sudo docker compose --env-file /opt/energiepad/release.env -f /opt/energiepad/compose.yml logs --timestamps web`.
+Events contain only status; repeated unchanged states are suppressed. A timeout
+does not cancel the underlying query. If it never settles, investigate database
+availability and connection exhaustion before restarting the web service.
+Docker's unhealthy status does not itself trigger an automatic container restart.
+This probe does not check weather-worker progress or migration currency.
+
+The worker has a separate progress health check. Inspect `compose ps` and worker
+logs for sanitized `weather_worker_state` transitions. Idle is healthy; `working`
+means a processing pass returned, not successful enrichment. Missing progress for
+over 120 seconds, an unexpected loop error, or a stopped process fails its probe.
+Check tenant-scoped weather-job status for provider failures and retry outcomes.
+For a stuck worker, diagnose database/provider connectivity before a deliberate
+restart; existing job leases govern recovery. The private progress file is local
+to one worker container and is never shared between replicas. The worker service
+must run the new image before installing this Compose health-check definition.
+
 A deployment validates the selected mode, loads the streamed
-image, waits for Postgres, creates a `pg_dump` in `/var/backups/energiepad`, runs
+image, waits for Postgres, publishes a backup bundle in `/var/backups/energiepad`, runs
 migrations and the idempotent plan seed, then waits for `/api/health` (including
 a database query) and starts the weather worker. Failed startup restores the
-previous application image when available. **Schema changes are not reversed**:
+previous application image when available, except while `APP_WRITE_FREEZE` is active.
+Frozen startup failure requires a reviewed freeze-compatible recovery release;
+automatic rollback could select an older image that ignores the freeze.
+**Schema changes are not reversed**:
 use backward-compatible migrations; destructive changes require a separate
 reviewed maintenance/restore plan. A failed migration leaves current services
 running and must be investigated before retrying.
+
+Backups are private `*.backup` directories containing `database.dump`, its
+`database.dump.sha256` checksum and `manifest.json`. A new bundle is published
+atomically only after `pg_dump` completes, `pg_restore --list` accepts its table
+of contents and the files are flushed to disk. Ordinary failures remove the
+attempt's temporary directory and stop deployment before migration. A killed
+process or power loss may leave `.pending-*` directories; never use those as
+restore points. Previous backups are never overwritten or pruned.
+
+The manifest records the **target migration release**, not the current source
+database's release. `restoreVerified` remains false: a readable archive listing
+and matching checksum do not prove that every row can be restored. Restore
+rehearsals require the checksum sidecar by default. A reviewed old standalone
+dump requires explicit `--legacy-unverified`; this does not bypass a checksum
+mismatch when a sidecar exists. Keep the archive and sidecar private and unchanged
+throughout verification/restoration. Checksums detect accidental corruption,
+not malicious replacement of both files.
 
 Inspect with `sudo docker compose --env-file /opt/energiepad/release.env -f
 /opt/energiepad/compose.yml ps`. Keep backups off-instance and define retention
@@ -147,3 +203,7 @@ plan. Leave the key/model absent to keep generation disabled while retaining evi
 previews. Pending attempts are never automatically resent; inspect reservations and
 provider records before manually initiating a new request. No AI secrets are required
 for CI tests, which use stubs.
+
+### Planned write freeze
+
+See [WRITE_FREEZE.md](../../docs/WRITE_FREEZE.md) for the runtime flag, draining and recreation procedure, verification and recovery. Install a freeze-capable release and matching host scripts before activation. Existing sessions retain authorized reads; authentication, mutations and audited downloads pause. A fresh worker `paused` state is healthy only while frozen. The health header reports configuration, not proof that all writers were drained. This change does not enable the freeze.

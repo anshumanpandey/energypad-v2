@@ -2,6 +2,21 @@
 
 Sprint 7 begins with an owner-only plan and usage overview. Independent commercial work can proceed while Sprint 6's methodological approval and deferred OpenAI acceptance remain open. This does not mark those gates accepted.
 
+## Current scope and acceptance gates — 26 September 2026
+
+The sections below describe successive increments; statements such as “no endpoint yet” or “temporary databases only” describe the state at that increment. The management/readiness endpoints and manual retained-report pages now exist, and all six billing/report migrations have been applied to the local development database. Production application of those migrations remains outstanding.
+
+| Area                                                         | Current state                                                  | Next prerequisite                                                           |
+| ------------------------------------------------------------ | -------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Assigned-plan billing and provider evidence                  | Implemented with test adapters and isolated acceptance         | Real Stripe test configuration and reviewed bindings                        |
+| Checkout, customer portal and subscription-based access      | Not implemented or enabled                                     | Approved offers and lifecycle decisions in SPRINT_7_COMMERCIAL_DECISIONS.md |
+| Retained reports                                             | Manual authenticated viewing and JSON/CSV download implemented | Production rollout acceptance when deployment is requested                  |
+| Schedule drafts and readiness checks                         | Explicit manual preparation/checking only; no sends            | No automatic-delivery work until the user resumes it                        |
+| Automatic report delivery                                    | Deferred by user                                               | Explicit request to resume and delivery policy decisions                    |
+| Live AI, savings verification and real-source reconciliation | Separate unresolved/deferred gates                             | See PRE_SPRINT_7_REVIEW.md and its follow-ups                               |
+
+Passing local regression checks does not close the commercial lifecycle gate or accept Sprint 7 in full. Continue requests alone do not approve prices, entitlement cutoffs, automatic delivery or live-provider activation.
+
 ## First increment: assigned plan and site usage
 
 Billing replaces its placeholder with the assigned plan, active-site count, site limit, remaining capacity and plan entitlements. The page and GET /api/v1/organisations/:org/billing use one owner-authorized service. The service reads under repeatable-read isolation; outsiders and revoked memberships are denied and non-owner roles cannot read the overview.
@@ -140,3 +155,80 @@ Owners, Admins and Analysts can retain previews. The server regenerates from a s
 Capture and download audits are transactional. Tenant-scoped site foreign keys, evidence checks and immutable update/delete/truncate guards protect persisted records. History uses scoped 25-item cursor pages ordered by creation time and ID. The Reports panel is scoped to the selected site and explicitly loads history; it does not silently schedule or email reports.
 
 Deployment requires migration 202609260004_report_archives (and preceding migrations). Development validation applies migrations only to isolated test databases. No production deployment is included.
+
+## Scheduled-report delivery eligibility
+
+The internal ReportDeliveryEligibilityService provides a read-only preflight for a proposed schedule owner, a site, one retained archive/fingerprint and a bounded list of recipient membership IDs. In one repeatable-read snapshot it verifies current analysis-write permission, assigned-plan scheduledReports inclusion, an active site, archive scope/integrity and every recipient's current tenant membership and site assignment. Missing, foreign, revoked or unassigned recipients reject the entire selection without identifying individual failures. Password-only accounts remain supported under existing authentication rules.
+
+The result explicitly says ELIGIBLE_NOW and delivery DISABLED. It is not a token, durable authorization, evidence of consent or email-deliverability approval. No recipient addresses, report data or mail are emitted, and the preflight writes no records. The 100-recipient input bound is a technical work limit, not an approved commercial allowance. No HTTP endpoint or runtime scheduler uses it yet.
+
+A future worker must call this check immediately before each delivery attempt and additionally verify the persisted schedule revision, active state, occurrence claim, approved limits/channel and recipient policy. An earlier successful preflight cannot survive revocation or authorize a later retry. This increment does not solve the external-send/authorization race or exactly-once delivery; durable jobs, claim recovery, revision cancellation and provider idempotency remain required. Archived reports remain available through their existing read endpoint after a plan downgrade or site archival, while new scheduled delivery eligibility is denied.
+
+## Durable schedule drafts and held occurrences
+
+ReportScheduleService adds internal draft creation/editing, terminal cancellation and explicit UTC occurrence preparation. It exposes no HTTP endpoint, scheduler or mail transport. A schedule retains its creator membership and site identity. Each immutable revision pins an existing archive/fingerprint, sorted distinct recipient membership IDs and a canonical timezone. No recurring cadence is inferred: occurrence preparation accepts an explicit UTC timestamp with millisecond precision. Two instants within a repeated daylight-saving hour remain separate jobs.
+
+Draft writes and preparation recheck the shared eligibility rules inside the write transaction, under the workspace lock. A request key/hash deduplicates revisions; edits require the latest revision ID. Concurrent conflicting edits return SCHEDULE_CHANGED, while identical retries reuse the original revision. Returning a prior revision after a later edit is a receipt for the earlier operation, not a rollback or reactivation. Schedule management is currently limited to its creator. A current creator membership may cancel after role demotion, plan downgrade, site archival or recipient revocation; revoked creators cannot use the service. Administrative takeover remains future work.
+
+ReportDeliveryJob is unique per revision and occurrenceAt and starts HELD. Inserting a newer revision atomically cancels older held jobs through a database trigger; terminal cancellation cannot be reopened. Scope foreign keys bind schedules, archives and jobs to the same workspace/site; database guards enforce lineage, distinct workspace recipients, immutable identities/revisions and held-only job transitions. Writes and audits are atomic, so an audit failure also rolls back cancellation of old jobs. Job deletion/truncation and history mutation are rejected.
+
+Migration 202609260005_report_schedules is required and has been tested only on temporary databases. These rows are preparation records, not sent reports, active subscriptions or delivery approval. Next: schedule management/read APIs and the durable execution/attempt lifecycle, including leases, authorization before each send, retries and ambiguous provider outcomes. Cadence, recipient/channel rules and commercial limits still require decisions before activation. No automatic delivery is enabled.
+
+## Schedule management HTTP API
+
+The authenticated API now exposes the draft service under `/api/v1/organisations/:org/sites/:site/report-schedules`. Every response explicitly identifies delivery as DISABLED. Mutation routes use the existing same-origin, session-authenticated JSON handler and 16 KiB body limit. No send or activation endpoint exists.
+
+| Method and suffix      | Behavior                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| GET collection         | Creator-owned schedule list with latest revision and optional cursor                       |
+| POST collection        | DRAFT create/edit or CANCEL action using the existing strict request-key/revision contract |
+| GET /:schedule         | Creator-owned identity and latest revision                                                 |
+| GET /:schedule/history | Immutable revision history, optional cursor                                                |
+| GET /:schedule/jobs    | HELD/CANCELLED occurrence jobs, optional cursor                                            |
+| POST /:schedule/jobs   | Prepare an explicitly timed UTC occurrence for the current draft                           |
+
+Read pages contain at most 25 items and nextCursor. List ordering is creation time descending with ID tie-break; revision history is revision descending; jobs use occurrence time descending with ID tie-break. Cursors must belong to the exact creator/workspace/site/schedule scope for their endpoint. Reads recheck active membership each time. Another workspace member, including an Owner, cannot inspect someone else's schedule through these routes. Current creators can still inspect/cancel their own drafts after demotion, downgrade or site archival; these management responses contain snapshot references and recipient membership IDs, not report bodies or email addresses. Existing report downloads independently enforce current report access.
+
+Request keys and request hashes are omitted from HTTP revision responses. Mutation retries retain their prior-operation semantics; edit responses do not imply that a historical idempotent result is still the latest revision. Clients should reload the detail endpoint after a conflict or retry when displaying current state. All API responses retain the shared no-store header. The app database still requires the schedule migration before these endpoints can be used. This increment adds no UI or delivery worker.
+
+## Reports schedule management panel
+
+Reports now includes a site-scoped schedule panel with explicit refresh and pagination, draft creation/editing against retained snapshots, revision history, held occurrence history and terminal cancellation. Snapshot choices are loaded from the retained-report API, preserving the selected fingerprint. Stable request keys are retained across failed saves; successful saves reload current detail. Conflicts keep the form available and offer an explicit reload rather than silently overwriting a newer revision. Switching sites remounts the panel so old requests cannot update the new site's controls.
+
+Recipient labels use the existing member-management permission: team managers receive the current member list, with site managers filtered by assignment to the selected site; other users get their own membership only. Previously selected IDs unavailable to the picker remain visible as unavailable entries and are never silently dropped. Every write still uses server-side eligibility checks. Plan/writer/site eligibility controls new/edit forms, while creator history and cancellation remain available through the panel for selectable sites.
+
+Occurrence input is explicitly labelled UTC and converted by appending Z, independent of the browser timezone or saved schedule timezone. It creates HELD records only and clears after success. Changing a draft shows superseded jobs as CANCELLED; cancelling disables further edits/preparation. All copy states that automatic scheduling and email are disabled. No cadence controls or delivery claims are introduced. The existing schedule migration must be applied to the app database before using the panel.
+
+## Durable delivery-readiness worker
+
+ReportDeliveryWorker adds an internal, unscheduled readiness rehearsal for explicitly selected occurrence jobs. It has no mail transport, runtime singleton, HTTP mutation endpoint or automatic activation. Jobs remain HELD: READY_NO_SEND is a point-in-time validation result, never a delivered report or reusable permission to send.
+
+Each job has sequential durable ReportDeliveryCheck attempts, an idempotency key, a unique claim token and a two-minute lease. Only one CHECKING attempt can exist per job. A current creator with analysis-write access can claim a due held job. Another claim returns BUSY; future jobs return NOT_DUE. Repeating a request key returns its earlier attempt without a new check. Retrying with a fresh key after lease expiry atomically records INTERRUPTED and a new claim. Terminal records cannot be changed, deleted or truncated.
+
+Completion checks the original creator identity and token, current schedule revision, job cancellation, plan, site and all recipient permissions. The final lease time is rechecked before committing. A claimed worker can record BLOCKED after its creator loses access, but receives no report content or recipient addresses. Old/finished tokens cannot replace newer results. Unexpected database errors roll back; finalization and its audit commit together. Known eligibility failures record sanitized codes. Cancellation or revision changes prevent READY_NO_SEND.
+
+Migration 202609260006_report_delivery_checks is tested only in temporary databases. This is not a provider retry policy or commercial quota: there is no batch daemon, automatic retry/backoff, recipient send, delivered state or claim of exactly-once delivery. An abandoned check whose creator remains unauthorized needs later operator recovery design; a running token can still record a blocked result. Next: expose check history for operators and define execution activation, recurrence, provider idempotency and ambiguous-send reconciliation before connecting any email transport.
+
+## Readiness-check history visibility
+
+Creators can inspect each occurrence's readiness checks from the Reports schedule panel. GET `/api/v1/organisations/:org/sites/:site/report-schedules/:schedule/jobs/:job/checks` returns at most 25 checks, ordered by descending attempt number, with a job-scoped cursor. It checks current creator membership and the full workspace/site/schedule/job chain. Tokens and request keys are excluded by an explicit select. The endpoint is read-only, no-store and always reports delivery DISABLED.
+
+The UI offers refresh and older pages, identifies ready results as “Ready — not sent,” and explains blocked/interrupted results. CHECKING attempts whose lease has expired are labelled recovery pending, without rewriting their stored status or claiming recovery happened. Expiry display uses the server response time, avoiding dependence on the browser clock, and updates on refresh. Check selection resets when opening another schedule or starting a draft; site changes remount the whole panel. Past readiness never authorizes a later send. This increment adds no worker-trigger control or mail transport.
+
+## Controlled readiness execution and recovery
+
+POST to the per-job `/checks` endpoint now accepts only `{ requestKey }`. It invokes the readiness worker for the current authenticated creator, requires analysis-write permission and verifies the complete workspace/site/schedule/job path. It does not accept actor IDs, tokens, destinations or provider parameters. The response explicitly projects only status/code and delivery DISABLED, including on idempotent retries; lease tokens and request keys never leave the server. Active membership is checked again before returning.
+
+The schedule panel offers Run readiness check and, for an observed expired claim, Recover and recheck. One invocation processes one selected job, never a batch or recurring task. A fresh request after expiry closes the old check as INTERRUPTED and can create a new readiness attempt. The UI retains a request key across failed requests until a response and history refresh succeed, then uses a fresh key for a deliberate new check. Repeating a key returns its recorded outcome; an in-progress retry reports CHECKING, not a second worker.
+
+Future occurrences return NOT_DUE; busy jobs report BUSY; cancelled jobs cannot create new checks. Recovery of an expired cancelled job can close its stale check without starting another. Current plan/site/recipient eligibility is evaluated by completion and may produce BLOCKED. An authorized creator is still required to start/recover checks; this does not add administrative takeover for revoked creators. Existing readable history remains independent of write eligibility.
+
+No provider is called, no report is sent, no recurring scheduler runs and no HELD job becomes delivered. This activation is limited to explicit readiness checks. Commercial cadence/recipient policy, actual provider submissions, retry/backoff and ambiguous-send reconciliation remain open.
+
+## Manual retained-report access
+
+The user chose to keep delivery manual. Retained snapshots now have a protected page at `/retained-reports/:org/:site/:archive`, reachable from Open retained report in archive history. This page shows the immutable stored summary, status, units and expandable full evidence, with the existing authorized JSON/CSV downloads. It uses current membership/site checks and an integrity check; possessing the URL does not grant access. No email, scheduled send or public bearer link is created.
+
+The page sits outside the workspace layout so its exact return path can survive sign-in. Password and email-link login accept only the existing invitation paths and strictly shaped retained-report paths; arbitrary URLs, query strings, fragments, whitespace and encoded paths are rejected. Authentication return-path validation does not replace archive authorization. Page views use report.archive_viewed auditing, distinct from report.archive_downloaded; browser link prefetch is disabled to avoid eager view audits.
+
+This change introduces no schema migration and uses the existing archive storage. The user's manual-delivery decision supersedes plans to activate recurring/email delivery until requested.

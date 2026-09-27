@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { request } from './forms';
 import { Button } from './ui/button';
@@ -90,6 +91,9 @@ export function ReportArchives({
             {item.family} · {new Date(item.createdAt).toLocaleString()}
           </strong>
           <span>{item.id}</span>
+          <Link prefetch={false} href={`/retained-reports/${path.split('/')[1]}/${path.split('/')[3]}/${item.id}`}>
+            Open retained report
+          </Link>
           <a href={`/api/v1/${path}/${item.id}?format=json`}>Download retained JSON</a>
           <a href={`/api/v1/${path}/${item.id}?format=csv`}>Download retained CSV</a>
         </article>

@@ -2072,3 +2072,20 @@ small {
 .waste-savings li {
   margin-bottom: 12px;
 }
+
+.report-schedules fieldset {
+  min-width: 0;
+}
+.report-schedules label,
+.report-schedules p {
+  overflow-wrap: anywhere;
+}
+.report-schedules select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.report-schedules .checkbox-label input {
+  flex-shrink: 0;
+}

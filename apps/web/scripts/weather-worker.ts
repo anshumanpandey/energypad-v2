@@ -3,6 +3,8 @@ import { setTimeout } from 'node:timers/promises';
 import { db } from '../src/server/db';
 import { WeatherJobs } from '../src/server/weather/jobs';
 import { OpenMeteoProvider } from '../src/server/weather/provider';
+import { WorkerProgress } from '../src/server/weather/worker-health';
+import { writesFrozen } from '../src/server/write-freeze';
 const jobs = new WeatherJobs(
   db,
   { async send() {} },
@@ -16,17 +18,31 @@ for (const signal of ['SIGINT', 'SIGTERM'])
     stopping = true;
     idle.abort();
   });
-console.log('Weather worker started.');
+const progress = new WorkerProgress();
 try {
+  await progress.record('starting');
   while (!stopping) {
-    try {
-      if (await jobs.processOne()) continue;
-    } catch {
-      console.error('Weather worker could not process a job; will retry.');
+    if (writesFrozen()) {
+      await progress.record('paused');
+      await setTimeout(2000, undefined, { signal: idle.signal }).catch(() => {});
+      continue;
     }
+    let processed = false;
+    try {
+      processed = await jobs.processOne();
+    } catch {
+      await progress.record('error');
+      await setTimeout(2000, undefined, { signal: idle.signal }).catch(() => {});
+      continue;
+    }
+    await progress.record(processed ? 'working' : 'idle');
+    if (processed) continue;
     await setTimeout(2000, undefined, { signal: idle.signal }).catch(() => {});
   }
 } finally {
-  await db.$disconnect();
-  console.log('Weather worker stopped.');
+  try {
+    await progress.record('stopped');
+  } finally {
+    await db.$disconnect();
+  }
 }

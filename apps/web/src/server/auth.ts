@@ -6,8 +6,11 @@ import { db } from './db';
 import { mailer } from './mail';
 import { email } from '../domain/policy';
 import { sessionCookie, sessionMaxAge } from './session-cookie';
+import { cookies } from 'next/headers';
+import { writesFrozen } from './write-freeze';
+import { frozenSession } from './frozen-session';
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const authentication = NextAuth({
   adapter: PrismaAdapter(db),
   session: { strategy: 'database', maxAge: sessionMaxAge, updateAge: 86400 },
   cookies: { sessionToken: sessionCookie() },
@@ -51,3 +54,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+export const { handlers, signIn, signOut } = authentication;
+export async function auth() {
+  if (writesFrozen()) return frozenSession(db, (await cookies()).get(sessionCookie().name)?.value);
+  return authentication.auth();
+}

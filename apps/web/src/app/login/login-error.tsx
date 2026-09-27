@@ -26,6 +26,7 @@ export function LoginError({ error }: { error?: string }) {
         SignupFailed: 'Unable to create this account. Try signing in instead.',
         RateLimited: 'Too many attempts. Please try again in 15 minutes.',
         Unavailable: 'Sign-in is temporarily unavailable. Please try again.',
+        WRITE_FREEZE: 'Maintenance is in progress. Sign-in and account changes are temporarily paused.',
       }[error] ?? 'We couldn’t sign you in. Request a fresh link, or try again in 15 minutes.'}
     </div>
   );

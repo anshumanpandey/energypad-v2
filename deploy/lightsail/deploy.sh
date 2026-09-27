@@ -30,15 +30,18 @@ for variable in "${required[@]}"; do
   fi
 done
 previous=''
+frozen=false
+if grep -Eq '^APP_WRITE_FREEZE=.+$' /etc/energiepad/runtime.env && ! grep -qx 'APP_WRITE_FREEZE=false' /etc/energiepad/runtime.env; then
+  frozen=true
+fi
 [[ ! -f release.env ]] || previous=$(cat release.env)
 export APP_IMAGE="energiepad-v2:$1"
 gzip -dc | docker image load
 docker image inspect "$APP_IMAGE" >/dev/null
 compose=(docker compose -f /opt/energiepad/compose.yml)
 "${compose[@]}" up -d --wait db
-mkdir -p /var/backups/energiepad
 # A database backup precedes every migration. Do not auto-reverse schema changes.
-"${compose[@]}" exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "/var/backups/energiepad/$(date -u +%Y%m%dT%H%M%SZ)-$1.dump"
+/usr/local/sbin/energiepad-backup "$1"
 "${compose[@]}" run --rm --no-deps migrate
 "${compose[@]}" exec -T db sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
 GRANT USAGE ON SCHEMA public TO energiepad_app;
@@ -50,7 +53,9 @@ if "${compose[@]}" up -d --wait --wait-timeout 180 web worker; then
   printf 'APP_IMAGE=%s\n' "$APP_IMAGE" > release.env
   echo "Deployed $1"
 else
-  if [[ $previous =~ ^APP_IMAGE=energiepad-v2:[0-9a-f]{40}$ ]]; then
+  if [[ $frozen == true ]]; then
+    echo 'Write freeze active: automatic image rollback is disabled. Use a reviewed freeze-compatible recovery release.' >&2
+  elif [[ $previous =~ ^APP_IMAGE=energiepad-v2:[0-9a-f]{40}$ ]]; then
     export APP_IMAGE=${previous#APP_IMAGE=}
     "${compose[@]}" up -d --wait --wait-timeout 180 web worker
     echo 'Restored previous application image; database migrations remain applied.' >&2

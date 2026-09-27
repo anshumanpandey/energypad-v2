@@ -6,13 +6,13 @@ Auth.js email links last 15 minutes and are consumed once by the Prisma adapter.
 
 The organisation URL identifies the requested scope. Cross-tenant IDs return the same unavailable response as missing records. PostgreSQL composite foreign keys bind SiteAssignment and InvitationSite to matching organisation IDs. PostgreSQL row-level security is **not** claimed: service checks and relationship constraints are the enforcement layers in Sprint 1. Any future repository/query path must preserve these checks.
 
-| Role | Organisation settings | Team and invitations | Site reads | Save baselines / analysis runs | Audit | Future billing |
-|---|---|---|---|---|---|---|
-| Owner | Yes | All roles | All organisation sites | Yes | Yes | Yes |
-| Admin | Yes | Non-owners only; cannot grant Owner | All organisation sites | Yes | Yes | No |
-| Analyst | No | No | All organisation sites | Yes | No | No |
-| Site manager | No | No | Assigned sites only | No | No | No |
-| Viewer | No | No | All organisation sites | No | No | No |
+| Role         | Organisation settings | Team and invitations                | Site reads             | Save baselines / analysis runs | Audit | Future billing |
+| ------------ | --------------------- | ----------------------------------- | ---------------------- | ------------------------------ | ----- | -------------- |
+| Owner        | Yes                   | All roles                           | All organisation sites | Yes                            | Yes   | Yes            |
+| Admin        | Yes                   | Non-owners only; cannot grant Owner | All organisation sites | Yes                            | Yes   | No             |
+| Analyst      | No                    | No                                  | All organisation sites | Yes                            | No    | No             |
+| Site manager | No                    | No                                  | Assigned sites only    | No                             | No    | No             |
+| Viewer       | No                    | No                                  | All organisation sites | No                             | No    | No             |
 
 Platform Admin is a separate user flag, **not** a tenant bypass. Support impersonation is deferred. Site-manager membership alone grants no site access. Role changes clear old site grants so later demotion cannot restore stale permissions. Revoked membership fails the next service/API request even when its login session remains valid for another organisation.
 
@@ -27,6 +27,8 @@ Sending is limited to 20 invitations per issuer/organisation/hour and five sign-
 ## Audit and secrets
 
 Audit events store organisation, actor ID, action, target, request ID, safe metadata and timestamp in the same transaction as the change. PostgreSQL triggers reject UPDATE, DELETE and TRUNCATE. The organisation foreign key also blocks cascading deletion of audit history. This protects against ordinary SQL/application mutation, not a database superuser disabling triggers. Use separate restricted application and migration roles in production.
+
+The Activity log now pages through retained history in groups of 100. The history API checks current Owner/Admin membership and the cursor's workspace in one repeatable-read transaction. Timestamp/ID boundaries preserve ordering across tied timestamps and new insertions. Every subsequent page rechecks access; platform-administrator status alone does not grant workspace audit access. The original latest-100 API remains compatible. Pagination does not expand audit metadata, change retention or provide support impersonation.
 
 Raw auth/invitation tokens are not returned by membership APIs or stored in audit metadata. Development mail is private on-disk capture, excluded from Git and never served by the app. Production uses Resend HTTPS delivery and requires explicit configuration. Next.js development request/action logging is disabled to keep token-bearing URLs and form arguments out of local logs. Reverse-proxy access logs must redact sensitive callback/invitation URLs. Secrets, database files and browser traces are excluded from source control.
 
@@ -44,7 +46,10 @@ Sites, portfolios and meters use organisation-scoped service checks and composit
 
 Uploads are authenticated, origin-checked, byte-bounded and rate-limited before parsing. ZIP expansion, entries, dimensions and cell lengths are bounded; formulas, macros, external links and entity declarations are unsupported. Credential headers are normalized and removed with their entire columns before staging. The original bytes are transient. Staging and preview are accessible only to current Owner/Admin members of the batch organisation. Error downloads contain coordinates/field/reason, not source cell values. Import commit is transactional, revalidates all rows and supports safe retries. Production ingress limits and staging retention policy remain deployment requirements.
 
-
 Advanced Analysis uses the dedicated `analysis:write` permission for Owner, Admin and Analyst. This implements the specification's Analyst models/NRA responsibility and the Sprint 1 design's analytical-work role. The service checks the current membership before fitting, saving or reusing any baseline/run. The page uses the same permission to show save controls. Viewer and Site Manager remain read-only for analysis; Site Managers also require assignment. Demotion/revocation is effective on the next request. Analysis writes do not grant organisation settings, membership, audit-feed, billing or source-data editing permissions. Source-data write policy remains separately enforced by the existing services. All numerical outputs remain UNVALIDATED.
 
 NRA review uses `analysis:approve` for Owner/Admin only, with an independent reviewer (run author cannot review their own run). Every decision rechecks active membership and site scope under the organisation lock, requires a reason and commits an immutable decision with its audit event. Stale decisions and conflicting retry IDs fail. Archived sites remain history-only. No role receives broader administrative access through this permission.
+
+## Sprint 8 maintenance write freeze
+
+The operator-controlled `APP_WRITE_FREEZE` flag defaults off and fails closed for unexpected nonempty values. Runtime PostgreSQL connections enforce default read-only transactions as a backstop to HTTP/action guards. This is not an administrator-proof database boundary: trusted code or external clients can override their own settings. Existing sessions are read without renewal or expired-session cleanup, retaining their original expiry and current membership checks. New authentication, sign-out, mutations and audited downloads pause. Worker processing pauses before acquiring jobs. Activation requires draining old connections and recreating every writer; see [WRITE_FREEZE.md](WRITE_FREEZE.md). No freeze is enabled by this implementation.

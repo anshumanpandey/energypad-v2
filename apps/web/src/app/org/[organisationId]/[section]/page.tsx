@@ -1,4 +1,5 @@
 import { BillingOverview } from '@/components/billing-overview';
+import { auditFilters, auditHistoryUrl } from '@/domain/audit-history';
 import { billingService } from '@/server/services';
 import { PortfolioEnergy } from '@/components/portfolio-energy';
 import { AIEvidence } from '@/components/ai-evidence';
@@ -29,7 +30,7 @@ import {
 } from 'lucide-react';
 import { pageActor, accessible } from '@/server/page-auth';
 import { foundation, siteService, analysisService } from '@/server/services';
-import { can, canManageRole, roleLabels } from '@/domain/policy';
+import { can, canManageRole, roleLabels, hasFeature } from '@/domain/policy';
 import { InviteForm, MemberActions, OrganisationForm, RevokeInvite } from '@/components/forms';
 import { SitesWorkspace, PortfoliosWorkspace } from '@/components/sites-workspace';
 import { ImportWorkspace } from '@/components/import-workspace';
@@ -120,6 +121,18 @@ export default async function WorkspacePage({
         </section>
         <AnalyticsReports
           canArchive={can(membership.role, 'analysis:write')}
+          scheduleSettings={{
+            canWrite: can(membership.role, 'analysis:write') && hasFeature(org.planKey, 'scheduledReports'),
+            selfId: membership.id,
+            timezone: org.timezone,
+            recipients: manage
+              ? (await accessible(() => foundation.listMembers(actor, org.id))).map((m) => ({
+                  id: m.id,
+                  label: m.user.name ?? m.user.email,
+                  siteIds: m.role === 'SITE_MANAGER' ? m.siteAssignments.map((a) => a.siteId) : null,
+                }))
+              : [{ id: membership.id, label: 'Me', siteIds: null }],
+          }}
           organisationId={org.id}
           sites={await accessible(() => analysisService.historySites(actor, org.id))}
         />
@@ -315,7 +328,20 @@ export default async function WorkspacePage({
     );
   }
   if (section === 'audit') {
-    const events = await accessible(() => foundation.listAudit(actor, org.id));
+    const query = await searchParams;
+    const cursor = query.cursor;
+    if (Array.isArray(cursor)) notFound();
+    const filters = await accessible(async () =>
+      auditFilters.parse({ action: query.action, requestId: query.requestId }),
+    );
+    const history = await accessible(() => foundation.auditHistory(actor, org.id, cursor, filters));
+    const events = history.items;
+    const exportQuery = new URLSearchParams(auditHistoryUrl(org.id, filters, cursor).split('?')[1]);
+    const exportUrl = (format: 'csv' | 'json') => {
+      const query = new URLSearchParams(exportQuery);
+      query.set('format', format);
+      return `/api/v1/organisations/${org.id}/audit/export?${query}`;
+    };
     return (
       <>
         <Heading
@@ -323,10 +349,54 @@ export default async function WorkspacePage({
           title="Activity log"
           text="A permanent record of changes to your organisation and team."
         />
+        <form
+          key={JSON.stringify(filters)}
+          action={`/org/${org.id}/audit`}
+          method="get"
+          className="panel stack-form"
+          aria-label="Filter activity"
+        >
+          <h2>Find activity</h2>
+          <p className="muted">
+            Match an exact action code or request ID from an event’s details. Both filters apply when supplied.
+          </p>
+          <label>
+            Action code
+            <input
+              name="action"
+              defaultValue={filters.action ?? ''}
+              maxLength={100}
+              pattern={'[a-z][a-z0-9_.\\-]*'}
+              title="Use the exact lowercase action code shown in an event."
+              placeholder="e.g. organisation.updated"
+            />
+          </label>
+          <label>
+            Request ID
+            <input
+              name="requestId"
+              defaultValue={filters.requestId ?? ''}
+              maxLength={36}
+              pattern="[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}"
+              title="Enter the UUID shown as Request ID in an event."
+              placeholder="UUID from event details"
+            />
+          </label>
+          <div className="button-row">
+            <Button type="submit">Apply filters</Button>
+            <Button asChild variant="secondary">
+              <Link href={`/org/${org.id}/audit`} prefetch={false}>
+                Clear filters
+              </Link>
+            </Button>
+          </div>
+        </form>
         <section className="panel">
           <div className="section-heading">
-            <h2>Recent activity</h2>
-            <span className="muted">Latest 100 events · {org.timezone}</span>
+            <h2>{query.cursor ? 'Earlier activity' : 'Recent activity'}</h2>
+            <span className="muted">
+              {events.length} events · {org.timezone}
+            </span>
           </div>
           <div className="audit-list">
             {events.map((event) => (
@@ -340,6 +410,8 @@ export default async function WorkspacePage({
                   <span className="mini-label">Details</span>
                 </summary>
                 <dl>
+                  <dt>Action code</dt>
+                  <dd>{event.action}</dd>
                   <dt>Actor ID</dt>
                   <dd>{event.actorUserId}</dd>
                   <dt>Target ID</dt>
@@ -353,7 +425,39 @@ export default async function WorkspacePage({
                 </dl>
               </details>
             ))}
-            {!events.length && <p className="empty-inline">No activity recorded yet.</p>}
+            {!events.length && (
+              <p className="empty-inline">
+                {filters.action || filters.requestId
+                  ? 'No activity matches these filters.'
+                  : 'No activity recorded yet.'}
+              </p>
+            )}
+          </div>
+          <nav className="button-row" aria-label="Activity history pages">
+            {query.cursor && (
+              <Link href={auditHistoryUrl(org.id, filters)} prefetch={false}>
+                Latest activity
+              </Link>
+            )}
+            {history.nextCursor && (
+              <Link href={auditHistoryUrl(org.id, filters, history.nextCursor)} prefetch={false}>
+                Older activity
+              </Link>
+            )}
+          </nav>
+          <div className="stack-form">
+            <p className="muted">
+              Export this page: up to 100 matching events at download time, including filters and the next-page cursor.
+              Each export is recorded in the Activity log.
+            </p>
+            <div className="button-row">
+              <a href={exportUrl('csv')} download>
+                Export this page (CSV)
+              </a>
+              <a href={exportUrl('json')} download>
+                Export this page (JSON)
+              </a>
+            </div>
           </div>
         </section>
         <p className="page-note">

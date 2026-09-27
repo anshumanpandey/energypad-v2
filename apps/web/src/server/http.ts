@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { auth } from './auth';
 import { DomainError } from '../domain/policy';
 import type { Actor } from './foundation';
+import { assertWritable, writesFrozen, freezeMessage } from './write-freeze';
 
 export async function readBody(request: Request, limit = 16_384): Promise<unknown> {
   if (!request.headers.get('content-type')?.includes('application/json'))
@@ -48,6 +49,7 @@ export async function api(request: Request, work: (actor: Actor) => Promise<unkn
     }
     const session = await auth();
     if (!session?.user?.id) throw new DomainError('UNAUTHENTICATED', 'Sign in to continue.', 401);
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) assertWritable();
     const result = await work({ userId: session.user.id, correlationId });
     if (result instanceof Response) {
       for (const [key, value] of Object.entries(headers)) result.headers.set(key, value);
@@ -58,11 +60,14 @@ export async function api(request: Request, work: (actor: Actor) => Promise<unkn
     let issue =
       error instanceof DomainError
         ? error
-        : new DomainError('INTERNAL_ERROR', 'Something went wrong. Please try again.', 500);
+        : writesFrozen()
+          ? new DomainError('WRITE_FREEZE', freezeMessage, 503)
+          : new DomainError('INTERNAL_ERROR', 'Something went wrong. Please try again.', 500);
     if (error instanceof ZodError)
       issue = new DomainError('VALIDATION_ERROR', error.issues[0]?.message ?? 'Check your input.');
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')
       issue = new DomainError('CONFLICT', 'This record already exists.', 409);
+    if (issue.code === 'WRITE_FREEZE') Object.assign(headers, { 'Retry-After': '60' });
     if (issue.status === 500) console.error('Request failed', { correlationId });
     return Response.json(
       {

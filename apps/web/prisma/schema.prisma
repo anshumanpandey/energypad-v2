@@ -114,6 +114,7 @@ model Organisation {
 }
 
 model Membership {
+  reportSchedules ReportSchedule[]
   opportunityWork OpportunityWorkVersion[]
   opportunities Opportunity[]
   id             String         @id @default(uuid()) @db.Uuid
@@ -132,6 +133,7 @@ model Membership {
 }
 
 model Site {
+  reportSchedules ReportSchedule[]
  reportArchives ReportArchive[]
  aiInteractions AIInteraction[]
  monthlyPlans MonthlyPlanVersion[]
@@ -1247,6 +1249,8 @@ model BillingReconciliationJob {
 }
 
 model ReportArchive {
+  scheduleRevisions ReportScheduleRevision[]
+  @@unique([id, organisationId, siteId, fingerprint], map: "ReportArchive_schedule_reference_key")
   id String @id @default(uuid()) @db.Uuid
   organisationId String @db.Uuid
   siteId String @db.Uuid
@@ -1261,4 +1265,76 @@ model ReportArchive {
   site Site @relation(fields: [siteId, organisationId], references: [id, organisationId], onDelete: Restrict)
   @@unique([organisationId, requestKey])
   @@index([organisationId, siteId, createdAt, id])
+}
+
+
+// Draft-only schedules. No active state or delivery transport is enabled yet.
+model ReportSchedule {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  ownerMembershipId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  site Site @relation(fields: [siteId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  owner Membership @relation(fields: [ownerMembershipId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  revisions ReportScheduleRevision[]
+  @@unique([id, organisationId, siteId])
+}
+
+model ReportScheduleRevision {
+  id String @id @default(uuid()) @db.Uuid
+  scheduleId String @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  revision Int
+  previousId String? @unique @db.Uuid
+  state String
+  archiveId String @db.Uuid
+  fingerprint String
+  recipientMembershipIds String[] @db.Uuid
+  timezone String
+  requestKey String @db.Uuid
+  requestHash String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  schedule ReportSchedule @relation(fields: [scheduleId, organisationId, siteId], references: [id, organisationId, siteId], onDelete: Restrict)
+  archive ReportArchive @relation(fields: [archiveId, organisationId, siteId, fingerprint], references: [id, organisationId, siteId, fingerprint], onDelete: Restrict, map: "ReportScheduleRevision_archive_fkey")
+  previous ReportScheduleRevision? @relation("ReportScheduleLineage", fields: [previousId, scheduleId, organisationId, siteId], references: [id, scheduleId, organisationId, siteId], onDelete: NoAction, onUpdate: NoAction, map: "ReportScheduleRevision_previous_fkey")
+  next ReportScheduleRevision[] @relation("ReportScheduleLineage")
+  jobs ReportDeliveryJob[]
+  @@unique([id, scheduleId, organisationId, siteId], map: "ReportScheduleRevision_scope_key")
+  @@unique([scheduleId, revision])
+  @@unique([organisationId, requestKey])
+}
+
+model ReportDeliveryJob {
+  checks ReportDeliveryCheck[]
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  siteId String @db.Uuid
+  scheduleId String @db.Uuid
+  revisionId String @db.Uuid
+  occurrenceAt DateTime @db.Timestamptz(3)
+  status String @default("HELD")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  revision ReportScheduleRevision @relation(fields: [revisionId, scheduleId, organisationId, siteId], references: [id, scheduleId, organisationId, siteId], onDelete: Restrict, map: "ReportDeliveryJob_revision_fkey")
+  @@unique([revisionId, occurrenceAt])
+  @@index([organisationId, status, occurrenceAt])
+}
+
+
+// Readiness rehearsal only: no provider submission or delivery success is represented.
+model ReportDeliveryCheck {
+  id String @id @default(uuid()) @db.Uuid
+  jobId String @db.Uuid
+  attempt Int
+  requestKey String @db.Uuid
+  token String @unique @db.Uuid
+  status String @default("CHECKING")
+  code String?
+  leaseUntil DateTime @db.Timestamptz(3)
+  startedAt DateTime @default(now()) @db.Timestamptz(3)
+  finishedAt DateTime? @db.Timestamptz(3)
+  job ReportDeliveryJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  @@unique([jobId, attempt])
+  @@unique([jobId, requestKey])
 }

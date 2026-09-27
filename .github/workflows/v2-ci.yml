@@ -44,6 +44,12 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
       - name: Check deployment scripts
         run: for script in ../../deploy/lightsail/*.sh; do bash -n "$script"; done
+      - name: Test operational safeguards
+        run: |
+          python3 -B ../../deploy/lightsail/test-diagnose.py
+          python3 -B ../../deploy/lightsail/test-restore-rehearsal.py
+          python3 -B ../../deploy/lightsail/test-backup.py
+          python3 -B ../../deploy/lightsail/test-deploy-freeze.py
       - run: npm ci
       - run: npm audit --audit-level=high
       - run: npm run format:check
@@ -54,6 +60,7 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - run: npm run test:e2e:freeze
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

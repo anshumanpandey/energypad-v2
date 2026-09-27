@@ -25,6 +25,8 @@ try {
   assert.equal(pair[0].id, pair[1].id);
   assert.equal(await db.auditEvent.count({ where: { action: 'report.archived', targetId: pair[0].id } }), 1);
   await db.site.update({ where: { id: site.id }, data: { name: 'Corrected name' } });
+  assert.deepEqual(await archives.view(actor, org.id, site.id, pair[0].id), original);
+  assert.equal(await db.auditEvent.count({ where: { action: 'report.archive_viewed', targetId: pair[0].id } }), 1);
   assert.deepEqual(await archives.read(actor, org.id, site.id, pair[0].id), original);
   assert.equal((await archives.capture(actor, org.id, site.id, input)).id, pair[0].id);
   await assert.rejects(archives.capture(actor, org.id, site.id, { ...input, requestKey: crypto.randomUUID() }), {
@@ -57,11 +59,13 @@ try {
   assert.deepEqual(await archives.read(actor, org.id, site.id, pair[0].id), original);
   await db.membership.update({ where: { id: member.id }, data: { role: 'SITE_MANAGER' } });
   await assert.rejects(archives.read(actor, org.id, site.id, pair[0].id), { status: 404 });
+  await assert.rejects(archives.view(actor, org.id, site.id, pair[0].id), { status: 404 });
   await db.membership.update({ where: { id: member.id }, data: { role: 'OWNER' } });
   await db.site.update({ where: { id: site.id }, data: { archivedAt: new Date() } });
   assert.deepEqual(await archives.read(actor, org.id, site.id, pair[0].id), original);
   await db.membership.update({ where: { id: member.id }, data: { revokedAt: new Date() } });
   await assert.rejects(archives.read(actor, org.id, site.id, pair[0].id), { status: 404 });
+  await assert.rejects(archives.view(actor, org.id, site.id, pair[0].id), { status: 404 });
   await db.membership.update({ where: { id: member.id }, data: { revokedAt: null } });
   const fresh = await reports.report(actor, org.id, site.id, definition);
   await db.$executeRawUnsafe(

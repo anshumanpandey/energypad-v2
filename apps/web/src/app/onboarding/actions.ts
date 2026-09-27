@@ -5,6 +5,7 @@ import { ZodError } from 'zod';
 import { DomainError } from '@/domain/policy';
 import { pageActor } from '@/server/page-auth';
 import { foundation } from '@/server/services';
+import { assertWritable } from '@/server/write-freeze';
 
 export type OnboardingState = {
   error: string;
@@ -20,6 +21,7 @@ export async function createWorkspace(_previous: OnboardingState, form: FormData
   const values = { name: field('name'), currency: field('currency'), timezone: field('timezone') };
   let organisation;
   try {
+    assertWritable();
     organisation = await foundation.createOrganisation(actor, values);
   } catch (error) {
     if (error instanceof DomainError && error.status === 401) redirect('/login');

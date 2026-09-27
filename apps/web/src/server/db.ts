@@ -1,8 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { databaseConnection, writesFrozen } from './write-freeze';
 
-export function createDatabase(url: string) {
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString: url, max: 8 }) });
+export function createDatabase(url: string, frozen = writesFrozen()) {
+  return new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseConnection(url, frozen), max: 8 }) });
 }
 const globalDb = globalThis as unknown as { energiepadDb?: PrismaClient };
 export const db =

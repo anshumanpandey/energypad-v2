@@ -8,6 +8,7 @@ install -d -m 755 /opt/energiepad
 install -d -m 700 /etc/energiepad /var/backups/energiepad
 install -m 644 compose.yml /opt/energiepad/compose.yml
 install -m 755 deploy.sh /usr/local/sbin/energiepad-deploy
+install -m 755 backup.py /usr/local/sbin/energiepad-backup
 install -m 755 ssh-command.sh /usr/local/bin/energiepad-ssh-command
 # Root-owned key configuration cannot be widened by the deployment account.
 install -d -o root -g root -m 755 /home/deploy/.ssh

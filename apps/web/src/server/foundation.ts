@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Prisma, PrismaClient } from '@prisma/client';
+import { auditFilters } from '../domain/audit-history';
 import {
   DomainError,
   can,
@@ -394,6 +395,70 @@ export class FoundationService {
       where: { organisationId },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 100,
+    });
+  }
+
+  private async auditPage(tx: Tx, actor: Actor, organisationId: string, cursor?: string, input: unknown = {}) {
+    await this.membership(actor, organisationId, 'audit:read', tx);
+    const filters = auditFilters.parse(input);
+    const scope = {
+      organisationId,
+      ...(filters.action ? { action: filters.action } : {}),
+      ...(filters.requestId ? { correlationId: filters.requestId } : {}),
+    };
+    const anchor =
+      cursor === undefined
+        ? null
+        : await tx.auditEvent.findFirst({
+            where: { ...scope, id: uuid.parse(cursor) },
+            select: { id: true, createdAt: true },
+          });
+    if (cursor !== undefined && !anchor) throw notFound();
+    const rows = await tx.auditEvent.findMany({
+      where: {
+        ...scope,
+        ...(anchor
+          ? {
+              OR: [{ createdAt: { lt: anchor.createdAt } }, { createdAt: anchor.createdAt, id: { lt: anchor.id } }],
+            }
+          : {}),
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: 101,
+    });
+    const items = rows.slice(0, 100);
+    return { items, nextCursor: rows.length > 100 ? items.at(-1)!.id : null };
+  }
+
+  async auditHistory(actor: Actor, organisationId: string, cursor?: string, input: unknown = {}) {
+    return this.db.$transaction((tx) => this.auditPage(tx, actor, organisationId, cursor, input), {
+      isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+    });
+  }
+
+  async exportAudit(actor: Actor, organisationId: string, cursor?: string, input: unknown = {}) {
+    return this.db.$transaction(async (tx) => {
+      await this.lock(tx, organisationId);
+      const page = await this.auditPage(tx, actor, organisationId, cursor, input);
+      const filters = auditFilters.parse(input);
+      const exportedAt = new Date().toISOString();
+      await this.audit(tx, actor, organisationId, 'audit.page_exported', organisationId, {
+        filters,
+        cursor: cursor ?? null,
+        count: page.items.length,
+        firstEventId: page.items[0]?.id ?? null,
+        lastEventId: page.items.at(-1)?.id ?? null,
+        nextCursor: page.nextCursor,
+      });
+      return {
+        exportVersion: 'audit-page-v1' as const,
+        organisationId,
+        exportedAt,
+        filters,
+        cursor: cursor ?? null,
+        pageSize: 100 as const,
+        ...page,
+      };
     });
   }
 }

@@ -327,3 +327,83 @@ Added a local configuration gate and concrete real-provider acceptance runbook. 
 ### Sprint 7 — retained report foundation
 
 Added explicit preview retention and immutable JSON/CSV retrieval for energy, baseline and savings reports, with scoped history, exact fingerprint matching, retry safety and atomic auditing. This progresses independently of blocked real Stripe acceptance. Next report increment: define scheduled-report execution and delivery contracts, including recipient authorization, cadence/time zone and retry handling. No scheduling or email is enabled by this archive slice.
+
+### Sprint 7 — scheduled-report access preflight
+
+Added internal current-plan, owner, archive and recipient eligibility checks. Revoked membership, missing site assignments, cross-tenant references, archived sites and changed fingerprints block eligibility. Existing retained-report reads and password login are preserved. This is read-only and does not activate scheduling or email. Next: durable schedule revisions and occurrence/delivery jobs, followed by approved cadence, recipient/channel and retry policy integration.
+
+### Sprint 7 — durable schedule drafts and occurrence jobs
+
+Added immutable schedule revisions and held occurrence jobs with tenant-bound references, current eligibility checks, idempotent requests, optimistic revision checks and atomic cancellation of superseded jobs. Cancellation remains possible for a current creator after loss of writer role or plan eligibility. Migration is prepared and validated in temporary databases. Next: management/read APIs and execution/attempt lifecycle; recurrence and email delivery remain disabled pending policy and transport work.
+
+### Sprint 7 — schedule management APIs
+
+Connected authenticated draft creation/edit/cancellation and held-job preparation. Added creator-private list/detail/history/job reads with bounded scoped cursors, current membership checks and no-store responses. Delivery remains DISABLED; no send endpoint or transport is active. Next: schedule management UI and execution/attempt lifecycle, followed by approved recurring delivery policy.
+
+### Sprint 7 — report schedule management UI
+
+Added Reports-panel controls for retained-snapshot drafts, authorized recipient selection, editing/cancellation, paginated history/jobs and explicit UTC held occurrences. Errors and revision conflicts retain user input with a reload option. Next: execution claims, attempt records and recovery before connecting approved recurring delivery. Automatic scheduling and email remain disabled.
+
+### Sprint 7 — durable delivery-readiness worker
+
+Added per-job claimed readiness checks with leases, sequential immutable outcomes, idempotent requests, interruption recovery and stale-token protection. Completion rechecks current schedule and access, retaining READY_NO_SEND/BLOCKED/INTERRUPTED without sending or changing HELD jobs to delivered. Next: operator check-history visibility and approved activation/transport/retry contracts. Migration is prepared; no automatic worker or email is enabled.
+
+### Sprint 7 — readiness-check history visibility
+
+Added creator-scoped, paginated check-history reads and schedule-panel visibility for ready-without-send, blocked, interrupted and expired-but-unrecovered checks. Claim tokens and idempotency keys stay server-side. Next: controlled readiness execution/recovery and approved cadence, recipient and transport rules before enabling automatic delivery.
+
+### Sprint 7 — controlled readiness execution and recovery
+
+Connected manual per-job readiness checks and expired-claim recovery through a strict authenticated endpoint and panel controls. HTTP responses contain no claim tokens; request-key retries do not duplicate checks. Future, busy and cancelled jobs produce explicit non-delivery outcomes. Next: settle recurring delivery policy and implement the provider submission/reconciliation contract. Automatic scheduling and email remain disabled.
+
+### Sprint 7 — manual retained-report links
+
+User decision: keep delivery manual. Added protected snapshot pages with exact login return paths, current-access checks, separate view audits and retained JSON/CSV downloads. Automatic recurrence and report email activation are deferred. Next: manual-flow acceptance and remaining Sprint 7 gaps within that constraint.
+
+### Sprint 7 — local database activation
+
+Applied the six pending billing/report migrations (`202609260001` through `202609260006`) to the existing local development database. All 38 migrations are complete; all 10 new tables are readable, and row counts in all 57 pre-existing application tables are unchanged. No reset or seed was run. Manual-flow acceptance is recorded above; automatic delivery remains deferred. Production migrations/deployment and the real Stripe/commercial acceptance gates remain outstanding.
+
+### Sprint 7 — combined regression and gate review
+
+Passed the full 389-test unit suite, five Sprint 7 database suites, three combined billing/report browser workflows, full lint/format checks and the production build. Added a current-scope table to SPRINT_7_DESIGN.md to distinguish completed foundations from historical increment notes. No new application defect was found in this run. The next commercial implementation step requires approved offers/lifecycle policy and Stripe test configuration; manual report delivery remains the selected scope. These checks do not mark all of Sprint 7 accepted or authorize production deployment.
+
+### Sprint 8 started — isolated restore tooling
+
+User deferred billing. Added an isolated PostgreSQL backup restore rehearsal script and operational acceptance record in SPRINT_8_ACCEPTANCE.md. Script-control tests and shell syntax pass; an actual restore requires authorized Docker access and a trusted dump and remains unverified. Billing, live AI and automatic report delivery remain deferred. Next: execute the restore exercise when its environment is available; observability and other independent operational work can proceed meanwhile. No production cutover is authorized or accepted.
+
+### Sprint 8 — bounded database health and transition logs
+
+Added a two-second database health deadline, shared outstanding probes and sanitized outage/recovery events while preserving the public no-store 200/503 contract. Six focused tests, TypeScript and lint/format checks passed. This is connectivity monitoring, not schema or background-worker readiness. Next independent increment: weather-worker progress visibility and operational diagnosis; backup restoration and real-source reconciliation remain open gates.
+
+### Sprint 8 — weather-worker progress visibility
+
+Added private atomic progress snapshots, sanitized state-transition logs and a container health check that distinguishes idle progress from stalled, failed or stopped workers. Unit/CLI coverage and an isolated actual-worker lifecycle check cover the monitoring contract. Deployment now waits for worker health when using the new Compose definition. No automatic recovery, provider activation or production deployment is included. Next: operational alerting/runbook coverage; actual backup restoration and real-source reconciliation remain open.
+
+### Sprint 8 — operator diagnostics and runbook
+
+Added a bounded read-only deployment check, explicit HEALTHY/ATTENTION/UNKNOWN outcomes and issue-specific operator guidance. Seven diagnostic tests and four restore-control tests pass and are included in CI. The local Docker-access failure is reported as UNKNOWN without exposing error details. Notification routing and production validation remain open; no recurring monitor or remediation was enabled. Actual restore and real-source reconciliation remain unaccepted gates.
+
+### Sprint 8 — complete backup publication and integrity preflight
+
+Replaced direct final-name dumps with atomic private backup bundles and added checksums before restore rehearsals. Failed/empty/invalid backups stop migration and do not overwrite prior backups. Five backup, six restore-control and seven diagnostics tests pass; backup tests now run in CI. Host installation and an actual Docker restore remain pending, and no production data was accessed. Restore verification, off-instance storage and retention remain separate acceptance requirements.
+
+### Sprint 8 — administrative audit history
+
+Added workspace-scoped audit pagination and Older/Latest activity navigation beyond the previous newest-100 limit. The original API response remains compatible; a separate history endpoint returns bounded pages with scoped cursors and current-role checks. Database and browser acceptance passed, including tied timestamps, intervening inserts, tenant isolation, revocation and mobile layout. No data retention policy or support impersonation was introduced. Operational rollout, actual restoration and real-source reconciliation remain open.
+
+### Sprint 8 — incident activity lookup
+
+Added exact action-code and request-ID filters to audit history, preserving filters through pagination and resetting cursors for new searches. Scoped cursor checks reject events outside the selected result set. Unit, database and browser checks passed, including empty states, clearing filters and cross-workspace isolation. The operator runbook now describes correlation lookup. No broader administrative permissions, data retention changes or production deployment are included.
+
+### Sprint 8 — audited activity-page exports
+
+Added explicit CSV/JSON downloads for up to 100 matching audit events, including filters and pagination evidence. Each authorized export records its page boundaries atomically; audit failure blocks the download. CSV neutralizes formula-like fields and JSON retains original values. Unit, database and browser checks passed. This is bounded incident evidence export, not bulk workspace extraction or a retention-policy change. Production rollout and the existing recovery/reconciliation gates remain open.
+
+### Sprint 8 — cutover and rollback runbook
+
+Added the missing cutover procedure with evidence gates, rehearsal, writer freeze, final reconciliation, traffic release and distinct application/database recovery decisions. Production execution remains blocked on real sources, restore evidence and operational decisions. Review identified the next independent implementation gap: a restart-safe write-freeze mechanism, because routine deployment restarts application and worker services. No production action or acceptance is implied by preparing the runbook.
+
+### Sprint 8 — restart-safe application write freeze
+
+Added runtime read-only database connections, maintenance guards and notices, read-only existing-session authentication, paused worker health and frozen-deployment rollback protection. Unit, isolated database/worker and frozen/normal browser checks passed. The operator procedure requires a compatible release, complete writer drain and container recreation; no local or production freeze was enabled. Next operational gates remain actual restore evidence, host rollout and real-source reconciliation. Billing, live AI and automatic delivery remain deferred.

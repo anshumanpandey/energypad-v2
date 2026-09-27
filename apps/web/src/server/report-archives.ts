@@ -111,6 +111,18 @@ export class ReportArchiveService extends FoundationService {
     );
   }
   async read(actor: Actor, org: string, siteId: string, id: string) {
+    return this.retrieve(actor, org, siteId, id, 'report.archive_downloaded');
+  }
+  async view(actor: Actor, org: string, siteId: string, id: string) {
+    return this.retrieve(actor, org, siteId, id, 'report.archive_viewed');
+  }
+  private async retrieve(
+    actor: Actor,
+    org: string,
+    siteId: string,
+    id: string,
+    action: 'report.archive_downloaded' | 'report.archive_viewed',
+  ) {
     uuid.parse(id);
     return this.db.$transaction(async (tx) => {
       await this.access(tx, actor, org, siteId);
@@ -119,7 +131,7 @@ export class ReportArchiveService extends FoundationService {
       const report = archive.report as unknown as AnalyticsReport;
       if (reportFingerprint(report) !== archive.fingerprint)
         throw new DomainError('REPORT_INTEGRITY', 'Retained report integrity check failed.', 500);
-      await this.audit(tx, actor, org, 'report.archive_downloaded', archive.id, {
+      await this.audit(tx, actor, org, action, archive.id, {
         siteId,
         fingerprint: archive.fingerprint,
       });

@@ -1,3 +1,6 @@
+import { reportDeliveryWorker } from '@/server/services';
+import { auditExportCsv } from '@/domain/audit-export';
+import { reportScheduleService } from '@/server/services';
 import { reportArchiveService } from '@/server/services';
 import { billingService } from '@/server/services';
 import { opportunityBodyLimits } from '@/server/opportunity-body-limits';
@@ -150,6 +153,35 @@ async function handle(request: Request, context: Context) {
             s[5],
             await readBody(request, opportunityBodyLimits.review),
           );
+      }
+
+      if (s[2] === 'sites' && s[3] && s[4] === 'report-schedules') {
+        const cursor = new URL(request.url).searchParams.get('cursor') ?? undefined;
+        if (s.length === 5 && method === 'GET') return reportScheduleService.list(actor, org, s[3], cursor);
+        if (s.length === 5 && method === 'POST') {
+          const {
+            requestKey: _key,
+            requestHash: _hash,
+            ...revision
+          } = await reportScheduleService.save(actor, org, s[3], await readBody(request));
+          void _key;
+          void _hash;
+          return { delivery: 'DISABLED', revision };
+        }
+        if (s.length === 6 && method === 'GET') return reportScheduleService.detail(actor, org, s[3], s[5]);
+        if (s.length === 7 && s[6] === 'history' && method === 'GET')
+          return reportScheduleService.history(actor, org, s[3], s[5], cursor);
+        if (s.length === 7 && s[6] === 'jobs' && method === 'GET')
+          return reportScheduleService.jobs(actor, org, s[3], s[5], cursor);
+        if (s.length === 9 && s[6] === 'jobs' && s[8] === 'checks' && method === 'POST')
+          return reportDeliveryWorker.execute(actor, org, s[3], s[5], s[7], await readBody(request));
+        if (s.length === 9 && s[6] === 'jobs' && s[8] === 'checks' && method === 'GET')
+          return reportScheduleService.checks(actor, org, s[3], s[5], s[7], cursor);
+        if (s.length === 7 && s[6] === 'jobs' && method === 'POST')
+          return {
+            delivery: 'DISABLED',
+            job: await reportScheduleService.prepareOccurrence(actor, org, s[3], s[5], await readBody(request)),
+          };
       }
 
       if (s[2] === 'sites' && s[3] && s[4] === 'report-archives') {
@@ -518,6 +550,28 @@ async function handle(request: Request, context: Context) {
         if (s[2] === 'audit' && method === 'GET') return foundation.listAudit(actor, org);
       }
       if (s.length === 4) {
+        if (s[2] === 'audit' && ['history', 'export'].includes(s[3]) && method === 'GET') {
+          const query = new URL(request.url).searchParams;
+          const value = (key: string) =>
+            query.getAll(key).length > 1 ? query.getAll(key) : (query.get(key) ?? undefined);
+          if (query.getAll('cursor').length > 1) throw new DomainError('VALIDATION', 'Use one activity cursor.', 400);
+          const filters = {
+            action: value('action'),
+            requestId: value('requestId'),
+          };
+          if (s[3] === 'history') return foundation.auditHistory(actor, org, query.get('cursor') ?? undefined, filters);
+          const format = query.get('format') ?? 'json';
+          if (query.getAll('format').length > 1 || !['json', 'csv'].includes(format))
+            throw new DomainError('EXPORT_FORMAT', 'Choose CSV or JSON.');
+          const report = await foundation.exportAudit(actor, org, query.get('cursor') ?? undefined, filters);
+          return new Response(format === 'csv' ? auditExportCsv(report) : JSON.stringify(report, null, 2) + '\n', {
+            headers: {
+              'Content-Type': format === 'csv' ? 'text/csv; charset=utf-8' : 'application/json; charset=utf-8',
+              'Content-Disposition': `attachment; filename="activity-page.${format}"`,
+              'X-Content-Type-Options': 'nosniff',
+            },
+          });
+        }
         if (s[2] === 'members') {
           if (method === 'PATCH') return foundation.changeMember(actor, org, s[3], await readBody(request));
           if (method === 'DELETE') return foundation.changeMember(actor, org, s[3], undefined, true);

@@ -1,6 +1,7 @@
 import { WorkspaceShell } from '@/components/workspace-shell';
 import { pageActor, accessible } from '@/server/page-auth';
 import { foundation } from '@/server/services';
+import { writesFrozen, freezeMessage } from '@/server/write-freeze';
 export default async function OrgLayout({
   children,
   params,
@@ -19,6 +20,11 @@ export default async function OrgLayout({
       role={data.membership.role}
       email={user.email ?? 'Your account'}
     >
+      {writesFrozen() && (
+        <p className="notice" role="status">
+          {freezeMessage} Existing sessions can view read-only pages.
+        </p>
+      )}
       {children}
     </WorkspaceShell>
   );

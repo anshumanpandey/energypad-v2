@@ -7,11 +7,13 @@ import { email, DomainError } from '@/domain/policy';
 import { db } from '@/server/db';
 import { PasswordAuth } from '@/server/password-auth';
 import { passwordInput } from '@/server/password';
+import { safeAuthCallback } from '@/domain/auth-callback';
 import { sessionCookie } from '@/server/session-cookie';
+import { writesFrozen, assertWritable } from '@/server/write-freeze';
 
 function callback(form: FormData) {
   const value = String(form.get('callbackUrl') ?? '/');
-  return /^\/invite\/[a-f0-9]{64}$/.test(value) ? value : '/';
+  return safeAuthCallback(value);
 }
 
 async function passwordAction(form: FormData, mode: 'login' | 'signup') {
@@ -25,6 +27,7 @@ async function passwordAction(form: FormData, mode: 'login' | 'signup') {
   if (mode === 'signup' && form.get('confirmPassword') !== password.data) fail('PasswordMismatch');
   let session;
   try {
+    assertWritable();
     // nginx replaces this header with the direct client IP; never trust forwarded chains.
     const ip = (await headers()).get('x-forwarded-for') ?? 'unknown';
     session = await new PasswordAuth(db)[mode]({ email: address.data, password: password.data }, ip);
@@ -52,6 +55,7 @@ export async function signup(form: FormData) {
 
 // Existing email-link accounts remain accessible without granting password takeover.
 export async function emailLogin(form: FormData) {
+  if (writesFrozen()) redirect('/login/email?error=WRITE_FREEZE');
   const parsed = email.safeParse(form.get('email'));
   if (!parsed.success) redirect('/login/email?error=InvalidEmail');
   try {
@@ -63,5 +67,6 @@ export async function emailLogin(form: FormData) {
 }
 
 export async function logout() {
+  if (writesFrozen()) redirect('/login?error=WRITE_FREEZE');
   await signOut({ redirectTo: '/login' });
 }

@@ -105,3 +105,17 @@ export const reportArchiveService = new ReportArchiveService(
   mailer,
   process.env.AUTH_URL ?? 'http://localhost:3100',
 );
+
+import { ReportScheduleService } from './report-schedules';
+export const reportScheduleService = new ReportScheduleService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+);
+
+import { ReportDeliveryWorker } from './report-delivery-worker';
+export const reportDeliveryWorker = new ReportDeliveryWorker(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+);

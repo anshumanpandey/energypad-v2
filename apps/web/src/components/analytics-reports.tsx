@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import type { AnalyticsReport, ReportValue } from '@/domain/analytics-report';
 import { reportFields } from '@/domain/analytics-report';
+import { ReportSchedules, type ScheduleRecipient } from './report-schedules';
 import { ReportArchives } from './report-archives';
 import { Button } from './ui/button';
 const label = (key: string) => key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
@@ -10,9 +11,11 @@ export function AnalyticsReports({
   organisationId,
   sites,
   canArchive = false,
+  scheduleSettings,
 }: {
   organisationId: string;
   canArchive?: boolean;
+  scheduleSettings?: { canWrite: boolean; selfId: string; recipients: ScheduleRecipient[]; timezone: string };
   sites: { id: string; name: string; archived: boolean }[];
 }) {
   const [family, setFamily] = useState('energy');
@@ -203,6 +206,17 @@ export function AnalyticsReports({
         source={pending ? null : source}
         canCapture={canArchive}
       />
+      {scheduleSettings && (
+        <ReportSchedules
+          key={`schedules:${organisationId}:${site}`}
+          path={`organisations/${organisationId}/sites/${site}/report-schedules`}
+          siteId={site}
+          recipients={scheduleSettings.recipients}
+          selfId={scheduleSettings.selfId}
+          canWrite={scheduleSettings.canWrite && !sites.find((s) => s.id === site)?.archived}
+          defaultTimezone={scheduleSettings.timezone}
+        />
+      )}
       {pending && <p role="status">Preparing report…</p>}
       {error && <p role="alert">{error}</p>}
       {report && (

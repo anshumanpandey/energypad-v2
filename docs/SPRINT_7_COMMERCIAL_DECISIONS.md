@@ -1,26 +1,26 @@
 # Sprint 7 commercial decision sheet
 
-Status: awaiting business decisions. Existing local assignments remain in force. This sheet neither enables payments nor approves proposed rules.
+Status: billing deferred by the user on 26 September 2026. Existing local assignments remain in force. The decisions below remain open; do not resume checkout/provider activation merely in response to “continue.” Independent Sprint 8 work may proceed. This sheet neither enables payments nor approves proposed rules.
 
 ## Existing plan definitions
 
-| Plan | Active sites | Included features beyond core |
-| --- | --- | --- |
-| Starter | 5 | None |
-| Growth | 25 | Portfolio, AI, scheduled reports |
-| Professional | 100 | Growth features, NRA, API |
-| Enterprise | Unlimited | Professional features, SSO |
+| Plan         | Active sites | Included features beyond core    |
+| ------------ | ------------ | -------------------------------- |
+| Starter      | 5            | None                             |
+| Growth       | 25           | Portfolio, AI, scheduled reports |
+| Professional | 100          | Growth features, NRA, API        |
+| Enterprise   | Unlimited    | Professional features, SSO       |
 
 These are current code definitions, not available paid offers. Included features can still be unavailable because rollout, provider configuration or role permissions are separate. The Professional limit currently includes exactly 100 sites; confirm that boundary before publishing commercial terms. Persisted capacity overrides remain supported.
 
 ## Required offer decisions
 
-| Plan | Currency | Monthly amount | Annual amount | Monthly test price ID | Annual test price ID |
-| --- | --- | --- | --- | --- | --- |
-| Starter | Pending | Pending | Pending | Pending | Pending |
-| Growth | Pending | Pending | Pending | Pending | Pending |
-| Professional | Pending | Pending | Pending | Pending | Pending |
-| Enterprise | Pending | Pending | Pending | Pending | Pending |
+| Plan         | Currency | Monthly amount | Annual amount | Monthly test price ID | Annual test price ID |
+| ------------ | -------- | -------------- | ------------- | --------------------- | -------------------- |
+| Starter      | Pending  | Pending        | Pending       | Pending               | Pending              |
+| Growth       | Pending  | Pending        | Pending       | Pending               | Pending              |
+| Professional | Pending  | Pending        | Pending       | Pending               | Pending              |
+| Enterprise   | Pending  | Pending        | Pending       | Pending               | Pending              |
 
 Specify whether Enterprise is self-service or handled through sales. An annual price must be supplied explicitly; do not infer a discount from monthly pricing. Record whether published amounts include tax. Configure test price IDs only after offers are approved and created in the intended Stripe test account; the local catalogue cannot verify account ownership, amount, currency or recurring interval by itself.
 
@@ -53,3 +53,7 @@ Scheduled reports need per-plan schedule limits, allowed cadences, timezone beha
 6. Add scoped scheduled reports and run lifecycle/security acceptance before live activation.
 
 Point 4 closes at commercial activation only when the decisions are approved, provider configuration is verified and dependent implementations/tests pass. The decision sheet itself is preparatory work.
+
+## Report delivery decision — 26 September 2026
+
+The user selected “Keep delivery manual for now.” Automatic recurrence and report email delivery remain disabled. Continue with explicit retained-report access/downloads and readiness checks; do not treat continued sprint work as approval to enable email or a recurring scheduler. Per-plan cadence, automatic recipient policy and provider retries are deferred until the user requests automatic delivery.
