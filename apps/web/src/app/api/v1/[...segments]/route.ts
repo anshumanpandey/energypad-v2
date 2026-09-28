@@ -1,3 +1,4 @@
+import { historicConsumptionService } from '@/server/services';
 import { inventoryQuery, inventoryExportQuery, inventoryReviewQuery } from '@/domain/import-inventory';
 import { importInventoryService } from '@/server/services';
 import { reportDeliveryWorker } from '@/server/services';
@@ -49,6 +50,15 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (
+        s[2] === 'consumption-imports' &&
+        s.length === 4 &&
+        method === 'POST' &&
+        ['preview', 'commit'].includes(s[3])
+      ) {
+        const signature = s[3] === 'commit' ? (request.headers.get('X-Import-Signature') ?? '') : undefined;
+        return historicConsumptionService.process(actor, org, await readBytes(request, 2_000_000), signature);
+      }
       if (s[2] === 'import-inventory' && s[3] === 'inconsistent' && s.length === 4 && method === 'GET')
         return importInventoryService.inconsistentBatches(
           actor,

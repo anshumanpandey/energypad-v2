@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { uuid } from './policy';
 import { correctionReason } from './energy';
-export const fuels = ['ELECTRICITY', 'GAS', 'OIL', 'LPG', 'BIOMASS', 'HEAT', 'OTHER'] as const;
+import { fuels } from './fuels';
+export { fuels } from './fuels';
 export const rateUnits = ['kWh', 'MWh', 'm3', 'litre', 'kg'] as const;
 const legacyId = z.string().trim().max(160).default('');
 const source = z.string().trim().min(3).max(500);

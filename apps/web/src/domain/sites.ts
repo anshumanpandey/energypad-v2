@@ -1,3 +1,4 @@
+import { fuels } from './fuels';
 import { z } from 'zod';
 import { uuid } from './policy';
 const text = (max = 160) =>
@@ -56,7 +57,7 @@ export const meterInput = z
   .object({
     code: z.string().trim().min(1).max(80),
     name: z.string().trim().min(2).max(160),
-    fuel: z.enum(['ELECTRICITY', 'GAS', 'OIL', 'LPG', 'BIOMASS', 'HEAT', 'OTHER']),
+    fuel: z.enum(fuels),
     unit: z.enum(['kWh', 'MWh', 'm3', 'litre', 'kg']),
   })
   .strict();

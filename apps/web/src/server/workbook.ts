@@ -35,7 +35,10 @@ function importCell(cell: ExcelJS.Cell): string {
   else throw reject(`${location}: unsupported cell value.`);
   return text.trim();
 }
-export async function readWorkbook(bytes: Uint8Array): Promise<ImportSheet[]> {
+export async function readWorkbook(
+  bytes: Uint8Array,
+  options?: { sheetName: string; cellErrors: WorkbookCellIssue[] },
+): Promise<ImportSheet[]> {
   if (bytes.length > 2_000_000) throw reject('Upload an XLSX file smaller than 2 MB.');
   let total = 0,
     entries = 0;
@@ -83,7 +86,7 @@ export async function readWorkbook(bytes: Uint8Array): Promise<ImportSheet[]> {
   }
   if (!book.worksheets.length || book.worksheets.length > 10) throw reject('Use 1–10 sheets.');
   const sheets: ImportSheet[] = [];
-  const cellErrors: WorkbookCellIssue[] = [];
+  const cellErrors: WorkbookCellIssue[] = options?.cellErrors ?? [];
   function plainCell(cell: ExcelJS.Cell, limit: number) {
     try {
       const value = importCell(cell);
@@ -103,10 +106,11 @@ export async function readWorkbook(bytes: Uint8Array): Promise<ImportSheet[]> {
     }
   }
   for (const sheet of book.worksheets) {
+    if (options && sheet.name !== options.sheetName) continue;
     if (sheet.columnCount > 50 || sheet.rowCount > 2001)
       throw reject('Use at most 50 columns and 2,000 rows per sheet.');
     const headers = Array.from({ length: sheet.columnCount }, (_, i) => plainCell(sheet.getRow(1).getCell(i + 1), 100));
-    const allowed = headers.map((h, i) => (credentialHeader(h) ? -1 : i)).filter((i) => i >= 0);
+    const allowed = headers.map((h, i) => (!options && credentialHeader(h) ? -1 : i)).filter((i) => i >= 0);
     const rows: ImportSheet['rows'] = [];
     sheet.eachRow((row, number) => {
       if (number === 1) return;
@@ -119,7 +123,7 @@ export async function readWorkbook(bytes: Uint8Array): Promise<ImportSheet[]> {
     });
     sheets.push({ name: sheet.name, headers: allowed.map((i) => headers[i]), rows });
   }
-  if (cellErrors.length) throw new WorkbookCellError(cellErrors);
+  if (cellErrors.length && !options) throw new WorkbookCellError(cellErrors);
   return sheets;
 }
 export function previewRows(sheets: ImportSheet[], mapping: ImportMapping) {

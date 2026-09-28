@@ -126,3 +126,10 @@ export const importInventoryService = new ImportInventoryService(
   mailer,
   process.env.AUTH_URL ?? 'http://localhost:3100',
 );
+
+import { HistoricConsumptionService } from './historic-consumption';
+export const historicConsumptionService = new HistoricConsumptionService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+);

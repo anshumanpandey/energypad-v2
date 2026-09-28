@@ -35,7 +35,7 @@ import { foundation, siteService, analysisService } from '@/server/services';
 import { can, canManageRole, roleLabels, hasFeature } from '@/domain/policy';
 import { InviteForm, MemberActions, OrganisationForm, RevokeInvite } from '@/components/forms';
 import { SitesWorkspace, PortfoliosWorkspace } from '@/components/sites-workspace';
-import { ImportWorkspace } from '@/components/import-workspace';
+import { DataImportWorkspace } from '@/components/data-import-workspace';
 import { Button } from '@/components/ui/button';
 import { AnalysisWorkspace } from '@/components/analysis-workspace';
 import { EnergyWorkspace } from '@/components/energy-workspace';
@@ -524,17 +524,17 @@ export default async function WorkspacePage({
     if (!manage)
       return (
         <>
-          <Heading eyebrow="YOUR DATA" title="Data" text="Ask an owner or admin to import your site workbook." />
+          <Heading eyebrow="YOUR DATA" title="Data" text="Ask an owner or admin to import your workbook." />
         </>
       );
     const batches = await siteService.imports(actor, org.id);
     return (
       <>
-        <Heading eyebrow="SITE IMPORT" title="Data" text="Upload, map, validate and import your sites." />
+        <Heading eyebrow="IMPORT DATA" title="Data" text="Import sites and historic consumption from Excel." />
         <p>
           <Link href={`${base}/import-retention`}>Review import retention</Link>
         </p>
-        <ImportWorkspace orgId={org.id} batches={batches} />
+        <DataImportWorkspace orgId={org.id} batches={batches} />
       </>
     );
   }

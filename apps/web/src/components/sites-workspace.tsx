@@ -1,4 +1,5 @@
 'use client';
+import { fuels } from '@/domain/fuels';
 import { useState, type FormEvent } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
@@ -315,8 +316,10 @@ function MeterForm({
         <label>
           Fuel
           <select name="fuel" defaultValue={meter?.fuel}>
-            {['ELECTRICITY', 'GAS', 'OIL', 'LPG', 'BIOMASS', 'HEAT', 'OTHER'].map((f) => (
-              <option key={f}>{f}</option>
+            {fuels.map((f) => (
+              <option key={f} value={f}>
+                {f === 'SOLAR_PV' ? 'Solar PV' : f}
+              </option>
             ))}
           </select>
         </label>
