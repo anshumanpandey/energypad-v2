@@ -531,8 +531,10 @@ export default async function WorkspacePage({
     return (
       <>
         <Heading eyebrow="IMPORT DATA" title="Data" text="Import sites and historic consumption from Excel." />
-        <p>
-          <Link href={`${base}/import-retention`}>Review import retention</Link>
+        <p className="data-retention-link">
+          <Link href={`${base}/import-retention`}>
+            Import history &amp; retention <ArrowRight size={14} aria-hidden="true" />
+          </Link>
         </p>
         <DataImportWorkspace orgId={org.id} batches={batches} />
       </>

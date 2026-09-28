@@ -51,6 +51,7 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   await upload();
   await expect(errors).toHaveCount(0);
   await expect(page.getByRole('cell', { name: '540 GBP' })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('consumption-import-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('consumption-import.png'), fullPage: true });

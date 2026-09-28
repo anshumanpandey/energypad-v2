@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { Building2, ChartColumn, FileSpreadsheet, Upload, CheckCircle2, ChevronDown, ArrowRight } from 'lucide-react';
 import { ImportWorkspace } from './import-workspace';
 import { Button } from './ui/button';
 import { responseError, useMutation } from './forms';
@@ -23,13 +24,13 @@ export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches
   const [tab, setTab] = useState('sites');
   return (
     <>
-      <div className="form-actions" role="tablist" aria-label="Data imports">
+      <div className="data-import-tabs" role="tablist" aria-label="Data imports">
         {['sites', 'consumption'].map((value) => (
-          <Button
+          <button
+            type="button"
             key={value}
             role="tab"
             tabIndex={tab === value ? 0 : -1}
-            variant={tab === value ? 'primary' : 'secondary'}
             onKeyDown={(event) => {
               if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
               event.preventDefault();
@@ -49,8 +50,13 @@ export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches
             aria-controls={`panel-${value}`}
             onClick={() => setTab(value)}
           >
+            {value === 'sites' ? (
+              <Building2 size={18} aria-hidden="true" />
+            ) : (
+              <ChartColumn size={18} aria-hidden="true" />
+            )}
             {value === 'sites' ? 'Sites' : 'Consumption'}
-          </Button>
+          </button>
         ))}
       </div>
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
@@ -83,65 +89,154 @@ function HistoricImport({ orgId }: { orgId: string }) {
     setPreview(result);
   }
   return (
-    <section className="panel">
-      <h2>Import historic consumption</h2>
-      <p>
-        Upload an XLSX workbook with a Historic Consumption sheet. Columns A–M must follow this exact order. Other
-        sheets are ignored.
-      </p>
-      <ol>
-        {historicColumns.map((name, index) => (
-          <li key={name}>
-            <strong>{String.fromCharCode(65 + index)}:</strong> {name}
+    <section className="consumption-import">
+      <div className="import-intro">
+        <div>
+          <span className="eyebrow">CONSUMPTION DATA</span>
+          <h2>Import historic consumption</h2>
+          <p>Bring your monthly readings into one place.</p>
+        </div>
+        <span className="import-format">
+          <FileSpreadsheet size={15} aria-hidden="true" /> Excel · .xlsx
+        </span>
+      </div>
+      <ol className="import-steps" aria-label="Import progress">
+        {['Choose workbook', 'Review readings', 'Import data'].map((step, index) => (
+          <li key={step} aria-current={(preview?.committed ? 2 : preview ? 1 : 0) === index ? 'step' : undefined}>
+            <span>{index + 1}</span>
+            {step}
           </li>
         ))}
       </ol>
-      <p>
-        Total Cost includes VAT; VAT Cost is a monetary amount. Costs use the site currency, or the organisation
-        currency when unset. Operating Hours are hours per day (0–24).
-      </p>
-      <p>
-        Use existing site codes and meter codes in MPAN/MPRN. Leave MPAN/MPRN blank only when exactly one meter matches
-        the utility and unit. Conversion Factor must match the configured kWh conversion. Population and daily hours are
-        retained as source information; this import does not change site history or driver observations.
-      </p>
-      <p>
-        Excel formatting and saved formula results are supported. Error cells and formulas without saved results must be
-        corrected. Cost, population and operating hours may be blank; provide both cost columns together.
-      </p>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void m.run(() => upload(false), 'Workbook validated. Review before importing.');
-        }}
-      >
-        <label>
-          Consumption workbook
-          <input
-            type="file"
-            accept=".xlsx"
-            required
-            disabled={m.pending}
-            onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null);
-              setPreview(null);
+      <div className="import-layout">
+        <div className="panel import-upload-card">
+          <div className="import-card-heading">
+            <span className="import-icon">
+              <Upload size={21} aria-hidden="true" />
+            </span>
+            <div>
+              <h3>Upload your workbook</h3>
+              <p>We’ll check every cell before you import.</p>
+            </div>
+          </div>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void m.run(() => upload(false), 'Workbook validated. Review before importing.');
             }}
-          />
-        </label>
-        <div className="form-actions">
-          <Button type="submit" disabled={m.pending || !file}>
-            Validate consumption
-          </Button>
+          >
+            <label className="import-file-field">
+              <span>Consumption workbook</span>
+              <input
+                type="file"
+                accept=".xlsx"
+                required
+                disabled={m.pending}
+                onChange={(event) => {
+                  setFile(event.target.files?.[0] ?? null);
+                  setPreview(null);
+                }}
+              />
+            </label>
+            <div className="import-upload-footer">
+              <span className="muted">XLSX · Up to 2 MB · 2,000 rows</span>
+              <Button type="submit" disabled={m.disabled || !file}>
+                {m.pending ? 'Checking workbook…' : 'Validate consumption'} <ArrowRight size={16} aria-hidden="true" />
+              </Button>
+            </div>
+          </form>
         </div>
-      </form>
-      {m.feedback}
+        <aside className="import-guide" aria-label="Workbook requirements">
+          <h3>Before you upload</h3>
+          <ul>
+            <li>
+              <CheckCircle2 size={17} aria-hidden="true" />
+              <span>
+                Use the <strong>Historic Consumption</strong> sheet.
+              </span>
+            </li>
+            <li>
+              <CheckCircle2 size={17} aria-hidden="true" />
+              <span>
+                Keep the template’s <strong>A–M column order</strong>.
+              </span>
+            </li>
+            <li>
+              <CheckCircle2 size={17} aria-hidden="true" />
+              <span>
+                Match existing <strong>sites and meters</strong>.
+              </span>
+            </li>
+          </ul>
+          <div className="import-key-facts">
+            <span>
+              Total cost <strong>Includes VAT</strong>
+            </span>
+            <span>
+              Operating hours <strong>Hours per day</strong>
+            </span>
+          </div>
+        </aside>
+      </div>
+      <details className="import-help">
+        <summary>
+          <FileSpreadsheet size={18} aria-hidden="true" />
+          <span>Template columns &amp; format rules</span>
+          <ChevronDown size={17} aria-hidden="true" />
+        </summary>
+        <div className="import-help-content">
+          <div>
+            <h3>Column order</h3>
+            <ol className="import-column-list">
+              {historicColumns.map((name, index) => (
+                <li key={name}>
+                  <span>{String.fromCharCode(65 + index)}</span>
+                  {name}
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div className="import-rules">
+            <h3>Format rules</h3>
+            <p>
+              <strong>Meter matching.</strong> MPAN/MPRN must match an active meter code. Leave it blank only when one
+              meter matches the utility and unit. Solar PV is a separate fuel source.
+            </p>
+            <p>
+              <strong>Costs.</strong> Total Cost includes VAT. Supply VAT Cost as an amount, including zero when
+              applicable. Fill both cost columns or leave both blank. Currency comes from the site, or the organisation
+              when unset.
+            </p>
+            <p>
+              <strong>Conversion.</strong> The factor must match the meter’s configured kWh conversion for that month.
+            </p>
+            <p>
+              <strong>Population &amp; hours.</strong> Both are optional. Hours are per day (0–24). Values are retained
+              with the reading; site history and driver observations stay unchanged.
+            </p>
+            <p>
+              <strong>Excel cells.</strong> Formatting and saved formula results are supported. Correct error cells and
+              formulas without saved results. Other worksheets are ignored.
+            </p>
+          </div>
+        </div>
+      </details>
+      <div className="import-feedback">{m.feedback}</div>
       {preview && (
-        <>
-          <p role="status">
-            {preview.committed
-              ? `Imported ${preview.count} consumption readings. This workbook will not be imported twice.`
-              : `${preview.count} readings ready to import. No data has been saved yet.`}
-          </p>
+        <section className="panel import-preview">
+          <div className="import-card-heading">
+            <span className="import-icon">
+              <CheckCircle2 size={21} aria-hidden="true" />
+            </span>
+            <div>
+              <h3>{preview.committed ? 'Import complete' : 'Review your readings'}</h3>
+              <p role="status">
+                {preview.committed
+                  ? `Imported ${preview.count} consumption readings. This workbook will not be imported twice.`
+                  : `${preview.count} readings ready to import. No data has been saved yet.`}
+              </p>
+            </div>
+          </div>
           {!preview.committed && (
             <>
               <div className="analysis-table">
@@ -173,15 +268,18 @@ function HistoricImport({ orgId }: { orgId: string }) {
                   </tbody>
                 </table>
               </div>
-              <Button
-                disabled={m.pending}
-                onClick={() => void m.run(() => upload(true), 'Consumption import completed.')}
-              >
-                Import {preview.count} readings
-              </Button>
+              <div className="import-preview-footer">
+                <span className="muted">All rows are validated. Import when you’re ready.</span>
+                <Button
+                  disabled={m.pending}
+                  onClick={() => void m.run(() => upload(true), 'Consumption import completed.')}
+                >
+                  Import {preview.count} readings <ArrowRight size={16} aria-hidden="true" />
+                </Button>
+              </div>
             </>
           )}
-        </>
+        </section>
       )}
     </section>
   );
