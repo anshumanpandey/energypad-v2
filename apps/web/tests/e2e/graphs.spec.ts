@@ -15,7 +15,14 @@ test('graphs preserve recorded zero, missing coverage, filters and site isolatio
       sameSite: 'Lax',
     },
   ]);
-  const api = `/api/v1/organisations/${f.organisationId}`;
+  // Keep chart data out of the shared report workspace used by later specs.
+  const created = await page.request.post('/api/v1/organisations', {
+    headers: { origin: 'http://localhost:3101' },
+    data: { name: 'Isolated graph workspace', currency: 'GBP', timezone: 'UTC' },
+  });
+  expect(created.ok(), await created.text()).toBe(true);
+  const organisation = await created.json();
+  const api = `/api/v1/organisations/${organisation.id}`;
   async function post(path: string, data: unknown) {
     const response = await page.request.post(`${api}${path}`, { data, headers: { origin: 'http://localhost:3101' } });
     expect(response.ok(), await response.text()).toBe(true);
@@ -47,7 +54,7 @@ test('graphs preserve recorded zero, missing coverage, filters and site isolatio
     basis: 'LOCATION_BASED',
     requestKey: randomUUID(),
   });
-  const path = `/org/${f.organisationId}/graphs`;
+  const path = `/org/${organisation.id}/graphs`;
   await page.goto(`${path}?site=${site.id}&year=2020`);
   await expect(page.getByRole('link', { name: 'Graphs', exact: true })).toHaveAttribute('aria-current', 'page');
   const consumption = page.getByRole('region', { name: 'Consumption', exact: true });

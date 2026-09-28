@@ -294,7 +294,7 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await page.getByLabel('Effective date').fill('2026-01-01');
   await page.getByLabel('Population', { exact: true }).fill('12');
   await page.getByRole('button', { name: 'Add history entry' }).click();
-  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'This record already exists.' })).toBeVisible();
   await expect(page.getByLabel('Effective date')).toHaveValue('2026-01-01');
   await expect(page.getByLabel('Population', { exact: true })).toHaveValue('12');
   await page.getByLabel('Meter code').fill('MAIN');

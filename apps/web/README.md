@@ -49,6 +49,32 @@ npm audit --audit-level=high
 
 Integration and browser tests each create a uniquely named disposable database. They do not reset `DATABASE_URL`. By default they start their own temporary PostgreSQL cluster; in CI, `TEST_DATABASE_ADMIN_URL` points to a test-only PostgreSQL service with permission to create/drop databases. The browser harness starts a separate app at `localhost:3101`, uses `.next-e2e`, captures email locally and deletes its database when it exits. Browser output lives under `test-results` and `playwright-report` (gitignored). Failed browser traces can contain test sign-in tokens; retain them only in private CI artifacts.
 
+## Check tests before pushing
+
+Install the versioned Git hook once per clone (from `apps/web`):
+
+```sh
+npm run hooks:install
+```
+
+Every `git push` then runs the V2 operational Python tests, real Docker restore smoke test,
+formatting, lint, unit tests, database integration tests, normal browser tests, the separate
+write-freeze browser test, type checking, and production build. Any failure stops the push.
+Run the same checks manually with `npm run test:all`. Tests run sequentially and use disposable
+fixtures. Allow several minutes; keep port 3101 free and do not run another E2E suite concurrently.
+The legacy root application's Docker-resetting test command is never invoked.
+
+Prerequisites: installed web dependencies (`npm ci`), Node 22.12+, Python 3, Playwright Chromium
+(`npx playwright install --with-deps chromium`), and Docker accessible by your current user with
+`postgres:18-bookworm` installed (`docker pull postgres:18-bookworm`). Missing Docker access blocks
+the push rather than skipping the restore test. Git GUI launches can use an installed nvm Node 22
+when Node is missing from their PATH. The installer preserves any other configured hook setup.
+
+The separate workbook compatibility acceptance test needs the three private reference workbooks;
+set `WORKBOOK_FIXTURE_DIR` to their directory to include it. It is not a CI fixture suite and is
+not available from a fresh clone. Checks run against the current working tree; commit the intended
+changes before pushing. The hook is local to each clone, so CI remains the remote verification gate.
+
 ## Structure
 
 - `src/domain/policy.ts`: validated inputs, role matrix and internal entitlements.

@@ -1,9 +1,9 @@
 name: V2 CI and Lightsail deployment
 on:
   push:
-    paths: ['apps/web/**', '.github/workflows/v2-ci.yml', 'deploy/lightsail/**', 'scripts/migration/**']
+    paths: ['apps/web/**', '.github/workflows/v2-ci.yml', 'deploy/lightsail/**', 'scripts/migration/**', 'scripts/git/**', '.githooks/**']
   pull_request:
-    paths: ['apps/web/**', '.github/workflows/v2-ci.yml', 'deploy/lightsail/**', 'scripts/migration/**']
+    paths: ['apps/web/**', '.github/workflows/v2-ci.yml', 'deploy/lightsail/**', 'scripts/migration/**', 'scripts/git/**', '.githooks/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -46,6 +46,7 @@ jobs:
         run: for script in ../../deploy/lightsail/*.sh; do bash -n "$script"; done
       - name: Test operational safeguards
         run: |
+          python3 -B ../../scripts/git/test-pre-push.py
           python3 -B ../../scripts/migration/test-source-manifest.py
           python3 -B ../../scripts/migration/test-verify-manifest.py
           python3 -B ../../deploy/lightsail/test-diagnose.py
