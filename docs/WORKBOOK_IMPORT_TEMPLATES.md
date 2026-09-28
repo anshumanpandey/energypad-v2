@@ -36,12 +36,12 @@ Driver/pattern batch results retain the version, chosen worksheet, mapping/defau
 
 FP15 remains retained across Sprints 2, 3 and 5:
 
-| Destination | Delivery / remaining acceptance |
-| --- | --- |
-| Sites | Sprint 2 existing staging/mapping pipeline |
-| Consumption, drivers, setpoints | Sprint 3 named-sheet selection and reusable v1 mappings; normal preview/atomic per-batch commit; records outside the selected batch unchanged |
-| Emissions / versioned factors | Sprint 5 implemented for versioned factors: named-sheet mapping, versioned templates, scoped preview, atomic commit, correction lineage and retry tests |
-| Targets / monitoring | Sprint 5 implemented for absolute annual carbon targets: named-sheet mapping, versioned templates, unit/period validation, scoped preview, atomic commit, corrections and retry tests; additional target metrics remain open |
+| Destination                     | Delivery / remaining acceptance                                                                                                                                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sites                           | Sprint 2 existing staging/mapping pipeline                                                                                                                                                                                   |
+| Consumption, drivers, setpoints | Sprint 3 named-sheet selection and reusable v1 mappings; normal preview/atomic per-batch commit; records outside the selected batch unchanged                                                                                |
+| Emissions / versioned factors   | Sprint 5 implemented for versioned factors: named-sheet mapping, versioned templates, scoped preview, atomic commit, correction lineage and retry tests                                                                      |
+| Targets / monitoring            | Sprint 5 implemented for absolute annual carbon targets: named-sheet mapping, versioned templates, unit/period validation, scoped preview, atomic commit, corrections and retry tests; additional target metrics remain open |
 
 The Sprint 5 factor and absolute-carbon-target import contracts are now implemented as described below. Calculated outputs, additional target metrics and undocumented legacy worksheet semantics are not implicitly covered. The source workbook's actual sheet/header semantics still require reviewed mappings. Full production source reconciliation remains a separate gate.
 
@@ -53,24 +53,24 @@ Emission destinations: fuel, geography, basis, unit, factor, source, firstDay, l
 
 Target destinations: meterCode, year, geography, basis, unit, name, limitKgCO2e, source, supersedesId, reason. Unit must be `kgCO2e`; meterCode must belong to the selected site. Targets are absolute annual carbon limits. Correction IDs reference existing destination versions and require reasons; leave both correction fields blank for new records. A template carries column names/defaults, not authorization to import or correct a record.
 
-Use exact destination headers without a template, or map exact source header names through a template. Optional correction headers may be omitted from a workbook and from its mapping. Downloaded starter mappings enumerate all supported fields; remove optional mappings if those headers are absent. Preview displays row values, scope, selected/excluded sheets and errors. Formatted cells and cached formula results are supported by the shared reader; recalculate and save first. Changing a file or mapping clears the displayed preview/confirmation. Calculated emissions and target assessments remain reproducible application results, not editable imported outputs.
+Use exact destination headers without a template, or map exact source header names through a template. Optional correction headers may be omitted from a workbook and from its mapping. Downloaded starter mappings enumerate all supported fields; remove optional mappings if those headers are absent. Preview displays row values, scope, selected/excluded sheets and errors. The shared reader converts formatting, rich text, hyperlink labels and cached formula results into plain values. Excel error cells are unsupported. Failed cells across all sheets are collected into a frontend error list with sheet, address and reason, with 50 errors per page and no truncation. Error cells are never replaced with plain text, zero or blanks, and a failed workbook is not staged. Credential columns remain excluded. Mapped numeric/date fields also require valid values during preview. Numeric precision is preserved rather than rounded to displayed formatting. Formulas without saved results require recalculation and saving first; the importer cannot extract a missing result. Changing a file or mapping clears the displayed preview/confirmation. Calculated emissions and target assessments remain reproducible application results, not editable imported outputs.
 
 ## Monthly consumption targets and utility monitoring
 
 Use Targets & Monitoring (or the Carbon import destination selector) with v1 kind `monthlyTargets` or `monitoring`.
 
-| Field | Meaning |
-| --- | --- |
-| month | YYYY-MM; YYYY-ALL repeats the same value in twelve previewed months |
-| fuel | Registered V2 fuel category, e.g. ELECTRICITY |
-| unit | kWh, MWh, m3, litre or kg |
-| energy | Non-negative monthly source-unit quantity; up to nine decimals |
-| carbon | kgCO2e; optional for consumption targets, required for monitoring; zero is valid |
-| conversionFactor | Explicit kWh/source-unit factor: 1 for kWh, 1000 for MWh; source required for physical units |
-| source | Target/monitoring and conversion provenance/reference |
-| energyUseCodes | Monitoring only: semicolon-separated same-site/same-fuel end-use codes |
-| externalLegacyId | Optional source record reference |
-| supersedesId, reason | Both needed to correct one current saved month; ALL cannot correct multiple IDs |
+| Field                | Meaning                                                                                      |
+| -------------------- | -------------------------------------------------------------------------------------------- |
+| month                | YYYY-MM; YYYY-ALL repeats the same value in twelve previewed months                          |
+| fuel                 | Registered V2 fuel category, e.g. ELECTRICITY                                                |
+| unit                 | kWh, MWh, m3, litre or kg                                                                    |
+| energy               | Non-negative monthly source-unit quantity; up to nine decimals                               |
+| carbon               | kgCO2e; optional for consumption targets, required for monitoring; zero is valid             |
+| conversionFactor     | Explicit kWh/source-unit factor: 1 for kWh, 1000 for MWh; source required for physical units |
+| source               | Target/monitoring and conversion provenance/reference                                        |
+| energyUseCodes       | Monitoring only: semicolon-separated same-site/same-fuel end-use codes                       |
+| externalLegacyId     | Optional source record reference                                                             |
+| supersedesId, reason | Both needed to correct one current saved month; ALL cannot correct multiple IDs              |
 
 Named-sheet mapping/defaults and saved templates work as for other imports. Source rows are capped at 120 (at most 1,440 expanded destination months). Previewed end-use mappings cannot silently change at commit. All months commit atomically; no all-sheet transaction is inferred. Different target source-unit representations are retained separately and are not added together in benchmarking.
 

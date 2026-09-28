@@ -1,3 +1,4 @@
+import { WorkbookCellError } from '../src/domain/workbook-errors';
 import { expect, it } from 'vitest';
 import ExcelJS from 'exceljs';
 import { readWorkbook } from '../src/server/workbook';
@@ -58,18 +59,17 @@ it.each([false, true])('normalizes formatted dates and formula date results (190
   expect(sheet.rows[0].cells).toEqual(['2020-02', '2020-02-29', '2020-02']);
 });
 
-it.each([
-  { value: { formula: '1+1' }, message: 'formula has no saved result' },
-  { value: { formula: '1/0', result: { error: '#DIV/0!' } }, message: 'cell contains an Excel error' },
-  { value: { error: '#N/A' }, message: 'cell contains an Excel error' },
-] as const)('rejects unusable cells with a location: $message', async ({ value, message }) => {
-  await expect(
-    read((s) => {
-      s.addRow(['Quantity']);
-      s.getCell('A2').value = value;
-    }),
-  ).rejects.toThrow(`Import!A2: ${message}`);
-});
+it.each([{ value: { formula: '1+1' }, message: 'formula has no saved result' }] as const)(
+  'rejects unusable cells with a location: $message',
+  async ({ value, message }) => {
+    await expect(
+      read((s) => {
+        s.addRow(['Quantity']);
+        s.getCell('A2').value = value;
+      }),
+    ).rejects.toThrow(`Import!A2: ${message}`);
+  },
+);
 
 it('validates formula headers, excludes credential columns before reading their cells and retains size limits', async () => {
   await expect(
@@ -89,4 +89,34 @@ it('validates formula headers, excludes credential columns before reading their 
       s.addRow([{ formula: '"long"', result: 'x'.repeat(501) }]);
     }),
   ).rejects.toThrow('at most 500 characters');
+});
+
+it('collects every failed cell across sheets without returning partial imports', async () => {
+  try {
+    await read((s, book) => {
+      s.addRow(['Code', 'Name', 'Area', 'Unused', 'Password']);
+      s.addRow(['SITE-1', 'Test site', 12.345, { formula: '1/0', result: { error: '#DIV/0!' } }, { error: '#N/A' }]);
+      s.addRow(['SITE-2', 'Other site', { error: '#N/A' }, { error: '#VALUE!' }]);
+      s.addRow([{ formula: 'A3', result: { error: '#REF!' } }, 'x'.repeat(501)]);
+      const other = book.addWorksheet('Other');
+      other.addRow([{ error: '#REF!' }, 'Value']);
+      other.addRow(['valid', { formula: '1+1' }]);
+    });
+    expect.fail('An invalid workbook must not be returned');
+  } catch (error) {
+    expect(error).toBeInstanceOf(WorkbookCellError);
+    const issues = (error as WorkbookCellError).cellErrors;
+    expect(issues.map((item) => `${item.sheet}!${item.cell}`)).toEqual([
+      'Import!D2',
+      'Import!C3',
+      'Import!D3',
+      'Import!A4',
+      'Import!B4',
+      'Other!A1',
+      'Other!B2',
+    ]);
+    expect(issues[0]).toMatchObject({ row: 2, column: 4, message: expect.stringContaining('Excel error cell') });
+    expect(JSON.stringify(issues)).not.toContain('SITE-1');
+    expect(JSON.stringify(issues)).not.toContain('x'.repeat(501));
+  }
 });

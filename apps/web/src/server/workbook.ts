@@ -1,3 +1,4 @@
+import { WorkbookCellError, type WorkbookCellIssue } from '../domain/workbook-errors';
 import ExcelJS from 'exceljs';
 import { unzipSync, zipSync } from 'fflate';
 import { DomainError } from '../domain/policy';
@@ -19,7 +20,7 @@ function importCell(cell: ExcelJS.Cell): string {
     value = result;
   }
   if (value && typeof value === 'object' && 'error' in value)
-    throw reject(`${location}: cell contains an Excel error. Fix the error and save the workbook before importing.`);
+    throw reject('Excel error cell. Fix the error and save the workbook before importing.');
   let text: string;
   if (value === null || value === undefined) text = '';
   else if (value instanceof Date) {
@@ -82,25 +83,43 @@ export async function readWorkbook(bytes: Uint8Array): Promise<ImportSheet[]> {
   }
   if (!book.worksheets.length || book.worksheets.length > 10) throw reject('Use 1–10 sheets.');
   const sheets: ImportSheet[] = [];
+  const cellErrors: WorkbookCellIssue[] = [];
+  function plainCell(cell: ExcelJS.Cell, limit: number) {
+    try {
+      const value = importCell(cell);
+      if (value.length > limit) throw reject(`Use at most ${limit} characters.`);
+      return value;
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      const prefix = `${cell.worksheet.name}!${cell.address}: `;
+      cellErrors.push({
+        sheet: cell.worksheet.name,
+        cell: cell.address,
+        row: Number(cell.row),
+        column: Number(cell.col),
+        message: error.message.startsWith(prefix) ? error.message.slice(prefix.length) : error.message,
+      });
+      return '';
+    }
+  }
   for (const sheet of book.worksheets) {
     if (sheet.columnCount > 50 || sheet.rowCount > 2001)
       throw reject('Use at most 50 columns and 2,000 rows per sheet.');
-    const headers = Array.from({ length: sheet.columnCount }, (_, i) => importCell(sheet.getRow(1).getCell(i + 1)));
-    if (headers.some((h) => h.length > 100)) throw reject('Column headings must be at most 100 characters.');
+    const headers = Array.from({ length: sheet.columnCount }, (_, i) => plainCell(sheet.getRow(1).getCell(i + 1), 100));
     const allowed = headers.map((h, i) => (credentialHeader(h) ? -1 : i)).filter((i) => i >= 0);
     const rows: ImportSheet['rows'] = [];
     sheet.eachRow((row, number) => {
       if (number === 1) return;
       const cells = allowed.map((i) => {
         const cell = row.getCell(i + 1);
-        const value = importCell(cell);
-        if (value.length > 500) throw reject('Each cell must contain at most 500 characters.');
+        const value = plainCell(cell, 500);
         return value;
       });
       if (cells.some(Boolean)) rows.push({ row: number, cells });
     });
     sheets.push({ name: sheet.name, headers: allowed.map((i) => headers[i]), rows });
   }
+  if (cellErrors.length) throw new WorkbookCellError(cellErrors);
   return sheets;
 }
 export function previewRows(sheets: ImportSheet[], mapping: ImportMapping) {

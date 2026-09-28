@@ -11,13 +11,14 @@ const energy = new EnergyImportService(db, mailer, 'http://localhost:3100');
 async function workbook(months: string[], badUnit = false) {
   const book = new ExcelJS.Workbook();
   const sheet = book.addWorksheet('Readings');
-  sheet.addRow(['month', 'quantity', 'unit', 'password']);
+  sheet.addRow(['month', 'quantity', 'unit', 'password', 'unused calculation']);
   for (const month of months) {
     const row = sheet.addRow([
       new Date(`${month}-01T00:00:00Z`),
       { formula: '50*2', result: 100 },
       badUnit ? 'm3' : 'kWh',
       'synthetic-secret',
+      { formula: '1+1', result: 2 },
     ]);
     row.getCell(1).numFmt = 'mmm-yy';
     row.getCell(2).numFmt = '#,##0.00';

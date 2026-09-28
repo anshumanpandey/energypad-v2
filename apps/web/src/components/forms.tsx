@@ -1,4 +1,5 @@
 'use client';
+import type { WorkbookCellIssue } from '@/domain/workbook-errors';
 import { useState, useSyncExternalStore, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Plus, Check, Send, X, Save } from 'lucide-react';
@@ -6,6 +7,17 @@ import { Button } from './ui/button';
 import { OrganisationFields } from './organisation-fields';
 import { canManageRole, roleLabels, roles, type Role } from '@/domain/policy';
 
+export class ImportRequestError extends Error {
+  constructor(
+    message: string,
+    public cellErrors: WorkbookCellIssue[] = [],
+  ) {
+    super(message);
+  }
+}
+export function responseError(data: { title?: string; cellErrors?: WorkbookCellIssue[] }) {
+  return new ImportRequestError(data.title ?? 'Something went wrong. Please try again.', data.cellErrors ?? []);
+}
 export async function request(path: string, method: string, body?: unknown) {
   const response = await fetch(`/api/v1/${path}`, {
     method,
@@ -13,7 +25,7 @@ export async function request(path: string, method: string, body?: unknown) {
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.title ?? 'Something went wrong. Please try again.');
+  if (!response.ok) throw responseError(data);
   return data;
 }
 const subscribe = () => () => {};
@@ -27,11 +39,15 @@ export function useMutation() {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [cellErrors, setCellErrors] = useState<WorkbookCellIssue[]>([]);
+  const [errorPage, setErrorPage] = useState(0);
   const router = useRouter();
   async function run(work: () => Promise<void>, success = 'Changes saved.') {
     if (pending) return;
     setPending(true);
     setError('');
+    setCellErrors([]);
+    setErrorPage(0);
     setMessage('');
     try {
       await work();
@@ -39,6 +55,7 @@ export function useMutation() {
       router.refresh();
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Something went wrong.');
+      if (error instanceof ImportRequestError) setCellErrors(error.cellErrors);
     } finally {
       setPending(false);
     }
@@ -55,6 +72,36 @@ export function useMutation() {
         <div className="notice error" role="alert">
           {error}
         </div>
+      )}
+      {cellErrors.length > 0 && (
+        <section className="panel" aria-label="Failed import cells">
+          <h3>Failed cells ({cellErrors.length})</h3>
+          <ol start={errorPage * 50 + 1}>
+            {cellErrors.slice(errorPage * 50, errorPage * 50 + 50).map((issue, index) => (
+              <li key={index}>
+                <strong>
+                  {issue.sheet}!{issue.cell}
+                </strong>
+                : {issue.message}
+              </li>
+            ))}
+          </ol>
+          <p>
+            Showing {errorPage * 50 + 1}–{Math.min(errorPage * 50 + 50, cellErrors.length)} of {cellErrors.length}
+          </p>
+          <div className="form-actions">
+            {errorPage > 0 && (
+              <Button type="button" onClick={() => setErrorPage(errorPage - 1)}>
+                Previous errors
+              </Button>
+            )}
+            {(errorPage + 1) * 50 < cellErrors.length && (
+              <Button type="button" onClick={() => setErrorPage(errorPage + 1)}>
+                Next errors
+              </Button>
+            )}
+          </div>
+        </section>
       )}
       {message && (
         <div className="notice success" role="status">

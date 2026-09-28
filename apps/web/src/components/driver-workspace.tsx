@@ -1,4 +1,5 @@
 'use client';
+import { responseError } from './forms';
 import {
   WorkbookTemplateFields,
   workbookSelection,
@@ -233,7 +234,7 @@ export function DriverWorkspace({
                   body: file,
                 });
                 const result = await response.json();
-                if (!response.ok) throw new Error(result.title ?? 'Upload failed.');
+                if (!response.ok) throw responseError(result);
                 setBatch(result);
                 form.reset();
               }, 'Driver workbook checked. Review the preview before importing.');

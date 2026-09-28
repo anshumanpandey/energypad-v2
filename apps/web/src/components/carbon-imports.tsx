@@ -1,4 +1,5 @@
 'use client';
+import { responseError } from './forms';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
@@ -92,7 +93,7 @@ export function CarbonImports({
               body: file,
             });
             const result = await response.json();
-            if (!response.ok) throw new Error(result.title ?? 'Unable to preview workbook.');
+            if (!response.ok) throw responseError(result);
             setBatch(result);
           }, 'Workbook preview ready for review.');
         }}

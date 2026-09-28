@@ -1,4 +1,5 @@
 'use client';
+import { responseError } from './forms';
 import { applyEnergyTemplate, saveEnergyTemplate, parseTemplateText } from '@/domain/workbook-template';
 import { downloadMapping } from './workbook-template';
 import { useState } from 'react';
@@ -106,7 +107,7 @@ export function EnergyImportWorkspace({
                 body: file,
               });
               const result = await response.json();
-              if (!response.ok) throw new Error(result.title ?? 'Upload failed.');
+              if (!response.ok) throw responseError(result);
               open(result);
             }, 'Workbook staged. Map its columns to continue.');
           }}
@@ -303,8 +304,8 @@ export function EnergyImportWorkspace({
                       <Button variant="secondary" type="button" onClick={downloadErrors}>
                         Download consumption errors
                       </Button>
-                      <ul>
-                        {batch.result.issues.slice(0, 20).map((issue, index) => (
+                      <ul className="import-row-errors" aria-label="Row validation errors">
+                        {batch.result.issues.map((issue, index) => (
                           <li key={index}>
                             Row {issue.row} · {issue.field}: {issue.message}
                           </li>

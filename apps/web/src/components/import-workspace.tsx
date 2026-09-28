@@ -1,4 +1,5 @@
 'use client';
+import { responseError } from './forms';
 import { useState, type FormEvent } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
@@ -103,7 +104,7 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
                 body: file,
               });
               const data = await response.json();
-              if (!response.ok) throw new Error(data.title);
+              if (!response.ok) throw responseError(data);
               select(data);
             }, 'Workbook ready. Choose a sheet and map its columns.');
           }}
@@ -219,8 +220,8 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
                       <Button variant="secondary" onClick={download}>
                         Download row errors
                       </Button>
-                      <ul>
-                        {batch.result.issues.slice(0, 50).map((i, n) => (
+                      <ul className="import-row-errors" aria-label="Row validation errors">
+                        {batch.result.issues.map((i, n) => (
                           <li key={n}>
                             Row {i.row}, {i.field}: {i.message}
                           </li>

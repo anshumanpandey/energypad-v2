@@ -1,3 +1,4 @@
+import { WorkbookCellError } from '../domain/workbook-errors';
 import { randomUUID } from 'node:crypto';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
@@ -76,6 +77,7 @@ export async function api(request: Request, work: (actor: Actor) => Promise<unkn
         status: issue.status,
         code: issue.code,
         correlationId,
+        ...(error instanceof WorkbookCellError ? { cellErrors: error.cellErrors } : {}),
       },
       {
         status: issue.status,

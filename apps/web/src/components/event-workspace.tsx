@@ -1,4 +1,5 @@
 'use client';
+import { responseError } from './forms';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
@@ -243,7 +244,7 @@ export function EventWorkspace({
               void m.run(async () => {
                 const response = await fetch(`/api/v1/${base}/imports`, { method: 'POST', body: file });
                 const result = await response.json();
-                if (!response.ok) throw new Error(result.title ?? 'Upload failed.');
+                if (!response.ok) throw responseError(result);
                 setBatch(result);
                 form.reset();
               }, 'Event workbook checked. Review every row before importing.');

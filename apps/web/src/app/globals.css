@@ -2159,3 +2159,10 @@ small {
   margin-bottom: 1.5rem;
   scroll-margin-top: 1rem;
 }
+
+.import-row-errors {
+  max-height: 28rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  padding-left: 1.5rem;
+}

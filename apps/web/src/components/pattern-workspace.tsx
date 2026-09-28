@@ -1,4 +1,5 @@
 'use client';
+import { responseError } from './forms';
 import {
   WorkbookTemplateFields,
   workbookSelection,
@@ -283,7 +284,7 @@ export function PatternWorkspace({
                   body: file,
                 });
                 const result = await response.json();
-                if (!response.ok) throw new Error(result.title ?? 'Upload failed.');
+                if (!response.ok) throw responseError(result);
                 setBatch(result);
                 form.reset();
               }, 'Pattern workbook checked. Review every row before importing.');
