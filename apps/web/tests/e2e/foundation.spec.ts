@@ -52,7 +52,9 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   await expect(page.getByRole('heading', { name: 'Create your organisation' })).toBeVisible();
   await page.getByLabel('Organisation name').fill('Northstar Properties');
   await page.getByRole('button', { name: 'Create workspace' }).click();
-  await expect(page.getByRole('heading', { name: 'A better view starts here.' })).toBeVisible();
+  await expect(page).toHaveURL(/\/org\/[^/]+\/overview$/);
+  await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Add your first site', exact: true })).toBeVisible();
   const orgId = page.url().split('/')[4],
     orgPath = `/org/${orgId}`,
     apiPath = `/api/v1/organisations/${orgId}`;
@@ -82,8 +84,20 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
     await expect(page).toHaveURL(new RegExp(`${orgPath}/${section}$`));
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
     await expect(navigation.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
-    if (section !== 'energy') await expect(page.getByText('Coming in a later release', { exact: true })).toBeVisible();
-    else await expect(page.getByRole('heading', { name: 'Add a site to get started' })).toBeVisible();
+    if (section === 'energy')
+      await expect(page.getByRole('heading', { name: 'Add a site to get started' })).toBeVisible();
+    if (section === 'carbon') {
+      await expect(page.getByRole('heading', { name: 'Calculate annual emissions', exact: true })).toBeVisible();
+      await expect(page.getByRole('combobox', { name: 'Carbon site', exact: true })).toHaveValue('');
+    }
+    if (section === 'opportunities')
+      await expect(page.getByText('Add a site and save an analysis run to begin.', { exact: true })).toBeVisible();
+    if (section === 'ai-analyst')
+      await expect(
+        page.getByText('Add a site and save an analysis result to preview evidence.', { exact: true }),
+      ).toBeVisible();
+    if (section === 'billing')
+      await expect(page.getByRole('heading', { name: 'Plan entitlements', exact: true })).toBeVisible();
   }
   await navigation.getByRole('link', { name: 'Energy', exact: true }).click();
   await page.getByRole('link', { name: 'Advanced Analysis', exact: true }).click();
@@ -116,13 +130,15 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   // Streamed not-found pages may have HTTP 200; verify the access-denied UI.
   await member.goto(`${orgPath}/billing`);
   await expect(member.getByRole('heading', { name: 'We couldn’t find that page.' })).toBeVisible();
-  await expect(member.getByRole('heading', { name: 'Manage your subscription' })).toHaveCount(0);
+  await expect(member.getByRole('heading', { name: 'Billing', exact: true })).toHaveCount(0);
   await member.goto(invitation);
   await expect(member.getByRole('heading', { name: 'Invitation unavailable' })).toBeVisible();
   await member.goto('/onboarding');
   await member.getByLabel('Organisation name').fill('Another organisation');
   await member.getByRole('button', { name: 'Create workspace' }).click();
-  await expect(member.getByRole('heading', { name: 'A better view starts here.' })).toBeVisible();
+  await expect(member).toHaveURL(/\/org\/[^/]+\/overview$/);
+  await expect(member.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
+  await expect(member.getByRole('heading', { name: 'Add your first site', exact: true })).toBeVisible();
   const otherId = member.url().split('/')[4];
   expect((await page.request.get(`/api/v1/organisations/${otherId}`)).status()).toBe(404);
   await member.getByLabel('Switch organisation').selectOption(orgId);
