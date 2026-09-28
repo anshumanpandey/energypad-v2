@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
   LayoutDashboard,
+  ChartColumn,
   Building2,
   Users,
   Settings,
@@ -45,6 +46,7 @@ export function WorkspaceShell({
   const section = pathname.split('/')[3] ?? 'overview';
   const nav = [
     { key: 'overview', name: 'Overview', icon: LayoutDashboard },
+    { key: 'graphs', name: 'Graphs', icon: ChartColumn },
     { key: 'sites', name: 'Sites', icon: Building2 },
     { key: 'energy', name: 'Energy', icon: Zap },
     { key: 'targets', name: 'Targets & Monitoring', icon: Layers3 },

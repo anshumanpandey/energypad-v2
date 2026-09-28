@@ -1,3 +1,4 @@
+import { Graphs } from '@/components/graphs';
 import { ImportRetention } from '@/components/import-retention';
 import { BillingOverview } from '@/components/billing-overview';
 import { auditFilters, auditHistoryUrl } from '@/domain/audit-history';
@@ -55,6 +56,9 @@ export default async function WorkspacePage({
   } = await accessible(() => foundation.getWorkspace(actor, organisationId));
   const base = `/org/${org.id}`;
   const manage = can(membership.role, 'members:manage');
+
+  if (section === 'graphs')
+    return <Graphs actor={actor} organisationId={org.id} sites={sites} query={await searchParams} />;
 
   if (section === 'ai-analyst')
     return (

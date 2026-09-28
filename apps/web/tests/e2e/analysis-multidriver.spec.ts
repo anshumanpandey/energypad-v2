@@ -97,6 +97,13 @@ test('saved two/three-driver weather models preserve coefficients, provenance an
     await expect(row.getByRole('cell').nth(0)).toHaveText(String(scenario.actual));
     await expect(row.getByRole('cell').nth(1)).toHaveText(String(scenario.expected));
     expect(await (await page.request.get(`${api}/runs/${runId}`)).json()).toEqual(saved);
+    await page.goto(`/org/${f.orgId}/graphs?site=${f.siteId}&year=2020&run=${runId}`);
+    const wasteChart = page.getByRole('region', { name: 'Waste & savings', exact: true });
+    await wasteChart.locator('summary').click();
+    const september = wasteChart.getByRole('row').filter({ hasText: '2020-09' });
+    expect(Number(await september.getByRole('cell').first().innerText())).toBeCloseTo(5, 9);
+    await expect(september).toContainText(`actual ${scenario.actual} kWh`);
+    await expect(page.getByText('It is experimental', { exact: false })).toBeVisible();
   }
   expect(errors).toEqual([]);
 });

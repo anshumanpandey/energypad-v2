@@ -2166,3 +2166,105 @@ small {
   overflow-wrap: anywhere;
   padding-left: 1.5rem;
 }
+
+.graphs-page {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.graphs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.metric-chart {
+  --chart-color: #a95c20;
+  min-width: 0;
+  border-top: 3px solid var(--chart-color);
+}
+.metric-chart-carbon {
+  --chart-color: #23745d;
+}
+.metric-chart-waste {
+  --chart-color: #356f9a;
+}
+.metric-chart-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.metric-chart-heading h2 {
+  margin: 6px 0 12px;
+}
+.metric-chart-coverage {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #f1f4f0;
+  color: #435348;
+}
+.metric-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 16px 0;
+}
+.metric-chart-grid line {
+  stroke: #dfe5de;
+  stroke-dasharray: 3 4;
+}
+.metric-chart-grid text,
+.metric-chart-month,
+.metric-chart-missing {
+  fill: #586259;
+  font-size: 12px;
+}
+.metric-chart-zero {
+  stroke: #758277;
+}
+.metric-chart-bar {
+  fill: var(--chart-color);
+}
+.metric-chart-point.is-negative .metric-chart-bar {
+  fill: #ac4436;
+}
+.metric-chart-point:focus .metric-chart-bar,
+.metric-chart-point:hover .metric-chart-bar {
+  stroke: #202f29;
+  stroke-width: 2;
+}
+.metric-chart-detail {
+  min-height: 3em;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.metric-chart summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 12px 0;
+}
+.graph-source-links {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+@media (max-width: 1000px) {
+  .graphs-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.metric-chart-grid text,
+.metric-chart-month,
+.metric-chart-missing {
+  font-size: 18px;
+}
+@media (max-width: 600px) {
+  .metric-chart-grid text,
+  .metric-chart-month,
+  .metric-chart-missing {
+    font-size: 24px;
+  }
+}
