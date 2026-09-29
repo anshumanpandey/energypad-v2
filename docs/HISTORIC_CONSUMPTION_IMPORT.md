@@ -16,9 +16,10 @@ Validation errors retain the original workbook’s cell addresses in both layout
 - Site Code identifies an existing active site in the current organisation.
 - Year is 1900–2199; Month is Jan–Dec or 1–12.
 - In the older layout only, MPAN/MPRN (F), including its header and contents,
-  is ignored. In the new layout, F is imported as Consumption. Exactly one active meter must
-  match the site, utility and source unit. Missing or ambiguous matches are rejected;
-  the importer never creates meters or sites automatically.
+  is ignored. In the new layout, F is imported as Consumption. An active meter is matched by site, utility and source unit. If no meter matches,
+  the preview proposes a default meter and confirmation creates it atomically with
+  the readings. Multiple matches are rejected. Sites must already exist. Preview
+  rolls back provisional meters, conversions and audit entries; it saves no domain data.
 - Utility types include Grid Electricity, Solar PV, Gas, Diesel, Oil, LPG,
   Biomass, Heat and Other. Diesel maps to OIL; Solar PV maps to the independent SOLAR_PV fuel.
   Solar PV rows only match Solar PV meters, never grid-electricity meters.
@@ -32,8 +33,9 @@ Validation errors retain the original workbook’s cell addresses in both layout
   retained without deriving a rounded VAT percentage. Currency comes from the
   site, falling back to the organisation.
 - Conversion Factor is kWh per source unit. It must agree with the configured
-  conversion covering that month (1 for kWh, 1000 for MWh). Other units require a
-  sourced meter conversion first. A mismatched factor is reported at column K.
+  conversion covering that month (1 for kWh, 1000 for MWh). Existing meters using other units require a sourced conversion first. For new
+  default meters, the workbook factor is stored as a sourced conversion for each
+  imported month. Mismatches are reported in the actual Conversion Factor column.
 - Population and Operating Hours are optional. Operating Hours means **hours per
   day**, between 0 and 24. Both are retained in each reading's source provenance;
   no weekly hours, monthly driver observations, or site history are inferred.

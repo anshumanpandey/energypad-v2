@@ -89,11 +89,11 @@ try {
   });
   await assert.rejects(
     service.process(actor, org.id, await workbook([row('London', 'Feb')])),
-    /Exactly one active meter/,
+    /Multiple active meters/,
   );
   const explicit = row('London', 'Feb');
   explicit[5] = 'Gas';
-  await assert.rejects(service.process(actor, org.id, await workbook([explicit])), /Exactly one active meter/);
+  await assert.rejects(service.process(actor, org.id, await workbook([explicit])), /Multiple active meters/);
   const grid = await siteService.saveMeter(actor, org.id, sites[0].id, {
     code: 'GRID',
     name: 'Grid electricity',
@@ -102,13 +102,15 @@ try {
   });
   const solarRow = row('London', 'Mar');
   solarRow[4] = 'Solar PV';
-  await assert.rejects(service.process(actor, org.id, await workbook([solarRow])), /Exactly one active meter/);
+  const solarProposal = await service.process(actor, org.id, await workbook([solarRow]));
+  assert.equal(solarProposal.defaultMeters.length, 1);
   const solar = await siteService.saveMeter(actor, org.id, sites[0].id, {
     code: 'PV',
     name: 'Solar PV',
     fuel: 'SOLAR_PV',
     unit: 'kWh',
   });
+  await assert.rejects(service.process(actor, org.id, await workbook([solarRow]), solarProposal.signature), /changed/);
   const gridRow = row('London', 'Mar');
   gridRow[4] = 'Grid Electricity';
   const solarBytes = await workbook([solarRow, gridRow]);
@@ -135,6 +137,42 @@ try {
     (e) =>
       e instanceof WorkbookCellError && e.cellErrors.some((i) => i.cell === 'J2' && i.message.includes('Expected 1')),
   );
+  const autoSite = await siteService.createSite(actor, org.id, { code: 'AUTO', name: 'Auto meter site' });
+  const autoRows = [row('AUTO'), row('AUTO', 'Feb')];
+  const autoBytes = await workbook(autoRows);
+  const beforeAudit = await db.auditEvent.count();
+  const autoPreview = await service.process(actor, org.id, autoBytes);
+  assert.equal(autoPreview.defaultMeters.length, 1);
+  assert.equal(await db.meter.count({ where: { siteId: autoSite.id } }), 0);
+  assert.equal(await db.auditEvent.count(), beforeAudit);
+  assert.equal((await service.process(actor, org.id, autoBytes)).signature, autoPreview.signature);
+  await assert.rejects(service.process(actor, org.id, autoBytes, 'stale'), /changed/);
+  assert.equal(await db.meter.count({ where: { siteId: autoSite.id } }), 0);
+  await Promise.all([
+    service.process(actor, org.id, autoBytes, autoPreview.signature),
+    service.process(actor, org.id, autoBytes, autoPreview.signature),
+  ]);
+  assert.equal(await db.meter.count({ where: { siteId: autoSite.id } }), 1);
+  assert.equal(await db.consumptionRecord.count({ where: { siteId: autoSite.id } }), 2);
+  const oil = row('AUTO', 'Mar');
+  oil[4] = 'Diesel';
+  oil[7] = 'l';
+  oil[10] = 2;
+  const oilBytes = await workbook([oil]);
+  const oilPreview = await service.process(actor, org.id, oilBytes);
+  assert.equal(oilPreview.defaultMeters.length, 1);
+  assert.equal(await db.unitConversionVersion.count({ where: { siteId: autoSite.id } }), 0);
+  await service.process(actor, org.id, oilBytes, oilPreview.signature);
+  const oilRecord = await db.consumptionRecord.findFirstOrThrow({ where: { siteId: autoSite.id, fuel: 'OIL' } });
+  assert.equal(oilRecord.normalizedKwh.toString(), '90');
+  assert.ok(oilRecord.conversionId);
+  const invalidSolar = row('AUTO', 'Mar');
+  invalidSolar[4] = 'Solar PV';
+  invalidSolar[6] = 'bad';
+  const validSolar = row('AUTO', 'Apr');
+  validSolar[4] = 'Solar PV';
+  await assert.rejects(service.process(actor, org.id, await workbook([validSolar, invalidSolar])));
+  assert.equal(await db.meter.count({ where: { siteId: autoSite.id } }), 2);
   console.log(
     'Historic consumption integration passed: costs, source hours, isolation, atomicity, stale previews, duplicates, factors and ambiguous meters.',
   );

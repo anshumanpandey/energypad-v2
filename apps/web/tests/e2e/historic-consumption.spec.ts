@@ -25,8 +25,7 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
     timezone: 'UTC',
   });
   const base = `organisations/${org.id}`;
-  const site = await post(`${base}/sites`, { code: 'London', name: 'London' });
-  await post(`${base}/sites/${site.id}/meters`, { code: 'GAS', name: 'Gas meter', fuel: 'GAS', unit: 'kWh' });
+  await post(`${base}/sites`, { code: 'London', name: 'London' });
   await page.goto(`/org/${org.id}/data`);
   await page.getByRole('tab', { name: 'Consumption', exact: true }).click();
   const book = new ExcelJS.Workbook();
@@ -50,6 +49,7 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   sheet.getCell('M2').value = 9;
   await upload();
   await expect(errors).toHaveCount(0);
+  await expect(page.getByText('1 default meter(s) will be created on import')).toBeVisible();
   await expect(page.getByRole('cell', { name: '540 GBP' })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('consumption-import-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });

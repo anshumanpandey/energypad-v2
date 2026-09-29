@@ -9,6 +9,7 @@ type Preview = {
   committed: boolean;
   count: number;
   signature: string;
+  defaultMeters: { id: string; site: string; name: string; unit: string }[];
   records: {
     row: number;
     site: string;
@@ -164,7 +165,7 @@ function HistoricImport({ orgId }: { orgId: string }) {
             <li>
               <CheckCircle2 size={17} aria-hidden="true" />
               <span>
-                Match existing <strong>sites and meters</strong>.
+                Match an existing <strong>site</strong>; missing meters are created on import.
               </span>
             </li>
           </ul>
@@ -203,8 +204,10 @@ function HistoricImport({ orgId }: { orgId: string }) {
               also supported: MPAN/MPRN in F is ignored and Consumption stays in G.
             </p>
             <p>
-              <strong>Meter matching.</strong> Exactly one active meter must match the site, utility and unit. Solar PV
-              is a separate fuel source.
+              <strong>Meter matching.</strong> An existing meter is selected by site, utility and unit. If none matches,
+              a default meter is created when you confirm the import. Multiple matches still require resolution. Solar
+              PV is a separate fuel source. New meters using physical units use the workbook’s conversion factor for
+              each imported month.
             </p>
             <p>
               <strong>Costs.</strong> Total Cost includes VAT. Supply VAT Cost as an amount, including zero when
@@ -241,6 +244,20 @@ function HistoricImport({ orgId }: { orgId: string }) {
               </p>
             </div>
           </div>
+          {!preview.committed && preview.defaultMeters?.length > 0 && (
+            <div className="notice">
+              <div>
+                <strong>{preview.defaultMeters.length} default meter(s) will be created on import</strong>
+                <ul>
+                  {preview.defaultMeters.map((meter) => (
+                    <li key={meter.id}>
+                      {meter.site}: {meter.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
           {!preview.committed && (
             <>
               <div className="analysis-table">
