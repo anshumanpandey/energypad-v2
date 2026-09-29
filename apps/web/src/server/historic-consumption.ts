@@ -4,7 +4,13 @@ import { EnergyService } from './energy';
 import type { Actor } from './foundation';
 import { DomainError } from '../domain/policy';
 import { WorkbookCellError, type WorkbookCellIssue } from '../domain/workbook-errors';
-import { historicSheet, historicIssue, parseHistoric } from '../domain/historic-consumption';
+import {
+  historicSheet,
+  historicIssue,
+  parseHistoric,
+  historicIgnoredColumns,
+  historicSourceColumn,
+} from '../domain/historic-consumption';
 import { readWorkbook } from './workbook';
 const hash = (v: unknown) => createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const json = (v: unknown) => JSON.parse(JSON.stringify(v));
@@ -19,8 +25,13 @@ export class HistoricConsumptionService extends EnergyService {
     });
     if (bucket.count > 40) throw new DomainError('RATE_LIMIT', 'Please wait before uploading more workbooks.', 429);
     const errors: WorkbookCellIssue[] = [];
-    const sheets = await readWorkbook(bytes, { sheetName: historicSheet, cellErrors: errors });
+    const sheets = await readWorkbook(bytes, {
+      sheetName: historicSheet,
+      cellErrors: errors,
+      ignoredColumns: historicIgnoredColumns,
+    });
     const parsed = parseHistoric(sheets[0], errors);
+    const column = (value: number) => historicSourceColumn(sheets[0]?.headers ?? [], value);
     const fingerprint = `historic-v1:${hash(sheets)}`;
     return this.db.$transaction(
       async (tx) => {
@@ -52,15 +63,13 @@ export class HistoricConsumptionService extends EnergyService {
             );
             continue;
           }
-          const meters = site.meters.filter(
-            (m) => m.fuel === row.fuel && m.unit === row.unit && (!row.meterCode || m.code === row.meterCode),
-          );
+          const meters = site.meters.filter((m) => m.fuel === row.fuel && m.unit === row.unit);
           if (meters.length !== 1) {
             errors.push(
               historicIssue(
                 row.row,
-                6,
-                'MPAN/MPRN must match an active meter code with this utility and unit. Blank is allowed only when exactly one meter matches.',
+                5,
+                'Exactly one active meter must match this site, utility and unit. Resolve missing or ambiguous meters before importing.',
               ),
             );
             continue;
@@ -86,7 +95,7 @@ export class HistoricConsumptionService extends EnergyService {
               errors.push(
                 historicIssue(
                   row.row,
-                  11,
+                  column(11),
                   `Expected ${data.conversionFactor} kWh per ${row.unit}, matching the meter conversion for this month.`,
                 ),
               );
@@ -116,7 +125,7 @@ export class HistoricConsumptionService extends EnergyService {
             });
           } catch (error) {
             if (!(error instanceof DomainError)) throw error;
-            errors.push(historicIssue(row.row, error.code === 'CONVERSION_REQUIRED' ? 11 : 3, error.message));
+            errors.push(historicIssue(row.row, error.code === 'CONVERSION_REQUIRED' ? column(11) : 3, error.message));
           }
         }
         if (errors.length) throw new WorkbookCellError(errors.sort((a, b) => a.row - b.row || a.column - b.column));

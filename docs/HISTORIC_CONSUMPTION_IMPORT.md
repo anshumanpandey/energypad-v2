@@ -4,16 +4,21 @@ Owners and admins can use **Data → Consumption** to validate and import the
 `Historic Consumption` worksheet. Other sheets are ignored. No data is saved until
 the preview is confirmed; all rows commit in one transaction.
 
-The fixed columns A–M are Site Code, Year, Month, Energy Use, Utility Type,
-MPAN/MPRN, Consumption, Fuel Unit, Total Cost, VAT Cost, Conversion Factor,
-Population, Operating Hours. Header comparison ignores casing and surrounding
-spaces, but never reorders columns.
+The current template uses columns A–L: Site Code, Year, Month, Energy Use,
+Utility Type, Consumption, Fuel Unit, Total Cost, VAT Cost, Conversion Factor,
+Population, Operating Hours. Consumption starts in F.
+
+Older A–M workbooks remain supported, with an ignored MPAN/MPRN column at F and
+Consumption in G. The importer detects the layout from the headers. Header
+comparison ignores casing and surrounding spaces but never reorders columns.
+Validation errors retain the original workbook’s cell addresses in both layouts.
 
 - Site Code identifies an existing active site in the current organisation.
 - Year is 1900–2199; Month is Jan–Dec or 1–12.
-- MPAN/MPRN matches an existing meter code. Blank is accepted only when exactly
-  one active meter matches the utility and source unit. The importer never creates
-  meters or sites automatically.
+- In the older layout only, MPAN/MPRN (F), including its header and contents,
+  is ignored. In the new layout, F is imported as Consumption. Exactly one active meter must
+  match the site, utility and source unit. Missing or ambiguous matches are rejected;
+  the importer never creates meters or sites automatically.
 - Utility types include Grid Electricity, Solar PV, Gas, Diesel, Oil, LPG,
   Biomass, Heat and Other. Diesel maps to OIL; Solar PV maps to the independent SOLAR_PV fuel.
   Solar PV rows only match Solar PV meters, never grid-electricity meters.

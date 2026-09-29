@@ -17,6 +17,12 @@ export const historicColumns = [
   'Population',
   'Operating Hours',
 ];
+export const historicCompactColumns = historicColumns.filter((_, i) => i !== 5);
+export const isCompactHistoric = (headers: readonly string[]) =>
+  headers[5]?.trim().toLowerCase() === 'consumption' || headers[6]?.trim().toLowerCase() === 'fuel unit';
+export const historicIgnoredColumns = (headers: readonly string[]) => (isCompactHistoric(headers) ? [] : [6]);
+export const historicSourceColumn = (headers: readonly string[], column: number) =>
+  isCompactHistoric(headers) && column > 6 ? column - 1 : column;
 const fuels: Record<string, string> = {
   electricity: 'ELECTRICITY',
   'grid electricity': 'ELECTRICITY',
@@ -56,7 +62,6 @@ export function parseHistoric(sheet: ImportSheet | undefined, errors: WorkbookCe
     endUse: string;
     utility: string;
     fuel: string;
-    meterCode: string;
     quantity: string;
     unit: string;
     grossCost: string | null;
@@ -65,7 +70,16 @@ export function parseHistoric(sheet: ImportSheet | undefined, errors: WorkbookCe
     population: string | null;
     dailyHours: string | null;
   }[] = [];
+  const sourceHeaders = sheet?.headers ?? [];
+  const compact = isCompactHistoric(sourceHeaders);
+  if (sheet && compact)
+    sheet = {
+      ...sheet,
+      headers: [...sheet.headers.slice(0, 5), '', ...sheet.headers.slice(5)],
+      rows: sheet.rows.map((r) => ({ ...r, cells: [...r.cells.slice(0, 5), '', ...r.cells.slice(5)] })),
+    };
   const add = (row: number, col: number, message: string) => {
+    col = historicSourceColumn(sourceHeaders, col);
     if (!errors.some((e) => e.row === row && e.column === col)) errors.push(historicIssue(row, col, message));
   };
   if (!sheet) {
@@ -73,25 +87,28 @@ export function parseHistoric(sheet: ImportSheet | undefined, errors: WorkbookCe
     return { records, errors };
   }
   historicColumns.forEach((header, i) => {
+    if (i === 5) return; // Column F is a positional placeholder, never imported.
     if (sheet.headers[i]?.trim().toLowerCase() !== header.toLowerCase())
-      add(1, i + 1, `Expected ${header} in column ${String.fromCharCode(65 + i)}.`);
+      add(
+        1,
+        i + 1,
+        `Expected ${header} in column ${String.fromCharCode(64 + historicSourceColumn(sourceHeaders, i + 1))}.`,
+      );
   });
   sheet.headers.slice(13).forEach((header, i) => {
     if (header || sheet.rows.some((r) => r.cells[i + 13]))
-      add(1, i + 14, 'Unexpected column; use exactly the 13 template columns.');
+      add(1, i + 14, `Unexpected column; use exactly the ${compact ? 12 : 13} template columns.`);
   });
   for (const { row, cells } of sheet.rows) {
     cells.slice(13).forEach((value, i) => {
-      if (value) add(row, i + 14, 'Unexpected value outside the 13 template columns.');
+      if (value) add(row, i + 14, `Unexpected value outside the ${compact ? 12 : 13} template columns.`);
     });
     const v = Array.from({ length: 13 }, (_, i) => cells[i]?.trim() ?? '');
     for (const [i, max] of [
       [0, 50],
       [3, 100],
-      [5, 80],
     ])
-      if ((!v[i] && i !== 5) || v[i].length > max)
-        add(row, i + 1, `Use ${i === 5 ? 'an optional' : 'a required'} text value of at most ${max} characters.`);
+      if (!v[i] || v[i].length > max) add(row, i + 1, `Use a required text value of at most ${max} characters.`);
     if (!/^(19|20|21)\d{2}$/.test(v[1])) add(row, 2, 'Use a four-digit year from 1900 to 2199.');
     const month = /^(0?[1-9]|1[0-2])$/.test(v[2]) ? Number(v[2]) : months.indexOf(v[2].toLowerCase()) + 1;
     if (!month) add(row, 3, 'Use Jan–Dec or a month number from 1 to 12.');
@@ -119,7 +136,6 @@ export function parseHistoric(sheet: ImportSheet | undefined, errors: WorkbookCe
         endUse: v[3],
         utility: v[4],
         fuel,
-        meterCode: v[5],
         quantity: v[6],
         unit,
         grossCost: v[8] || null,

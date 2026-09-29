@@ -37,7 +37,11 @@ function importCell(cell: ExcelJS.Cell): string {
 }
 export async function readWorkbook(
   bytes: Uint8Array,
-  options?: { sheetName: string; cellErrors: WorkbookCellIssue[] },
+  options?: {
+    sheetName: string;
+    cellErrors: WorkbookCellIssue[];
+    ignoredColumns?: readonly number[] | ((headers: readonly string[]) => readonly number[]);
+  },
 ): Promise<ImportSheet[]> {
   if (bytes.length > 2_000_000) throw reject('Upload an XLSX file smaller than 2 MB.');
   let total = 0,
@@ -87,7 +91,9 @@ export async function readWorkbook(
   if (!book.worksheets.length || book.worksheets.length > 10) throw reject('Use 1–10 sheets.');
   const sheets: ImportSheet[] = [];
   const cellErrors: WorkbookCellIssue[] = options?.cellErrors ?? [];
+  let ignoredColumns: readonly number[] = [];
   function plainCell(cell: ExcelJS.Cell, limit: number) {
+    if (ignoredColumns.includes(Number(cell.col))) return '';
     try {
       const value = importCell(cell);
       if (value.length > limit) throw reject(`Use at most ${limit} characters.`);
@@ -109,6 +115,18 @@ export async function readWorkbook(
     if (options && sheet.name !== options.sheetName) continue;
     if (sheet.columnCount > 50 || sheet.rowCount > 2001)
       throw reject('Use at most 50 columns and 2,000 rows per sheet.');
+    ignoredColumns =
+      typeof options?.ignoredColumns === 'function'
+        ? options.ignoredColumns(
+            Array.from({ length: sheet.columnCount }, (_, i) => {
+              try {
+                return importCell(sheet.getRow(1).getCell(i + 1));
+              } catch {
+                return '';
+              }
+            }),
+          )
+        : (options?.ignoredColumns ?? []);
     const headers = Array.from({ length: sheet.columnCount }, (_, i) => plainCell(sheet.getRow(1).getCell(i + 1), 100));
     const allowed = headers.map((h, i) => (!options && credentialHeader(h) ? -1 : i)).filter((i) => i >= 0);
     const rows: ImportSheet['rows'] = [];

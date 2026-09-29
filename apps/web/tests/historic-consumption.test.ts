@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import ExcelJS from 'exceljs';
-import { historicColumns, historicSheet, parseHistoric } from '../src/domain/historic-consumption';
+import {
+  historicColumns,
+  historicSheet,
+  parseHistoric,
+  historicCompactColumns,
+  historicIgnoredColumns,
+} from '../src/domain/historic-consumption';
 import { readWorkbook } from '../src/server/workbook';
 import type { WorkbookCellIssue } from '../src/domain/workbook-errors';
 const cells = ['London', '2023', 'Jan', 'Heating', 'Gas', '', '45', 'kWh', '600', '60', '1', '120', '9'];
@@ -10,6 +16,67 @@ const sheet = (rows = [cells]) => ({
   rows: rows.map((cells, i) => ({ row: i + 2, cells })),
 });
 describe('fixed historic consumption template', () => {
+  it('supports the 12-column layout and reports physical Excel addresses', async () => {
+    const book = new ExcelJS.Workbook();
+    const ws = book.addWorksheet(historicSheet);
+    ws.addRow(historicCompactColumns);
+    ws.addRow(cells.filter((_, i) => i !== 5));
+    ws.getCell('F2').value = { formula: '9*5', result: 45 };
+    async function parse() {
+      const errors: WorkbookCellIssue[] = [];
+      const [sheet] = await readWorkbook(new Uint8Array(await book.xlsx.writeBuffer()), {
+        sheetName: historicSheet,
+        cellErrors: errors,
+        ignoredColumns: historicIgnoredColumns,
+      });
+      return parseHistoric(sheet, errors);
+    }
+    expect((await parse()).records[0]).toMatchObject({
+      quantity: '45',
+      unit: 'kWh',
+      grossCost: '600',
+      vatCost: '60',
+      factor: '1',
+      population: '120',
+      dailyHours: '9',
+    });
+    ws.getCell('F2').value = { error: '#VALUE!' };
+    ws.getCell('I2').value = 700;
+    ws.getCell('L2').value = 25;
+    const bad = await parse();
+    expect(bad.errors.map((e) => e.cell)).toEqual(['F2', 'I2', 'L2']);
+    expect(bad.errors.filter((e) => e.cell === 'F2')).toHaveLength(1);
+    ws.getCell('F1').value = 'Wrong header';
+    expect((await parse()).errors.find((e) => e.cell === 'F1')?.message).toContain('Expected Consumption in column F');
+  });
+
+  it('ignores column F header, errors and uncached formulas without shifting consumption', async () => {
+    const book = new ExcelJS.Workbook();
+    const ws = book.addWorksheet(historicSheet);
+    ws.addRow(historicColumns);
+    ws.getCell('F1').value = { error: '#VALUE!' };
+    ws.addRow(cells);
+    ws.getCell('F2').value = { error: '#DIV/0!' };
+    ws.addRow(cells);
+    ws.getCell('F3').value = { formula: '1+1' };
+    const errors: WorkbookCellIssue[] = [];
+    const sheets = await readWorkbook(new Uint8Array(await book.xlsx.writeBuffer()), {
+      sheetName: historicSheet,
+      cellErrors: errors,
+      ignoredColumns: [6],
+    });
+    const result = parseHistoric(sheets[0], errors);
+    expect(result.errors).toEqual([]);
+    expect(result.records).toHaveLength(2);
+    expect(result.records[0]).toMatchObject({ quantity: '45', unit: 'kWh', grossCost: '600' });
+    expect(sheets[0].rows[0].cells[5]).toBe('');
+    expect(result.records[0]).not.toHaveProperty('meterCode');
+    const arbitrary = sheet();
+    arbitrary.headers[5] = 'Anything';
+    arbitrary.rows[0].cells = [...cells];
+    arbitrary.rows[0].cells[5] = 'x'.repeat(1000);
+    expect(parseHistoric(arbitrary).errors).toEqual([]);
+  });
   it('keeps Solar PV separate from grid electricity regardless of casing', () => {
     for (const label of ['Solar PV', 'solar pv', 'SOLAR PV']) {
       const row = [...cells];

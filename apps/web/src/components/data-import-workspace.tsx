@@ -4,7 +4,7 @@ import { Building2, ChartColumn, FileSpreadsheet, Upload, CheckCircle2, ChevronD
 import { ImportWorkspace } from './import-workspace';
 import { Button } from './ui/button';
 import { responseError, useMutation } from './forms';
-import { historicColumns } from '@/domain/historic-consumption';
+import { historicCompactColumns } from '@/domain/historic-consumption';
 type Preview = {
   committed: boolean;
   count: number;
@@ -158,7 +158,7 @@ function HistoricImport({ orgId }: { orgId: string }) {
             <li>
               <CheckCircle2 size={17} aria-hidden="true" />
               <span>
-                Keep the template’s <strong>A–M column order</strong>.
+                Keep the template’s <strong>A–L column order</strong>.
               </span>
             </li>
             <li>
@@ -188,7 +188,7 @@ function HistoricImport({ orgId }: { orgId: string }) {
           <div>
             <h3>Column order</h3>
             <ol className="import-column-list">
-              {historicColumns.map((name, index) => (
+              {historicCompactColumns.map((name, index) => (
                 <li key={name}>
                   <span>{String.fromCharCode(65 + index)}</span>
                   {name}
@@ -199,8 +199,12 @@ function HistoricImport({ orgId }: { orgId: string }) {
           <div className="import-rules">
             <h3>Format rules</h3>
             <p>
-              <strong>Meter matching.</strong> MPAN/MPRN must match an active meter code. Leave it blank only when one
-              meter matches the utility and unit. Solar PV is a separate fuel source.
+              <strong>Layout.</strong> The new template has 12 columns, with Consumption in F. Older 13-column files are
+              also supported: MPAN/MPRN in F is ignored and Consumption stays in G.
+            </p>
+            <p>
+              <strong>Meter matching.</strong> Exactly one active meter must match the site, utility and unit. Solar PV
+              is a separate fuel source.
             </p>
             <p>
               <strong>Costs.</strong> Total Cost includes VAT. Supply VAT Cost as an amount, including zero when

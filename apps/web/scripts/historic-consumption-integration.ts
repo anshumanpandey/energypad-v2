@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import ExcelJS from 'exceljs';
 import { actorFor } from '../src/server/foundation';
 import { HistoricConsumptionService } from '../src/server/historic-consumption';
-import { historicColumns, historicSheet } from '../src/domain/historic-consumption';
+import { historicColumns, historicSheet, historicCompactColumns } from '../src/domain/historic-consumption';
 import { WorkbookCellError } from '../src/domain/workbook-errors';
 import { testDatabase } from './test-database';
 const { db, cleanup } = await testDatabase();
@@ -45,7 +45,9 @@ try {
     sites.push(site);
     await siteService.saveMeter(actor, org.id, site.id, { code: 'Gas', name: 'Gas meter', fuel: 'GAS', unit: 'kWh' });
   }
-  const bytes = await workbook([row('London'), row('Leeds')]);
+  const ignored: unknown[] = row('London');
+  ignored[5] = { error: '#VALUE!' };
+  const bytes = await workbook([ignored, row('Leeds')]);
   await assert.rejects(service.process(stranger, org.id, bytes));
   const preview = await service.process(actor, org.id, bytes);
   assert.equal(preview.count, 2);
@@ -85,10 +87,13 @@ try {
     fuel: 'GAS',
     unit: 'kWh',
   });
-  await assert.rejects(service.process(actor, org.id, await workbook([row('London', 'Feb')])), /exactly one meter/);
+  await assert.rejects(
+    service.process(actor, org.id, await workbook([row('London', 'Feb')])),
+    /Exactly one active meter/,
+  );
   const explicit = row('London', 'Feb');
   explicit[5] = 'Gas';
-  assert.equal((await service.process(actor, org.id, await workbook([explicit]))).count, 1);
+  await assert.rejects(service.process(actor, org.id, await workbook([explicit])), /Exactly one active meter/);
   const grid = await siteService.saveMeter(actor, org.id, sites[0].id, {
     code: 'GRID',
     name: 'Grid electricity',
@@ -97,7 +102,7 @@ try {
   });
   const solarRow = row('London', 'Mar');
   solarRow[4] = 'Solar PV';
-  await assert.rejects(service.process(actor, org.id, await workbook([solarRow])), /exactly one meter/);
+  await assert.rejects(service.process(actor, org.id, await workbook([solarRow])), /Exactly one active meter/);
   const solar = await siteService.saveMeter(actor, org.id, sites[0].id, {
     code: 'PV',
     name: 'Solar PV',
@@ -112,6 +117,24 @@ try {
   await service.process(actor, org.id, solarBytes, solarPreview.signature);
   assert.equal((await db.consumptionRecord.findFirstOrThrow({ where: { meterId: solar.id } })).fuel, 'SOLAR_PV');
   assert.equal((await db.consumptionRecord.findFirstOrThrow({ where: { meterId: grid.id } })).fuel, 'ELECTRICITY');
+  const compactBook = new ExcelJS.Workbook();
+  const compactSheet = compactBook.addWorksheet(historicSheet);
+  compactSheet.addRow(historicCompactColumns);
+  compactSheet.addRow(row('Leeds', 'Apr').filter((_, i) => i !== 5));
+  const compactBytes = new Uint8Array(await compactBook.xlsx.writeBuffer());
+  const compactPreview = await service.process(actor, org.id, compactBytes);
+  assert.equal(compactPreview.count, 1);
+  assert.equal(compactPreview.records[0].quantity, '45');
+  assert.equal(compactPreview.records[0].grossCost, '600');
+  await service.process(actor, org.id, compactBytes, compactPreview.signature);
+  assert.equal((await service.process(actor, org.id, compactBytes)).committed, true);
+  compactSheet.getCell('J2').value = 2;
+  compactSheet.getCell('C2').value = 'May';
+  await assert.rejects(
+    service.process(actor, org.id, new Uint8Array(await compactBook.xlsx.writeBuffer())),
+    (e) =>
+      e instanceof WorkbookCellError && e.cellErrors.some((i) => i.cell === 'J2' && i.message.includes('Expected 1')),
+  );
   console.log(
     'Historic consumption integration passed: costs, source hours, isolation, atomicity, stale previews, duplicates, factors and ambiguous meters.',
   );
