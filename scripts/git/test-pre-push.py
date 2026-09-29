@@ -18,7 +18,7 @@ class PrePushTests(unittest.TestCase):
         for folder in ['scripts/git', '.githooks', 'apps/web/node_modules',
                        'deploy/lightsail', 'scripts/migration', 'bin']:
             (self.repo / folder).mkdir(parents=True)
-        for path in ['scripts/git/test-before-push.sh', 'scripts/git/install-hooks.sh', '.githooks/pre-push']:
+        for path in ['scripts/git/test-before-push.sh', 'scripts/git/install-hooks.sh', '.githooks/pre-push', '.githooks/pre-commit', 'scripts/git/check-before-commit.sh']:
             shutil.copy2(SOURCE / path, self.repo / path)
         (self.repo / 'deploy/lightsail/test-restore-docker.sh').write_text('exit 0\n')
         (self.repo / 'deploy/lightsail/test-fixture.py').touch()
@@ -50,6 +50,20 @@ class PrePushTests(unittest.TestCase):
                     'npm run test:integration', 'npm run test:e2e', 'npm run test:e2e:freeze',
                     'npm run typecheck', 'npm run build']
         self.assertEqual([c for c in commands if c.startswith('npm ')], expected)
+
+    def test_pre_commit_runs_format_and_lint_and_blocks_failures(self):
+        result = self.run_command('bash', 'scripts/git/check-before-commit.sh')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual([c for c in self.log.read_text().splitlines() if c.startswith('npm ')],
+                         ['npm run format:check', 'npm run lint'])
+        for stage in ['npm run format:check', 'npm run lint']:
+            self.log.write_text('')
+            self.env['FAIL_STAGE'] = stage
+            result = self.run_command('bash', 'scripts/git/check-before-commit.sh')
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('commit cancelled', result.stderr)
+            if stage == 'npm run format:check':
+                self.assertNotIn('npm run lint', self.log.read_text())
 
     def test_failure_stops_later_suites(self):
         self.env['FAIL_STAGE'] = 'npm test'

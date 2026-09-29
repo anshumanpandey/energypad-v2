@@ -243,3 +243,14 @@ The Carbon page now imports emission factors and annual carbon targets from XLSX
 The Portfolio page can check carbon coverage for a chosen year/geography/basis using `GET /api/v1/organisations/:org/portfolios/:portfolio/carbon`. It aggregates active sites/meters only when all included site summaries are complete, using a consistent database snapshot and exact decimals. Site managers see only their assigned active sites and an explicit subset label. Missing meters, incomplete runs or outdated inputs withhold the aggregate. The carbon integration and browser suites cover portfolio summaries.
 
 Carbon summary results include **Download carbon CSV** and **Download carbon JSON**. The Reports page links to site and portfolio report flows. Authorized GET endpoints append `/report` to a site's or portfolio's `/carbon` path, with year/geography/basis and `format=csv|json`. Version 1 reports recheck coverage, retain incomplete totals and include only referenced, authorized run snapshots. CSV record types separate report/site/meter totals from historical monthly evidence; do not sum all row types together. JSON retains exact decimal strings. Downloads are private attachments and do not create a server-side report archive.
+
+### Commit checks
+
+Run `npm run hooks:install` once per checkout to enable both Git hooks. Every
+commit checks the entire `apps/web` working tree with Prettier (`format:check`)
+and ESLint (`lint`). Either failure blocks the commit. The hook does not format,
+stage, or modify files, and requires Node.js 22.12+ and installed dependencies.
+Unstaged changes are checked too. Run `npm run format` to fix formatting, review
+and stage your fixes, then commit again. The existing pre-push test suite remains
+enabled. To run the commit checks manually, use
+`bash ../../scripts/git/check-before-commit.sh` from `apps/web`.
