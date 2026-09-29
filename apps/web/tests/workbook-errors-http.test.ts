@@ -17,3 +17,17 @@ it('returns all cell errors as structured no-store validation feedback', async (
   expect(response.headers.get('cache-control')).toBe('no-store');
   expect((await response.json()).cellErrors).toEqual(cellErrors);
 });
+
+import { meterInput } from '../src/domain/sites';
+it('identifies all invalid meter fields in the API response', async () => {
+  const response = await api(new Request('http://localhost/api/meter'), async () =>
+    meterInput.parse({ code: '', name: 'x', fuel: 'GAS', unit: 'kWh' }),
+  );
+  const result = await response.json();
+  expect(response.status).toBe(400);
+  expect(result.title).toContain('name: Meter name must contain at least 2 characters.');
+  expect(result.fieldErrors).toEqual({
+    code: 'Meter code is required.',
+    name: 'Meter name must contain at least 2 characters.',
+  });
+});

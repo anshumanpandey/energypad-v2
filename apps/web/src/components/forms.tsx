@@ -11,12 +11,21 @@ export class ImportRequestError extends Error {
   constructor(
     message: string,
     public cellErrors: WorkbookCellIssue[] = [],
+    public fieldErrors: Record<string, string> = {},
   ) {
     super(message);
   }
 }
-export function responseError(data: { title?: string; cellErrors?: WorkbookCellIssue[] }) {
-  return new ImportRequestError(data.title ?? 'Something went wrong. Please try again.', data.cellErrors ?? []);
+export function responseError(data: {
+  title?: string;
+  cellErrors?: WorkbookCellIssue[];
+  fieldErrors?: Record<string, string>;
+}) {
+  return new ImportRequestError(
+    data.title ?? 'Something went wrong. Please try again.',
+    data.cellErrors ?? [],
+    data.fieldErrors ?? {},
+  );
 }
 export async function request(path: string, method: string, body?: unknown) {
   const response = await fetch(`/api/v1/${path}`, {
@@ -41,12 +50,14 @@ export function useMutation() {
   const [error, setError] = useState('');
   const [cellErrors, setCellErrors] = useState<WorkbookCellIssue[]>([]);
   const [errorPage, setErrorPage] = useState(0);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const router = useRouter();
   async function run(work: () => Promise<void>, success = 'Changes saved.') {
     if (pending) return;
     setPending(true);
     setError('');
     setCellErrors([]);
+    setFieldErrors({});
     setErrorPage(0);
     setMessage('');
     try {
@@ -55,7 +66,10 @@ export function useMutation() {
       router.refresh();
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Something went wrong.');
-      if (error instanceof ImportRequestError) setCellErrors(error.cellErrors);
+      if (error instanceof ImportRequestError) {
+        setCellErrors(error.cellErrors);
+        setFieldErrors(error.fieldErrors);
+      }
     } finally {
       setPending(false);
     }
@@ -111,7 +125,7 @@ export function useMutation() {
       )}
     </>
   );
-  return { pending, disabled: pending || !hydrated, run, feedback, router };
+  return { pending, disabled: pending || !hydrated, run, feedback, router, fieldErrors };
 }
 export function OrganisationForm({
   organisation,

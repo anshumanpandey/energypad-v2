@@ -1,6 +1,6 @@
 'use client';
 import { fuels } from '@/domain/fuels';
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, useId, useRef, type FormEvent } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
 type Portfolio = { id: string; name: string };
@@ -283,6 +283,24 @@ function MeterForm({
   reload: () => Promise<void>;
 }) {
   const m = useMutation();
+  const formRef = useRef<HTMLFormElement>(null);
+  const errorId = useId();
+  useEffect(() => {
+    const name = Object.keys(m.fieldErrors)[0];
+    const field = name && formRef.current?.elements.namedItem(name);
+    if (field instanceof HTMLElement) field.focus();
+  }, [m.fieldErrors]);
+  const validation = (name: string) => ({
+    'aria-invalid': !!m.fieldErrors[name],
+    'aria-describedby': m.fieldErrors[name] ? `${errorId}-${name}` : undefined,
+  });
+  const fieldError = (name: string) =>
+    m.fieldErrors[name] ? (
+      <span className="field-error" id={`${errorId}-${name}`}>
+        {m.fieldErrors[name]}
+      </span>
+    ) : null;
+
   if (!manage)
     return (
       <p>
@@ -291,6 +309,8 @@ function MeterForm({
     );
   return (
     <form
+      ref={formRef}
+      noValidate
       className="panel stack-form"
       onSubmit={(e) => {
         const form = e.currentTarget;
@@ -307,29 +327,33 @@ function MeterForm({
       <div className="form-grid">
         <label>
           Meter code
-          <input name="code" required defaultValue={meter?.code} maxLength={80} />
+          <input {...validation('code')} name="code" required defaultValue={meter?.code} maxLength={80} />
+          {fieldError('code')}
         </label>
         <label>
           Meter name
-          <input name="name" required defaultValue={meter?.name} maxLength={160} />
+          <input {...validation('name')} name="name" required defaultValue={meter?.name} maxLength={160} />
+          {fieldError('name')}
         </label>
         <label>
           Fuel
-          <select name="fuel" defaultValue={meter?.fuel}>
+          <select {...validation('fuel')} name="fuel" defaultValue={meter?.fuel}>
             {fuels.map((f) => (
               <option key={f} value={f}>
                 {f === 'SOLAR_PV' ? 'Solar PV' : f}
               </option>
             ))}
           </select>
+          {fieldError('fuel')}
         </label>
         <label>
           Unit
-          <select name="unit" defaultValue={meter?.unit}>
+          <select {...validation('unit')} name="unit" defaultValue={meter?.unit}>
             {['kWh', 'MWh', 'm3', 'litre', 'kg'].map((u) => (
               <option key={u}>{u}</option>
             ))}
           </select>
+          {fieldError('unit')}
         </label>
       </div>
       <div className="button-row">

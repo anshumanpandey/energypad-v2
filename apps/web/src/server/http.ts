@@ -65,7 +65,10 @@ export async function api(request: Request, work: (actor: Actor) => Promise<unkn
           ? new DomainError('WRITE_FREEZE', freezeMessage, 503)
           : new DomainError('INTERNAL_ERROR', 'Something went wrong. Please try again.', 500);
     if (error instanceof ZodError)
-      issue = new DomainError('VALIDATION_ERROR', error.issues[0]?.message ?? 'Check your input.');
+      issue = new DomainError(
+        'VALIDATION_ERROR',
+        error.issues.map((i) => `${i.path.join('.') || 'Input'}: ${i.message}`).join(' '),
+      );
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')
       issue = new DomainError('CONFLICT', 'This record already exists.', 409);
     if (issue.code === 'WRITE_FREEZE') Object.assign(headers, { 'Retry-After': '60' });
@@ -77,6 +80,19 @@ export async function api(request: Request, work: (actor: Actor) => Promise<unkn
         status: issue.status,
         code: issue.code,
         correlationId,
+        ...(error instanceof ZodError
+          ? {
+              fieldErrors: Object.fromEntries(
+                [...new Set(error.issues.map((i) => i.path.join('.')))].filter(Boolean).map((path) => [
+                  path,
+                  error.issues
+                    .filter((i) => i.path.join('.') === path)
+                    .map((i) => i.message)
+                    .join(' '),
+                ]),
+              ),
+            }
+          : {}),
         ...(error instanceof WorkbookCellError ? { cellErrors: error.cellErrors } : {}),
       },
       {

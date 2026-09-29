@@ -2631,3 +2631,15 @@ small {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+input[aria-invalid='true'],
+select[aria-invalid='true'] {
+  border-color: #b42318;
+  background: #fff7f6;
+  box-shadow: 0 0 0 1px #b42318;
+}
+.field-error {
+  color: #a32119;
+  font-size: 12px;
+  font-weight: 400;
+}

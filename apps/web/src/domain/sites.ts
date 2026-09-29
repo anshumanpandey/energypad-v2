@@ -55,8 +55,12 @@ export const siteInput = z
 export const portfolioInput = z.object({ name: z.string().trim().min(2).max(160) }).strict();
 export const meterInput = z
   .object({
-    code: z.string().trim().min(1).max(80),
-    name: z.string().trim().min(2).max(160),
+    code: z.string().trim().min(1, 'Meter code is required.').max(80, 'Meter code must be at most 80 characters.'),
+    name: z
+      .string()
+      .trim()
+      .min(2, 'Meter name must contain at least 2 characters.')
+      .max(160, 'Meter name must be at most 160 characters.'),
     fuel: z.enum(fuels),
     unit: z.enum(['kWh', 'MWh', 'm3', 'litre', 'kg']),
   })
