@@ -15,6 +15,12 @@ import { EnergyImportService } from './energy-import';
 export const energyImportService = new EnergyImportService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
 
 import { DriverService } from './drivers';
+import { DriverClassificationService } from './driver-classifications';
+export const driverClassificationService = new DriverClassificationService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+);
 export const driverService = new DriverService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
 
 import { WeatherJobs } from './weather/jobs';

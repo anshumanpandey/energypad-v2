@@ -24,7 +24,8 @@ test('Emissions tab reports every failed cell and imports valid site factors onc
   const site = await post(`${base}/sites`, { code: 'site_mit', name: 'MIT site' });
   await page.goto(`/org/${org.id}/data`);
   await page.getByRole('tab', { name: 'Sites', exact: true }).focus();
-  await page.keyboard.press('End');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('tab', { name: 'Emissions', exact: true })).toBeFocused();
   const book = new ExcelJS.Workbook();
   const sheet = book.addWorksheet('Emissions');

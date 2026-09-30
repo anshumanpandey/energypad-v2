@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Building2, ChartColumn, FileSpreadsheet, Upload, CheckCircle2, ChevronDown, ArrowRight } from 'lucide-react';
 import { ImportWorkspace } from './import-workspace';
 import { HistoricEmissionsImport } from './historic-emissions-import';
+import { DriverClassificationImport } from './driver-classification-import';
 import { Button } from './ui/button';
 import { responseError, useMutation } from './forms';
 import { historicCompactColumns } from '@/domain/historic-consumption';
@@ -24,7 +25,7 @@ type Preview = {
 };
 export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches: { id: string; status: string }[] }) {
   const [tab, setTab] = useState('sites');
-  const tabs = ['sites', 'consumption', 'emissions'];
+  const tabs = ['sites', 'consumption', 'emissions', 'drivers'];
   return (
     <>
       <div className="data-import-tabs" role="tablist" aria-label="Data imports">
@@ -41,7 +42,7 @@ export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches
                 event.key === 'Home'
                   ? 'sites'
                   : event.key === 'End'
-                    ? 'emissions'
+                    ? tabs[tabs.length - 1]
                     : tabs[(tabs.indexOf(value) + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
               setTab(next);
               document.getElementById(`tab-${next}`)?.focus();
@@ -56,7 +57,13 @@ export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches
             ) : (
               <ChartColumn size={18} aria-hidden="true" />
             )}
-            {value === 'sites' ? 'Sites' : value === 'consumption' ? 'Consumption' : 'Emissions'}
+            {value === 'sites'
+              ? 'Sites'
+              : value === 'consumption'
+                ? 'Consumption'
+                : value === 'emissions'
+                  ? 'Emissions'
+                  : 'Drivers'}
           </button>
         ))}
       </div>
@@ -65,8 +72,10 @@ export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches
           <ImportWorkspace orgId={orgId} batches={batches} />
         ) : tab === 'consumption' ? (
           <HistoricImport orgId={orgId} />
-        ) : (
+        ) : tab === 'emissions' ? (
           <HistoricEmissionsImport orgId={orgId} />
+        ) : (
+          <DriverClassificationImport orgId={orgId} />
         )}
       </div>
     </>

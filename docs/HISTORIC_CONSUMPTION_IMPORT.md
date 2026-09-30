@@ -97,3 +97,34 @@ Verification: `tests/historic-emissions.test.ts`,
 `tests/e2e/historic-emissions.spec.ts`. Set `EMISSIONS_REFERENCE_PATH` when running
 the integration script to also validate and import the supplied 72-row reference
 into its disposable database.
+
+## Drivers worksheet
+
+**Data → Drivers** imports annual driver classifications, separate from monthly
+population and operating-hour measurements. Use the `Drivers` sheet with headers
+on row 6 and data from row 7. Rows 1–5 contain the reference legend and are not
+imported. Columns A–H must be Site, Year, Heating, Cooling, Population, Operating
+Hours, Daylighting and Building Size. Header case and surrounding spaces are
+ignored. Blank trailing formatted rows/columns are ignored.
+
+Site must identify exactly one active site by code or name in the current
+workspace. Year is 1900–2199. All six classifications are required: `R` (Routine),
+`NR` (Non-routine), or literal `N/A` (Not applicable). An Excel `#N/A` error is not
+a valid classification. Formulas with saved results and formatting are supported.
+All invalid cells retain their source addresses, including headers on row 6.
+
+Owners/admins validate, review, then confirm the import. No classifications are
+saved on preview or on any invalid row. Confirmation rechecks site mappings and
+saved values, then stores all rows atomically with source worksheet, row and
+author provenance. Duplicate site/year rows are rejected even when different
+aliases identify the same site. Identical saved rows are skipped; conflicting
+saved values are reported against their individual cells and are never silently
+overwritten. Saved classifications remain visible in the Drivers tab after reload.
+Importing classifications does not select an analysis model or create numeric
+driver observations.
+
+Apply migration `202609300001_driver_classifications` before serving this feature.
+Verification: `tests/driver-classifications.test.ts`,
+`scripts/driver-classifications-integration.ts` (part of `test:integration`), and
+`tests/e2e/driver-classifications.spec.ts`. Set `DRIVERS_REFERENCE_PATH` to exercise
+the supplied five-site, thirty-classification reference in the isolated database.

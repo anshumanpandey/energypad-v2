@@ -533,7 +533,7 @@ export default async function WorkspacePage({
         <Heading
           eyebrow="IMPORT DATA"
           title="Data"
-          text="Import sites, historic consumption and emission factors from Excel."
+          text="Import sites, consumption, emissions and driver classifications from Excel."
         />
         <p className="data-retention-link">
           <Link href={`${base}/import-retention`}>

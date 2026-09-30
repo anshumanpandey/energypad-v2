@@ -2284,6 +2284,7 @@ small {
   color: var(--green);
 }
 .data-import-tabs {
+  overflow-x: auto;
   display: flex;
   gap: 8px;
   border-bottom: 1px solid var(--line);

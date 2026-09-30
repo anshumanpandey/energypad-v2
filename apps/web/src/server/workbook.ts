@@ -40,6 +40,7 @@ export async function readWorkbook(
   options?: {
     sheetName: string;
     cellErrors: WorkbookCellIssue[];
+    headerRow?: number;
     ignoredColumns?: readonly number[] | ((headers: readonly string[]) => readonly number[]);
   },
 ): Promise<ImportSheet[]> {
@@ -115,23 +116,26 @@ export async function readWorkbook(
     if (options && sheet.name !== options.sheetName) continue;
     if (sheet.columnCount > 50 || sheet.rowCount > 2001)
       throw reject('Use at most 50 columns and 2,000 rows per sheet.');
+    const headerRow = options?.headerRow ?? 1;
     ignoredColumns =
       typeof options?.ignoredColumns === 'function'
         ? options.ignoredColumns(
             Array.from({ length: sheet.columnCount }, (_, i) => {
               try {
-                return importCell(sheet.getRow(1).getCell(i + 1));
+                return importCell(sheet.getRow(headerRow).getCell(i + 1));
               } catch {
                 return '';
               }
             }),
           )
         : (options?.ignoredColumns ?? []);
-    const headers = Array.from({ length: sheet.columnCount }, (_, i) => plainCell(sheet.getRow(1).getCell(i + 1), 100));
+    const headers = Array.from({ length: sheet.columnCount }, (_, i) =>
+      plainCell(sheet.getRow(headerRow).getCell(i + 1), 100),
+    );
     const allowed = headers.map((h, i) => (!options && credentialHeader(h) ? -1 : i)).filter((i) => i >= 0);
     const rows: ImportSheet['rows'] = [];
     sheet.eachRow((row, number) => {
-      if (number === 1) return;
+      if (number <= headerRow) return;
       const cells = allowed.map((i) => {
         const cell = row.getCell(i + 1);
         const value = plainCell(cell, 500);
