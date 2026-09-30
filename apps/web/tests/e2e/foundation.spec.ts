@@ -84,8 +84,14 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
     await expect(page).toHaveURL(new RegExp(`${orgPath}/${section}$`));
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
     await expect(navigation.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
-    if (section === 'energy')
-      await expect(page.getByRole('heading', { name: 'Add a site to get started' })).toBeVisible();
+    if (section === 'energy') {
+      await expect(page.getByRole('heading', { name: 'Add a site to get started', exact: true })).toBeVisible();
+      await expect(
+        page
+          .getByRole('region', { name: 'Waste Report', exact: true })
+          .getByRole('heading', { name: 'Add a site to create a waste report', exact: true }),
+      ).toBeVisible();
+    }
     if (section === 'carbon') {
       await expect(page.getByRole('heading', { name: 'Calculate annual emissions', exact: true })).toBeVisible();
       await expect(page.getByRole('combobox', { name: 'Carbon site', exact: true })).toHaveValue('');

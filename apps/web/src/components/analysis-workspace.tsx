@@ -92,7 +92,7 @@ export function AnalysisWorkspace({
       </div>
       {!sites.length ? (
         <section className="panel">
-          <h2>Add a site to get started</h2>
+          <h2>{wizard ? 'Add a site to create a waste report' : 'Add a site to get started'}</h2>
           <p>Record monthly consumption and drivers in Energy before creating a baseline.</p>
         </section>
       ) : (
