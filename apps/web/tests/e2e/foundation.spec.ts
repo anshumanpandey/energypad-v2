@@ -1,3 +1,4 @@
+import { createMeter } from '../helpers/create-meter';
 import { aggregateWeather } from '../../src/domain/weather';
 import { syntheticWeather } from '../fixtures/weather';
 import { test, expect, type Page } from '@playwright/test';
@@ -411,12 +412,12 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await page.getByLabel('Year', { exact: true }).selectOption('2024');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   await expect(page.getByRole('cell').filter({ hasText: /^1250/ })).toBeVisible();
-  const gasResponse = await page.request.post(`/api/v1/organisations/${org}/sites/${site.id}/meters`, {
-    headers: { origin: 'http://localhost:3101' },
-    data: { code: 'G1', name: 'Gas meter', fuel: 'GAS', unit: 'm3' },
+  const gas = await createMeter(page.request, `/api/v1/organisations/${org}/sites/${site.id}`, {
+    code: 'G1',
+    name: 'Gas meter',
+    fuel: 'GAS',
+    unit: 'm3',
   });
-  expect(gasResponse.ok()).toBe(true);
-  const gas = await gasResponse.json();
   await page.getByRole('button', { name: 'Load energy records' }).click();
   await expect(page.getByRole('heading', { name: 'Add conversion factor' })).toBeVisible();
   await page.getByLabel('Conversion meter', { exact: true }).selectOption(gas.id);
