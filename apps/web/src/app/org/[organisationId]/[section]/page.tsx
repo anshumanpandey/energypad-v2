@@ -530,7 +530,11 @@ export default async function WorkspacePage({
     const batches = await siteService.imports(actor, org.id);
     return (
       <>
-        <Heading eyebrow="IMPORT DATA" title="Data" text="Import sites and historic consumption from Excel." />
+        <Heading
+          eyebrow="IMPORT DATA"
+          title="Data"
+          text="Import sites, historic consumption and emission factors from Excel."
+        />
         <p className="data-retention-link">
           <Link href={`${base}/import-retention`}>
             Import history &amp; retention <ArrowRight size={14} aria-hidden="true" />

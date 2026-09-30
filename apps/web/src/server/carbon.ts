@@ -323,6 +323,7 @@ export class CarbonService extends FoundationService {
     const factors = await tx.emissionFactorVersion.findMany({
       where: {
         organisationId: org,
+        OR: [{ siteId: null }, { siteId }],
         geography: definition.geography,
         basis: definition.basis,
         unit: 'kgCO2e/kWh',
@@ -614,14 +615,14 @@ export class CarbonService extends FoundationService {
         const factors = await tx.emissionFactorVersion.findMany({
           where: {
             organisationId: org,
+            OR: [{ siteId: null }, { siteId: { in: sites.map((site) => site.id) } }],
             geography: definition.geography,
             basis: definition.basis,
             unit: 'kgCO2e/kWh',
             replacement: { is: null },
           },
-          select: { id: true },
+          select: { id: true, siteId: true },
         });
-        const factorIds = new Set(factors.map((f) => f.id));
         const series = [];
         for (const year of years) {
           const runs = new Map<string, TrendRun>();
@@ -653,7 +654,9 @@ export class CarbonService extends FoundationService {
               meters.filter((m) => m.siteId === site.id),
               runs,
               readings,
-              factorIds,
+              new Set(
+                factors.filter((factor) => !factor.siteId || factor.siteId === site.id).map((factor) => factor.id),
+              ),
               carbonAlgorithmVersion,
             );
             return { ...site, months, totalKgCO2e: trendTotal(months) };
@@ -798,6 +801,7 @@ export class CarbonService extends FoundationService {
       const factors = await tx.emissionFactorVersion.findMany({
         where: {
           organisationId: org,
+          OR: [{ siteId: null }, { siteId }],
           geography: definition.geography,
           basis: definition.basis,
           unit: 'kgCO2e/kWh',

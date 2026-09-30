@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Building2, ChartColumn, FileSpreadsheet, Upload, CheckCircle2, ChevronDown, ArrowRight } from 'lucide-react';
 import { ImportWorkspace } from './import-workspace';
+import { HistoricEmissionsImport } from './historic-emissions-import';
 import { Button } from './ui/button';
 import { responseError, useMutation } from './forms';
 import { historicCompactColumns } from '@/domain/historic-consumption';
@@ -23,10 +24,11 @@ type Preview = {
 };
 export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches: { id: string; status: string }[] }) {
   const [tab, setTab] = useState('sites');
+  const tabs = ['sites', 'consumption', 'emissions'];
   return (
     <>
       <div className="data-import-tabs" role="tablist" aria-label="Data imports">
-        {['sites', 'consumption'].map((value) => (
+        {tabs.map((value) => (
           <button
             type="button"
             key={value}
@@ -39,10 +41,8 @@ export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches
                 event.key === 'Home'
                   ? 'sites'
                   : event.key === 'End'
-                    ? 'consumption'
-                    : value === 'sites'
-                      ? 'consumption'
-                      : 'sites';
+                    ? 'emissions'
+                    : tabs[(tabs.indexOf(value) + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
               setTab(next);
               document.getElementById(`tab-${next}`)?.focus();
             }}
@@ -56,12 +56,18 @@ export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches
             ) : (
               <ChartColumn size={18} aria-hidden="true" />
             )}
-            {value === 'sites' ? 'Sites' : 'Consumption'}
+            {value === 'sites' ? 'Sites' : value === 'consumption' ? 'Consumption' : 'Emissions'}
           </button>
         ))}
       </div>
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === 'sites' ? <ImportWorkspace orgId={orgId} batches={batches} /> : <HistoricImport orgId={orgId} />}
+        {tab === 'sites' ? (
+          <ImportWorkspace orgId={orgId} batches={batches} />
+        ) : tab === 'consumption' ? (
+          <HistoricImport orgId={orgId} />
+        ) : (
+          <HistoricEmissionsImport orgId={orgId} />
+        )}
       </div>
     </>
   );

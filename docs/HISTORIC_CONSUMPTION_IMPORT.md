@@ -53,3 +53,40 @@ import-retention tracking apply.
 Verification: `tests/historic-consumption.test.ts`,
 `scripts/historic-consumption-integration.ts` (included in `test:integration`), and
 `tests/e2e/historic-consumption.spec.ts`.
+
+## Emissions worksheet
+
+**Data → Emissions** validates the fixed A–F layout: Site Code, Year, Month,
+Utility Type, Fuel Unit, Emission Factor. A1 may be blank (as in the supplied
+template) or `Site Code`. Other headers are required in that exact order, ignoring
+case and surrounding spaces. Other worksheets are ignored.
+
+Each factor is kgCO₂e/kWh, scoped to the existing active site in A, the fuel in D,
+and the complete calendar month in B–C. The fuel aliases and year/month rules are
+the same as consumption imports. Fuel Unit must be kWh. Factors are non-negative
+numbers with at most nine integer and nine decimal digits; zero is valid.
+Choose geography and reporting basis before validation because the worksheet
+does not contain them. Defaults shown in the form are GB and LOCATION_BASED.
+
+Preview saves no factors. All failing cells are returned with original addresses,
+including Excel errors, unsupported units, unknown sites and both occurrences of
+duplicate site/month/fuel rows. Conflicting saved factors are reported in F.
+Identical existing monthly factors are skipped on re-import. Shared factors that
+overlap a site-specific factor are rejected to avoid ambiguous carbon calculations.
+Confirmation revalidates the workbook and database state and commits all new
+factors and audit entries atomically. The original workbook is not stored.
+
+Imported factors appear in the factor library with their site and workbook/row
+provenance. Carbon calculations, summaries and trends use only shared factors or
+factors belonging to the selected site. Corrections preserve site scope and
+invalidate calculations using the previous factor version. Site managers can see
+only shared factors and factors for their assigned sites.
+
+The same workbook limits and owner/admin permissions apply. Apply migration
+`202609290001_site_emission_factors` before serving the updated app.
+
+Verification: `tests/historic-emissions.test.ts`,
+`scripts/historic-emissions-integration.ts` (included in `test:integration`), and
+`tests/e2e/historic-emissions.spec.ts`. Set `EMISSIONS_REFERENCE_PATH` when running
+the integration script to also validate and import the supplied 72-row reference
+into its disposable database.

@@ -5,6 +5,7 @@ import { request, useMutation } from './forms';
 import { fuels } from '@/domain/tariffs';
 import { factorBases } from '@/domain/emission-factors';
 export type EmissionFactor = {
+  site?: { code: string; name: string } | null;
   id: string;
   fuel: string;
   geography: string;
@@ -181,6 +182,7 @@ export function EmissionFactorWorkspace({
                         </strong>
                         <br />
                         {r.basis.replaceAll('_', ' ')}
+                        <p>{r.site ? `Site: ${r.site.code} · ${r.site.name}` : 'All sites'}</p>
                       </td>
                       <td>
                         {r.factor} {r.unit}

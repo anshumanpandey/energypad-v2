@@ -4,9 +4,20 @@ import { DomainError, uuid } from '../domain/policy';
 import { emissionFactorInput, emissionFactorCorrectionInput } from '../domain/emission-factors';
 export class EmissionFactorService extends FoundationService {
   async list(actor: Actor, org: string) {
-    await this.membership(actor, org);
+    const member = await this.membership(actor, org);
     return this.db.emissionFactorVersion.findMany({
-      where: { organisationId: org },
+      where: {
+        organisationId: org,
+        ...(member.role === 'SITE_MANAGER'
+          ? {
+              OR: [
+                { siteId: null },
+                { site: { assignments: { some: { membershipId: member.id, organisationId: org } } } },
+              ],
+            }
+          : {}),
+      },
+      include: { site: { select: { code: true, name: true } } },
       orderBy: [{ validFrom: 'desc' }, { revision: 'desc' }],
     });
   }
@@ -20,6 +31,7 @@ export class EmissionFactorService extends FoundationService {
     input: unknown,
     supersedesId?: string,
     reason?: string,
+    siteId?: string,
   ) {
     const data = emissionFactorInput.parse(input);
     const { firstDay, lastDay, ...fields } = data;
@@ -38,6 +50,9 @@ export class EmissionFactorService extends FoundationService {
         'This factor changed or is unavailable. Reload before correcting it.',
         409,
       );
+    const scope = previous?.siteId ?? siteId ?? null;
+    if (scope && !(await tx.site.findFirst({ where: { id: scope, organisationId: org, archivedAt: null } })))
+      throw new DomainError('NOT_FOUND', 'This active site is unavailable.', 404);
     if (
       previous &&
       (previous.fuel !== data.fuel ||
@@ -50,6 +65,7 @@ export class EmissionFactorService extends FoundationService {
       await tx.emissionFactorVersion.findFirst({
         where: {
           organisationId: org,
+          ...(scope ? { OR: [{ siteId: null }, { siteId: scope }] } : {}),
           fuel: data.fuel,
           geography: data.geography,
           basis: data.basis,
@@ -69,6 +85,7 @@ export class EmissionFactorService extends FoundationService {
     const record = await tx.emissionFactorVersion.create({
       data: {
         ...fields,
+        siteId: scope,
         validFrom,
         validUntil,
         organisationId: org,

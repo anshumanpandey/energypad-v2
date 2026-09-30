@@ -39,8 +39,9 @@ export function EnergyWorkspace({
   manage: boolean;
 }) {
   const m = useMutation();
+  const currentYear = new Date().getUTCFullYear();
   const [siteId, setSiteId] = useState(sites[0]?.id ?? '');
-  const [year, setYear] = useState(new Date().getUTCFullYear());
+  const [year, setYear] = useState(currentYear);
   const [loaded, setLoaded] = useState<{ siteId: string; year: number; data: EnergyData } | null>(null);
   const data = loaded?.siteId === siteId && loaded.year === year ? loaded.data : null;
   const base = `organisations/${orgId}/sites/${siteId}/energy`;
@@ -99,7 +100,7 @@ export function EnergyWorkspace({
               onChange={(e) => setYear(Number(e.target.value))}
               disabled={m.disabled}
             >
-              {Array.from({ length: 300 }, (_, i) => 2199 - i).map((value) => (
+              {Array.from({ length: currentYear - 2000 + 1 }, (_, i) => currentYear - i).map((value) => (
                 <option key={value} value={value}>
                   {value}
                 </option>

@@ -2312,6 +2312,7 @@ small {
 }
 .consumption-import {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 22px;
   min-width: 0;
 }
@@ -2595,8 +2596,10 @@ small {
   }
   .data-import-tabs button {
     flex: 1;
+    flex-direction: column;
+    gap: 5px;
     justify-content: center;
-    padding: 12px;
+    padding: 12px 8px;
   }
   .import-intro {
     align-items: flex-start;

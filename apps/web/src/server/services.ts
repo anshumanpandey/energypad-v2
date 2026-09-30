@@ -128,6 +128,12 @@ export const importInventoryService = new ImportInventoryService(
 );
 
 import { HistoricConsumptionService } from './historic-consumption';
+import { HistoricEmissionsService } from './historic-emissions';
+export const historicEmissionsService = new HistoricEmissionsService(
+  db,
+  mailer,
+  process.env.AUTH_URL ?? 'http://localhost:3100',
+);
 export const historicConsumptionService = new HistoricConsumptionService(
   db,
   mailer,
