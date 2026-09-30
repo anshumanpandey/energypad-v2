@@ -614,8 +614,10 @@ function RunForm({
   submit: (input: unknown) => Promise<void>;
 }) {
   const [nra, setNra] = useState('NONE');
-  const [first, setFirst] = useState(''),
-    [last, setLast] = useState('');
+  const [firstDate, setFirstDate] = useState(''),
+    [lastDate, setLastDate] = useState('');
+  const first = firstDate.slice(0, 7),
+    last = lastDate.slice(0, 7);
   const months: string[] = [];
   if (/^\d{4}-\d{2}$/.test(first) && /^\d{4}-\d{2}$/.test(last)) {
     let [y, m] = first.split('-').map(Number);
@@ -633,6 +635,9 @@ function RunForm({
     <section className="panel stack-form">
       <span className="eyebrow">REPORTING</span>
       <h2>Create reporting run</h2>
+      <p id="reporting-date-help" className="muted">
+        Select any date in each month. Reporting includes both selected months in full.
+      </p>
       <form
         aria-label="Reporting run"
         className="stack-form"
@@ -670,11 +675,27 @@ function RunForm({
         <fieldset className="form-grid" disabled={disabled}>
           <label>
             Reporting first month
-            <input type="month" required value={first} onChange={(e) => setFirst(e.target.value)} />
+            <input
+              type="date"
+              min="1900-01-01"
+              max="2199-12-31"
+              aria-describedby="reporting-date-help"
+              required
+              value={firstDate}
+              onChange={(e) => setFirstDate(e.target.value)}
+            />
           </label>
           <label>
             Reporting last month
-            <input type="month" required value={last} onChange={(e) => setLast(e.target.value)} />
+            <input
+              type="date"
+              min="1900-01-01"
+              max="2199-12-31"
+              aria-describedby="reporting-date-help"
+              required
+              value={lastDate}
+              onChange={(e) => setLastDate(e.target.value)}
+            />
           </label>
           <label>
             Non-routine adjustment

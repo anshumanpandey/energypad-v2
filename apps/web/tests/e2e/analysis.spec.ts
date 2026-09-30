@@ -93,8 +93,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   ).toBeVisible();
   await page.getByText('Coefficient covariance', { exact: true }).click();
   await expect(page.getByRole('table', { name: 'Coefficient covariance matrix' })).toBeVisible();
-  await page.getByLabel('Reporting first month').fill('2020-05');
-  await page.getByLabel('Reporting last month').fill('2020-05');
+  await page.getByLabel('Reporting first month').fill('2020-05-15');
+  await page.getByLabel('Reporting last month').fill('2020-05-15');
   await page.getByRole('button', { name: 'Save reporting run' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'Reporting needs attention' })).toBeVisible();
   await page.getByLabel('Outside baseline driver range').selectOption('ALLOW_WITH_WARNING');
@@ -109,8 +109,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await page.getByRole('button', { name: 'Save experimental baseline' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Experimental baseline saved' })).toBeVisible();
   await page.getByRole('button', { name: 'Load older baselines', exact: true }).click();
-  await page.getByLabel('Reporting first month').fill('2020-05');
-  await page.getByLabel('Reporting last month').fill('2020-06');
+  await page.getByLabel('Reporting first month').fill('2020-05-15');
+  await page.getByLabel('Reporting last month').fill('2020-06-15');
   await page.getByLabel('Outside baseline driver range').selectOption('ALLOW_WITH_WARNING');
   await page.getByLabel('Non-routine adjustment').selectOption('HOURS_AND_POPULATION');
   await page
@@ -273,8 +273,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     await viewer.getByLabel('Population', { exact: true }).check();
     await viewer.getByRole('button', { name: 'Save experimental baseline' }).click();
     await expect(viewer.getByRole('status').filter({ hasText: 'Experimental baseline saved' })).toBeVisible();
-    await viewer.getByLabel('Reporting first month').fill('2020-05');
-    await viewer.getByLabel('Reporting last month').fill('2020-05');
+    await viewer.getByLabel('Reporting first month').fill('2020-05-15');
+    await viewer.getByLabel('Reporting last month').fill('2020-05-15');
     await viewer.getByLabel('Non-routine adjustment').selectOption('POPULATION');
     await viewer
       .getByLabel('NRA rationale and assumptions')

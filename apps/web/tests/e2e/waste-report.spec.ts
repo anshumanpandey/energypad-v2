@@ -75,8 +75,8 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await report.getByRole('button', { name: 'Back to baseline' }).click();
   await expect(report.getByLabel('Baseline first month')).toHaveValue('2020-01-15');
   await report.getByRole('button', { name: '2 Reporting period' }).click();
-  await report.getByLabel('Reporting first month').fill('2020-05');
-  await report.getByLabel('Reporting last month').fill('2020-05');
+  await report.getByLabel('Reporting first month').fill('2020-05-15');
+  await report.getByLabel('Reporting last month').fill('2020-05-15');
   await report.getByRole('button', { name: 'Save reporting run' }).click();
   await expect(report.getByRole('alert').filter({ hasText: 'Reporting needs attention' })).toBeVisible();
   await expect(report.getByRole('button', { name: '2 Reporting period' })).toHaveAttribute('aria-current', 'step');

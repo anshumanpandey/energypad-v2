@@ -68,12 +68,12 @@ test('saved two/three-driver weather models preserve coefficients, provenance an
           .getByRole('cell')
           .nth(1),
       ).toHaveText(value);
-    await page.getByLabel('Reporting first month').fill('2020-10');
-    await page.getByLabel('Reporting last month').fill('2020-10');
+    await page.getByLabel('Reporting first month').fill('2020-10-15');
+    await page.getByLabel('Reporting last month').fill('2020-10-15');
     await page.getByRole('button', { name: 'Save reporting run' }).click();
     await expect(page.getByRole('form', { name: 'Reporting run' })).toContainText('Missing, duplicate or incomplete');
-    await page.getByLabel('Reporting first month').fill('2020-09');
-    await page.getByLabel('Reporting last month').fill('2020-09');
+    await page.getByLabel('Reporting first month').fill('2020-09-15');
+    await page.getByLabel('Reporting last month').fill('2020-09-15');
     await page.getByRole('button', { name: 'Save reporting run' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Experimental reporting run saved' })).toBeVisible();
     const history = await (await page.request.get(`${api}/history`)).json();
