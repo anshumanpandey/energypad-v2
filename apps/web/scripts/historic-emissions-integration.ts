@@ -108,6 +108,11 @@ try {
         month: `2024-${String(month).padStart(2, '0')}`,
         quantity: '100',
       });
+    const countBeforeChart = await db.carbonRun.count();
+    const chart = await carbon.chartEmissions(actor, org.id, target.id, { ...settings, year: 2024 });
+    assert.equal(chart[0].kgCO2e, target.id === site.id ? '50' : '90');
+    assert.equal(chart[1].kgCO2e, target.id === site.id ? '50' : null);
+    assert.equal(await db.carbonRun.count(), countBeforeChart);
     const snapshot = (
       await carbon.calculate(actor, org.id, target.id, {
         ...settings,
@@ -144,6 +149,12 @@ try {
     (await carbon.summary(actor, org.id, site.id, { ...settings, year: 2024 })).meters[0].status,
     'OUTDATED',
   );
+  assert.equal((await carbon.chartEmissions(actor, org.id, site.id, { ...settings, year: 2024 }))[0].kgCO2e, '40');
+  assert.equal(
+    (await carbon.chartEmissions(actor, org.id, site.id, { ...settings, basis: 'MARKET_BASED', year: 2024 }))[0].kgCO2e,
+    null,
+  );
+  await assert.rejects(carbon.chartEmissions(stranger, org.id, other.id, { ...settings, year: 2024 }));
   // Optional real attachment validation/import, isolated from application data.
   if (process.env.EMISSIONS_REFERENCE_PATH) {
     const referenceOrg = await service.createOrganisation(actor, {

@@ -47,13 +47,6 @@ test('graphs preserve recorded zero, missing coverage, filters and site isolatio
     firstDay: '2020-01-01',
     lastDay: '2020-12-31',
   });
-  await post(`/sites/${site.id}/carbon`, {
-    meterId: meter.id,
-    year: 2020,
-    geography: 'GB',
-    basis: 'LOCATION_BASED',
-    requestKey: randomUUID(),
-  });
   const path = `/org/${organisation.id}/graphs`;
   await page.goto(`${path}?site=${site.id}&year=2020`);
   await expect(page.getByRole('link', { name: 'Graphs', exact: true })).toHaveAttribute('aria-current', 'page');

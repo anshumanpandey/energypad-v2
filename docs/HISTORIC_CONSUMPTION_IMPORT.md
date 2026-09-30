@@ -82,6 +82,13 @@ factors belonging to the selected site. Corrections preserve site scope and
 invalidate calculations using the previous factor version. Site managers can see
 only shared factors and factors for their assigned sites.
 
+The Graphs page calculates monthly emissions directly from current consumption
+and matching factors without requiring a saved carbon run. Select the imported
+site, year, geography and reporting basis. All active meters must have a complete
+monthly reading and factor for a monthly site total; missing inputs are explained
+in the chart data table rather than treated as zero. Viewing the graph does not
+create or modify saved carbon runs, reports or their historical evidence.
+
 The same workbook limits and owner/admin permissions apply. Apply migration
 `202609290001_site_emission_factors` before serving the updated app.
 

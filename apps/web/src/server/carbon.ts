@@ -1,3 +1,4 @@
+import { monthlyCarbonRows } from '../domain/carbon-monthly';
 import { carbonContentFingerprint } from './carbon-fingerprint';
 import { historyPageInput } from './analysis/contract';
 import { portfolioEnergyInput, aggregatePortfolioEnergy, type PortfolioEnergyResult } from '../domain/portfolio-energy';
@@ -23,7 +24,6 @@ import {
   type CarbonSnapshot,
   type PortfolioCarbonSummary,
 } from '../domain/carbon';
-import { monthPeriod } from '../domain/energy';
 const Decimal = Prisma.Decimal.clone({ precision: 50 });
 export const carbonAlgorithmVersion = 'monthly-exact-factor-v1';
 export class CarbonService extends FoundationService {
@@ -765,6 +765,65 @@ export class CarbonService extends FoundationService {
       { isolationLevel: 'RepeatableRead', timeout: 30000 },
     );
   }
+  async chartEmissions(actor: Actor, org: string, siteId: string, input: unknown) {
+    const definition = carbonSummaryInput.parse(input);
+    return this.db.$transaction(
+      async (tx) => {
+        await this.access(tx, actor, org, siteId, false);
+        const start = new Date(`${definition.year}-01-01`),
+          end = new Date(`${definition.year + 1}-01-01`);
+        const meters = await tx.meter.findMany({
+          where: { organisationId: org, siteId, archivedAt: null },
+          orderBy: { id: 'asc' },
+        });
+        const readings = await tx.consumptionRecord.findMany({
+          where: {
+            organisationId: org,
+            siteId,
+            replacement: { is: null },
+            periodStart: { lt: end },
+            periodEnd: { gt: start },
+          },
+        });
+        const factors = await tx.emissionFactorVersion.findMany({
+          where: {
+            organisationId: org,
+            OR: [{ siteId: null }, { siteId }],
+            geography: definition.geography,
+            basis: definition.basis,
+            unit: 'kgCO2e/kWh',
+            replacement: { is: null },
+            validFrom: { lt: end },
+            validUntil: { gt: start },
+          },
+        });
+        const results = meters.map((meter) => ({
+          meter,
+          rows: monthlyCarbonRows(
+            definition.year,
+            readings.filter((r) => r.meterId === meter.id),
+            factors,
+          ),
+        }));
+        return Array.from({ length: 12 }, (_, index) => {
+          const rows = results.map(({ meter, rows }) => ({ name: meter.name, row: rows[index] }));
+          const ready = rows.filter(({ row }) => row.issue === null);
+          const complete = meters.length > 0 && ready.length === meters.length;
+          return {
+            month: `${definition.year}-${String(index + 1).padStart(2, '0')}`,
+            kgCO2e: complete ? ready.reduce((sum, { row }) => sum.plus(row.kgCO2e!), new Decimal(0)).toString() : null,
+            readyMeters: ready.length,
+            expectedMeters: meters.length,
+            estimated: ready.filter(({ row }) => row.estimated).length,
+            issues: !meters.length
+              ? ['No active meters.']
+              : rows.filter(({ row }) => row.issue).map(({ name, row }) => `${name}: ${row.issue}`),
+          };
+        });
+      },
+      { isolationLevel: 'RepeatableRead', timeout: 30000 },
+    );
+  }
   async calculate(actor: Actor, org: string, siteId: string, input: unknown) {
     const definition = carbonInput.parse(input);
     return this.db.$transaction(async (tx) => {
@@ -810,51 +869,8 @@ export class CarbonService extends FoundationService {
           validUntil: { gt: start },
         },
       });
-      let total = new Decimal(0);
-      const rows: CarbonSnapshot['rows'] = Array.from({ length: 12 }, (_, i) => {
-        const month = `${definition.year}-${String(i + 1).padStart(2, '0')}`;
-        const period = monthPeriod(month);
-        const candidates = readings.filter((r) => +r.periodStart < +period.end && +r.periodEnd > +period.start);
-        if (
-          candidates.length !== 1 ||
-          +candidates[0].periodStart !== +period.start ||
-          +candidates[0].periodEnd !== +period.end
-        )
-          return {
-            month,
-            issue: candidates.length ? 'Ambiguous or non-monthly consumption coverage.' : 'Missing consumption.',
-          };
-        const reading = candidates[0];
-        const base = {
-          month,
-          readingId: reading.id,
-          readingRevision: reading.revision,
-          normalizedKwh: reading.normalizedKwh.toString(),
-          conversionVersion: reading.conversionVersion,
-          estimated: reading.estimated,
-        };
-        const matches = factors.filter(
-          (f) => f.fuel === reading.fuel && +f.validFrom <= +period.start && +f.validUntil >= +period.end,
-        );
-        if (matches.length !== 1)
-          return {
-            ...base,
-            issue:
-              'A single factor must cover the whole month. Add complete coverage; mid-month changes are not prorated.',
-          };
-        const factor = matches[0];
-        const kg = new Decimal(reading.normalizedKwh.toString()).mul(factor.factor.toString());
-        total = total.add(kg);
-        return {
-          ...base,
-          issue: null,
-          factorId: factor.id,
-          factorRevision: factor.revision,
-          factor: factor.factor.toString(),
-          source: factor.source,
-          kgCO2e: kg.toFixed(),
-        };
-      });
+      const rows = monthlyCarbonRows(definition.year, readings, factors);
+      const total = rows.reduce((sum, row) => sum.plus(row.kgCO2e ?? '0'), new Decimal(0));
       const blocked = rows.some((r) => r.issue);
       const snapshot: CarbonSnapshot = {
         definition,

@@ -31,19 +31,14 @@ export async function Graphs({
   const data =
     siteId && definition.success
       ? await accessible(async () => {
-          const [overview, trends, runs] = await Promise.all([
+          const [overview, emissions, runs] = await Promise.all([
             carbonService.overview(actor, organisationId, siteId, definition.data),
-            carbonService.trends(actor, organisationId, {
-              ...definition.data,
-              kind: 'site',
-              id: siteId,
-              comparisonYear: definition.data.year === 1900 ? 1901 : definition.data.year - 1,
-            }),
+            carbonService.chartEmissions(actor, organisationId, siteId, definition.data),
             analysisService.wasteRuns(actor, organisationId, siteId, { limit: 50 }),
           ]);
           const runId = text('run') || runs.items[0]?.id;
           const waste = runId ? await analysisService.wasteSummary(actor, organisationId, siteId, runId) : null;
-          return { overview, trends, runs, waste, runId };
+          return { overview, emissions, runs, waste, runId };
         })
       : null;
   const year = definition.success ? definition.data.year : null;
@@ -141,11 +136,11 @@ export async function Graphs({
                   title="Emissions"
                   unit="kgCO2e"
                   tone="carbon"
-                  description="Saved carbon calculations with current reading and factor coverage."
-                  points={(data.trends.series.find((s) => s.year === year)?.months ?? []).map((m, index) => ({
-                    month: months[index],
+                  description="Calculated from current consumption × matching emission factors. No saved carbon run is required."
+                  points={data.emissions.map((m) => ({
+                    month: m.month,
                     value: m.kgCO2e,
-                    note: `${m.readyMeters}/${m.expectedMeters} meters ready · ${m.estimated} estimated readings`,
+                    note: `${m.readyMeters}/${m.expectedMeters} meters ready · ${m.estimated} estimated readings${m.issues.length ? ` · ${m.issues.join('; ')}` : ''}`,
                   }))}
                 />
               </div>

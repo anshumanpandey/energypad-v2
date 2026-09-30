@@ -21,7 +21,7 @@ test('Emissions tab reports every failed cell and imports valid site factors onc
   }
   const org = await post('organisations', { name: 'Emissions browser import', currency: 'GBP', timezone: 'UTC' });
   const base = `organisations/${org.id}`;
-  await post(`${base}/sites`, { code: 'site_mit', name: 'MIT site' });
+  const site = await post(`${base}/sites`, { code: 'site_mit', name: 'MIT site' });
   await page.goto(`/org/${org.id}/data`);
   await page.getByRole('tab', { name: 'Sites', exact: true }).focus();
   await page.keyboard.press('End');
@@ -65,4 +65,17 @@ test('Emissions tab reports every failed cell and imports valid site factors onc
   const saved = await response.json();
   expect(saved).toHaveLength(1);
   expect(saved[0]).toMatchObject({ factor: '0.5', site: { code: 'site_mit' } });
+  const meter = await post(`${base}/sites/${site.id}/meters`, {
+    code: 'GAS',
+    name: 'Gas meter',
+    fuel: 'GAS',
+    unit: 'kWh',
+  });
+  await post(`${base}/sites/${site.id}/energy`, { meterId: meter.id, month: '2024-01', quantity: '100' });
+  await page.goto(`/org/${org.id}/graphs?site=${site.id}&year=2024`);
+  const chart = page.getByRole('region', { name: 'Emissions', exact: true });
+  await expect(chart).toContainText('1/12 months available');
+  await chart.locator('summary').click();
+  await expect(chart.getByRole('row').filter({ hasText: '2024-01' }).getByRole('cell').first()).toHaveText('50');
+  await expect(chart.getByRole('row').filter({ hasText: '2024-02' })).toContainText('Missing consumption');
 });
