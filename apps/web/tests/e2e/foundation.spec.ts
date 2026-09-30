@@ -372,7 +372,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   });
   expect(meterResponse.ok()).toBe(true);
   await page.getByRole('link', { name: 'Energy', exact: true }).click();
-  await page.getByLabel('Year', { exact: true }).fill('2024');
+  await page.getByLabel('Year', { exact: true }).selectOption('2024');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   await expect(page.getByRole('heading', { name: 'Record monthly consumption' })).toBeVisible();
   await page.getByLabel('Month', { exact: true }).fill('2024-02');
@@ -393,8 +393,16 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await expect(page.getByRole('alert').filter({ hasText: 'already has a reading' })).toBeVisible();
   await expect(page.getByLabel('Quantity (meter units)')).toHaveValue('2');
   await page.screenshot({ path: testInfo.outputPath('energy.png'), fullPage: true });
+  await page.getByRole('region', { name: 'Consumption records', exact: true }).screenshot({
+    path: testInfo.outputPath('consumption-records-desktop.png'),
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('region', { name: 'Consumption records', exact: true }).screenshot({
+    path: testInfo.outputPath('consumption-records-mobile.png'),
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.reload();
-  await page.getByLabel('Year', { exact: true }).fill('2024');
+  await page.getByLabel('Year', { exact: true }).selectOption('2024');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   await expect(page.getByRole('cell').filter({ hasText: /^1250/ })).toBeVisible();
   const gasResponse = await page.request.post(`/api/v1/organisations/${org}/sites/${site.id}/meters`, {
@@ -457,7 +465,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await page.screenshot({ path: testInfo.outputPath('consumption-import.png'), fullPage: true });
   await page.getByRole('button', { name: 'Commit consumption import', exact: true }).click();
   await expect(page.getByText('Consumption import complete: 12 readings created.', { exact: true })).toBeVisible();
-  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   await expect(page.getByText('Main electricity · 12/12 months recorded', { exact: true })).toBeVisible();
   const drivers = page.getByRole('region', { name: 'Drivers and schedules' });
@@ -509,7 +517,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
     drivers.getByText('Total operating hours (hours/month) · 12/12 months observed', { exact: true }),
   ).toBeVisible();
   await page.reload();
-  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   await expect(
     drivers.getByText('Total operating hours (hours/month) · 12/12 months observed', { exact: true }),
@@ -579,7 +587,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await weather.getByRole('button', { name: 'Fetch weather for 2021', exact: true }).click();
   await expect(weather.getByText('Queued · Attempt 0/3', { exact: true })).toBeVisible();
   await page.reload();
-  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   await expect(weather.getByText('Queued · Attempt 0/3', { exact: true })).toBeVisible();
   browserJob = {
@@ -640,7 +648,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await page.setViewportSize({ width: 390, height: 844 });
   await weather.screenshot({ path: testInfo.outputPath('weather-mobile.png') });
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.getByLabel('Year', { exact: true }).fill('2024');
+  await page.getByLabel('Year', { exact: true }).selectOption('2024');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   await page.getByRole('button', { name: 'Correct conversion factor', exact: true }).click();
   const factorForm = page.getByRole('form', { name: 'Correct conversion factor', exact: true });
@@ -669,13 +677,13 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await correctionForm.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(correctionForm).toHaveCount(0);
   await page.reload();
-  await page.getByLabel('Year', { exact: true }).fill('2024');
+  await page.getByLabel('Year', { exact: true }).selectOption('2024');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   await expect(gasRow.getByRole('cell').filter({ hasText: /^2200/ })).toBeVisible();
   await gasRow.getByRole('button', { name: 'View reading history', exact: true }).click();
   await expect(gasRow.getByText('100 m3 → 1050 kWh · Actual', { exact: true })).toBeVisible();
   await gasRow.screenshot({ path: testInfo.outputPath('reading-correction-history.png') });
-  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   const observationRow = drivers
     .getByRole('row')
@@ -701,7 +709,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await scheduleForm.getByRole('button', { name: 'Save schedule correction', exact: true }).click();
   await expect(drivers.getByText('Standard week · 35 hours/week', { exact: true })).toBeVisible();
   await page.reload();
-  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   await expect(observationRow.getByRole('cell', { name: '25', exact: true })).toBeVisible();
   await drivers.getByRole('button', { name: 'View schedule history', exact: true }).click();
@@ -769,7 +777,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await tariffCorrection.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(tariffCorrection).toHaveCount(0);
   await page.reload();
-  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   await expect(pricing.getByRole('cell', { name: '0.2 GBP/kWh', exact: true })).toBeVisible();
   await pricing.getByRole('button', { name: 'View tariff history', exact: true }).click();
@@ -852,7 +860,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await expect(electricityRow.getByText('Registered end use: LIGHTING · Lighting', { exact: true })).toBeVisible();
   await expect(page.getByText('Main electricity · 12/12 months recorded', { exact: true })).toBeVisible();
   await page.reload();
-  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   await electricityRow.getByRole('button', { name: 'View reading history', exact: true }).click();
   await expect(electricityRow.getByText('Saved fuel catalog: Grid power · revision 1', { exact: true })).toBeVisible();
@@ -880,7 +888,7 @@ test('Sprint 3 operating patterns, corrections and reviewed import', async ({ pa
   });
   expect(use.ok()).toBe(true);
   await page.getByRole('link', { name: 'Energy', exact: true }).click();
-  await page.getByLabel('Year', { exact: true }).fill('2020');
+  await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   const panel = page.getByRole('region', { name: 'Operating patterns', exact: true });
   const form = panel.getByRole('form', { name: 'Add pattern', exact: true });
@@ -962,7 +970,7 @@ test('Sprint 3 operating patterns, corrections and reviewed import', async ({ pa
   await panel.getByRole('button', { name: 'Commit pattern import', exact: true }).click();
   await expect(panel.getByText(/Pattern import: COMMITTED/)).toBeVisible();
   await page.reload();
-  await page.getByLabel('Year', { exact: true }).fill('2021');
+  await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   await expect(panel.getByText(/Annual active days: 0 · Temperature: 0 C/)).toBeVisible();
   await panel.screenshot({ path: testInfo.outputPath('operating-patterns.png') });
@@ -988,7 +996,7 @@ test('Sprint 3 operational events and log import', async ({ page }, testInfo) =>
   });
   expect(use.ok()).toBe(true);
   await page.getByRole('link', { name: 'Energy', exact: true }).click();
-  await page.getByLabel('Year', { exact: true }).fill('2020');
+  await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   const panel = page.getByRole('region', { name: 'Operational events', exact: true });
   const form = panel.getByRole('form', { name: 'Add event', exact: true });
@@ -1052,7 +1060,7 @@ test('Sprint 3 operational events and log import', async ({ page }, testInfo) =>
   await panel.getByRole('button', { name: 'Commit event import', exact: true }).click();
   await expect(panel.getByText('Maintenance · Revision 1', { exact: true })).toBeVisible();
   await page.reload();
-  await page.getByLabel('Year', { exact: true }).fill('2020');
+  await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   await expect(panel.getByText('Plant shutdown · Revision 2', { exact: true })).toBeVisible();
   await expect(panel.getByText('Maintenance · Revision 1', { exact: true })).toBeVisible();

@@ -92,21 +92,109 @@ export function EnergyWorkspace({
           </label>
           <label>
             Year
-            <input
-              type="number"
-              min="1900"
-              max="2199"
+            <select
+              aria-label="Year"
               required
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
               disabled={m.disabled}
-            />
+            >
+              {Array.from({ length: 300 }, (_, i) => 2199 - i).map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
         <Button disabled={m.disabled}>Load energy records</Button>
       </form>
       {data && (
         <>
+          <section className="panel stack-form energy-records" aria-labelledby="consumption-records-title">
+            <div className="energy-records-heading">
+              <div>
+                <span className="eyebrow">METER READINGS · {year}</span>
+                <h2 id="consumption-records-title">Consumption records</h2>
+                <p className="muted">
+                  {sites.find((site) => site.id === siteId)?.name} · Monthly readings, costs and data quality
+                </p>
+              </div>
+              <span className="energy-record-count">
+                {data.records.length} {data.records.length === 1 ? 'reading' : 'readings'}
+              </span>
+            </div>
+            {!data.records.length ? (
+              <p className="energy-records-empty">No readings recorded for this year.</p>
+            ) : (
+              <div className="energy-records-scroll" role="region" aria-label="Consumption records table" tabIndex={0}>
+                <table className="energy-records-table">
+                  <thead>
+                    <tr>
+                      <th>Month / meter</th>
+                      <th>Source</th>
+                      <th>Energy (kWh)</th>
+                      <th>Net / gross cost</th>
+                      <th>Data quality</th>
+                      <th>History and corrections</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.records.map((record) => (
+                      <tr key={record.id}>
+                        <td>
+                          <strong className="energy-record-month">{record.periodStart.slice(0, 7)}</strong>
+                          <span className="energy-record-meter">
+                            {data.meters.find((meter) => meter.id === record.meterId)?.name}
+                          </span>
+                        </td>
+                        <td>
+                          {record.sourceQuantity} {record.sourceUnit}
+                        </td>
+                        <td>
+                          <strong className="energy-record-value">{record.normalizedKwh}</strong>
+                          <details>
+                            <summary>Conversion details</summary>
+                            <p>
+                              {record.conversionFactor} kWh/{record.sourceUnit}
+                            </p>
+                            <p>
+                              {data.conversions.find((c) => c.id === record.conversionId)?.source ??
+                                'Exact kWh/MWh dimensional conversion'}
+                            </p>
+                            <p>Version: {record.conversionVersion}</p>
+                          </details>
+                        </td>
+                        <td>
+                          {record.netCost ?? 'Unknown'} / {record.grossCost ?? 'Unknown'} {record.currency}
+                        </td>
+                        <td>
+                          {record.qualityFlags.length ? (
+                            <ul className="energy-quality-list">
+                              {record.qualityFlags.map((flag) => (
+                                <li key={flag}>{flag}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <span className="energy-quality-ok">No input issues detected</span>
+                          )}
+                        </td>
+                        <td>
+                          <ReadingCorrections
+                            base={base}
+                            record={record}
+                            uses={data.pricing.uses}
+                            manage={manage}
+                            reload={load}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
           <section className="panel stack-form">
             <h2>Monthly coverage · {year}</h2>
             <p>
@@ -349,70 +437,6 @@ export function EnergyWorkspace({
               onCommitted={load}
             />
           )}
-          <section className="panel stack-form">
-            <h2>Consumption records</h2>
-            {!data.records.length ? (
-              <p>No readings recorded for this year.</p>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table className="import-preview-table">
-                  <thead>
-                    <tr>
-                      <th>Month / meter</th>
-                      <th>Source</th>
-                      <th>Energy (kWh)</th>
-                      <th>Net / gross cost</th>
-                      <th>Data quality</th>
-                      <th>History and corrections</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.records.map((record) => (
-                      <tr key={record.id}>
-                        <td>
-                          {record.periodStart.slice(0, 7)}
-                          <br />
-                          {data.meters.find((meter) => meter.id === record.meterId)?.name}
-                        </td>
-                        <td>
-                          {record.sourceQuantity} {record.sourceUnit}
-                        </td>
-                        <td>
-                          {record.normalizedKwh}
-                          <details>
-                            <summary>Conversion details</summary>
-                            <p>
-                              {record.conversionFactor} kWh/{record.sourceUnit}
-                            </p>
-                            <p>
-                              {data.conversions.find((c) => c.id === record.conversionId)?.source ??
-                                'Exact kWh/MWh dimensional conversion'}
-                            </p>
-                            <p>Version: {record.conversionVersion}</p>
-                          </details>
-                        </td>
-                        <td>
-                          {record.netCost ?? 'Unknown'} / {record.grossCost ?? 'Unknown'} {record.currency}
-                        </td>
-                        <td>
-                          {record.qualityFlags.length ? record.qualityFlags.join(' · ') : 'No input issues detected'}
-                        </td>
-                        <td>
-                          <ReadingCorrections
-                            base={base}
-                            record={record}
-                            uses={data.pricing.uses}
-                            manage={manage}
-                            reload={load}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
         </>
       )}
     </div>
