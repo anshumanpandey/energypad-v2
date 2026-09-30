@@ -243,7 +243,10 @@ function SiteAnalysis({
                   const definition = {
                     meterId: f.get('meterId'),
                     energyUseId: f.get('energyUseId') || null,
-                    period: { firstMonth: f.get('firstMonth'), lastMonth: f.get('lastMonth') },
+                    period: {
+                      firstMonth: String(f.get('firstMonth')).slice(0, 7),
+                      lastMonth: String(f.get('lastMonth')).slice(0, 7),
+                    },
                     drivers,
                     weather: drivers.some((d) => ['HDD', 'CDD', 'DAYLIGHT'].includes(d))
                       ? { configurationId: f.get('weatherId'), methodology: 'daily-mean-degree-days-v1' }
@@ -297,11 +300,25 @@ function SiteAnalysis({
                   </label>
                   <label>
                     Baseline first month
-                    <input type="month" name="firstMonth" required />
+                    <input
+                      type="date"
+                      name="firstMonth"
+                      min="1900-01-01"
+                      max="2199-12-31"
+                      aria-describedby="baseline-date-help"
+                      required
+                    />
                   </label>
                   <label>
                     Baseline last month
-                    <input type="month" name="lastMonth" required />
+                    <input
+                      type="date"
+                      name="lastMonth"
+                      min="1900-01-01"
+                      max="2199-12-31"
+                      aria-describedby="baseline-date-help"
+                      required
+                    />
                   </label>
                   <label>
                     Weather configuration
@@ -344,6 +361,9 @@ function SiteAnalysis({
                     </label>
                   ))}
                 </fieldset>
+                <p id="baseline-date-help" className="muted">
+                  Select any date in each month. The baseline includes both selected months in full.
+                </p>
                 <p className="muted">
                   Experimental fitting policy: relative rank tolerance 1 × 10⁻¹⁰. A ready baseline is not methodology
                   approval.

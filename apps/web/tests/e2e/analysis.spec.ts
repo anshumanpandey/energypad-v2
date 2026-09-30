@@ -69,12 +69,12 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   });
   await page.goto(`/org/${org}/analysis`);
   await expect(page.getByRole('heading', { name: 'Advanced Analysis', exact: true })).toBeVisible();
-  await page.getByLabel('Baseline first month').fill('2020-01');
-  await page.getByLabel('Baseline last month').fill('2020-07');
+  await page.getByLabel('Baseline first month').fill('2020-01-15');
+  await page.getByLabel('Baseline last month').fill('2020-07-15');
   await page.getByLabel('Population', { exact: true }).check();
   await page.getByRole('button', { name: 'Check readiness' }).click();
   await expect(page.getByText('Baseline needs attention')).toBeVisible();
-  await page.getByLabel('Baseline last month').fill('2020-04');
+  await page.getByLabel('Baseline last month').fill('2020-04-15');
   await expect(page.getByText('Baseline needs attention')).toHaveCount(0);
   await page.getByRole('button', { name: 'Check readiness' }).click();
   await expect(page.getByText('Inputs ready for experimental fitting')).toBeVisible();
@@ -268,8 +268,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     await expect(viewer.getByRole('link', { name: 'Settings', exact: true })).toHaveCount(0);
     await expect(viewer.getByRole('link', { name: 'Team members', exact: true })).toHaveCount(0);
     expect((await viewer.request.get(`${base}/members`)).status()).toBe(403);
-    await viewer.getByLabel('Baseline first month').fill('2020-02');
-    await viewer.getByLabel('Baseline last month').fill('2020-04');
+    await viewer.getByLabel('Baseline first month').fill('2020-02-15');
+    await viewer.getByLabel('Baseline last month').fill('2020-04-15');
     await viewer.getByLabel('Population', { exact: true }).check();
     await viewer.getByRole('button', { name: 'Save experimental baseline' }).click();
     await expect(viewer.getByRole('status').filter({ hasText: 'Experimental baseline saved' })).toBeVisible();
@@ -323,8 +323,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   }
   // Frozen input warnings must survive direct save and baseline-only history reads.
   await page.reload();
-  await page.getByLabel('Baseline first month').fill('2020-01');
-  await page.getByLabel('Baseline last month').fill('2020-06');
+  await page.getByLabel('Baseline first month').fill('2020-01-15');
+  await page.getByLabel('Baseline last month').fill('2020-06-15');
   await page.getByLabel('Population', { exact: true }).check();
   await page.getByLabel('Estimated consumption').selectOption('ALLOW_WITH_WARNING');
   await page.getByRole('button', { name: 'Save experimental baseline' }).click();
