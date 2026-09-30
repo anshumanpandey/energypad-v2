@@ -209,6 +209,23 @@ export default async function WorkspacePage({
           </div>
         </div>
         <EnergyWorkspace orgId={org.id} sites={sites} manage={manage} />
+        <section className="waste-report stack-form" aria-labelledby="waste-report-title">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">EXPECTED VS ACTUAL CONSUMPTION</span>
+              <h2 id="waste-report-title">Waste Report</h2>
+              <p>Build a baseline, compare a reporting period and review potential waste or savings.</p>
+            </div>
+          </div>
+          <AnalysisWorkspace
+            wizard
+            orgId={org.id}
+            sites={await accessible(() => analysisService.historySites(actor, org.id))}
+            manage={can(membership.role, 'analysis:write')}
+            approve={can(membership.role, 'analysis:approve')}
+            actorId={actor.userId}
+          />
+        </section>
         <p className="page-note">
           <Link href={`${base}/analysis`}>
             Advanced Analysis <ArrowRight size={14} />

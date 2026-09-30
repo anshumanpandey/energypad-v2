@@ -2786,3 +2786,53 @@ select[aria-invalid='true'] {
     gap: 10px;
   }
 }
+
+.waste-report {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #d8e1df;
+}
+.waste-report-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.waste-report-steps button {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1 1 160px;
+  padding: 1rem;
+  border: 1px solid #d8e1df;
+  border-radius: 12px;
+  background: #fff;
+  color: #314944;
+  text-align: left;
+  font-weight: 600;
+  cursor: pointer;
+}
+.waste-report-steps button span {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: #edf3f1;
+}
+.waste-report-steps button[aria-current='step'] {
+  background: #e8f5ee;
+  border-color: #25825a;
+  color: #185c3e;
+}
+.waste-report-steps button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.waste-report-history > summary {
+  cursor: pointer;
+  padding: 0.75rem 0;
+  font-weight: 600;
+}
+.analysis-workspace [hidden] {
+  display: none;
+}

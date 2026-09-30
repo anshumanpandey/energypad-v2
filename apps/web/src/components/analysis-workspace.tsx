@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Button } from './ui/button';
 import { NraReviewPanel, type NraReviewRecord } from './nra-review';
 import { BaselineDiagnostics } from './baseline-diagnostics';
@@ -70,7 +71,9 @@ export function AnalysisWorkspace({
   manage,
   approve,
   actorId,
+  wizard = false,
 }: {
+  wizard?: boolean;
   orgId: string;
   approve: boolean;
   actorId: string;
@@ -112,6 +115,7 @@ export function AnalysisWorkspace({
             archived={archived}
             approve={approve && !archived}
             actorId={actorId}
+            wizard={wizard}
           />
         </>
       )}
@@ -124,7 +128,9 @@ function SiteAnalysis({
   archived,
   approve,
   actorId,
+  wizard,
 }: {
+  wizard: boolean;
   base: string;
   manage: boolean;
   archived: boolean;
@@ -132,6 +138,7 @@ function SiteAnalysis({
   actorId: string;
 }) {
   const m = useMutation();
+  const [step, setStep] = useState(0);
   const [options, setOptions] = useState<Options | null>(null),
     [history, setHistory] = useState<History>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -184,339 +191,389 @@ function SiteAnalysis({
       setBaseline(await request(`${base}/baselines/${id}`, 'GET'));
       setRun(null);
       setIssues([]);
+      setStep(1);
     }, 'Baseline loaded.');
   }
   return (
     <>
-      {m.feedback}
-      {archived && (
-        <div className="notice" role="note">
-          Archived site · Saved baselines and runs are available for review. New calculations are disabled.
-        </div>
-      )}
-      {!archived && (
-        <section className="panel stack-form" aria-label="Baseline setup">
-          <div>
-            <span className="eyebrow">1 · BASELINE</span>
-            <h2>Baseline setup</h2>
-            <p>
-              Select one to three drivers and a complete monthly period. Source revisions are preserved when you save.
-            </p>
-          </div>
-          {!options.meters.length ? (
-            <p>Add a meter and monthly consumption in Sites and Energy first.</p>
-          ) : (
-            <form
-              aria-label="Baseline definition"
-              className="stack-form"
-              onChange={() => setReadiness(null)}
-              onSubmit={(e) => {
-                e.preventDefault();
-                const f = new FormData(e.currentTarget);
-                const action = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('value');
-                const drivers = f.getAll('drivers') as string[];
-                const definition = {
-                  meterId: f.get('meterId'),
-                  energyUseId: f.get('energyUseId') || null,
-                  period: { firstMonth: f.get('firstMonth'), lastMonth: f.get('lastMonth') },
-                  drivers,
-                  weather: drivers.some((d) => ['HDD', 'CDD', 'DAYLIGHT'].includes(d))
-                    ? { configurationId: f.get('weatherId'), methodology: 'daily-mean-degree-days-v1' }
-                    : null,
-                  estimatedConsumption: f.get('estimatedConsumption'),
-                  supersedesId: f.get('supersedesId') || null,
-                  fitPolicy: { version: 'experimental-workflow-v1', relativeRankTolerance: 1e-10 },
-                };
-                void m.run(
-                  async () => {
-                    setIssues([]);
-                    if (action === 'check') {
-                      setReadiness(await request(`${base}/readiness`, 'POST', definition));
-                      return;
-                    }
-                    const result = await request(`${base}/baselines`, 'POST', definition);
-                    if (result.status === 'BLOCKED') {
-                      setIssues(result.issues);
-                      throw new Error('Baseline could not be saved. Resolve the listed input issues.');
-                    }
-                    setBaseline(result.baseline);
-                    setRun(null);
-                    await refresh();
-                  },
-                  action === 'check' ? 'Readiness checked.' : 'Experimental baseline saved.',
-                );
-              }}
+      {wizard && (
+        <nav className="waste-report-steps" aria-label="Waste Report steps">
+          {['Baseline', 'Reporting period', 'Results'].map((label, index) => (
+            <button
+              key={label}
+              type="button"
+              aria-current={step === index ? 'step' : undefined}
+              disabled={m.disabled || (index === 1 && !baseline) || (index === 2 && !run)}
+              onClick={() => setStep(index)}
             >
-              <fieldset className="form-grid" disabled={m.disabled}>
-                <label>
-                  Meter
-                  <select name="meterId" required>
-                    {options.meters.map((x) => (
-                      <option key={x.id} value={x.id}>
-                        {x.code} · {x.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Consumption end use
-                  <select name="energyUseId">
-                    <option value="">Unassigned readings</option>
-                    {options.uses.map((x) => (
-                      <option key={x.id} value={x.id}>
-                        {x.code} · {x.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Baseline first month
-                  <input type="month" name="firstMonth" required />
-                </label>
-                <label>
-                  Baseline last month
-                  <input type="month" name="lastMonth" required />
-                </label>
-                <label>
-                  Weather configuration
-                  <select name="weatherId">
-                    <option value="">Select if using weather drivers</option>
-                    {options.weather.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        Version {w.version} · {w.source}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Estimated consumption
-                  <select name="estimatedConsumption">
-                    <option value="BLOCK">Block estimated readings</option>
-                    <option value="ALLOW_WITH_WARNING">Allow with a warning</option>
-                  </select>
-                </label>
-                {manage && (
+              <span>{index + 1}</span>
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
+      {m.feedback}
+      <div hidden={wizard && step !== 0} className="stack-form">
+        {archived && (
+          <div className="notice" role="note">
+            Archived site · Saved baselines and runs are available for review. New calculations are disabled.
+          </div>
+        )}
+        {!archived && (
+          <section className="panel stack-form" aria-label="Baseline setup">
+            <div>
+              <span className="eyebrow">1 · BASELINE</span>
+              <h2>Baseline setup</h2>
+              <p>
+                Select one to three drivers and a complete monthly period. Source revisions are preserved when you save.
+              </p>
+            </div>
+            {!options.meters.length ? (
+              <p>Add a meter and monthly consumption in Sites and Energy first.</p>
+            ) : (
+              <form
+                aria-label="Baseline definition"
+                className="stack-form"
+                onChange={() => setReadiness(null)}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const f = new FormData(e.currentTarget);
+                  const action = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('value');
+                  const drivers = f.getAll('drivers') as string[];
+                  const definition = {
+                    meterId: f.get('meterId'),
+                    energyUseId: f.get('energyUseId') || null,
+                    period: { firstMonth: f.get('firstMonth'), lastMonth: f.get('lastMonth') },
+                    drivers,
+                    weather: drivers.some((d) => ['HDD', 'CDD', 'DAYLIGHT'].includes(d))
+                      ? { configurationId: f.get('weatherId'), methodology: 'daily-mean-degree-days-v1' }
+                      : null,
+                    estimatedConsumption: f.get('estimatedConsumption'),
+                    supersedesId: f.get('supersedesId') || null,
+                    fitPolicy: { version: 'experimental-workflow-v1', relativeRankTolerance: 1e-10 },
+                  };
+                  void m.run(
+                    async () => {
+                      setIssues([]);
+                      if (action === 'check') {
+                        setReadiness(await request(`${base}/readiness`, 'POST', definition));
+                        return;
+                      }
+                      const result = await request(`${base}/baselines`, 'POST', definition);
+                      if (result.status === 'BLOCKED') {
+                        setIssues(result.issues);
+                        throw new Error('Baseline could not be saved. Resolve the listed input issues.');
+                      }
+                      setBaseline(result.baseline);
+                      setRun(null);
+                      setStep(1);
+                      await refresh();
+                    },
+                    action === 'check' ? 'Readiness checked.' : 'Experimental baseline saved.',
+                  );
+                }}
+              >
+                <fieldset className="form-grid" disabled={m.disabled}>
                   <label>
-                    Baseline to supersede (optional)
-                    <select name="supersedesId">
-                      <option value="">Create a new baseline</option>
-                      {history.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          Revision {b.revision} · {b.id.slice(0, 8)}
+                    Meter
+                    <select name="meterId" required>
+                      {options.meters.map((x) => (
+                        <option key={x.id} value={x.id}>
+                          {x.code} · {x.name}
                         </option>
                       ))}
                     </select>
                   </label>
-                )}
-              </fieldset>
-              <fieldset className="analysis-drivers" disabled={m.disabled}>
-                <legend>Baseline drivers · select 1–3</legend>
-                {Object.entries(labels).map(([code, label]) => (
-                  <label key={code}>
-                    <input type="checkbox" name="drivers" value={code} />
-                    {label}
+                  <label>
+                    Consumption end use
+                    <select name="energyUseId">
+                      <option value="">Unassigned readings</option>
+                      {options.uses.map((x) => (
+                        <option key={x.id} value={x.id}>
+                          {x.code} · {x.name}
+                        </option>
+                      ))}
+                    </select>
                   </label>
-                ))}
-              </fieldset>
-              <p className="muted">
-                Experimental fitting policy: relative rank tolerance 1 × 10⁻¹⁰. A ready baseline is not methodology
-                approval.
-              </p>
-              <div className="analysis-actions">
-                <Button type="submit" name="action" value="check" disabled={m.disabled}>
-                  Check readiness
-                </Button>
-                {manage && (
-                  <Button type="submit" name="action" value="save" disabled={m.disabled}>
-                    Save experimental baseline
-                  </Button>
-                )}
-              </div>
-            </form>
-          )}
-          {readiness && (
-            <div role="status">
-              <strong>{readiness.ready ? 'Inputs ready for experimental fitting' : 'Baseline needs attention'}</strong>
-              <Issues issues={readiness.issues} />
-              <Issues issues={readiness.warnings} />
-            </div>
-          )}
-        </section>
-      )}
-      <Issues issues={issues} />
-      <section className="panel stack-form" aria-label="Baseline and run history">
-        <div>
-          <span className="eyebrow">2 · SAVED EVIDENCE</span>
-          <h2>Baseline and run history</h2>
-        </div>
-        {!history.length ? (
-          <p>No saved baselines for this site yet.</p>
-        ) : (
-          <ul className="analysis-history">
-            {history.map((b) => (
-              <li key={b.id}>
+                  <label>
+                    Baseline first month
+                    <input type="month" name="firstMonth" required />
+                  </label>
+                  <label>
+                    Baseline last month
+                    <input type="month" name="lastMonth" required />
+                  </label>
+                  <label>
+                    Weather configuration
+                    <select name="weatherId">
+                      <option value="">Select if using weather drivers</option>
+                      {options.weather.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          Version {w.version} · {w.source}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Estimated consumption
+                    <select name="estimatedConsumption">
+                      <option value="BLOCK">Block estimated readings</option>
+                      <option value="ALLOW_WITH_WARNING">Allow with a warning</option>
+                    </select>
+                  </label>
+                  {manage && (
+                    <label>
+                      Baseline to supersede (optional)
+                      <select name="supersedesId">
+                        <option value="">Create a new baseline</option>
+                        {history.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            Revision {b.revision} · {b.id.slice(0, 8)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </fieldset>
+                <fieldset className="analysis-drivers" disabled={m.disabled}>
+                  <legend>Baseline drivers · select 1–3</legend>
+                  {Object.entries(labels).map(([code, label]) => (
+                    <label key={code}>
+                      <input type="checkbox" name="drivers" value={code} />
+                      {label}
+                    </label>
+                  ))}
+                </fieldset>
+                <p className="muted">
+                  Experimental fitting policy: relative rank tolerance 1 × 10⁻¹⁰. A ready baseline is not methodology
+                  approval.
+                </p>
                 <div className="analysis-actions">
-                  <Button variant="secondary" disabled={m.disabled} onClick={() => void selectBaseline(b.id)}>
-                    Load baseline {b.id.slice(0, 8)}
+                  <Button type="submit" name="action" value="check" disabled={m.disabled}>
+                    Check readiness
                   </Button>
-                  <span>
-                    Revision {b.revision} · {new Date(b.createdAt).toLocaleDateString()} · Unvalidated
-                  </span>
+                  {manage && (
+                    <Button type="submit" name="action" value="save" disabled={m.disabled}>
+                      Save experimental baseline
+                    </Button>
+                  )}
                 </div>
-                {b.supersedesId && <p>Supersedes {b.supersedesId.slice(0, 8)}</p>}
-                {b.runs.map((r) => (
-                  <Button
-                    key={r.id}
-                    variant="ghost"
-                    disabled={m.disabled}
-                    onClick={() =>
-                      void m.run(async () => {
-                        const saved = await request(`${base}/runs/${r.id}`, 'GET');
-                        setRun(saved);
-                        setBaseline(saved.baseline);
-                        setIssues([]);
-                      }, 'Saved run loaded without recalculation.')
-                    }
-                  >
-                    View run {r.id.slice(0, 8)} · {new Date(r.createdAt).toLocaleDateString()}
-                  </Button>
-                ))}
-                {b.nextRunCursor && (
-                  <Button
-                    variant="secondary"
-                    disabled={m.disabled}
-                    onClick={() =>
-                      void m.run(async () => {
-                        const page: Awaited<ReturnType<AnalysisService['runHistory']>> = await request(
-                          `${base}/baselines/${b.id}/runs?cursor=${encodeURIComponent(b.nextRunCursor!)}`,
-                          'GET',
-                        );
-                        setHistory((current) =>
-                          current.map((item) =>
-                            item.id !== b.id
-                              ? item
-                              : {
-                                  ...item,
-                                  runs: [
-                                    ...item.runs,
-                                    ...page.items.filter((r) => !item.runs.some((existing) => existing.id === r.id)),
-                                  ],
-                                  nextRunCursor: page.nextCursor,
-                                },
-                          ),
-                        );
-                      }, 'Older runs loaded.')
-                    }
-                  >
-                    Load older runs for {b.id.slice(0, 8)}
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
+              </form>
+            )}
+            {readiness && (
+              <div role="status">
+                <strong>
+                  {readiness.ready ? 'Inputs ready for experimental fitting' : 'Baseline needs attention'}
+                </strong>
+                <Issues issues={readiness.issues} />
+                <Issues issues={readiness.warnings} />
+              </div>
+            )}
+          </section>
         )}
-        {nextCursor && (
-          <Button
-            variant="secondary"
-            disabled={m.disabled}
-            onClick={() =>
-              void m.run(async () => {
-                const page: HistoryPage = await request(
-                  `${base}/history?cursor=${encodeURIComponent(nextCursor)}`,
-                  'GET',
-                );
-                setHistory((current) => [
-                  ...current,
-                  ...page.items.filter((item) => !current.some((existing) => existing.id === item.id)),
-                ]);
-                setNextCursor(page.nextCursor);
-              }, 'Older baselines loaded.')
-            }
-          >
-            Load older baselines
+        <Issues issues={issues} />
+        <details open={!wizard} className="waste-report-history">
+          <summary>Reuse a saved baseline or reporting run</summary>
+          <section className="panel stack-form" aria-label="Baseline and run history">
+            <div>
+              <span className="eyebrow">SAVED EVIDENCE</span>
+              <h2>Baseline and run history</h2>
+            </div>
+            {!history.length ? (
+              <p>No saved baselines for this site yet.</p>
+            ) : (
+              <ul className="analysis-history">
+                {history.map((b) => (
+                  <li key={b.id}>
+                    <div className="analysis-actions">
+                      <Button variant="secondary" disabled={m.disabled} onClick={() => void selectBaseline(b.id)}>
+                        Load baseline {b.id.slice(0, 8)}
+                      </Button>
+                      <span>
+                        Revision {b.revision} · {new Date(b.createdAt).toLocaleDateString()} · Unvalidated
+                      </span>
+                    </div>
+                    {b.supersedesId && <p>Supersedes {b.supersedesId.slice(0, 8)}</p>}
+                    {b.runs.map((r) => (
+                      <Button
+                        key={r.id}
+                        variant="ghost"
+                        disabled={m.disabled}
+                        onClick={() =>
+                          void m.run(async () => {
+                            const saved = await request(`${base}/runs/${r.id}`, 'GET');
+                            setRun(saved);
+                            setBaseline(saved.baseline);
+                            setStep(2);
+                            setIssues([]);
+                          }, 'Saved run loaded without recalculation.')
+                        }
+                      >
+                        View run {r.id.slice(0, 8)} · {new Date(r.createdAt).toLocaleDateString()}
+                      </Button>
+                    ))}
+                    {b.nextRunCursor && (
+                      <Button
+                        variant="secondary"
+                        disabled={m.disabled}
+                        onClick={() =>
+                          void m.run(async () => {
+                            const page: Awaited<ReturnType<AnalysisService['runHistory']>> = await request(
+                              `${base}/baselines/${b.id}/runs?cursor=${encodeURIComponent(b.nextRunCursor!)}`,
+                              'GET',
+                            );
+                            setHistory((current) =>
+                              current.map((item) =>
+                                item.id !== b.id
+                                  ? item
+                                  : {
+                                      ...item,
+                                      runs: [
+                                        ...item.runs,
+                                        ...page.items.filter(
+                                          (r) => !item.runs.some((existing) => existing.id === r.id),
+                                        ),
+                                      ],
+                                      nextRunCursor: page.nextCursor,
+                                    },
+                              ),
+                            );
+                          }, 'Older runs loaded.')
+                        }
+                      >
+                        Load older runs for {b.id.slice(0, 8)}
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {nextCursor && (
+              <Button
+                variant="secondary"
+                disabled={m.disabled}
+                onClick={() =>
+                  void m.run(async () => {
+                    const page: HistoryPage = await request(
+                      `${base}/history?cursor=${encodeURIComponent(nextCursor)}`,
+                      'GET',
+                    );
+                    setHistory((current) => [
+                      ...current,
+                      ...page.items.filter((item) => !current.some((existing) => existing.id === item.id)),
+                    ]);
+                    setNextCursor(page.nextCursor);
+                  }, 'Older baselines loaded.')
+                }
+              >
+                Load older baselines
+              </Button>
+            )}
+            <p className="muted">
+              {history.length} baselines loaded. Newest entries appear first; saving refreshes the list to the latest
+              entries.
+            </p>
+          </section>
+        </details>
+      </div>
+      <div hidden={wizard && step !== 1} className="stack-form">
+        {baseline && (
+          <>
+            <section className="panel stack-form" aria-label="Selected baseline">
+              <h2>Selected baseline · revision {baseline.revision}</h2>
+              <p>
+                {baseline.snapshot.definition.period.firstMonth} – {baseline.snapshot.definition.period.lastMonth} ·{' '}
+                {baseline.snapshot.definition.drivers.map((d) => labels[d]).join(', ')}
+              </p>
+              {!!baseline.snapshot.assembly.warnings.length && (
+                <div role="note" aria-label="Baseline input warnings">
+                  <strong>Baseline input warnings</strong>
+                  <Issues issues={baseline.snapshot.assembly.warnings} />
+                </div>
+              )}
+              {baseline.fit.status === 'FITTED' && (
+                <div className="analysis-metrics">
+                  <div>
+                    <span>R²</span>
+                    <strong>{number(baseline.fit.rSquared)}</strong>
+                  </div>
+                  <div>
+                    <span>Residual standard error</span>
+                    <strong>{number(baseline.fit.residualStandardError)} kWh</strong>
+                  </div>
+                  <div>
+                    <span>Observations</span>
+                    <strong>{baseline.fit.rows.length}</strong>
+                  </div>
+                </div>
+              )}
+              <BaselineDiagnostics
+                fit={baseline.fit}
+                observations={baseline.snapshot.assembly.rows}
+                interpretation={baseline.snapshot.interpretation}
+              />
+              <details>
+                <summary>Baseline provenance and unrounded data</summary>
+                <p className="analysis-hash">Input hash: {baseline.inputHash}</p>
+                <pre className="analysis-json">{JSON.stringify(baseline, null, 2)}</pre>
+              </details>
+            </section>
+            {manage && (
+              <RunForm
+                key={baseline.id}
+                baseline={baseline}
+                issues={issues}
+                disabled={m.disabled}
+                submit={(input) =>
+                  m.run(async () => {
+                    setIssues([]);
+                    const result = await request(`${base}/baselines/${baseline.id}/runs`, 'POST', input);
+                    if (result.status !== 'SAVED') {
+                      setIssues(result.issues);
+                      throw new Error('Reporting needs attention. No run was saved.');
+                    }
+                    setRun(await request(`${base}/runs/${result.run.id}`, 'GET'));
+                    setStep(2);
+                    await refresh();
+                  }, 'Experimental reporting run saved.')
+                }
+              />
+            )}
+          </>
+        )}
+        {wizard && baseline && (
+          <Button variant="secondary" disabled={m.disabled} onClick={() => setStep(0)}>
+            Back to baseline
           </Button>
         )}
-        <p className="muted">
-          {history.length} baselines loaded. Newest entries appear first; saving refreshes the list to the latest
-          entries.
-        </p>
-      </section>
-      {baseline && (
-        <>
-          <section className="panel stack-form" aria-label="Selected baseline">
-            <h2>Selected baseline · revision {baseline.revision}</h2>
-            <p>
-              {baseline.snapshot.definition.period.firstMonth} – {baseline.snapshot.definition.period.lastMonth} ·{' '}
-              {baseline.snapshot.definition.drivers.map((d) => labels[d]).join(', ')}
-            </p>
-            {!!baseline.snapshot.assembly.warnings.length && (
-              <div role="note" aria-label="Baseline input warnings">
-                <strong>Baseline input warnings</strong>
-                <Issues issues={baseline.snapshot.assembly.warnings} />
-              </div>
-            )}
-            {baseline.fit.status === 'FITTED' && (
-              <div className="analysis-metrics">
-                <div>
-                  <span>R²</span>
-                  <strong>{number(baseline.fit.rSquared)}</strong>
-                </div>
-                <div>
-                  <span>Residual standard error</span>
-                  <strong>{number(baseline.fit.residualStandardError)} kWh</strong>
-                </div>
-                <div>
-                  <span>Observations</span>
-                  <strong>{baseline.fit.rows.length}</strong>
-                </div>
-              </div>
-            )}
-            <BaselineDiagnostics
-              fit={baseline.fit}
-              observations={baseline.snapshot.assembly.rows}
-              interpretation={baseline.snapshot.interpretation}
-            />
-            <details>
-              <summary>Baseline provenance and unrounded data</summary>
-              <p className="analysis-hash">Input hash: {baseline.inputHash}</p>
-              <pre className="analysis-json">{JSON.stringify(baseline, null, 2)}</pre>
-            </details>
-          </section>
-          {manage && (
-            <RunForm
-              key={baseline.id}
-              baseline={baseline}
-              issues={issues}
-              disabled={m.disabled}
-              submit={(input) =>
-                m.run(async () => {
-                  setIssues([]);
-                  const result = await request(`${base}/baselines/${baseline.id}/runs`, 'POST', input);
-                  if (result.status !== 'SAVED') {
-                    setIssues(result.issues);
-                    throw new Error('Reporting needs attention. No run was saved.');
-                  }
-                  setRun(await request(`${base}/runs/${result.run.id}`, 'GET'));
-                  await refresh();
-                }, 'Experimental reporting run saved.')
-              }
-            />
-          )}
-        </>
-      )}
-      {run && <RunResults run={run} />}
-      {run && run.snapshot.request.policy.nra !== 'NONE' && (
-        <NraReviewPanel
-          key={run.id}
-          base={base}
-          runId={run.id}
-          authorId={run.authorId}
-          context={run.snapshot.request.nraContext}
-          reviews={run.reviews}
-          canReview={approve && actorId !== run.authorId}
-          reload={async () => setRun(await request(`${base}/runs/${run.id}`, 'GET'))}
-        />
-      )}
+      </div>
+      <div hidden={wizard && step !== 2} className="stack-form">
+        {run && <RunResults run={run} />}
+        {wizard && run && (
+          <div className="analysis-actions">
+            <Button variant="secondary" disabled={m.disabled} onClick={() => setStep(1)}>
+              Back to reporting period
+            </Button>
+            <Link
+              href={`/org/${base.split('/')[1]}/graphs?site=${base.split('/')[3]}&run=${run.id}&year=${run.result.output.rows[0]?.month.slice(0, 4) ?? new Date().getFullYear()}`}
+            >
+              View Waste &amp; Savings graph
+            </Link>
+          </div>
+        )}
+        {run && run.snapshot.request.policy.nra !== 'NONE' && (
+          <NraReviewPanel
+            key={run.id}
+            base={base}
+            runId={run.id}
+            authorId={run.authorId}
+            context={run.snapshot.request.nraContext}
+            reviews={run.reviews}
+            canReview={approve && actorId !== run.authorId}
+            reload={async () => setRun(await request(`${base}/runs/${run.id}`, 'GET'))}
+          />
+        )}
+      </div>
       {!manage && !archived && (
         <p className="notice">
           You can check readiness and read saved results. An Owner, Admin or Analyst can save baselines and runs.
@@ -554,7 +611,7 @@ function RunForm({
   }
   return (
     <section className="panel stack-form">
-      <span className="eyebrow">3 · REPORTING</span>
+      <span className="eyebrow">REPORTING</span>
       <h2>Create reporting run</h2>
       <form
         aria-label="Reporting run"
