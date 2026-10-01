@@ -67,9 +67,30 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   await expect(page.getByRole('cell', { name: '75 kWh', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Import 1 readings' }).click();
   await expect(page.getByRole('status').filter({ hasText: '1 updated' })).toBeVisible();
+  await post(`${base}/sites`, { code: 'Leeds', name: 'Leeds' });
+  for (const [utility, quantity] of [
+    ['Grid Electricity', 100],
+    ['Solar PV', 200],
+    ['Petrol', 300],
+  ]) {
+    sheet.addRow(['London', 2020, 'Jan', 'Heating', utility, '', quantity, 'kWh', 600, 60, 1, 120, 9]);
+  }
+  sheet.addRow(['London', 2021, 'Jan', 'Heating', 'Gas', '', 800, 'kWh', 600, 60, 1, 120, 9]);
+  sheet.addRow(['Leeds', 2020, 'Jan', 'Heating', 'Gas', '', 900, 'kWh', 600, 60, 1, 120, 9]);
+  await upload();
+  await page.getByRole('button', { name: 'Import 6 readings' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Imported 6 consumption' })).toBeVisible();
   await page.goto(`/org/${org.id}/energy`);
+  await page.getByLabel('Energy site').selectOption({ label: 'London' });
   await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   const records = page.getByRole('region', { name: 'Consumption records', exact: true });
   await expect(records.getByRole('cell').filter({ hasText: /^75/ }).first()).toBeVisible();
+  await expect(records.getByRole('row')).toHaveCount(5);
+  for (const utility of ['Gas', 'Grid electricity', 'Solar PV', 'Petrol']) {
+    await expect(records.getByRole('cell', { name: utility, exact: true })).toBeVisible();
+  }
+  for (const quantity of [75, 100, 200, 300]) {
+    await expect(records.getByRole('cell', { name: `${quantity} kWh`, exact: true })).toBeVisible();
+  }
 });

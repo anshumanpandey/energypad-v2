@@ -118,7 +118,8 @@ export function EnergyWorkspace({
                 <span className="eyebrow">METER READINGS · {year}</span>
                 <h2 id="consumption-records-title">Consumption records</h2>
                 <p className="muted">
-                  {sites.find((site) => site.id === siteId)?.name} · Monthly readings, costs and data quality
+                  {sites.find((site) => site.id === siteId)?.name} · All utilities · Monthly readings, costs and data
+                  quality
                 </p>
               </div>
               <span className="energy-record-count">
@@ -133,6 +134,7 @@ export function EnergyWorkspace({
                   <thead>
                     <tr>
                       <th>Month / meter</th>
+                      <th>Utility</th>
                       <th>Source</th>
                       <th>Energy (kWh)</th>
                       <th>Net / gross cost</th>
@@ -148,6 +150,15 @@ export function EnergyWorkspace({
                           <span className="energy-record-meter">
                             {data.meters.find((meter) => meter.id === record.meterId)?.name}
                           </span>
+                        </td>
+                        <td>
+                          {record.fuel === 'SOLAR_PV'
+                            ? 'Solar PV'
+                            : record.fuel === 'ELECTRICITY'
+                              ? 'Grid electricity'
+                              : record.fuel === 'LPG'
+                                ? 'LPG'
+                                : record.fuel.charAt(0) + record.fuel.slice(1).toLowerCase()}
                         </td>
                         <td>
                           {record.sourceQuantity} {record.sourceUnit}
