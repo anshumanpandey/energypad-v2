@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { WasteDirectionText } from './waste-direction';
 import { useGraphMonth } from './graph-month';
 
 export type ChartPoint = { month: string; value: string | number | null; note?: string };
@@ -104,9 +105,11 @@ export function MetricChart({
         })}
       </svg>
       <p className="metric-chart-detail" aria-live="polite">
-        {active
-          ? `${active.month}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`
-          : 'Hover or focus a month to inspect its value. A dash marks unavailable data; lines break across missing months.'}
+        {active ? (
+          <WasteDirectionText text={`${active.month}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`} />
+        ) : (
+          'Hover or focus a month to inspect its value. A dash marks unavailable data; lines break across missing months.'
+        )}
       </p>
       <details>
         <summary>View {title.toLowerCase()} data</summary>
@@ -124,7 +127,9 @@ export function MetricChart({
                 <tr key={p.month}>
                   <th>{p.month}</th>
                   <td>{finite(p) ? p.value : 'Unavailable'}</td>
-                  <td>{p.note || '—'}</td>
+                  <td>
+                    <WasteDirectionText text={p.note || '—'} />
+                  </td>
                 </tr>
               ))}
             </tbody>
