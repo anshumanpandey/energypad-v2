@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import { weatherJobLabels } from '@/domain/weather-jobs';
 import { request, useMutation } from './forms';
@@ -73,13 +73,23 @@ export function WeatherWorkspace({
   const [saveWarning, setSaveWarning] = useState('');
   const [fetchingStatus, setFetchingStatus] = useState(false);
   const weatherPending = fetchingStatus || (!!job && ['QUEUED', 'RUNNING', 'RETRY_WAIT'].includes(job.status));
+  const [recordRequests, setRecordRequests] = useState(0);
+  const refreshRecords = useCallback(async () => {
+    setRecordRequests((count) => count + 1);
+    try {
+      await reload();
+    } finally {
+      setRecordRequests((count) => count - 1);
+    }
+  }, [reload]);
+  const monthlyWeatherLoading = weatherPending || m.pending || recordRequests > 0;
   useEffect(() => {
     if (!active) return;
     let stopped = false;
     let timer: ReturnType<typeof setTimeout>;
     async function poll() {
       try {
-        await reload();
+        await refreshRecords();
         if (!stopped) setPollError('');
       } catch {
         if (!stopped)
@@ -94,7 +104,7 @@ export function WeatherWorkspace({
       stopped = true;
       clearTimeout(timer);
     };
-  }, [active, reload]);
+  }, [active, refreshRecords]);
   return (
     <section className="panel stack-form" aria-label="Historical weather">
       <h2>Historical weather · {year}</h2>
@@ -147,7 +157,7 @@ export function WeatherWorkspace({
                       );
                     }
                   }
-                  await reload();
+                  await refreshRecords();
                 } finally {
                   setFetchingStatus(false);
                 }
@@ -279,7 +289,7 @@ export function WeatherWorkspace({
                   onClick={() =>
                     void m.run(async () => {
                       await request(`${base}/jobs/${job.id}/retry`, 'POST');
-                      await reload();
+                      await refreshRecords();
                     }, 'Weather retry queued.')
                   }
                 >
@@ -295,7 +305,7 @@ export function WeatherWorkspace({
               disabled={m.disabled}
               onClick={() =>
                 void m.run(async () => {
-                  await reload();
+                  await refreshRecords();
                   setPollError('');
                 }, 'Weather status refreshed.')
               }
@@ -314,7 +324,7 @@ export function WeatherWorkspace({
                 onClick={() =>
                   void m.run(async () => {
                     await request(`${base}/enrich`, 'POST', { configurationId: configId, year });
-                    await reload();
+                    await refreshRecords();
                   }, 'Weather enrichment queued. Progress will update automatically.')
                 }
               >
@@ -322,9 +332,15 @@ export function WeatherWorkspace({
               </Button>
             </>
           )}
+          {monthlyWeatherLoading && (
+            <div className="notice" role="status" aria-live="polite" aria-label="Monthly weather loading">
+              <LoaderCircle className="animate-spin motion-reduce:animate-none" size={20} aria-hidden="true" />
+              <span>Fetching monthly weather records for {year}…</span>
+            </div>
+          )}
           {result && (
             <>
-              <div style={{ overflowX: 'auto' }}>
+              <div style={{ overflowX: 'auto' }} aria-busy={monthlyWeatherLoading}>
                 <table className="import-preview-table">
                   <caption>Monthly weather, settings version {config?.version}</caption>
                   <thead>

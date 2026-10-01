@@ -2260,14 +2260,21 @@ small {
 .metric-chart-zero {
   stroke: #758277;
 }
-.metric-chart-bar {
+.metric-chart-line {
+  fill: none;
+  stroke: var(--chart-color);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.metric-chart-dot {
   fill: var(--chart-color);
 }
-.metric-chart-point.is-negative .metric-chart-bar {
+.metric-chart-point.is-negative .metric-chart-dot {
   fill: #ac4436;
 }
-.metric-chart-point:focus .metric-chart-bar,
-.metric-chart-point:hover .metric-chart-bar {
+.metric-chart-point:focus .metric-chart-dot,
+.metric-chart-point:hover .metric-chart-dot {
   stroke: #202f29;
   stroke-width: 2;
 }

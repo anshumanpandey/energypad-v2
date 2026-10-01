@@ -25,6 +25,13 @@ export function MetricChart({
   const span = high - low || 1;
   const y = (value: number) => 220 - ((value - low) / span) * 180;
   const step = 600 / Math.max(points.length, 1);
+  const linePath = points
+    .map((point, index) => {
+      if (!finite(point)) return '';
+      const command = index > 0 && finite(points[index - 1]) ? 'L' : 'M';
+      return `${command} ${80 + step * index + step / 2} ${y(Number(point.value))}`;
+    })
+    .join(' ');
   const active = points.find((p) => p.month === selected);
   const display = (p: ChartPoint) => (finite(p) ? `${p.value} ${unit}` : 'Unavailable');
   return (
@@ -54,6 +61,7 @@ export function MetricChart({
           );
         })}
         <line x1="75" x2="680" y1={y(0)} y2={y(0)} className="metric-chart-zero" />
+        <path d={linePath} className="metric-chart-line" aria-hidden="true" />
         {points.map((point, index) => {
           const x = 80 + step * index + step / 2;
           const valid = finite(point);
@@ -73,14 +81,7 @@ export function MetricChart({
                 <title>{`${point.month}: ${display(point)}${point.note ? ` · ${point.note}` : ''}`}</title>
                 <rect x={x - step * 0.3} y="30" width={step * 0.6} height="200" fill="transparent" />
                 {valid ? (
-                  <rect
-                    className="metric-chart-bar"
-                    x={x - step * 0.28}
-                    y={Math.min(y(value), y(0)) - (value === 0 ? 1 : 0)}
-                    width={step * 0.56}
-                    height={Math.max(2, Math.abs(y(value) - y(0)))}
-                    rx="3"
-                  />
+                  <circle className="metric-chart-dot" cx={x} cy={y(value)} r="5" />
                 ) : (
                   <text x={x} y={y(0) - 8} textAnchor="middle" className="metric-chart-missing">
                     –
@@ -101,7 +102,7 @@ export function MetricChart({
       <p className="metric-chart-detail" aria-live="polite">
         {active
           ? `${active.month}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`
-          : 'Hover or focus a month to inspect its value. A dash marks unavailable data.'}
+          : 'Hover or focus a month to inspect its value. A dash marks unavailable data; lines break across missing months.'}
       </p>
       <details>
         <summary>View {title.toLowerCase()} data</summary>
