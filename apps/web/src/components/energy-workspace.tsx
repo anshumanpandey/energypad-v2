@@ -118,8 +118,7 @@ export function EnergyWorkspace({
                 <span className="eyebrow">METER READINGS · {year}</span>
                 <h2 id="consumption-records-title">Consumption records</h2>
                 <p className="muted">
-                  {sites.find((site) => site.id === siteId)?.name} · All utilities · Monthly readings, costs and data
-                  quality
+                  {sites.find((site) => site.id === siteId)?.name} · All meters and utilities, including archived meters
                 </p>
               </div>
               <span className="energy-record-count">

@@ -25,7 +25,7 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
     timezone: 'UTC',
   });
   const base = `organisations/${org.id}`;
-  await post(`${base}/sites`, { code: 'London', name: 'London' });
+  const london = await post(`${base}/sites`, { code: 'London', name: 'London' });
   await page.goto(`/org/${org.id}/data`);
   await page.getByRole('tab', { name: 'Consumption', exact: true }).click();
   const book = new ExcelJS.Workbook();
@@ -80,17 +80,38 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   await upload();
   await page.getByRole('button', { name: 'Import 6 readings' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Imported 6 consumption' })).toBeVisible();
+  const energyPath = `${base}/sites/${london.id}/energy`;
+  const existingResponse = await page.request.get(`/api/v1/${energyPath}?year=2020`);
+  expect(existingResponse.ok()).toBe(true);
+  const existing = await existingResponse.json();
+  const gasMeter = existing.meters.find((meter: { fuel: string }) => meter.fuel === 'GAS');
+  const archived = await page.request.delete(`/api/v1/${base}/sites/${london.id}/meters/${gasMeter.id}`, {
+    headers: { origin: 'http://localhost:3101' },
+  });
+  expect(archived.ok(), await archived.text()).toBe(true);
+  const secondGasMeter = await post(`${base}/sites/${london.id}/meters`, {
+    code: 'GAS-2',
+    name: 'Second gas meter',
+    fuel: 'GAS',
+    unit: 'kWh',
+  });
+  await post(energyPath, { meterId: secondGasMeter.id, month: '2020-01', quantity: '400' });
   await page.goto(`/org/${org.id}/energy`);
   await page.getByLabel('Energy site').selectOption({ label: 'London' });
   await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   const records = page.getByRole('region', { name: 'Consumption records', exact: true });
   await expect(records.getByRole('cell').filter({ hasText: /^75/ }).first()).toBeVisible();
-  await expect(records.getByRole('row')).toHaveCount(5);
-  for (const utility of ['Gas', 'Grid electricity', 'Solar PV', 'Petrol']) {
+  await expect(records.getByRole('row')).toHaveCount(6);
+  await expect(records.getByRole('cell', { name: 'Gas', exact: true })).toHaveCount(2);
+  for (const utility of ['Grid electricity', 'Solar PV', 'Petrol']) {
     await expect(records.getByRole('cell', { name: utility, exact: true })).toBeVisible();
   }
-  for (const quantity of [75, 100, 200, 300]) {
+  for (const quantity of [75, 100, 200, 300, 400]) {
     await expect(records.getByRole('cell', { name: `${quantity} kWh`, exact: true })).toBeVisible();
   }
+  await expect(records).toContainText(gasMeter.name);
+  await expect(records).toContainText('Second gas meter');
+  await page.getByLabel('Energy meter', { exact: true }).selectOption(secondGasMeter.id);
+  await expect(records.getByRole('row')).toHaveCount(6);
 });
