@@ -388,6 +388,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   const pinnedInvestigation = (await (await page.request.get(`${base}/sites/${site.id}/opportunities`)).json())
     .items[0];
   expect(pinnedInvestigation.evidence.evidence.carbonRunId).toBe(investigationCarbon.id);
+  expect(pinnedInvestigation.evidence.summary.preCarbon).not.toBeNull();
   expect(pinnedInvestigation.evidence.summary.postCarbon).not.toBeNull();
   // A newer factor and carbon calculation must never replace the investigation's selection.
   await post(`/emission-factors/${investigationFactor.id}/correct`, {
@@ -412,8 +413,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     .locator('.stat-card')
     .filter({ hasText: 'Estimated carbon impact' });
   await expect(carbonImpact.locator('strong')).toHaveText([
-    `${pinnedInvestigation.evidence.summary.preCarbon} kgCO2e`,
-    `${pinnedInvestigation.evidence.summary.postCarbon} kgCO2e`,
+    `${Number(pinnedInvestigation.evidence.summary.preCarbon).toFixed(2)} kgCO2e`,
+    `${Number(pinnedInvestigation.evidence.summary.postCarbon).toFixed(2)} kgCO2e`,
   ]);
   await page.goto(`/org/${org}/opportunities?site=${site.id}`);
   await expect(register).toContainText('DETECTED');
