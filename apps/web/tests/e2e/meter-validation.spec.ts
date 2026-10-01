@@ -20,6 +20,7 @@ test('meter validation names, highlights and focuses the invalid field', async (
   await post(`organisations/${org.id}/sites`, { code: 'abc', name: 'Meter validation site' });
   await page.goto(`/org/${org.id}/sites`);
   await page.getByRole('button', { name: 'View site', exact: true }).click();
+  await page.getByRole('button', { name: 'Add Meter', exact: true }).click();
   const form = page.locator('form').filter({ has: page.getByRole('heading', { name: 'New meter', exact: true }) });
   await form.getByLabel('Meter code', { exact: true }).fill('G');
   await form.getByLabel('Meter name', { exact: true }).fill('x');
@@ -31,7 +32,13 @@ test('meter validation names, highlights and focuses the invalid field', async (
   await expect(name).toHaveAccessibleDescription('Meter name must contain at least 2 characters.');
   await name.fill('Gas meter');
   await form.getByRole('button', { name: 'Add meter', exact: true }).click();
-  await expect(form.getByRole('status')).toContainText('Changes saved.');
+  await expect(page.getByRole('dialog', { name: 'New meter' })).toHaveCount(0);
+  await expect(page.getByRole('status')).toContainText('Meter saved successfully.');
+  await expect(page.getByRole('heading', { name: 'Edit meter', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Add Meter', exact: true }).click();
   await expect(name).toHaveAttribute('aria-invalid', 'false');
   await expect(name).toHaveValue('');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Add Meter', exact: true })).toBeFocused();
 });

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { LoaderCircle } from 'lucide-react';
 import { weatherJobLabels } from '@/domain/weather-jobs';
 import { request, useMutation } from './forms';
 import { Button } from './ui/button';
@@ -70,6 +71,8 @@ export function WeatherWorkspace({
   const active = data.jobs.some((j) => ['QUEUED', 'RUNNING', 'RETRY_WAIT'].includes(j.status));
   const [pollError, setPollError] = useState('');
   const [saveWarning, setSaveWarning] = useState('');
+  const [fetchingStatus, setFetchingStatus] = useState(false);
+  const weatherPending = fetchingStatus || (!!job && ['QUEUED', 'RUNNING', 'RETRY_WAIT'].includes(job.status));
   useEffect(() => {
     if (!active) return;
     let stopped = false;
@@ -102,6 +105,12 @@ export function WeatherWorkspace({
         coordinates and timezone. Progress updates here automatically.
       </p>
       {m.feedback}
+      {weatherPending && (
+        <div className="notice" role="status" aria-live="polite">
+          <LoaderCircle className="animate-spin motion-reduce:animate-none" size={20} aria-hidden="true" />
+          <span>Fetching weather status for {year}… Progress updates automatically.</span>
+        </div>
+      )}
       {saveWarning && <p role="alert">{saveWarning}</p>}
       {manage && (
         <details open={!latest}>
@@ -127,16 +136,21 @@ export function WeatherWorkspace({
                     'Settings saved. Select a completed year with at least seven days since year end to fetch historical weather.',
                   );
                 }
-                if (eligible) {
-                  try {
-                    await request(`${base}/enrich`, 'POST', { configurationId: saved.id, year });
-                  } catch (error) {
-                    setSaveWarning(
-                      `Settings saved, but weather fetching could not start: ${error instanceof Error ? error.message : 'Please try again.'}`,
-                    );
+                setFetchingStatus(eligible);
+                try {
+                  if (eligible) {
+                    try {
+                      await request(`${base}/enrich`, 'POST', { configurationId: saved.id, year });
+                    } catch (error) {
+                      setSaveWarning(
+                        `Settings saved, but weather fetching could not start: ${error instanceof Error ? error.message : 'Please try again.'}`,
+                      );
+                    }
                   }
+                  await reload();
+                } finally {
+                  setFetchingStatus(false);
                 }
-                await reload();
               }, 'Weather settings saved. Weather status refreshed.');
             }}
           >

@@ -1,7 +1,7 @@
 'use client';
 import { DateInput } from './ui/date-input';
 import { fuels } from '@/domain/fuels';
-import { useState, useEffect, useId, useRef, type FormEvent } from 'react';
+import { useState, useEffect, useId, useRef, type FormEvent, type ReactNode } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
 type Portfolio = { id: string; name: string };
@@ -65,8 +65,19 @@ export function SitesWorkspace({
 }) {
   const [selected, setSelected] = useState<Site | null>(null),
     [editing, setEditing] = useState(false);
+  const [entry, setEntry] = useState<'meter' | 'history' | null>(null);
+  const [notice, setNotice] = useState('');
   const m = useMutation(),
     base = `organisations/${orgId}`;
+  async function entrySaved(kind: string, id: string) {
+    setEntry(null);
+    setNotice(`${kind} saved successfully.`);
+    try {
+      await detail(id);
+    } catch {
+      setNotice(`${kind} saved successfully, but the list could not refresh. Select View site to reload it.`);
+    }
+  }
   async function detail(id: string) {
     setSelected(await request(`${base}/sites/${id}`, 'GET'));
     setEditing(false);
@@ -198,7 +209,24 @@ export function SitesWorkspace({
               </Button>
             </div>
           )}
-          <h3 className="site-details-section-title">Attribute history</h3>
+          {notice && (
+            <div className="notice" role="status">
+              {notice}
+            </div>
+          )}
+          <div className="site-details-actions">
+            <h3 className="site-details-section-title">Attribute history</h3>
+            {manage && (
+              <Button
+                onClick={() => {
+                  setNotice('');
+                  setEntry('history');
+                }}
+              >
+                Add History Entry
+              </Button>
+            )}
+          </div>
           <p>Each entry is a complete snapshot effective from its date. Blank values mean unknown, not zero.</p>
           {selected.attributes?.map((h) => (
             <article className="site-history-entry" key={h.id}>
@@ -216,45 +244,26 @@ export function SitesWorkspace({
             </article>
           ))}
           {!selected.attributes?.length && <p className="site-details-empty">No attribute history recorded yet.</p>}
-          {manage && (
-            <form
-              className="stack-form"
-              onSubmit={(e) => {
-                const form = e.currentTarget;
-                const input = values(e);
-                void m.run(async () => {
-                  await request(
-                    `${base}/sites/${selected.id}/attributes`,
-                    'POST',
-                    Object.fromEntries(Object.entries(input).map(([k, v]) => [k, v || null])),
-                  );
-                  form.reset();
-                  await detail(selected.id);
-                });
-              }}
-            >
-              <div className="form-grid">
-                <label>
-                  Effective date
-                  <DateInput type="date" name="effectiveFrom" required />
-                </label>
-                {historyFields.map(([key, label]) => (
-                  <label key={key}>
-                    {label}
-                    <input
-                      name={key}
-                      type="number"
-                      min="0"
-                      step="0.001"
-                      max={key === 'weeklyHours' ? 168 : key === 'vatPercent' ? 100 : 99999999999}
-                    />
-                  </label>
-                ))}
-              </div>
-              <Button disabled={m.disabled}>Add history entry</Button>
-            </form>
+          {manage && entry === 'history' && (
+            <HistoryForm
+              path={`${base}/sites/${selected.id}/attributes`}
+              onClose={() => setEntry(null)}
+              onSaved={() => entrySaved('History entry', selected.id)}
+            />
           )}
-          <h3 className="site-details-section-title">Meters</h3>
+          <div className="site-details-actions">
+            <h3 className="site-details-section-title">Meters</h3>
+            {manage && (
+              <Button
+                onClick={() => {
+                  setNotice('');
+                  setEntry('meter');
+                }}
+              >
+                Add Meter
+              </Button>
+            )}
+          </div>
           {selected.meters?.map((meter) => (
             <MeterForm
               key={meter.id}
@@ -264,12 +273,108 @@ export function SitesWorkspace({
               reload={() => detail(selected.id)}
             />
           ))}
-          {manage && (
-            <MeterForm manage path={`${base}/sites/${selected.id}/meters`} reload={() => detail(selected.id)} />
+          {manage && entry === 'meter' && (
+            <MeterForm
+              manage
+              path={`${base}/sites/${selected.id}/meters`}
+              reload={() => entrySaved('Meter', selected.id)}
+              onClose={() => setEntry(null)}
+            />
           )}
         </section>
       )}
     </div>
+  );
+}
+function EntryModal({
+  title,
+  busy,
+  onClose,
+  children,
+}: {
+  title: string;
+  busy: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const trigger = document.activeElement;
+    const dialog = ref.current;
+    dialog?.showModal();
+    return () => {
+      dialog?.close();
+      if (trigger instanceof HTMLElement) trigger.focus();
+    };
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      className="site-entry-dialog"
+      aria-label={title}
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!busy) onClose();
+      }}
+    >
+      <div className="site-entry-close">
+        <Button type="button" variant="ghost" disabled={busy} onClick={onClose} aria-label={`Close ${title}`}>
+          ×
+        </Button>
+      </div>
+      {children}
+    </dialog>
+  );
+}
+function HistoryForm({ path, onClose, onSaved }: { path: string; onClose: () => void; onSaved: () => Promise<void> }) {
+  const m = useMutation();
+  return (
+    <EntryModal title="New history entry" busy={m.pending} onClose={onClose}>
+      <form
+        className="stack-form"
+        onSubmit={(event) => {
+          const form = event.currentTarget;
+          const input = values(event);
+          void m.run(async () => {
+            await request(
+              path,
+              'POST',
+              Object.fromEntries(Object.entries(input).map(([key, value]) => [key, value || null])),
+            );
+            form.reset();
+            await onSaved();
+          });
+        }}
+      >
+        <h3>New history entry</h3>
+        <p>Enter a complete snapshot. Blank values mean unknown, not zero.</p>
+        {m.feedback}
+        <fieldset className="form-grid" disabled={m.pending}>
+          <label>
+            Effective date
+            <DateInput type="date" name="effectiveFrom" required />
+          </label>
+          {historyFields.map(([key, label]) => (
+            <label key={key}>
+              {label}
+              <input
+                name={key}
+                type="number"
+                min="0"
+                step="0.001"
+                max={key === 'weeklyHours' ? 168 : key === 'vatPercent' ? 100 : 99999999999}
+              />
+            </label>
+          ))}
+        </fieldset>
+        <div className="button-row">
+          <Button disabled={m.disabled}>Add history entry</Button>
+          <Button type="button" variant="ghost" disabled={m.pending} onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </EntryModal>
   );
 }
 function MeterForm({
@@ -277,7 +382,9 @@ function MeterForm({
   manage,
   path,
   reload,
+  onClose,
 }: {
+  onClose?: () => void;
   meter?: Meter;
   manage: boolean;
   path: string;
@@ -308,7 +415,7 @@ function MeterForm({
         {meter?.name} ({meter?.code}) — {meter?.fuel}, {meter?.unit}
       </p>
     );
-  return (
+  const form = (
     <form
       ref={formRef}
       noValidate
@@ -359,6 +466,11 @@ function MeterForm({
       </div>
       <div className="button-row">
         <Button disabled={m.disabled}>{meter ? 'Save meter' : 'Add meter'}</Button>
+        {onClose && (
+          <Button type="button" variant="ghost" disabled={m.pending} onClick={onClose}>
+            Cancel
+          </Button>
+        )}
         {meter && (
           <Button
             type="button"
@@ -377,6 +489,13 @@ function MeterForm({
         )}
       </div>
     </form>
+  );
+  return onClose ? (
+    <EntryModal title="New meter" busy={m.pending} onClose={onClose}>
+      {form}
+    </EntryModal>
+  ) : (
+    form
   );
 }
 export function PortfoliosWorkspace({

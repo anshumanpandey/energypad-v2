@@ -288,26 +288,41 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await page.getByLabel('Portfolio', { exact: true }).selectOption({ label: 'Regional sites' });
   await page.getByRole('button', { name: 'Save site', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Attribute history' })).toBeVisible();
+  await page.getByRole('button', { name: 'Add History Entry', exact: true }).click();
   await page.getByLabel('Effective date').fill('01/01/2026');
   await page.getByLabel('Population', { exact: true }).fill('0');
   await page.getByLabel('Floor area (m²)').fill('1200.5');
-  await page.getByRole('button', { name: 'Add history entry' }).click();
+  await page
+    .getByRole('dialog', { name: 'New history entry' })
+    .getByRole('button', { name: 'Add history entry', exact: true })
+    .click();
   const history = page.locator('.site-history-entry');
   await expect(history.getByText('2026-01-01', { exact: true })).toBeVisible();
   await expect(history.locator('dd').first()).toHaveText('0');
+  await expect(page.getByRole('dialog', { name: 'New history entry' })).toHaveCount(0);
+  await expect(page.getByRole('status').filter({ hasText: 'History entry saved successfully.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Add History Entry', exact: true }).click();
   await expect(page.getByLabel('Effective date')).toHaveValue('');
   await expect(page.getByLabel('Population', { exact: true })).toHaveValue('');
   await expect(page.getByLabel('Floor area (m²)')).toHaveValue('');
   await page.getByLabel('Effective date').fill('01/01/2026');
   await page.getByLabel('Population', { exact: true }).fill('12');
-  await page.getByRole('button', { name: 'Add history entry' }).click();
+  await page
+    .getByRole('dialog', { name: 'New history entry' })
+    .getByRole('button', { name: 'Add history entry', exact: true })
+    .click();
   await expect(page.getByRole('alert').filter({ hasText: 'This record already exists.' })).toBeVisible();
   await expect(page.getByLabel('Effective date')).toHaveValue('01/01/2026');
   await expect(page.getByLabel('Population', { exact: true })).toHaveValue('12');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Add Meter', exact: true }).click();
   await page.getByLabel('Meter code').fill('MAIN');
   await page.getByLabel('Meter name').fill('Main electricity');
   await page.getByRole('button', { name: 'Add meter', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Edit meter', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'New meter' })).toHaveCount(0);
+  await expect(page.getByRole('status').filter({ hasText: 'Meter saved successfully.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Add Meter', exact: true }).click();
   const newMeter = page.locator('form').filter({ has: page.getByRole('heading', { name: 'New meter', exact: true }) });
   await expect(newMeter.getByLabel('Meter code')).toHaveValue('');
   await expect(newMeter.getByLabel('Meter name')).toHaveValue('');
@@ -319,6 +334,7 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await expect(newMeter.getByRole('alert')).toBeVisible();
   await expect(newMeter.getByLabel('Meter code')).toHaveValue('MAIN');
   await expect(newMeter.getByLabel('Meter name')).toHaveValue('Duplicate meter');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
   await page.getByRole('link', { name: 'Data', exact: true }).click();
   const workbook = new ExcelJS.Workbook(),
     sheet = workbook.addWorksheet('Sites');
