@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { fuels } from '@/domain/fuels';
 import { useState, useEffect, useId, useRef, type FormEvent } from 'react';
 import { Button } from './ui/button';
@@ -235,7 +236,7 @@ export function SitesWorkspace({
               <div className="form-grid">
                 <label>
                   Effective date
-                  <input type="date" name="effectiveFrom" required />
+                  <DateInput type="date" name="effectiveFrom" required />
                 </label>
                 {historyFields.map(([key, label]) => (
                   <label key={key}>

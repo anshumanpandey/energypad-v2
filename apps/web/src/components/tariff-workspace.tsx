@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import type { CatalogEntry } from './energy-catalog';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -149,11 +150,11 @@ function TariffForm({
           </label>
           <label>
             Tariff first day
-            <input name="firstDay" type="date" defaultValue={record?.validFrom.slice(0, 10)} required />
+            <DateInput name="firstDay" type="date" defaultValue={record?.validFrom.slice(0, 10)} required />
           </label>
           <label>
             Tariff last day (inclusive)
-            <input name="lastDay" type="date" defaultValue={record ? lastDay(record.validUntil) : ''} required />
+            <DateInput name="lastDay" type="date" defaultValue={record ? lastDay(record.validUntil) : ''} required />
           </label>
           <label>
             Tariff currency

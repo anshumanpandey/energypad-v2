@@ -38,8 +38,8 @@ test('saved two/three-driver weather models preserve coefficients, provenance an
     await page.goto(`/org/${f.orgId}/analysis`);
     const form = page.getByRole('form', { name: 'Baseline definition' });
     await form.getByLabel('Meter').selectOption(scenario.meterId);
-    await page.getByLabel('Baseline first month').fill('2020-01-15');
-    await page.getByLabel('Baseline last month').fill('2020-10-15');
+    await page.getByLabel('Baseline first month').fill('15/01/2020');
+    await page.getByLabel('Baseline last month').fill('15/10/2020');
     await page.getByLabel('Heating degree days', { exact: true }).check();
     await page.getByLabel('Cooling degree days', { exact: true }).check();
     if (scenario.drivers.length === 3) await page.getByLabel('Daylight hours', { exact: true }).check();
@@ -48,7 +48,7 @@ test('saved two/three-driver weather models preserve coefficients, provenance an
     await expect(page.getByRole('status').filter({ hasText: 'Baseline needs attention' })).toContainText(
       'Missing, duplicate or incomplete',
     );
-    await page.getByLabel('Baseline last month').fill('2020-08-15');
+    await page.getByLabel('Baseline last month').fill('15/08/2020');
     await page.getByRole('button', { name: 'Check readiness' }).click();
     await expect(page.getByText('Inputs ready for experimental fitting')).toBeVisible();
     await page.getByRole('button', { name: 'Save experimental baseline' }).click();
@@ -68,12 +68,12 @@ test('saved two/three-driver weather models preserve coefficients, provenance an
           .getByRole('cell')
           .nth(1),
       ).toHaveText(value);
-    await page.getByLabel('Reporting first month').fill('2020-10-15');
-    await page.getByLabel('Reporting last month').fill('2020-10-15');
+    await page.getByLabel('Reporting first month').fill('15/10/2020');
+    await page.getByLabel('Reporting last month').fill('15/10/2020');
     await page.getByRole('button', { name: 'Save reporting run' }).click();
     await expect(page.getByRole('form', { name: 'Reporting run' })).toContainText('Missing, duplicate or incomplete');
-    await page.getByLabel('Reporting first month').fill('2020-09-15');
-    await page.getByLabel('Reporting last month').fill('2020-09-15');
+    await page.getByLabel('Reporting first month').fill('15/09/2020');
+    await page.getByLabel('Reporting last month').fill('15/09/2020');
     await page.getByRole('button', { name: 'Save reporting run' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Experimental reporting run saved' })).toBeVisible();
     const history = await (await page.request.get(`${api}/history`)).json();

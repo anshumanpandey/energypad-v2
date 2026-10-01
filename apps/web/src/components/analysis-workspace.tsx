@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from './ui/button';
@@ -300,7 +301,7 @@ function SiteAnalysis({
                   </label>
                   <label>
                     Baseline first month
-                    <input
+                    <DateInput
                       type="date"
                       name="firstMonth"
                       min="1900-01-01"
@@ -311,7 +312,7 @@ function SiteAnalysis({
                   </label>
                   <label>
                     Baseline last month
-                    <input
+                    <DateInput
                       type="date"
                       name="lastMonth"
                       min="1900-01-01"
@@ -675,26 +676,26 @@ function RunForm({
         <fieldset className="form-grid" disabled={disabled}>
           <label>
             Reporting first month
-            <input
+            <DateInput
               type="date"
               min="1900-01-01"
               max="2199-12-31"
               aria-describedby="reporting-date-help"
               required
               value={firstDate}
-              onChange={(e) => setFirstDate(e.target.value)}
+              onValueChange={setFirstDate}
             />
           </label>
           <label>
             Reporting last month
-            <input
+            <DateInput
               type="date"
               min="1900-01-01"
               max="2199-12-31"
               aria-describedby="reporting-date-help"
               required
               value={lastDate}
-              onChange={(e) => setLastDate(e.target.value)}
+              onValueChange={setLastDate}
             />
           </label>
           <label>

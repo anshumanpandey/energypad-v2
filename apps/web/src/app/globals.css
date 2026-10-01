@@ -2836,3 +2836,40 @@ select[aria-invalid='true'] {
 .analysis-workspace [hidden] {
   display: none;
 }
+
+.date-input {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+.date-input > input[type='text'] {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+.date-input-calendar {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  bottom: 0;
+  right: 0;
+}
+.date-input-button {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.date-input-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

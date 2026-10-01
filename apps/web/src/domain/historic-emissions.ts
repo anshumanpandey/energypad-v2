@@ -15,6 +15,7 @@ const fuels: Record<string, string> = {
   gas: 'GAS',
   diesel: 'OIL',
   oil: 'OIL',
+  petrol: 'PETROL',
   lpg: 'LPG',
   biomass: 'BIOMASS',
   heat: 'HEAT',
@@ -50,7 +51,7 @@ export function parseEmissions(sheet: ImportSheet | undefined, errors: WorkbookC
     const month = /^(0?[1-9]|1[0-2])$/.test(v[2]) ? Number(v[2]) : months.indexOf(v[2].toLowerCase()) + 1;
     if (!month) add(row, 3, 'Use Jan–Dec or a month number from 1 to 12.');
     const fuel = fuels[v[3].toLowerCase()];
-    if (!fuel) add(row, 4, 'Use Grid Electricity, Solar PV, Gas, Diesel, Oil, LPG, Biomass, Heat or Other.');
+    if (!fuel) add(row, 4, 'Use Grid Electricity, Solar PV, Gas, Diesel, Oil, Petrol, LPG, Biomass, Heat or Other.');
     if (v[4].toLowerCase() !== 'kwh') add(row, 5, 'Use kWh. Emission Factor must be expressed per kWh.');
     if (!/^\d{1,9}(\.\d{1,9})?$/.test(v[5])) add(row, 6, 'Use a non-negative factor with up to nine decimal places.');
     if (!errors.some((e) => e.row === row)) {

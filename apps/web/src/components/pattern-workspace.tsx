@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { responseError } from './forms';
 import {
   WorkbookTemplateFields,
@@ -123,11 +124,11 @@ export function PatternWorkspace({
             </label>
             <label>
               Pattern first day
-              <input name="firstDay" type="date" required defaultValue={editing?.validFrom.slice(0, 10)} />
+              <DateInput name="firstDay" type="date" required defaultValue={editing?.validFrom.slice(0, 10)} />
             </label>
             <label>
               Pattern last day (inclusive)
-              <input
+              <DateInput
                 name="lastDay"
                 type="date"
                 required

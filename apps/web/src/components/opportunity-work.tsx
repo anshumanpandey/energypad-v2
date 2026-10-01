@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import type { OpportunityAction } from '@/domain/opportunities';
@@ -131,10 +132,10 @@ export function OpportunityWork({
             />
             <label>
               Action due date (optional)
-              <input
+              <DateInput
                 type="date"
                 value={a.dueDate ?? ''}
-                onChange={(e) => update(a.id, { dueDate: e.target.value || null })}
+                onValueChange={(value) => update(a.id, { dueDate: value || null })}
                 readOnly={scopeLocked}
               />
             </label>

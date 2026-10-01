@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { useId, useRef, useState } from 'react';
 import { request } from './forms';
 import { Button } from './ui/button';
@@ -345,12 +346,12 @@ export function ReportSchedules({
                 >
                   <label>
                     Occurrence time (UTC)
-                    <input
+                    <DateInput
                       type="datetime-local"
                       required
                       disabled={pending}
                       value={occurrence}
-                      onChange={(e) => setOccurrence(e.target.value)}
+                      onValueChange={setOccurrence}
                     />
                   </label>
                   <p>

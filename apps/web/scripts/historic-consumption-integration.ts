@@ -119,6 +119,14 @@ try {
   await service.process(actor, org.id, solarBytes, solarPreview.signature);
   assert.equal((await db.consumptionRecord.findFirstOrThrow({ where: { meterId: solar.id } })).fuel, 'SOLAR_PV');
   assert.equal((await db.consumptionRecord.findFirstOrThrow({ where: { meterId: grid.id } })).fuel, 'ELECTRICITY');
+  const petrolRow = row('London', 'May');
+  petrolRow[4] = 'Petrol';
+  const petrolBytes = await workbook([petrolRow]);
+  const petrolPreview = await service.process(actor, org.id, petrolBytes);
+  assert.equal(petrolPreview.defaultMeters[0].fuel, 'PETROL');
+  await service.process(actor, org.id, petrolBytes, petrolPreview.signature);
+  const petrolMeter = await db.meter.findFirstOrThrow({ where: { siteId: sites[0].id, fuel: 'PETROL' } });
+  assert.equal((await db.consumptionRecord.findFirstOrThrow({ where: { meterId: petrolMeter.id } })).fuel, 'PETROL');
   const compactBook = new ExcelJS.Workbook();
   const compactSheet = compactBook.addWorksheet(historicSheet);
   compactSheet.addRow(historicCompactColumns);

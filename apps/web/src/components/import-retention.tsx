@@ -1,3 +1,4 @@
+import { DateInput } from './ui/date-input';
 import { writesFrozen } from '@/server/write-freeze';
 import Link from 'next/link';
 import { ZodError } from 'zod';
@@ -71,7 +72,7 @@ export async function ImportRetention({
         <form key={date} method="GET" action={path} className="retention-filter">
           <label htmlFor="retention-before">
             Created before (UTC)
-            <input
+            <DateInput
               id="retention-before"
               type="date"
               name="beforeDate"

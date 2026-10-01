@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
@@ -127,11 +128,11 @@ export function DriverCorrections({
                 </label>
                 <label>
                   Corrected first day
-                  <input name="firstDay" type="date" defaultValue={record.validFrom!.slice(0, 10)} required />
+                  <DateInput name="firstDay" type="date" defaultValue={record.validFrom!.slice(0, 10)} required />
                 </label>
                 <label>
                   Corrected last day (inclusive)
-                  <input name="lastDay" type="date" defaultValue={lastDay(record.validUntil!)} required />
+                  <DateInput name="lastDay" type="date" defaultValue={lastDay(record.validUntil!)} required />
                 </label>
                 <label>
                   Corrected weekly hours

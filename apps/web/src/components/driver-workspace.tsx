@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { responseError } from './forms';
 import {
   WorkbookTemplateFields,
@@ -193,11 +194,11 @@ export function DriverWorkspace({
             </label>
             <label>
               First day
-              <input name="firstDay" type="date" required />
+              <DateInput name="firstDay" type="date" required />
             </label>
             <label>
               Last day (inclusive)
-              <input name="lastDay" type="date" required />
+              <DateInput name="lastDay" type="date" required />
             </label>
             <label>
               Planned weekly hours

@@ -20,8 +20,8 @@ Validation errors retain the original workbook’s cell addresses in both layout
   the preview proposes a default meter and confirmation creates it atomically with
   the readings. Multiple matches are rejected. Sites must already exist. Preview
   rolls back provisional meters, conversions and audit entries; it saves no domain data.
-- Utility types include Grid Electricity, Solar PV, Gas, Diesel, Oil, LPG,
-  Biomass, Heat and Other. Diesel maps to OIL; Solar PV maps to the independent SOLAR_PV fuel.
+- Utility types include Grid Electricity, Solar PV, Gas, Diesel, Oil, Petrol, LPG,
+  Biomass, Heat and Other. Diesel maps to OIL; Solar PV maps to the independent SOLAR_PV fuel. Petrol maps to the independent PETROL fuel.
   Solar PV rows only match Solar PV meters, never grid-electricity meters.
 - Units are kWh, MWh, m3 (also m³), litre (also l), and kg.
 - Quantities and costs are non-negative numbers with at most three decimals;

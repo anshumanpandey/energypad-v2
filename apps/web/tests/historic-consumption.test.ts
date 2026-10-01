@@ -16,6 +16,13 @@ const sheet = (rows = [cells]) => ({
   rows: rows.map((cells, i) => ({ row: i + 2, cells })),
 });
 describe('fixed historic consumption template', () => {
+  it.each(['Petrol', 'petrol', 'PETROL'])('accepts %s as an independent fuel', (label) => {
+    const data = [...cells];
+    data[4] = label;
+    const parsed = parseHistoric(sheet([data]));
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.records[0].fuel).toBe('PETROL');
+  });
   it('supports the 12-column layout and reports physical Excel addresses', async () => {
     const book = new ExcelJS.Workbook();
     const ws = book.addWorksheet(historicSheet);

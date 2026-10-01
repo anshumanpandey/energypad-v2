@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { useState } from 'react';
 import { VerificationRunPicker } from './verification-run-picker';
 import { Button } from './ui/button';
@@ -82,13 +83,13 @@ export function VerificationForm({
       <fieldset disabled={disabled} className="stack-form">
         <label>
           Implementation completion date
-          <input
+          <DateInput
             type="date"
             name="implementationDate"
             required
             value={implementationDate}
-            onChange={(event) => {
-              setImplementationDate(event.target.value);
+            onValueChange={(value) => {
+              setImplementationDate(value);
               setRunId('');
             }}
           />

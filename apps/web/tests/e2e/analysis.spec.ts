@@ -69,12 +69,12 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   });
   await page.goto(`/org/${org}/analysis`);
   await expect(page.getByRole('heading', { name: 'Advanced Analysis', exact: true })).toBeVisible();
-  await page.getByLabel('Baseline first month').fill('2020-01-15');
-  await page.getByLabel('Baseline last month').fill('2020-07-15');
+  await page.getByLabel('Baseline first month').fill('15/01/2020');
+  await page.getByLabel('Baseline last month').fill('15/07/2020');
   await page.getByLabel('Population', { exact: true }).check();
   await page.getByRole('button', { name: 'Check readiness' }).click();
   await expect(page.getByText('Baseline needs attention')).toBeVisible();
-  await page.getByLabel('Baseline last month').fill('2020-04-15');
+  await page.getByLabel('Baseline last month').fill('15/04/2020');
   await expect(page.getByText('Baseline needs attention')).toHaveCount(0);
   await page.getByRole('button', { name: 'Check readiness' }).click();
   await expect(page.getByText('Inputs ready for experimental fitting')).toBeVisible();
@@ -93,8 +93,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   ).toBeVisible();
   await page.getByText('Coefficient covariance', { exact: true }).click();
   await expect(page.getByRole('table', { name: 'Coefficient covariance matrix' })).toBeVisible();
-  await page.getByLabel('Reporting first month').fill('2020-05-15');
-  await page.getByLabel('Reporting last month').fill('2020-05-15');
+  await page.getByLabel('Reporting first month').fill('15/05/2020');
+  await page.getByLabel('Reporting last month').fill('15/05/2020');
   await page.getByRole('button', { name: 'Save reporting run' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'Reporting needs attention' })).toBeVisible();
   await page.getByLabel('Outside baseline driver range').selectOption('ALLOW_WITH_WARNING');
@@ -109,8 +109,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await page.getByRole('button', { name: 'Save experimental baseline' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Experimental baseline saved' })).toBeVisible();
   await page.getByRole('button', { name: 'Load older baselines', exact: true }).click();
-  await page.getByLabel('Reporting first month').fill('2020-05-15');
-  await page.getByLabel('Reporting last month').fill('2020-06-15');
+  await page.getByLabel('Reporting first month').fill('15/05/2020');
+  await page.getByLabel('Reporting last month').fill('15/06/2020');
   await page.getByLabel('Outside baseline driver range').selectOption('ALLOW_WITH_WARNING');
   await page.getByLabel('Non-routine adjustment').selectOption('HOURS_AND_POPULATION');
   await page
@@ -268,13 +268,13 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     await expect(viewer.getByRole('link', { name: 'Settings', exact: true })).toHaveCount(0);
     await expect(viewer.getByRole('link', { name: 'Team members', exact: true })).toHaveCount(0);
     expect((await viewer.request.get(`${base}/members`)).status()).toBe(403);
-    await viewer.getByLabel('Baseline first month').fill('2020-02-15');
-    await viewer.getByLabel('Baseline last month').fill('2020-04-15');
+    await viewer.getByLabel('Baseline first month').fill('15/02/2020');
+    await viewer.getByLabel('Baseline last month').fill('15/04/2020');
     await viewer.getByLabel('Population', { exact: true }).check();
     await viewer.getByRole('button', { name: 'Save experimental baseline' }).click();
     await expect(viewer.getByRole('status').filter({ hasText: 'Experimental baseline saved' })).toBeVisible();
-    await viewer.getByLabel('Reporting first month').fill('2020-05-15');
-    await viewer.getByLabel('Reporting last month').fill('2020-05-15');
+    await viewer.getByLabel('Reporting first month').fill('15/05/2020');
+    await viewer.getByLabel('Reporting last month').fill('15/05/2020');
     await viewer.getByLabel('Non-routine adjustment').selectOption('POPULATION');
     await viewer
       .getByLabel('NRA rationale and assumptions')
@@ -323,8 +323,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   }
   // Frozen input warnings must survive direct save and baseline-only history reads.
   await page.reload();
-  await page.getByLabel('Baseline first month').fill('2020-01-15');
-  await page.getByLabel('Baseline last month').fill('2020-06-15');
+  await page.getByLabel('Baseline first month').fill('15/01/2020');
+  await page.getByLabel('Baseline last month').fill('15/06/2020');
   await page.getByLabel('Population', { exact: true }).check();
   await page.getByLabel('Estimated consumption').selectOption('ALLOW_WITH_WARNING');
   await page.getByRole('button', { name: 'Save experimental baseline' }).click();
@@ -429,7 +429,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   const actionPlan = register.getByRole('form', { name: 'Action plan', exact: true });
   await actionPlan.getByRole('button', { name: 'Add action', exact: true }).click();
   await actionPlan.getByLabel('Action description').fill('Correct boiler operating schedule');
-  await actionPlan.getByLabel('Action due date (optional)').fill('2026-10-01');
+  await actionPlan.getByLabel('Action due date (optional)').fill('01/10/2026');
   await actionPlan.getByLabel('Plan change note').fill('Assign the schedule work for operational approval.');
   await actionPlan.getByRole('button', { name: 'Save owner and actions' }).click();
   await expect(register.getByRole('region', { name: 'Saved action plan' })).toContainText('revision 1');
@@ -626,7 +626,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     .getByLabel('Supporting references (one per line)')
     .fill('Commissioning record for December 2020');
   await verificationForm.getByLabel('Verification explanation').fill('Review January readings after implementation.');
-  await verificationForm.getByLabel('Implementation completion date').fill('2020-12-31');
+  await verificationForm.getByLabel('Implementation completion date').fill('31/12/2020');
   await expect(verificationForm.getByRole('alert')).toContainText('Temporary picker failure');
   failReporting = false;
   await verificationForm.getByRole('button', { name: 'Retry reporting runs', exact: true }).click();
@@ -654,7 +654,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   holdReporting = true;
   await verificationForm.getByRole('button', { name: 'Refresh reporting runs', exact: true }).click();
   await heldReady;
-  await verificationForm.getByLabel('Implementation completion date').fill('2021-01-01');
+  await verificationForm.getByLabel('Implementation completion date').fill('01/01/2021');
   await expect(verificationForm).toContainText('No eligible reporting run');
   releaseHeld();
   await heldDone;
@@ -663,7 +663,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     true,
   );
   await expect(verificationForm.getByRole('button', { name: 'Save verification evidence' })).toBeDisabled();
-  await verificationForm.getByLabel('Implementation completion date').fill('2020-12-31');
+  await verificationForm.getByLabel('Implementation completion date').fill('31/12/2020');
   await reportingPicker.selectOption(postImplementationRun.run.id);
   await expect(verificationForm).toContainText('No compatible carbon run');
 

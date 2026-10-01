@@ -17,7 +17,7 @@ test('owners review retention counts with UTC cutoffs, validation and responsive
   await page.getByRole('link', { name: 'Review import retention' }).click();
   await expect(page.getByRole('heading', { name: 'Import retention', exact: true })).toBeVisible();
   await expect(page.getByText('Select a cutoff date to load the inventory.')).toBeVisible();
-  await page.getByLabel('Created before (UTC)').fill('2020-02-01');
+  await page.getByLabel('Created before (UTC)').fill('01/02/2020');
   await page.getByRole('button', { name: 'Review imports' }).click();
   const sites = page.getByRole('region', { name: 'Site imports', exact: true });
   await expect(sites).toBeVisible();
@@ -48,7 +48,7 @@ test('owners review retention counts with UTC cutoffs, validation and responsive
   const energy = page.getByRole('region', { name: 'Energy imports', exact: true });
   await expect(energy.locator('.retention-highlight dd')).toHaveText('0');
   await expect(energy).toContainText('No batches');
-  await expect(page.getByLabel('Created before (UTC)')).toHaveValue('2020-02-01');
+  await expect(page.getByLabel('Created before (UTC)')).toHaveValue('01/02/2020');
   const exportLink = page.getByRole('link', { name: 'Download inventory JSON' });
   const exportUrl = (await exportLink.getAttribute('href'))!;
   const downloadEvent = page.waitForEvent('download');

@@ -22,8 +22,8 @@ test('carbon factors save, reset and retain corrected versions', async ({ page }
   await page.goto(page.url().replace('/overview', '/carbon'));
   await page.getByLabel('Geography code').fill('gb');
   await page.getByLabel('Factor', { exact: true }).fill('0.123456789');
-  await page.getByLabel('First day').fill('2020-01-01');
-  await page.getByLabel('Last day (inclusive)').fill('2020-12-31');
+  await page.getByLabel('First day').fill('01/01/2020');
+  await page.getByLabel('Last day (inclusive)').fill('31/12/2020');
   await page.getByLabel('Source and methodology reference').fill('Synthetic browser reference');
   await page.getByRole('button', { name: 'Save factor' }).click();
   await expect(page.getByRole('cell', { name: '0.123456789 kgCO2e/kWh' })).toBeVisible();

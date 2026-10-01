@@ -7,6 +7,13 @@ const sheet = (rows: string[][], headers = emissionsColumns) => ({
   rows: rows.map((cells, i) => ({ row: i + 2, cells })),
 });
 describe('fixed Emissions worksheet', () => {
+  it.each(['Petrol', 'petrol', 'PETROL'])('accepts emission factors for %s', (label) => {
+    const data = [...row];
+    data[3] = label;
+    const parsed = parseEmissions(sheet([data]));
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.records[0].fuel).toBe('PETROL');
+  });
   it('accepts the reference blank A1, zero factors and normalized utilities', () => {
     const result = parseEmissions(
       sheet([[...row.slice(0, 3), 'solar pv', 'KWH', '0']], ['', ...emissionsColumns.slice(1)]),

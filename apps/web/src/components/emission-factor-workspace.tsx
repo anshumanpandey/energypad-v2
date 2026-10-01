@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
@@ -107,11 +108,16 @@ export function EmissionFactorWorkspace({
               </label>
               <label>
                 First day
-                <input name="firstDay" type="date" required defaultValue={editing?.validFrom.slice(0, 10) ?? ''} />
+                <DateInput name="firstDay" type="date" required defaultValue={editing?.validFrom.slice(0, 10) ?? ''} />
               </label>
               <label>
                 Last day (inclusive)
-                <input name="lastDay" type="date" required defaultValue={editing ? lastDay(editing.validUntil) : ''} />
+                <DateInput
+                  name="lastDay"
+                  type="date"
+                  required
+                  defaultValue={editing ? lastDay(editing.validUntil) : ''}
+                />
               </label>
             </div>
             <label>

@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { responseError } from './forms';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -107,7 +108,7 @@ export function OccupancyWorkspace({
             </label>
             <label>
               Occupancy first day
-              <input
+              <DateInput
                 name="firstDay"
                 type="date"
                 required
@@ -117,7 +118,7 @@ export function OccupancyWorkspace({
             </label>
             <label>
               Occupancy last day (inclusive)
-              <input
+              <DateInput
                 name="lastDay"
                 type="date"
                 required

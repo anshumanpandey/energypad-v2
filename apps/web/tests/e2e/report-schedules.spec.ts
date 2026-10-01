@@ -106,7 +106,7 @@ test('report schedule HTTP lifecycle stays private and delivery stays disabled',
   await panel.getByRole('button', { name: 'Save schedule draft', exact: true }).click();
   const uiRevision = (await (await uiSaved).json()).revision;
   await expect(panel.getByRole('status')).toHaveText('Schedule draft saved. Delivery remains disabled.');
-  await panel.getByLabel('Occurrence time (UTC)', { exact: true }).fill('2026-10-25T01:30');
+  await panel.getByLabel('Occurrence time (UTC)', { exact: true }).fill('25/10/2026 01:30');
   await panel.getByRole('button', { name: 'Prepare held occurrence', exact: true }).click();
   await expect(panel.getByRole('status')).toHaveText('Occurrence held. Nothing has been sent.');
   await expect(panel.getByLabel('Occurrence time (UTC)', { exact: true })).toHaveValue('');

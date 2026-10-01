@@ -1,4 +1,5 @@
 'use client';
+import { DateInput } from './ui/date-input';
 import { responseError } from './forms';
 import { useState, type FormEvent } from 'react';
 import { Button } from './ui/button';
@@ -190,7 +191,7 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
                 </label>
                 <label>
                   Attribute effective date
-                  <input name="effectiveFrom" type="date" />
+                  <DateInput name="effectiveFrom" type="date" />
                 </label>
                 {sourceEmails.length > 0 && (
                   <label>

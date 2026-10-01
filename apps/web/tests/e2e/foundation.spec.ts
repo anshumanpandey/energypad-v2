@@ -288,7 +288,7 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await page.getByLabel('Portfolio', { exact: true }).selectOption({ label: 'Regional sites' });
   await page.getByRole('button', { name: 'Save site', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Attribute history' })).toBeVisible();
-  await page.getByLabel('Effective date').fill('2026-01-01');
+  await page.getByLabel('Effective date').fill('01/01/2026');
   await page.getByLabel('Population', { exact: true }).fill('0');
   await page.getByLabel('Floor area (m²)').fill('1200.5');
   await page.getByRole('button', { name: 'Add history entry' }).click();
@@ -298,11 +298,11 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await expect(page.getByLabel('Effective date')).toHaveValue('');
   await expect(page.getByLabel('Population', { exact: true })).toHaveValue('');
   await expect(page.getByLabel('Floor area (m²)')).toHaveValue('');
-  await page.getByLabel('Effective date').fill('2026-01-01');
+  await page.getByLabel('Effective date').fill('01/01/2026');
   await page.getByLabel('Population', { exact: true }).fill('12');
   await page.getByRole('button', { name: 'Add history entry' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'This record already exists.' })).toBeVisible();
-  await expect(page.getByLabel('Effective date')).toHaveValue('2026-01-01');
+  await expect(page.getByLabel('Effective date')).toHaveValue('01/01/2026');
   await expect(page.getByLabel('Population', { exact: true })).toHaveValue('12');
   await page.getByLabel('Meter code').fill('MAIN');
   await page.getByLabel('Meter name').fill('Main electricity');
@@ -485,16 +485,16 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await expect(drivers.getByLabel('Observed value')).toHaveValue('');
   await expect(drivers.getByText('Average population (people) · 1/12 months observed', { exact: true })).toBeVisible();
   await drivers.getByLabel('Schedule name').fill('Standard week');
-  await drivers.getByLabel('First day', { exact: true }).fill('2021-01-01');
-  await drivers.getByLabel('Last day (inclusive)', { exact: true }).fill('2021-12-31');
+  await drivers.getByLabel('First day', { exact: true }).fill('01/01/2021');
+  await drivers.getByLabel('Last day (inclusive)', { exact: true }).fill('31/12/2021');
   await drivers.getByLabel('Planned weekly hours').fill('40');
   await drivers.getByLabel('Schedule source').fill('Synthetic operating plan');
   await drivers.getByRole('button', { name: 'Save operating schedule', exact: true }).click();
   await expect(drivers.getByText('Standard week · 40 hours/week', { exact: true })).toBeVisible();
   await expect(drivers.getByLabel('Schedule name')).toHaveValue('');
   await drivers.getByLabel('Schedule name').fill('Overlap');
-  await drivers.getByLabel('First day', { exact: true }).fill('2021-06-01');
-  await drivers.getByLabel('Last day (inclusive)', { exact: true }).fill('2021-12-31');
+  await drivers.getByLabel('First day', { exact: true }).fill('01/06/2021');
+  await drivers.getByLabel('Last day (inclusive)', { exact: true }).fill('31/12/2021');
   await drivers.getByLabel('Planned weekly hours').fill('20');
   await drivers.getByLabel('Schedule source').fill('Synthetic conflicting plan');
   await drivers.getByRole('button', { name: 'Save operating schedule', exact: true }).click();
@@ -756,8 +756,8 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
     .getByRole('combobox', { name: 'Tariff end use', exact: true })
     .selectOption({ label: 'LIGHTING · Lighting · ELECTRICITY' });
   await tariffForm.getByLabel('Tariff name', { exact: true }).fill('Synthetic electricity tariff');
-  await tariffForm.getByLabel('Tariff first day', { exact: true }).fill('2021-01-01');
-  await tariffForm.getByLabel('Tariff last day (inclusive)', { exact: true }).fill('2021-12-31');
+  await tariffForm.getByLabel('Tariff first day', { exact: true }).fill('01/01/2021');
+  await tariffForm.getByLabel('Tariff last day (inclusive)', { exact: true }).fill('31/12/2021');
   await tariffForm.getByLabel('Tariff currency', { exact: true }).fill('gbp');
   await tariffForm.getByRole('combobox', { name: 'Rate unit', exact: true }).selectOption('kWh');
   await tariffForm.getByRole('combobox', { name: 'Rate tax basis', exact: true }).selectOption('NET');
@@ -793,8 +793,8 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   const occupancy = page.getByRole('region', { name: 'Occupancy history', exact: true });
   const occupancyForm = occupancy.getByRole('form', { name: 'Add occupancy', exact: true });
   await occupancyForm.getByLabel('Occupancy end use').selectOption('LIGHTING');
-  await occupancyForm.getByLabel('Occupancy first day').fill('2021-01-01');
-  await occupancyForm.getByLabel('Occupancy last day (inclusive)').fill('2021-01-31');
+  await occupancyForm.getByLabel('Occupancy first day').fill('01/01/2021');
+  await occupancyForm.getByLabel('Occupancy last day (inclusive)').fill('31/01/2021');
   await occupancyForm.getByLabel('Regular occupants', { exact: true }).fill('0');
   await occupancyForm.getByLabel('Occupancy source', { exact: true }).fill('Reviewed attendance register');
   await occupancyForm.getByRole('button', { name: 'Save occupancy', exact: true }).click();
@@ -900,8 +900,8 @@ test('Sprint 3 operating patterns, corrections and reviewed import', async ({ pa
   const panel = page.getByRole('region', { name: 'Operating patterns', exact: true });
   const form = panel.getByRole('form', { name: 'Add pattern', exact: true });
   await form.getByLabel('Pattern end use').selectOption('HEAT');
-  await form.getByLabel('Pattern first day').fill('2020-01-01');
-  await form.getByLabel('Pattern last day (inclusive)').fill('2020-01-31');
+  await form.getByLabel('Pattern first day').fill('01/01/2020');
+  await form.getByLabel('Pattern last day (inclusive)').fill('31/01/2020');
   await form.getByLabel('Annual active days').fill('250');
   await form.getByLabel('Pattern temperature').fill('18.5');
   await form.getByLabel('Pattern source', { exact: true }).fill('Legacy pattern review');
@@ -913,7 +913,7 @@ test('Sprint 3 operating patterns, corrections and reviewed import', async ({ pa
   const correction = panel.getByRole('form', { name: 'Correct pattern', exact: true });
   await correction.getByLabel('Temperature unit').selectOption('C');
   await correction.getByLabel('Temperature context').selectOption('HEATING');
-  await correction.getByLabel('Pattern last day (inclusive)').fill('2020-12-31');
+  await correction.getByLabel('Pattern last day (inclusive)').fill('31/12/2020');
   await correction
     .getByLabel('Pattern correction reason')
     .fill('Confirmed annual validity and Celsius heating setpoint');
@@ -1008,8 +1008,8 @@ test('Sprint 3 operational events and log import', async ({ page }, testInfo) =>
   const panel = page.getByRole('region', { name: 'Operational events', exact: true });
   const form = panel.getByRole('form', { name: 'Add event', exact: true });
   await form.getByLabel('Event end use').selectOption('HEAT');
-  await form.getByLabel('Event first day').fill('2020-01-01');
-  await form.getByLabel('Event last day (inclusive)').fill('2020-01-31');
+  await form.getByLabel('Event first day').fill('01/01/2020');
+  await form.getByLabel('Event last day (inclusive)').fill('31/01/2020');
   await form.getByLabel('Event code', { exact: true }).fill('log-01');
   await form.getByLabel('Operation', { exact: true }).fill('Plant shutdown');
   await expect(form.getByLabel('Event comments')).toHaveCSS('border-top-width', '1px');
@@ -1021,7 +1021,7 @@ test('Sprint 3 operational events and log import', async ({ page }, testInfo) =>
   await expect(form.getByLabel('Event code', { exact: true })).toHaveValue('');
   await panel.getByRole('button', { name: 'Correct event', exact: true }).click();
   const correction = panel.getByRole('form', { name: 'Correct event', exact: true });
-  await correction.getByLabel('Event last day (inclusive)').fill('2020-02-01');
+  await correction.getByLabel('Event last day (inclusive)').fill('01/02/2020');
   await correction.getByLabel('Event comments').fill('Confirmed shutdown interval');
   await correction.getByLabel('Event correction reason').fill('Reviewed engineer log');
   await correction.getByRole('button', { name: 'Save event correction', exact: true }).click();
