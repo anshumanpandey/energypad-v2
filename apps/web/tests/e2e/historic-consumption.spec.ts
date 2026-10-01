@@ -108,7 +108,7 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
     await expect(records.getByRole('cell', { name: utility, exact: true })).toBeVisible();
   }
   for (const quantity of [75, 100, 200, 300, 400]) {
-    await expect(records.getByRole('cell', { name: `${quantity} kWh`, exact: true })).toBeVisible();
+    await expect(records.getByRole('cell', { name: `${quantity.toFixed(2)} kWh`, exact: true })).toBeVisible();
   }
   await expect(records).toContainText(gasMeter.name);
   await expect(records).toContainText('Second gas meter');
@@ -123,9 +123,15 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
     'Solar PV',
   ]);
   await records.getByRole('button', { name: 'Source', exact: true }).click();
-  await expect(bodyRows.locator('td:nth-child(3)')).toHaveText(['75 kWh', '100 kWh', '200 kWh', '300 kWh', '400 kWh']);
+  await expect(bodyRows.locator('td:nth-child(3)')).toHaveText([
+    '75.00 kWh',
+    '100.00 kWh',
+    '200.00 kWh',
+    '300.00 kWh',
+    '400.00 kWh',
+  ]);
   await records.getByRole('button', { name: 'Source', exact: true }).click();
-  await expect(bodyRows.first()).toContainText('400 kWh');
+  await expect(bodyRows.first()).toContainText('400.00 kWh');
   await expect(records.getByRole('columnheader', { name: 'Source', exact: true })).toHaveAttribute(
     'aria-sort',
     'descending',
@@ -134,9 +140,9 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   await records.getByRole('button', { name: 'Utility', exact: true }).click();
   await expect(bodyRows.first().locator('td').nth(1)).toHaveText('Solar PV');
   await records.getByRole('button', { name: 'Energy (kWh)', exact: true }).click();
-  await expect(bodyRows.first()).toContainText('75 kWh');
+  await expect(bodyRows.first()).toContainText('75.00 kWh');
   await records.getByRole('button', { name: 'Net / gross cost', exact: true }).click();
-  await expect(bodyRows.last()).toContainText('400 kWh');
+  await expect(bodyRows.last()).toContainText('400.00 kWh');
   await records.getByRole('button', { name: 'Month / meter', exact: true }).click();
   await expect(records.getByRole('columnheader', { name: 'Month / meter', exact: true })).toHaveAttribute(
     'aria-sort',
@@ -151,7 +157,7 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   await records.getByLabel('Filter consumption month').selectOption('01');
   await records.getByLabel('Filter consumption utility').selectOption('SOLAR_PV');
   await expect(bodyRows).toHaveCount(1);
-  await expect(bodyRows.first()).toContainText('200 kWh');
+  await expect(bodyRows.first()).toContainText('200.00 kWh');
   await records.getByRole('button', { name: 'Clear filters', exact: true }).click();
   await expect(bodyRows).toHaveCount(5);
   await records.getByLabel('Filter consumption utility').selectOption('SOLAR_PV');
@@ -160,5 +166,5 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   await expect(records.getByLabel('Filter consumption utility')).toHaveValue('');
   await expect(records.getByLabel('Filter consumption month')).toHaveValue('');
   await expect(bodyRows).toHaveCount(1);
-  await expect(bodyRows.first()).toContainText('800 kWh');
+  await expect(bodyRows.first()).toContainText('800.00 kWh');
 });

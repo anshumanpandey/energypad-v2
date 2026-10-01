@@ -1,4 +1,5 @@
 'use client';
+import { formatEnergyValue } from './format-energy-value';
 import { MigrationEvidence, type MigrationEvidenceData } from './migration-evidence';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -106,11 +107,12 @@ export function ReadingCorrections({
             <article className="site-history-entry" key={r.id}>
               <RevisionMeta value={r} />
               <p>
-                {r.sourceQuantity} {r.sourceUnit} → {r.normalizedKwh} kWh · {r.estimated ? 'Estimated' : 'Actual'}
+                {formatEnergyValue(r.sourceQuantity)} {r.sourceUnit} → {formatEnergyValue(r.normalizedKwh)} kWh ·{' '}
+                {r.estimated ? 'Estimated' : 'Actual'}
               </p>
               <p>
-                Net {r.netCost ?? 'Unknown'} · VAT {r.vatPercent ?? 'Unknown'}% / {r.vatCost ?? 'Unknown'} · Gross{' '}
-                {r.grossCost ?? 'Unknown'} {r.currency}
+                Net {formatEnergyValue(r.netCost)} · VAT {formatEnergyValue(r.vatPercent)}% /{' '}
+                {formatEnergyValue(r.vatCost)} · Gross {formatEnergyValue(r.grossCost)} {r.currency}
               </p>
               <p>End use: {r.endUse || 'Not specified'}</p>
               <p>
@@ -130,7 +132,7 @@ export function ReadingCorrections({
                 </p>
               )}
               <p>
-                Conversion: {r.conversionFactor} kWh/{r.sourceUnit}
+                Conversion: {formatEnergyValue(r.conversionFactor)} kWh/{r.sourceUnit}
               </p>
               <details>
                 <summary>Saved provenance</summary>
@@ -143,9 +145,9 @@ export function ReadingCorrections({
                   Legacy reference: {r.externalLegacyId || 'None'}
                 </p>
                 <p>
-                  Population: {String(r.attributeSnapshot.population ?? 'Unknown')} · Weekly hours:{' '}
-                  {String(r.attributeSnapshot.weeklyHours ?? 'Unknown')} · Floor area:{' '}
-                  {String(r.attributeSnapshot.floorArea ?? 'Unknown')}
+                  Population: {formatEnergyValue(r.attributeSnapshot.population)} · Weekly hours:{' '}
+                  {formatEnergyValue(r.attributeSnapshot.weeklyHours)} · Floor area:{' '}
+                  {formatEnergyValue(r.attributeSnapshot.floorArea)}
                 </p>
                 <MigrationEvidence data={r.sourceProvenance} />
                 <p>{r.qualityFlags.join(' · ') || 'No input issues recorded'}</p>
@@ -262,8 +264,8 @@ export function ReadingCorrections({
               </label>
             )}
             <p className="field-hint">
-              The saved factor ({record.conversionFactor} kWh/{record.sourceUnit}) is retained unless you select the
-              current conversion.
+              The saved factor ({formatEnergyValue(record.conversionFactor)} kWh/{record.sourceUnit}) is retained unless
+              you select the current conversion.
             </p>
             <label>
               Reading correction reason
@@ -317,7 +319,7 @@ export function ConversionCorrections({
             <article className="site-history-entry" key={c.id}>
               <RevisionMeta value={c} />
               <p>
-                {c.factor} kWh/{c.sourceUnit} · {c.fuel}
+                {formatEnergyValue(c.factor)} kWh/{c.sourceUnit} · {c.fuel}
               </p>
               <p>
                 {c.validFrom.slice(0, 7)} to {new Date(+new Date(c.validUntil) - 86400000).toISOString().slice(0, 7)}{' '}

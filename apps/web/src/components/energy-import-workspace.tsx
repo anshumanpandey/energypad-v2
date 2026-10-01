@@ -1,4 +1,5 @@
 'use client';
+import { formatEnergyValue } from './format-energy-value';
 import { responseError } from './forms';
 import { applyEnergyTemplate, saveEnergyTemplate, parseTemplateText } from '@/domain/workbook-template';
 import { downloadMapping } from './workbook-template';
@@ -332,11 +333,11 @@ export function EnergyImportWorkspace({
                               {row.row} · {row.data.month}
                             </td>
                             <td>
-                              {row.data.quantity} {row.prepared.sourceUnit}
+                              {formatEnergyValue(row.data.quantity)} {row.prepared.sourceUnit}
                             </td>
-                            <td>{row.prepared.normalizedKwh}</td>
+                            <td>{formatEnergyValue(row.prepared.normalizedKwh)}</td>
                             <td>
-                              {row.prepared.netCost ?? 'Unknown'} / {row.prepared.grossCost ?? 'Unknown'}{' '}
+                              {formatEnergyValue(row.prepared.netCost)} / {formatEnergyValue(row.prepared.grossCost)}{' '}
                               {row.prepared.currency}
                             </td>
                             <td>

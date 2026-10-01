@@ -1,4 +1,5 @@
 'use client';
+import { formatEnergyValue } from './format-energy-value';
 import { DateInput } from './ui/date-input';
 import { useState } from 'react';
 import { Button } from './ui/button';
@@ -63,8 +64,8 @@ export function DriverCorrections({
                 </strong>
                 <p>
                   {r.month
-                    ? `${r.month.slice(0, 7)} · ${r.driver} · ${r.value}`
-                    : `${r.name} · ${r.weeklyHours} hours/week · ${r.validFrom!.slice(0, 10)} to ${lastDay(r.validUntil!)} inclusive`}
+                    ? `${r.month.slice(0, 7)} · ${r.driver} · ${formatEnergyValue(r.value)}`
+                    : `${r.name} · ${formatEnergyValue(r.weeklyHours)} hours/week · ${r.validFrom!.slice(0, 10)} to ${lastDay(r.validUntil!)} inclusive`}
                 </p>
                 <p>Source: {r.source}</p>
                 <p className="muted" style={{ overflowWrap: 'anywhere' }}>

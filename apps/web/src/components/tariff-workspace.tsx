@@ -1,4 +1,5 @@
 'use client';
+import { formatEnergyValue } from './format-energy-value';
 import { DateInput } from './ui/date-input';
 import type { CatalogEntry } from './energy-catalog';
 import { useState } from 'react';
@@ -54,7 +55,8 @@ function TariffDetails({ record: r }: { record: Tariff }) {
         {r.validFrom.slice(0, 10)} to {lastDay(r.validUntil)} inclusive · {r.timezone}
       </p>
       <p>
-        {r.currency} per {r.rateUnit} · {r.taxBasis === 'NET' ? 'Excludes VAT' : 'Includes VAT'} · VAT {r.vatPercent}%
+        {r.currency} per {r.rateUnit} · {r.taxBasis === 'NET' ? 'Excludes VAT' : 'Includes VAT'} · VAT{' '}
+        {formatEnergyValue(r.vatPercent)}%
       </p>
       <div style={{ overflowX: 'auto' }}>
         <table className="import-preview-table">
@@ -77,7 +79,7 @@ function TariffDetails({ record: r }: { record: Tariff }) {
                   {b.startTime}–{b.endTime}
                 </td>
                 <td>
-                  {b.rate} {r.currency}/{r.rateUnit}
+                  {formatEnergyValue(b.rate)} {r.currency}/{r.rateUnit}
                 </td>
                 <td>{b.legacyId || 'None'}</td>
               </tr>

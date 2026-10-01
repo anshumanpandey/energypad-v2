@@ -1,3 +1,5 @@
+import { WasteDirection } from './waste-direction';
+import { formatEnergyValue } from './format-energy-value';
 import type { CarbonSnapshot } from '@/domain/carbon';
 import { DomainError } from '@/domain/policy';
 import Link from 'next/link';
@@ -41,7 +43,8 @@ export async function WasteSavings({
   }
   const carbonRuns = siteId ? await accessible(() => carbonService.history(actor, organisationId, siteId)) : [];
   const carbonOptions = carbonRuns.map((run) => ({ id: run.id, snapshot: run.snapshot as unknown as CarbonSnapshot }));
-  const value = (v: string | number | null, unit = '') => (v === null ? 'Unavailable' : `${v} ${unit}`);
+  const value = (v: string | number | null, unit = '') =>
+    v === null ? 'Unavailable' : `${formatEnergyValue(v)} ${unit}`;
   return (
     <div className="waste-savings">
       <div className="page-heading">
@@ -237,19 +240,21 @@ export async function WasteSavings({
                         ) : (
                           <tr key={r.month}>
                             <th>{r.month}</th>
-                            <td>{r.actualKwh}</td>
-                            <td>{r.expectedKwh}</td>
-                            <td>{r.adjustedExpectedKwh}</td>
-                            <td>{r.preNraVarianceKwh}</td>
-                            <td>{r.postNraVarianceKwh}</td>
-                            <td>{r.direction.replace('_', ' ')}</td>
+                            <td>{formatEnergyValue(r.actualKwh)}</td>
+                            <td>{formatEnergyValue(r.expectedKwh)}</td>
+                            <td>{formatEnergyValue(r.adjustedExpectedKwh)}</td>
+                            <td>{formatEnergyValue(r.preNraVarianceKwh)}</td>
+                            <td>{formatEnergyValue(r.postNraVarianceKwh)}</td>
+                            <td>
+                              <WasteDirection direction={r.direction} />
+                            </td>
                             <td>
                               {r.significance.significant === null
                                 ? 'Undefined'
                                 : r.significance.significant
                                   ? 'Significant'
                                   : 'Not significant'}{' '}
-                              · {r.significance.basis} · threshold {r.significance.thresholdKwh} kWh
+                              · {r.significance.basis} · threshold {formatEnergyValue(r.significance.thresholdKwh)} kWh
                             </td>
                             <td>
                               {value(r.preCost, r.currency ?? '')} / {value(r.postCost, r.currency ?? '')}

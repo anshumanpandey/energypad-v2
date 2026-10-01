@@ -1,4 +1,5 @@
 'use client';
+import { formatEnergyValue } from './format-energy-value';
 import { DateInput } from './ui/date-input';
 import { responseError } from './forms';
 import { useState } from 'react';
@@ -187,7 +188,8 @@ export function OccupancyWorkspace({
             {r.energyUse.code} · {r.validFrom.slice(0, 10)} to {lastDay(r.validUntil)}
           </strong>
           <p>
-            Regular: {r.regularCount ?? 'Unknown'} · Irregular: {r.irregularCount ?? 'Unknown'} · Revision {r.revision}
+            Regular: {formatEnergyValue(r.regularCount)} · Irregular: {formatEnergyValue(r.irregularCount)} · Revision{' '}
+            {r.revision}
           </p>
           <p>
             Source: {r.source}
@@ -215,8 +217,8 @@ export function OccupancyWorkspace({
             <ol>
               {history.rows.map((h) => (
                 <li key={h.id}>
-                  Revision {h.revision}: regular {h.regularCount ?? 'Unknown'}, irregular{' '}
-                  {h.irregularCount ?? 'Unknown'} · {h.source} · {h.correctionReason ?? 'Original record'} ·{' '}
+                  Revision {h.revision}: regular {formatEnergyValue(h.regularCount)}, irregular{' '}
+                  {formatEnergyValue(h.irregularCount)} · {h.source} · {h.correctionReason ?? 'Original record'} ·{' '}
                   {new Date(h.createdAt).toLocaleString()} · Author {h.authorId}
                 </li>
               ))}
@@ -325,8 +327,8 @@ export function OccupancyWorkspace({
                           {r.data.firstDay} to {r.data.lastDay}
                         </td>
                         <td>{r.data.energyUseCode}</td>
-                        <td>{r.data.regularCount ?? 'Unknown'}</td>
-                        <td>{r.data.irregularCount ?? 'Unknown'}</td>
+                        <td>{formatEnergyValue(r.data.regularCount)}</td>
+                        <td>{formatEnergyValue(r.data.irregularCount)}</td>
                         <td>{r.data.source}</td>
                         <td>
                           {r.data.legacySource}/{r.data.legacyId}

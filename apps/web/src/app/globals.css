@@ -2943,3 +2943,13 @@ select[aria-invalid='true'] {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.waste-direction {
+  font-weight: 700;
+}
+.waste-direction-saving {
+  color: #166534;
+}
+.waste-direction-waste {
+  color: #b91c1c;
+}

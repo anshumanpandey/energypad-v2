@@ -1,4 +1,6 @@
 'use client';
+import { formatEnergyValue } from './format-energy-value';
+import { WasteDirection } from './waste-direction';
 import { DateInput } from './ui/date-input';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -65,8 +67,7 @@ function warningLabel(code: string) {
   if (code === 'ZERO_SIGNIFICANCE_THRESHOLD') return 'Baseline error is zero; review significance policy';
   return code;
 }
-const number = (v: number | null) =>
-  v === null ? 'Undefined' : v.toLocaleString(undefined, { maximumFractionDigits: 3 });
+const number = (v: number | null) => formatEnergyValue(v, 'Undefined');
 export function AnalysisWorkspace({
   orgId,
   sites,
@@ -863,7 +864,7 @@ function RunResults({ run }: { run: SavedRun }) {
                   <td>{number(row.adjustedExpectedKwh)}</td>
                   <td>{number(row.preNraVarianceKwh)}</td>
                   <td>
-                    {number(row.postNraVarianceKwh)} · {row.direction.toLowerCase().replace('_', ' ')}
+                    {number(row.postNraVarianceKwh)} · <WasteDirection direction={row.direction} />
                   </td>
                   <td>{number(row.significance.thresholdKwh)}</td>
                   <td>

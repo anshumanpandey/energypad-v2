@@ -408,7 +408,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await expect(page.getByLabel('Quantity (meter units)')).toHaveValue('');
   await expect(page.getByText('Main electricity · 1/12 months recorded')).toBeVisible();
   await expect(page.getByRole('cell').filter({ hasText: /^1250/ })).toBeVisible();
-  await expect(page.getByRole('cell', { name: '100 / 120 GBP', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '100.00 / 120.00 GBP', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: /Missing population/ })).toBeVisible();
   await page.getByLabel('Month', { exact: true }).fill('2024-02');
   await page.getByLabel('Quantity (meter units)').fill('2');
@@ -506,7 +506,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await drivers.getByLabel('Planned weekly hours').fill('40');
   await drivers.getByLabel('Schedule source').fill('Synthetic operating plan');
   await drivers.getByRole('button', { name: 'Save operating schedule', exact: true }).click();
-  await expect(drivers.getByText('Standard week · 40 hours/week', { exact: true })).toBeVisible();
+  await expect(drivers.getByText('Standard week · 40.00 hours/week', { exact: true })).toBeVisible();
   await expect(drivers.getByLabel('Schedule name')).toHaveValue('');
   await drivers.getByLabel('Schedule name').fill('Overlap');
   await drivers.getByLabel('First day', { exact: true }).fill('01/06/2021');
@@ -697,8 +697,8 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await expect(gasRow.getByRole('cell').filter({ hasText: /^2200/ })).toBeVisible();
   await expect(page.getByText('Gas meter · 1/12 months recorded', { exact: true })).toBeVisible();
   await gasRow.getByRole('button', { name: 'View reading history', exact: true }).click();
-  await expect(gasRow.getByText('100 m3 → 1050 kWh · Actual', { exact: true })).toBeVisible();
-  await expect(gasRow.getByText('200 m3 → 2200 kWh · Actual', { exact: true })).toBeVisible();
+  await expect(gasRow.getByText('100.00 m3 → 1050.00 kWh · Actual', { exact: true })).toBeVisible();
+  await expect(gasRow.getByText('200.00 m3 → 2200.00 kWh · Actual', { exact: true })).toBeVisible();
   await gasRow.getByRole('button', { name: 'Correct reading', exact: true }).click();
   await correctionForm.getByLabel('Corrected quantity (m3)').fill('300');
   await correctionForm.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -708,7 +708,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   await expect(gasRow.getByRole('cell').filter({ hasText: /^2200/ })).toBeVisible();
   await gasRow.getByRole('button', { name: 'View reading history', exact: true }).click();
-  await expect(gasRow.getByText('100 m3 → 1050 kWh · Actual', { exact: true })).toBeVisible();
+  await expect(gasRow.getByText('100.00 m3 → 1050.00 kWh · Actual', { exact: true })).toBeVisible();
   await gasRow.screenshot({ path: testInfo.outputPath('reading-correction-history.png') });
   await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
@@ -721,10 +721,10 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await observationForm.getByLabel('Corrected observed value').fill('25');
   await observationForm.getByLabel('Correction reason', { exact: true }).fill('Correct attendance count');
   await observationForm.getByRole('button', { name: 'Save observation correction', exact: true }).click();
-  await expect(observationRow.getByRole('cell', { name: '25', exact: true })).toBeVisible();
+  await expect(observationRow.getByRole('cell', { name: '25.00', exact: true })).toBeVisible();
   await expect(drivers.getByText('Average population (people) · 1/12 months observed', { exact: true })).toBeVisible();
   await observationRow.getByRole('button', { name: 'View observation history', exact: true }).click();
-  await expect(observationRow.getByText('2021-01 · POPULATION · 0', { exact: true })).toBeVisible();
+  await expect(observationRow.getByText('2021-01 · POPULATION · 0.00', { exact: true })).toBeVisible();
   await observationRow.getByRole('button', { name: 'Correct observation', exact: true }).click();
   await observationForm.getByLabel('Corrected observed value').fill('99');
   await observationForm.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -734,14 +734,14 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await scheduleForm.getByLabel('Corrected weekly hours').fill('35');
   await scheduleForm.getByLabel('Correction reason', { exact: true }).fill('Correct weekly plan');
   await scheduleForm.getByRole('button', { name: 'Save schedule correction', exact: true }).click();
-  await expect(drivers.getByText('Standard week · 35 hours/week', { exact: true })).toBeVisible();
+  await expect(drivers.getByText('Standard week · 35.00 hours/week', { exact: true })).toBeVisible();
   await page.reload();
   await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
-  await expect(observationRow.getByRole('cell', { name: '25', exact: true })).toBeVisible();
+  await expect(observationRow.getByRole('cell', { name: '25.00', exact: true })).toBeVisible();
   await drivers.getByRole('button', { name: 'View schedule history', exact: true }).click();
   await expect(
-    drivers.getByText('Standard week · 40 hours/week · 2021-01-01 to 2021-12-31 inclusive', { exact: true }),
+    drivers.getByText('Standard week · 40.00 hours/week · 2021-01-01 to 2021-12-31 inclusive', { exact: true }),
   ).toBeVisible();
   await observationRow.getByRole('button', { name: 'View observation history', exact: true }).click();
   await observationRow.screenshot({ path: testInfo.outputPath('driver-correction-history.png') });
@@ -806,7 +806,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await page.reload();
   await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
-  await expect(pricing.getByRole('cell', { name: '0.2 GBP/kWh', exact: true })).toBeVisible();
+  await expect(pricing.getByRole('cell', { name: '0.20 GBP/kWh', exact: true })).toBeVisible();
   await pricing.getByRole('button', { name: 'View tariff history', exact: true }).click();
   await expect(pricing.getByRole('cell', { name: '0.15 GBP/kWh', exact: true })).toBeVisible();
   await pricing.screenshot({ path: testInfo.outputPath('tariff-history.png') });
@@ -818,7 +818,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await occupancyForm.getByLabel('Regular occupants', { exact: true }).fill('0');
   await occupancyForm.getByLabel('Occupancy source', { exact: true }).fill('Reviewed attendance register');
   await occupancyForm.getByRole('button', { name: 'Save occupancy', exact: true }).click();
-  await expect(occupancy.getByText('Regular: 0 · Irregular: Unknown · Revision 1', { exact: true })).toBeVisible();
+  await expect(occupancy.getByText('Regular: 0.00 · Irregular: Unknown · Revision 1', { exact: true })).toBeVisible();
   await expect(occupancyForm.getByLabel('Regular occupants', { exact: true })).toHaveValue('');
   await occupancy.getByRole('button', { name: 'Correct occupancy', exact: true }).click();
   const occupancyCorrection = occupancy.getByRole('form', { name: 'Correct occupancy', exact: true });
@@ -826,9 +826,9 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await occupancyCorrection.getByLabel('Irregular occupants', { exact: true }).fill('3');
   await occupancyCorrection.getByLabel('Occupancy correction reason').fill('Corrected register');
   await occupancyCorrection.getByRole('button', { name: 'Save occupancy correction', exact: true }).click();
-  await expect(occupancy.getByText('Regular: 12 · Irregular: 3 · Revision 2', { exact: true })).toBeVisible();
+  await expect(occupancy.getByText('Regular: 12.00 · Irregular: 3.00 · Revision 2', { exact: true })).toBeVisible();
   await occupancy.getByRole('button', { name: 'View occupancy history', exact: true }).click();
-  await expect(occupancy.getByText(/Revision 1: regular 0, irregular Unknown/)).toBeVisible();
+  await expect(occupancy.getByText(/Revision 1: regular 0.00, irregular Unknown/)).toBeVisible();
   await occupancy.getByRole('button', { name: 'Correct occupancy', exact: true }).click();
   await occupancyCorrection.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(occupancyCorrection).toHaveCount(0);
@@ -865,7 +865,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   ).toBeVisible();
   await occupancy.getByLabel('I confirm the site, end uses, inclusive periods and separate occupant counts.').check();
   await occupancy.getByRole('button', { name: 'Commit occupancy import', exact: true }).click();
-  await expect(occupancy.getByText('Regular: 10 · Irregular: 0 · Revision 1', { exact: true })).toBeVisible();
+  await expect(occupancy.getByText('Regular: 10.00 · Irregular: 0.00 · Revision 1', { exact: true })).toBeVisible();
   await occupancy.screenshot({ path: testInfo.outputPath('occupancy-history.png') });
 
   await catalogPanel.getByRole('button', { name: 'Correct catalog entry', exact: true }).click();
@@ -999,7 +999,7 @@ test('Sprint 3 operating patterns, corrections and reviewed import', async ({ pa
   await page.reload();
   await page.getByLabel('Year', { exact: true }).selectOption('2021');
   await page.getByRole('button', { name: 'Load energy records' }).click();
-  await expect(panel.getByText(/Annual active days: 0 · Temperature: 0 C/)).toBeVisible();
+  await expect(panel.getByText(/Annual active days: 0.00 · Temperature: 0.00 C/)).toBeVisible();
   await panel.screenshot({ path: testInfo.outputPath('operating-patterns.png') });
 });
 

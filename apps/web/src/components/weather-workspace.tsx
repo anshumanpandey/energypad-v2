@@ -1,4 +1,5 @@
 'use client';
+import { formatEnergyValue } from './format-energy-value';
 import { useCallback, useEffect, useState } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import { weatherJobLabels } from '@/domain/weather-jobs';
@@ -254,7 +255,7 @@ export function WeatherWorkspace({
             <select value={configId} disabled={m.disabled} onChange={(e) => setSelected(e.target.value)}>
               {data.configurations.map((c) => (
                 <option key={c.id} value={c.id}>
-                  Version {c.version} · {c.latitude}, {c.longitude} · {c.timezone}
+                  Version {c.version} · {formatEnergyValue(c.latitude)}, {formatEnergyValue(c.longitude)} · {c.timezone}
                 </option>
               ))}
             </select>
@@ -262,7 +263,8 @@ export function WeatherWorkspace({
           {config && (
             <div className="site-history-entry">
               <strong>
-                Heating base {config.heatingBase} °C · Cooling base {config.coolingBase} °C
+                Heating base {formatEnergyValue(config.heatingBase)} °C · Cooling base{' '}
+                {formatEnergyValue(config.coolingBase)} °C
               </strong>
               <p>Source: {config.source}</p>
             </div>
@@ -358,10 +360,10 @@ export function WeatherWorkspace({
                       <tr key={month.month}>
                         <td>{month.month}</td>
                         <td>{month.days}</td>
-                        <td>{month.meanTemperature}</td>
-                        <td>{month.heatingDegreeDays}</td>
-                        <td>{month.coolingDegreeDays}</td>
-                        <td>{month.daylightHours}</td>
+                        <td>{formatEnergyValue(month.meanTemperature)}</td>
+                        <td>{formatEnergyValue(month.heatingDegreeDays)}</td>
+                        <td>{formatEnergyValue(month.coolingDegreeDays)}</td>
+                        <td>{formatEnergyValue(month.daylightHours)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -374,8 +376,8 @@ export function WeatherWorkspace({
                   {new Date(result.provenance.retrievedAt).toLocaleString()}
                 </p>
                 <p>
-                  Returned grid coordinates: {result.provenance.returnedLatitude}, {result.provenance.returnedLongitude}
-                  . Timezone: {result.provenance.timezone}.
+                  Returned grid coordinates: {formatEnergyValue(result.provenance.returnedLatitude)},{' '}
+                  {formatEnergyValue(result.provenance.returnedLongitude)}. Timezone: {result.provenance.timezone}.
                 </p>
                 <p>
                   Method: {result.methodology}. Daily HDD = max(0, heating base − daily mean temperature); daily CDD =

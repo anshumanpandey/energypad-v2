@@ -134,8 +134,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     evidence.getByRole('row').filter({ hasText: '2020-06' }).filter({ hasText: 'Population' }),
   ).toContainText('2020-02');
   const table = page.getByRole('region', { name: 'Monthly reporting results' });
-  await expect(table.getByRole('row').filter({ hasText: '2020-05' }).getByRole('cell').nth(2)).toHaveText('10');
-  await expect(table.getByRole('row').filter({ hasText: '2020-06' }).getByRole('cell').nth(2)).toHaveText('1.5');
+  await expect(table.getByRole('row').filter({ hasText: '2020-05' }).getByRole('cell').nth(2)).toHaveText('10.00');
+  await expect(table.getByRole('row').filter({ hasText: '2020-06' }).getByRole('cell').nth(2)).toHaveText('1.50');
   await expect(page.getByRole('region', { name: 'Reporting results', exact: true })).toContainText(
     'Consumption is estimated.',
   );

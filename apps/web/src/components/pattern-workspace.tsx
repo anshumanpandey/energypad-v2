@@ -1,4 +1,5 @@
 'use client';
+import { formatEnergyValue } from './format-energy-value';
 import { DateInput } from './ui/date-input';
 import { responseError } from './forms';
 import {
@@ -213,7 +214,7 @@ export function PatternWorkspace({
             {r.energyUse.code} · {r.validFrom.slice(0, 10)} to {lastDay(r.validUntil)}
           </strong>
           <p>
-            Annual active days: {r.daysOnYear ?? 'Unknown'} · Temperature: {r.temperature ?? 'Unknown'}{' '}
+            Annual active days: {formatEnergyValue(r.daysOnYear)} · Temperature: {formatEnergyValue(r.temperature)}{' '}
             {r.temperatureUnit} · {r.temperatureContext} · Revision {r.revision}
           </p>
           <ul>
@@ -248,8 +249,8 @@ export function PatternWorkspace({
               {history.rows.map((h) => (
                 <li key={h.id}>
                   Revision {h.revision}: {h.validFrom.slice(0, 10)} to {lastDay(h.validUntil)} · annual days{' '}
-                  {h.daysOnYear ?? 'Unknown'}, temperature {h.temperature ?? 'Unknown'} {h.temperatureUnit} ·{' '}
-                  {h.temperatureContext} · {h.source} · {h.correctionReason ?? 'Original record'} ·{' '}
+                  {formatEnergyValue(h.daysOnYear)}, temperature {formatEnergyValue(h.temperature)} {h.temperatureUnit}{' '}
+                  · {h.temperatureContext} · {h.source} · {h.correctionReason ?? 'Original record'} ·{' '}
                   {new Date(h.createdAt).toLocaleString()} · Author {h.authorId}
                 </li>
               ))}
@@ -368,9 +369,9 @@ export function PatternWorkspace({
                           {r.data.firstDay} to {r.data.lastDay}
                         </td>
                         <td>{r.data.energyUseCode}</td>
-                        <td>{r.data.daysOnYear ?? 'Unknown'}</td>
+                        <td>{formatEnergyValue(r.data.daysOnYear)}</td>
                         <td>
-                          {r.data.temperature ?? 'Unknown'} {r.data.temperatureUnit} · {r.data.temperatureContext}
+                          {formatEnergyValue(r.data.temperature)} {r.data.temperatureUnit} · {r.data.temperatureContext}
                         </td>
                         <td>{r.warnings.join(' ')}</td>
                         <td>{r.data.source}</td>

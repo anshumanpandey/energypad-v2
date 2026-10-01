@@ -1,4 +1,5 @@
 'use client';
+import { formatEnergyValue } from './format-energy-value';
 import { EventWorkspace, type EventRecord } from './event-workspace';
 import { PatternWorkspace, type PatternRecord } from './pattern-workspace';
 import { OccupancyWorkspace, type OccupancyRecord } from './occupancy-workspace';
@@ -263,14 +264,14 @@ export function EnergyWorkspace({
                         </td>
                         <td>{utilityLabel(record.fuel)}</td>
                         <td>
-                          {record.sourceQuantity} {record.sourceUnit}
+                          {formatEnergyValue(record.sourceQuantity)} {record.sourceUnit}
                         </td>
                         <td>
-                          <strong className="energy-record-value">{record.normalizedKwh}</strong>
+                          <strong className="energy-record-value">{formatEnergyValue(record.normalizedKwh)}</strong>
                           <details>
                             <summary>Conversion details</summary>
                             <p>
-                              {record.conversionFactor} kWh/{record.sourceUnit}
+                              {formatEnergyValue(record.conversionFactor)} kWh/{record.sourceUnit}
                             </p>
                             <p>
                               {data.conversions.find((c) => c.id === record.conversionId)?.source ??
@@ -280,7 +281,7 @@ export function EnergyWorkspace({
                           </details>
                         </td>
                         <td>
-                          {record.netCost ?? 'Unknown'} / {record.grossCost ?? 'Unknown'} {record.currency}
+                          {formatEnergyValue(record.netCost)} / {formatEnergyValue(record.grossCost)} {record.currency}
                         </td>
                         <td>
                           {record.qualityFlags.length ? (
@@ -473,7 +474,8 @@ export function EnergyWorkspace({
               .map((c) => (
                 <article className="site-history-entry" key={c.id}>
                   <strong>
-                    {data.meters.find((meter) => meter.id === c.meterId)?.name} · {c.factor} kWh/{c.sourceUnit}
+                    {data.meters.find((meter) => meter.id === c.meterId)?.name} · {formatEnergyValue(c.factor)} kWh/
+                    {c.sourceUnit}
                   </strong>
                   <p>
                     {c.fuel} · {c.validFrom.slice(0, 7)} to{' '}

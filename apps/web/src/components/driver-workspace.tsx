@@ -1,4 +1,5 @@
 'use client';
+import { formatEnergyValue } from './format-energy-value';
 import { DateInput } from './ui/date-input';
 import { responseError } from './forms';
 import {
@@ -142,7 +143,7 @@ export function DriverWorkspace({
                 <tr key={o.id}>
                   <td>{o.month.slice(0, 7)}</td>
                   <td>{driverLabels[o.driver]}</td>
-                  <td>{o.value}</td>
+                  <td>{formatEnergyValue(o.value)}</td>
                   <td>{o.source}</td>
                   <td>
                     <DriverCorrections base={base} record={o} manage={manage} reload={reload} />
@@ -162,7 +163,7 @@ export function DriverWorkspace({
       {data.schedules.map((s) => (
         <article className="site-history-entry" key={s.id}>
           <strong>
-            {s.name} · {s.weeklyHours} hours/week
+            {s.name} · {formatEnergyValue(s.weeklyHours)} hours/week
           </strong>
           <p>
             {s.validFrom.slice(0, 10)} to {new Date(+new Date(s.validUntil) - 86400000).toISOString().slice(0, 10)}{' '}
@@ -320,7 +321,7 @@ export function DriverWorkspace({
                           <td>{r.row}</td>
                           <td>{r.data.month}</td>
                           <td>{driverLabels[r.data.driver]}</td>
-                          <td>{r.data.value}</td>
+                          <td>{formatEnergyValue(r.data.value)}</td>
                           <td>{r.data.source}</td>
                         </tr>
                       ))}

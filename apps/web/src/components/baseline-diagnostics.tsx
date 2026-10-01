@@ -1,14 +1,10 @@
+import { formatEnergyValue } from './format-energy-value';
 import type { RegressionInterpretation } from '../domain/analysis/interpretation';
 import type { RegressionResult } from '../domain/analysis/regression';
 import type { CoefficientStatistic } from '../domain/analysis/inference';
 
 function Value({ value }: { value: number }) {
-  const magnitude = Math.abs(value);
-  const text =
-    magnitude > 0 && (magnitude < 0.001 || magnitude >= 1e7)
-      ? value.toExponential(5)
-      : value.toLocaleString('en-US', { maximumSignificantDigits: 6 });
-  return <span title={String(value)}>{text}</span>;
+  return <span title={String(value)}>{formatEnergyValue(value, 'Undefined')}</span>;
 }
 const reasons = {
   ZERO_RESIDUAL_VARIANCE: 'Undefined: zero residual variance',
@@ -53,8 +49,8 @@ export function BaselineDiagnostics({
     <details>
       <summary>Regression diagnostics</summary>
       <p>
-        Experimental · unvalidated. Values are displayed to six significant digits; full precision remains in
-        provenance. No statistical acceptance decision is implied.
+        Experimental · unvalidated. Values are displayed to two decimal places; full precision remains in provenance. No
+        statistical acceptance decision is implied.
       </p>
       {interpretation ? (
         <div role="note" aria-label="Saved statistical interpretation">
