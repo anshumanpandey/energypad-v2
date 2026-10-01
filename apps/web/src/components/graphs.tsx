@@ -6,6 +6,7 @@ import type { Actor } from '@/server/foundation';
 import { accessible } from '@/server/page-auth';
 import { analysisService, carbonService } from '@/server/services';
 import { MetricChart, type ChartPoint } from './metric-chart';
+import { GraphMonthProvider, GraphMonthSelect } from './graph-month';
 import { Button } from './ui/button';
 
 export async function Graphs({
@@ -56,151 +57,159 @@ export async function Graphs({
     };
   });
   return (
-    <div className="graphs-page">
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">PERFORMANCE AT A GLANCE</span>
-          <h1>Graphs</h1>
-          <p>Explore monthly consumption, emissions and calculated waste or savings.</p>
+    <GraphMonthProvider>
+      <div className="graphs-page">
+        <div className="page-heading">
+          <div>
+            <span className="eyebrow">PERFORMANCE AT A GLANCE</span>
+            <h1>Graphs</h1>
+            <p>Explore monthly consumption, emissions and calculated waste or savings.</p>
+          </div>
         </div>
-      </div>
-      {!sites.length ? (
-        <section className="panel">
-          <h2>Add a site to view charts</h2>
-          <p>Your charts will appear as readings and calculations become available.</p>
-          <Link href={`${base}/sites`}>Manage sites</Link>
-        </section>
-      ) : (
-        <>
-          <form method="get" className="panel stack-form" aria-label="Graph filters">
-            <div className="form-grid">
-              <label>
-                Site
-                <select name="site" defaultValue={siteId}>
-                  {sites.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Calendar year
-                <input
-                  type="number"
-                  name="year"
-                  min="1900"
-                  max="2199"
-                  required
-                  defaultValue={text('year', String(new Date().getUTCFullYear()))}
-                />
-              </label>
-              <label>
-                Carbon geography
-                <input name="geography" required pattern="[A-Za-z0-9_-]{2,40}" defaultValue={text('geography', 'GB')} />
-              </label>
-              <label>
-                Carbon reporting basis
-                <select name="basis" defaultValue={text('basis', 'LOCATION_BASED')}>
-                  {factorBases.map((basis) => (
-                    <option key={basis}>{basis}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <Button type="submit">Update charts</Button>
-          </form>
-          {!definition.success && (
-            <p role="alert">Choose a year from 1900 to 2199, a valid geography and reporting basis.</p>
-          )}
-          {data && (
-            <>
-              <p className="page-note">
-                {sites.find((s) => s.id === siteId)?.name} · January–December {year}. Consumption and emissions include
-                registered active meters, which may overlap; these are not a net site inventory. Estimated readings are
-                included and identified in the data tables.
-              </p>
-              <div className="graphs-grid">
-                <MetricChart
-                  title="Consumption"
-                  unit="kWh"
-                  tone="energy"
-                  description="Monthly consumption with complete active-meter coverage."
-                  points={data.overview.energy.months.map((m) => ({
-                    month: m.month,
-                    value: m.kwh,
-                    note: `${m.estimated} estimated readings${m.kwh === null ? ' · incomplete coverage' : ''}`,
-                  }))}
-                />
-                <MetricChart
-                  title="Emissions"
-                  unit="kgCO2e"
-                  tone="carbon"
-                  description="Calculated from current consumption × matching emission factors. No saved carbon run is required."
-                  points={data.emissions.map((m) => ({
-                    month: m.month,
-                    value: m.kgCO2e,
-                    note: `${m.readyMeters}/${m.expectedMeters} meters ready · ${m.estimated} estimated readings${m.issues.length ? ` · ${m.issues.join('; ')}` : ''}`,
-                  }))}
-                />
-              </div>
-              <section className="panel stack-form">
-                <h2>Choose waste calculation</h2>
-                <p>
-                  Waste is measured against a saved expected-consumption baseline for one meter. It is experimental and
-                  does not represent verified savings. The chart shows only months in the selected calendar year.
-                </p>
-                <form method="get" className="stack-form" aria-label="Waste calculation selection">
-                  <input type="hidden" name="site" value={siteId} />
-                  <input type="hidden" name="year" value={String(year)} />
-                  <input type="hidden" name="geography" value={text('geography', 'GB')} />
-                  <input type="hidden" name="basis" value={text('basis', 'LOCATION_BASED')} />
-                  <label>
-                    Saved analysis run
-                    <input
-                      name="run"
-                      list="graph-waste-runs"
-                      defaultValue={data.runId ?? ''}
-                      placeholder="Select or paste a saved run ID"
-                    />
-                  </label>
-                  <datalist id="graph-waste-runs">
-                    {data.runs.items.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.createdAt.toISOString()} · meter {r.meterId}
+        {!sites.length ? (
+          <section className="panel">
+            <h2>Add a site to view charts</h2>
+            <p>Your charts will appear as readings and calculations become available.</p>
+            <Link href={`${base}/sites`}>Manage sites</Link>
+          </section>
+        ) : (
+          <>
+            <form method="get" className="panel stack-form" aria-label="Graph filters">
+              <div className="form-grid">
+                <label>
+                  Site
+                  <select name="site" defaultValue={siteId}>
+                    {sites.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
                       </option>
                     ))}
-                  </datalist>
-                  <p>Latest 50 runs suggested. Paste an older saved run ID to view it.</p>
-                  <Button type="submit">Show waste chart</Button>
-                </form>
-                {data.waste ? (
-                  <p>
-                    Meter {data.waste.meterId} · saved {data.waste.createdAt} · run {data.waste.runId}
-                  </p>
-                ) : (
-                  <p>No saved analysis runs for this site.</p>
-                )}
-                <Link href={`${base}/analysis`}>Create or review an analysis run</Link>
-              </section>
-              <MetricChart
-                title="Waste & savings"
-                unit="kWh"
-                tone="waste"
-                description="Adjusted expected minus actual consumption: positive values indicate potential savings; negative values indicate waste. Includes saved non-routine adjustments."
-                points={wastePoints}
-              />
-              <div className="graph-source-links">
-                <Link href={`${base}/energy`}>Consumption records</Link>
-                <Link href={`${base}/carbon`}>Carbon calculations</Link>
-                <Link href={`${base}/waste-savings?site=${siteId}${data.runId ? `&run=${data.runId}` : ''}`}>
-                  Waste calculation details
-                </Link>
+                  </select>
+                </label>
+                <label>
+                  Calendar year
+                  <input
+                    type="number"
+                    name="year"
+                    min="1900"
+                    max="2199"
+                    required
+                    defaultValue={text('year', String(new Date().getUTCFullYear()))}
+                  />
+                </label>
+                <GraphMonthSelect />
+                <label>
+                  Carbon geography
+                  <input
+                    name="geography"
+                    required
+                    pattern="[A-Za-z0-9_-]{2,40}"
+                    defaultValue={text('geography', 'GB')}
+                  />
+                </label>
+                <label>
+                  Carbon reporting basis
+                  <select name="basis" defaultValue={text('basis', 'LOCATION_BASED')}>
+                    {factorBases.map((basis) => (
+                      <option key={basis}>{basis}</option>
+                    ))}
+                  </select>
+                </label>
               </div>
-            </>
-          )}
-        </>
-      )}
-    </div>
+              <Button type="submit">Update charts</Button>
+            </form>
+            {!definition.success && (
+              <p role="alert">Choose a year from 1900 to 2199, a valid geography and reporting basis.</p>
+            )}
+            {data && (
+              <>
+                <p className="page-note">
+                  {sites.find((s) => s.id === siteId)?.name} · January–December {year}. Consumption and emissions
+                  include registered active meters, which may overlap; these are not a net site inventory. Estimated
+                  readings are included and identified in the data tables.
+                </p>
+                <div className="graphs-grid">
+                  <MetricChart
+                    title="Consumption"
+                    unit="kWh"
+                    tone="energy"
+                    description="Monthly consumption with complete active-meter coverage."
+                    points={data.overview.energy.months.map((m) => ({
+                      month: m.month,
+                      value: m.kwh,
+                      note: `${m.estimated} estimated readings${m.kwh === null ? ' · incomplete coverage' : ''}`,
+                    }))}
+                  />
+                  <MetricChart
+                    title="Emissions"
+                    unit="kgCO2e"
+                    tone="carbon"
+                    description="Calculated from current consumption × matching emission factors. No saved carbon run is required."
+                    points={data.emissions.map((m) => ({
+                      month: m.month,
+                      value: m.kgCO2e,
+                      note: `${m.readyMeters}/${m.expectedMeters} meters ready · ${m.estimated} estimated readings${m.issues.length ? ` · ${m.issues.join('; ')}` : ''}`,
+                    }))}
+                  />
+                </div>
+                <section className="panel stack-form">
+                  <h2>Choose waste calculation</h2>
+                  <p>
+                    Waste is measured against a saved expected-consumption baseline for one meter. It is experimental
+                    and does not represent verified savings. The chart shows only months in the selected calendar year.
+                  </p>
+                  <form method="get" className="stack-form" aria-label="Waste calculation selection">
+                    <input type="hidden" name="site" value={siteId} />
+                    <input type="hidden" name="year" value={String(year)} />
+                    <input type="hidden" name="geography" value={text('geography', 'GB')} />
+                    <input type="hidden" name="basis" value={text('basis', 'LOCATION_BASED')} />
+                    <label>
+                      Saved analysis run
+                      <input
+                        name="run"
+                        list="graph-waste-runs"
+                        defaultValue={data.runId ?? ''}
+                        placeholder="Select or paste a saved run ID"
+                      />
+                    </label>
+                    <datalist id="graph-waste-runs">
+                      {data.runs.items.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.createdAt.toISOString()} · meter {r.meterId}
+                        </option>
+                      ))}
+                    </datalist>
+                    <p>Latest 50 runs suggested. Paste an older saved run ID to view it.</p>
+                    <Button type="submit">Show waste chart</Button>
+                  </form>
+                  {data.waste ? (
+                    <p>
+                      Meter {data.waste.meterId} · saved {data.waste.createdAt} · run {data.waste.runId}
+                    </p>
+                  ) : (
+                    <p>No saved analysis runs for this site.</p>
+                  )}
+                  <Link href={`${base}/analysis`}>Create or review an analysis run</Link>
+                </section>
+                <MetricChart
+                  title="Waste & savings"
+                  unit="kWh"
+                  tone="waste"
+                  description="Adjusted expected minus actual consumption: positive values indicate potential savings; negative values indicate waste. Includes saved non-routine adjustments."
+                  points={wastePoints}
+                />
+                <div className="graph-source-links">
+                  <Link href={`${base}/energy`}>Consumption records</Link>
+                  <Link href={`${base}/carbon`}>Carbon calculations</Link>
+                  <Link href={`${base}/waste-savings?site=${siteId}${data.runId ? `&run=${data.runId}` : ''}`}>
+                    Waste calculation details
+                  </Link>
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </GraphMonthProvider>
   );
 }

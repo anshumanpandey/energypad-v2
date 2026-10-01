@@ -52,6 +52,26 @@ test('graphs preserve recorded zero, missing coverage, filters and site isolatio
   await expect(page.getByRole('link', { name: 'Graphs', exact: true })).toHaveAttribute('aria-current', 'page');
   const consumption = page.getByRole('region', { name: 'Consumption', exact: true });
   await expect(consumption).toContainText('2/12 months available');
+  const month = page.getByLabel('Month', { exact: true });
+  await expect(month).toHaveValue('01');
+  await expect(consumption.locator('.metric-chart-detail')).toContainText('2020-01: 0 kWh');
+  const beforeMonthChange = page.url();
+  await month.selectOption('02');
+  for (const title of ['Consumption', 'Emissions', 'Waste & savings']) {
+    const chart = page.getByRole('region', { name: title, exact: true });
+    await expect(chart.locator('.metric-chart-detail')).toContainText('2020-02:');
+    await expect(chart.locator('.metric-chart-point[aria-current="true"]')).toHaveAttribute('aria-label', /^2020-02:/);
+  }
+  await expect(
+    page.getByRole('region', { name: 'Emissions', exact: true }).locator('.metric-chart-detail'),
+  ).toContainText('50 kgCO2e');
+  await expect(
+    page.getByRole('region', { name: 'Waste & savings', exact: true }).locator('.metric-chart-detail'),
+  ).toContainText('Unavailable');
+  expect(page.url()).toBe(beforeMonthChange);
+  await month.selectOption('03');
+  await expect(consumption.locator('.metric-chart-detail')).toContainText('2020-03: Unavailable');
+  await month.selectOption('01');
   await consumption.locator('.metric-chart-point').nth(1).focus();
   await expect(consumption.locator('.metric-chart-detail')).toContainText('2020-02: 100 kWh');
   await consumption.locator('summary').click();

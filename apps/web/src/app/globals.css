@@ -2273,10 +2273,16 @@ small {
 .metric-chart-point.is-negative .metric-chart-dot {
   fill: #ac4436;
 }
+.metric-chart-point.is-selected .metric-chart-dot,
 .metric-chart-point:focus .metric-chart-dot,
 .metric-chart-point:hover .metric-chart-dot {
   stroke: #202f29;
   stroke-width: 2;
+}
+.metric-chart-point.is-selected .metric-chart-missing {
+  fill: var(--chart-color);
+  font-weight: 700;
+  font-size: 20px;
 }
 .metric-chart-detail {
   min-height: 3em;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useGraphMonth } from './graph-month';
 
 export type ChartPoint = { month: string; value: string | number | null; note?: string };
 
@@ -17,6 +18,7 @@ export function MetricChart({
   tone: 'energy' | 'carbon' | 'waste';
   description: string;
 }) {
+  const month = useGraphMonth();
   const [selected, setSelected] = useState<string | null>(null);
   const finite = (p: ChartPoint) => p.value !== null && Number.isFinite(Number(p.value));
   const values = points.filter(finite).map((p) => Number(p.value));
@@ -32,7 +34,7 @@ export function MetricChart({
       return `${command} ${80 + step * index + step / 2} ${y(Number(point.value))}`;
     })
     .join(' ');
-  const active = points.find((p) => p.month === selected);
+  const active = points.find((p) => (selected ? p.month === selected : p.month.slice(5, 7) === month));
   const display = (p: ChartPoint) => (finite(p) ? `${p.value} ${unit}` : 'Unavailable');
   return (
     <section className={`panel metric-chart metric-chart-${tone}`} aria-label={title}>
@@ -64,6 +66,7 @@ export function MetricChart({
         <path d={linePath} className="metric-chart-line" aria-hidden="true" />
         {points.map((point, index) => {
           const x = 80 + step * index + step / 2;
+          const highlighted = point.month.slice(5, 7) === month;
           const valid = finite(point);
           const value = valid ? Number(point.value) : 0;
           return (
@@ -76,12 +79,13 @@ export function MetricChart({
                 onMouseEnter={() => setSelected(point.month)}
                 onBlur={() => setSelected(null)}
                 onMouseLeave={() => setSelected(null)}
-                className={`metric-chart-point ${value < 0 ? 'is-negative' : ''}`}
+                className={`metric-chart-point ${value < 0 ? 'is-negative' : ''} ${highlighted ? 'is-selected' : ''}`}
+                aria-current={highlighted ? 'true' : undefined}
               >
                 <title>{`${point.month}: ${display(point)}${point.note ? ` · ${point.note}` : ''}`}</title>
                 <rect x={x - step * 0.3} y="30" width={step * 0.6} height="200" fill="transparent" />
                 {valid ? (
-                  <circle className="metric-chart-dot" cx={x} cy={y(value)} r="5" />
+                  <circle className="metric-chart-dot" cx={x} cy={y(value)} r={highlighted ? 7 : 5} />
                 ) : (
                   <text x={x} y={y(0) - 8} textAnchor="middle" className="metric-chart-missing">
                     –
