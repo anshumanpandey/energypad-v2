@@ -384,6 +384,8 @@ export class EnergyService extends FoundationService {
       endUse: data.endUse,
       energyUseId,
       energyUseSnapshot: energyUseSnapshot === null ? Prisma.DbNull : (energyUseSnapshot as Prisma.InputJsonValue),
+      importProvenance:
+        previous?.importProvenance == null ? Prisma.DbNull : (previous.importProvenance as Prisma.InputJsonValue),
       sourceProvenance:
         previous?.sourceProvenance == null ? Prisma.DbNull : (previous.sourceProvenance as Prisma.InputJsonValue),
       externalLegacyId: data.externalLegacyId,

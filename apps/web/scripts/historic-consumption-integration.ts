@@ -181,6 +181,75 @@ try {
   validSolar[4] = 'Solar PV';
   await assert.rejects(service.process(actor, org.id, await workbook([validSolar, invalidSolar])));
   assert.equal(await db.meter.count({ where: { siteId: autoSite.id } }), 2);
+  // Re-imports update current revisions atomically, including mixed new and unchanged rows.
+  const updateOrg = await service.createOrganisation(actor, {
+    name: 'Import updates',
+    currency: 'GBP',
+    timezone: 'UTC',
+  });
+  const updateSite = await siteService.createSite(actor, updateOrg.id, { code: 'UPDATE', name: 'Update site' });
+  const initialBytes = await workbook([row('UPDATE')]);
+  const initialPreview = await service.process(actor, updateOrg.id, initialBytes);
+  await service.process(actor, updateOrg.id, initialBytes, initialPreview.signature);
+  const original = await db.consumptionRecord.findFirstOrThrow({ where: { siteId: updateSite.id } });
+  const changedRow = row('UPDATE');
+  changedRow[6] = 90;
+  changedRow[8] = 900;
+  changedRow[9] = 90;
+  changedRow[11] = 150;
+  changedRow[12] = 8;
+  const changedBytes = await workbook([changedRow, row('UPDATE', 'Feb')]);
+  const updatePreview = await service.process(actor, updateOrg.id, changedBytes);
+  assert.equal(updatePreview.updated, 1);
+  assert.equal(updatePreview.created, 1);
+  assert.equal(updatePreview.records[0].previousQuantity, '45');
+  assert.equal(await db.consumptionRecord.count({ where: { siteId: updateSite.id } }), 1);
+  const invalidUpdate = [...changedRow];
+  invalidUpdate[12] = 30;
+  await assert.rejects(service.process(actor, updateOrg.id, await workbook([changedRow, invalidUpdate])));
+  assert.equal(await db.consumptionRecord.count({ where: { siteId: updateSite.id } }), 1);
+  await Promise.all([
+    service.process(actor, updateOrg.id, changedBytes, updatePreview.signature),
+    service.process(actor, updateOrg.id, changedBytes, updatePreview.signature),
+  ]);
+  const currentReading = await db.consumptionRecord.findFirstOrThrow({
+    where: { siteId: updateSite.id, periodStart: original.periodStart, replacement: { is: null } },
+  });
+  assert.deepEqual(currentReading.sourceProvenance, original.sourceProvenance);
+  assert.equal(currentReading.revision, 2);
+  assert.equal(currentReading.supersedesId, original.id);
+  assert.equal(currentReading.sourceQuantity.toString(), '90');
+  assert.equal(currentReading.normalizedKwh.toString(), '90');
+  assert.equal(currentReading.netCost?.toString(), '810');
+  assert.equal(currentReading.grossCost?.toString(), '900');
+  assert.equal((currentReading.importProvenance as { population: string }).population, '150');
+  assert.equal(
+    (await db.consumptionRecord.findUniqueOrThrow({ where: { id: original.id } })).sourceQuantity.toString(),
+    '45',
+  );
+  assert.equal(await db.consumptionRecord.count({ where: { siteId: updateSite.id } }), 3);
+  assert.equal(await db.consumptionRecord.count({ where: { siteId: updateSite.id, replacement: { is: null } } }), 2);
+  assert.equal(await db.auditEvent.count({ where: { organisationId: updateOrg.id, action: 'energy.corrected' } }), 1);
+  const unchanged = await service.process(actor, updateOrg.id, changedBytes);
+  assert.equal(unchanged.unchanged, 2);
+  assert.equal(unchanged.committed, true);
+  // An old workbook may be explicitly restored after preview; an old commit token cannot silently restore it.
+  await assert.rejects(service.process(actor, updateOrg.id, initialBytes, initialPreview.signature), /changed/);
+  const restore = await service.process(actor, updateOrg.id, initialBytes);
+  assert.equal(restore.updated, 1);
+  const newerRow = [...changedRow];
+  newerRow[6] = 100;
+  const newerBytes = await workbook([newerRow]);
+  const newer = await service.process(actor, updateOrg.id, newerBytes);
+  await service.process(actor, updateOrg.id, newerBytes, newer.signature);
+  await assert.rejects(service.process(actor, updateOrg.id, initialBytes, restore.signature), /changed/);
+  const freshRestore = await service.process(actor, updateOrg.id, initialBytes);
+  await service.process(actor, updateOrg.id, initialBytes, freshRestore.signature);
+  const mixed = await service.process(actor, updateOrg.id, changedBytes);
+  assert.equal(mixed.updated, 1);
+  assert.equal(mixed.unchanged, 1);
+  await service.process(actor, updateOrg.id, changedBytes, mixed.signature);
+  assert.equal(await db.consumptionRecord.count({ where: { siteId: updateSite.id, replacement: { is: null } } }), 2);
   console.log(
     'Historic consumption integration passed: costs, source hours, isolation, atomicity, stale previews, duplicates, factors and ambiguous meters.',
   );

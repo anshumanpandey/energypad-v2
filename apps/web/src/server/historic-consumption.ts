@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { Prisma } from '@prisma/client';
+import { Prisma, type ConsumptionRecord } from '@prisma/client';
 import { energyConversions, monthPeriod } from '../domain/energy';
 import { EnergyService } from './energy';
 import type { Actor } from './foundation';
@@ -19,10 +19,16 @@ type DefaultMeter = { id: string; site: string; code: string; name: string; fuel
 type ImportResult = {
   committed: boolean;
   count: number;
+  created: number;
+  updated: number;
+  unchanged: number;
   signature: string;
   defaultMeters: DefaultMeter[];
   records: {
     row: number;
+    action: 'New' | 'Update' | 'Unchanged';
+    meter: string;
+    previousQuantity: string | null;
     site: string;
     month: string;
     quantity: string;
@@ -68,22 +74,45 @@ export class HistoricConsumptionService extends EnergyService {
           await this.lock(tx, org);
           await this.membership(actor, org, 'organisation:update', tx);
           const existing = await tx.energyImportBatch.findMany({
-            where: { organisationId: org, fingerprint, status: 'COMMITTED' },
+            where: {
+              organisationId: org,
+              OR: [{ fingerprint }, { fingerprint: { startsWith: `${fingerprint}:` } }],
+              status: 'COMMITTED',
+            },
           });
-          if (existing.length && !errors.length)
-            return {
-              committed: true,
-              count: existing.reduce((n, b) => n + Number((b.result as { count?: number })?.count ?? 0), 0),
-              signature: '',
-              records: [],
-              defaultMeters: [],
-            };
+          if (signature !== undefined && existing.length && !errors.length) {
+            const batches = existing.filter((b) => (b.result as { signature?: string })?.signature === signature);
+            const ids = batches.flatMap((b) => (b.result as { recordIds: string[] }).recordIds);
+            if (
+              ids.length &&
+              (await tx.consumptionRecord.count({
+                where: { organisationId: org, id: { in: ids }, replacement: { is: null } },
+              })) === ids.length
+            ) {
+              return {
+                committed: true,
+                count: ids.length,
+                signature,
+                records: [],
+                defaultMeters: [],
+                created: batches.reduce((n, b) => n + Number((b.result as { created?: number }).created ?? 0), 0),
+                updated: batches.reduce((n, b) => n + Number((b.result as { updated?: number }).updated ?? 0), 0),
+                unchanged: batches.reduce((n, b) => n + Number((b.result as { unchanged?: number }).unchanged ?? 0), 0),
+              };
+            }
+          }
           const sites = await tx.site.findMany({
             where: { organisationId: org, archivedAt: null },
             include: { meters: true },
           });
           const organisation = await tx.organisation.findUniqueOrThrow({ where: { id: org } });
-          const prepared: { row: number; data: Prisma.ConsumptionRecordUncheckedCreateInput }[] = [];
+          const prepared: {
+            row: number;
+            data: Prisma.ConsumptionRecordUncheckedCreateInput;
+            previous: ConsumptionRecord | null;
+            action: 'New' | 'Update' | 'Unchanged';
+            meter: string;
+          }[] = [];
           const seen = new Set<string>();
           const defaultMeters: DefaultMeter[] = [];
           for (const row of parsed.records) {
@@ -172,12 +201,44 @@ export class HistoricConsumptionService extends EnergyService {
               const gross = row.grossCost === null ? null : new Prisma.Decimal(row.grossCost);
               const vat = row.vatCost === null ? null : new Prisma.Decimal(row.vatCost);
               const net = gross !== null && vat !== null ? gross.minus(vat) : null;
-              const data = await this.prepareReading(tx, actor, org, site.id, {
-                meterId: meter.id,
-                month: row.month,
-                quantity: row.quantity,
-                endUse: row.endUse,
+              const period = monthPeriod(row.month);
+              const overlaps = await tx.consumptionRecord.findMany({
+                where: {
+                  organisationId: org,
+                  siteId: site.id,
+                  meterId: meter.id,
+                  periodStart: { lt: period.end },
+                  periodEnd: { gt: period.start },
+                  replacement: { is: null },
+                },
               });
+              const previous = overlaps[0] ?? null;
+              if (
+                overlaps.length > 1 ||
+                (previous &&
+                  (+previous.periodStart !== +period.start ||
+                    +previous.periodEnd !== +period.end ||
+                    previous.fuel !== row.fuel ||
+                    previous.sourceUnit !== row.unit))
+              )
+                throw new DomainError(
+                  'PERIOD_CONFLICT',
+                  'Existing readings do not match this full month, utility and unit.',
+                );
+              const data = await this.prepareReading(
+                tx,
+                actor,
+                org,
+                site.id,
+                {
+                  meterId: meter.id,
+                  month: row.month,
+                  quantity: row.quantity,
+                  endUse: row.endUse,
+                  externalLegacyId: previous?.externalLegacyId ?? '',
+                },
+                previous ? { previous, useLatestConversion: true } : undefined,
+              );
               if (!new Prisma.Decimal(data.conversionFactor as string).equals(row.factor)) {
                 errors.push(
                   historicIssue(
@@ -188,27 +249,59 @@ export class HistoricConsumptionService extends EnergyService {
                 );
                 continue;
               }
+              const nextData: Prisma.ConsumptionRecordUncheckedCreateInput = {
+                ...data,
+                netCost: net,
+                vatCost: vat,
+                grossCost: gross,
+                vatPercent: null,
+                currency: gross === null ? null : (site.currency ?? organisation.currency),
+                importProvenance: json({
+                  format: 'historic-consumption-v1',
+                  sheet: historicSheet,
+                  row: row.row,
+                  costBasis: 'GROSS',
+                  population: row.population,
+                  operatingHours: row.dailyHours,
+                  operatingHoursBasis: 'HOURS_PER_DAY',
+                  utilityType: row.utility,
+                  conversionFactor: row.factor,
+                }),
+              };
+              if (!previous) nextData.sourceProvenance = nextData.importProvenance;
+              const provenance = (previous?.importProvenance ?? previous?.sourceProvenance) as {
+                population?: string | null;
+                operatingHours?: string | null;
+              } | null;
+              const same =
+                previous &&
+                [
+                  'sourceQuantity',
+                  'sourceUnit',
+                  'fuel',
+                  'normalizedKwh',
+                  'conversionFactor',
+                  'conversionVersion',
+                  'netCost',
+                  'vatCost',
+                  'grossCost',
+                  'vatPercent',
+                  'currency',
+                  'endUse',
+                  'estimated',
+                ].every(
+                  (key) =>
+                    String(previous[key as keyof ConsumptionRecord] ?? '') ===
+                    String(nextData[key as keyof typeof nextData] ?? ''),
+                ) &&
+                (provenance?.population ?? null) === row.population &&
+                (provenance?.operatingHours ?? null) === row.dailyHours;
               prepared.push({
                 row: row.row,
-                data: {
-                  ...data,
-                  netCost: net,
-                  vatCost: vat,
-                  grossCost: gross,
-                  vatPercent: null,
-                  currency: gross === null ? null : (site.currency ?? organisation.currency),
-                  sourceProvenance: json({
-                    format: 'historic-consumption-v1',
-                    sheet: historicSheet,
-                    row: row.row,
-                    costBasis: 'GROSS',
-                    population: row.population,
-                    operatingHours: row.dailyHours,
-                    operatingHoursBasis: 'HOURS_PER_DAY',
-                    utilityType: row.utility,
-                    conversionFactor: row.factor,
-                  }),
-                },
+                data: nextData,
+                previous,
+                meter: meter.code,
+                action: !previous ? 'New' : same ? 'Unchanged' : 'Update',
               });
             } catch (error) {
               if (!(error instanceof DomainError)) throw error;
@@ -218,7 +311,11 @@ export class HistoricConsumptionService extends EnergyService {
           if (errors.length) throw new WorkbookCellError(errors.sort((a, b) => a.row - b.row || a.column - b.column));
           const current = hash({
             defaultMeters,
-            records: prepared.map((r) => ({ ...r, data: { ...r.data, authorId: undefined } })),
+            records: prepared.map((r) => ({
+              ...r,
+              previous: r.previous?.id ?? null,
+              data: { ...r.data, authorId: undefined },
+            })),
           });
           if (signature !== undefined) {
             if (signature !== current)
@@ -234,7 +331,7 @@ export class HistoricConsumptionService extends EnergyService {
                   organisationId: org,
                   siteId: rows[0].data.siteId,
                   meterId,
-                  fingerprint,
+                  fingerprint: `${fingerprint}:${current}`,
                   sheets: json(sheets),
                   createdBy: actor.userId,
                   status: 'COMMITTED',
@@ -243,13 +340,41 @@ export class HistoricConsumptionService extends EnergyService {
               });
               const ids = [];
               for (const row of rows) {
-                const record = await tx.consumptionRecord.create({ data: { ...row.data, energyImportId: batch.id } });
+                if (row.action === 'Unchanged') {
+                  ids.push(row.previous!.id);
+                  continue;
+                }
+                const reason = `Updated from Historic Consumption workbook, row ${row.row}`;
+                const record = await tx.consumptionRecord.create({
+                  data: {
+                    ...row.data,
+                    energyImportId: batch.id,
+                    ...(row.previous
+                      ? { supersedesId: row.previous.id, revision: row.previous.revision + 1, correctionReason: reason }
+                      : {}),
+                  },
+                });
                 ids.push(record.id);
-                await this.audit(tx, actor, org, 'energy.recorded', record.id, { siteId: record.siteId, meterId });
+                await this.audit(tx, actor, org, row.previous ? 'energy.corrected' : 'energy.recorded', record.id, {
+                  siteId: record.siteId,
+                  meterId,
+                  ...(row.previous
+                    ? { supersedesId: row.previous.id, revision: record.revision, reason, useLatestConversion: true }
+                    : {}),
+                });
               }
               await tx.energyImportBatch.update({
                 where: { id: batch.id },
-                data: { result: { count: ids.length, recordIds: ids } },
+                data: {
+                  result: {
+                    count: ids.length,
+                    recordIds: ids,
+                    signature: current,
+                    created: rows.filter((r) => r.action === 'New').length,
+                    updated: rows.filter((r) => r.action === 'Update').length,
+                    unchanged: rows.filter((r) => r.action === 'Unchanged').length,
+                  },
+                },
               });
               await this.audit(tx, actor, org, 'energy.import_committed', batch.id, {
                 count: ids.length,
@@ -259,11 +384,17 @@ export class HistoricConsumptionService extends EnergyService {
           }
           const result: ImportResult = {
             defaultMeters,
-            committed: signature !== undefined,
+            committed: signature !== undefined || prepared.every((r) => r.action === 'Unchanged'),
             count: prepared.length,
+            created: prepared.filter((r) => r.action === 'New').length,
+            updated: prepared.filter((r) => r.action === 'Update').length,
+            unchanged: prepared.filter((r) => r.action === 'Unchanged').length,
             signature: current,
             records: prepared.map((r) => ({
               row: r.row,
+              action: r.action,
+              meter: r.meter,
+              previousQuantity: r.previous?.sourceQuantity.toString() ?? null,
               site: sites.find((s) => s.id === r.data.siteId)!.code,
               month: (r.data.periodStart as Date).toISOString().slice(0, 7),
               quantity: String(r.data.sourceQuantity),

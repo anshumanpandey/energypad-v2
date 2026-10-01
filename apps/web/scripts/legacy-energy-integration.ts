@@ -238,6 +238,7 @@ try {
         supersedesId: corrected.id,
         revision: 3,
         sourceProvenance: { removed: true },
+        importProvenance: corrected.importProvenance ?? Prisma.DbNull,
         energyUseSnapshot: corrected.energyUseSnapshot as Prisma.InputJsonValue,
         attributeSnapshot: corrected.attributeSnapshot as Prisma.InputJsonValue,
         qualityFlags: corrected.qualityFlags as Prisma.InputJsonValue,

@@ -59,4 +59,17 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   await expect(page.getByRole('status').filter({ hasText: 'Imported 1 consumption' })).toBeVisible();
   await page.getByRole('button', { name: 'Validate consumption' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Imported 1 consumption' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: '1 unchanged' })).toBeVisible();
+  sheet.getCell('G2').value = 75;
+  await upload();
+  await expect(page.getByRole('cell', { name: 'Update', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '45 kWh', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '75 kWh', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Import 1 readings' }).click();
+  await expect(page.getByRole('status').filter({ hasText: '1 updated' })).toBeVisible();
+  await page.goto(`/org/${org.id}/energy`);
+  await page.getByLabel('Year', { exact: true }).selectOption('2020');
+  await page.getByRole('button', { name: 'Load energy records' }).click();
+  const records = page.getByRole('region', { name: 'Consumption records', exact: true });
+  await expect(records.getByRole('cell').filter({ hasText: /^75/ }).first()).toBeVisible();
 });

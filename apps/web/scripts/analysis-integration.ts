@@ -1553,6 +1553,7 @@ try {
         qualityFlags: [],
         energyUseSnapshot: undefined,
         sourceProvenance: undefined,
+        importProvenance: undefined,
       },
     }),
   );

@@ -303,6 +303,7 @@ model ImportBatch {
 }
 
 model ConsumptionRecord {
+  importProvenance Json?
   sourceProvenance Json?
   revision Int @default(1)
   supersedesId String? @db.Uuid

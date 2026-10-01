@@ -10,10 +10,16 @@ import { historicCompactColumns } from '@/domain/historic-consumption';
 type Preview = {
   committed: boolean;
   count: number;
+  created: number;
+  updated: number;
+  unchanged: number;
   signature: string;
   defaultMeters: { id: string; site: string; name: string; unit: string }[];
   records: {
     row: number;
+    action: 'New' | 'Update' | 'Unchanged';
+    meter: string;
+    previousQuantity: string | null;
     site: string;
     month: string;
     quantity: string;
@@ -254,8 +260,8 @@ function HistoricImport({ orgId }: { orgId: string }) {
               <h3>{preview.committed ? 'Import complete' : 'Review your readings'}</h3>
               <p role="status">
                 {preview.committed
-                  ? `Imported ${preview.count} consumption readings. This workbook will not be imported twice.`
-                  : `${preview.count} readings ready to import. No data has been saved yet.`}
+                  ? `Imported ${preview.count} consumption readings. ${preview.created} new, ${preview.updated} updated, ${preview.unchanged} unchanged.`
+                  : `${preview.count} readings: ${preview.created} new, ${preview.updated} to update, ${preview.unchanged} unchanged. No data has been saved yet.`}
               </p>
             </div>
           </div>
@@ -279,7 +285,17 @@ function HistoricImport({ orgId }: { orgId: string }) {
                 <table>
                   <thead>
                     <tr>
-                      {['Excel row', 'Site', 'Month', 'Consumption', 'Net cost', 'Total including VAT'].map((h) => (
+                      {[
+                        'Excel row',
+                        'Action',
+                        'Site',
+                        'Meter',
+                        'Month',
+                        'Previous consumption',
+                        'Consumption',
+                        'Net cost',
+                        'Total including VAT',
+                      ].map((h) => (
                         <th key={h}>{h}</th>
                       ))}
                     </tr>
@@ -288,8 +304,11 @@ function HistoricImport({ orgId }: { orgId: string }) {
                     {preview.records.map((r) => (
                       <tr key={r.row}>
                         <td>{r.row}</td>
+                        <td>{r.action}</td>
                         <td>{r.site}</td>
+                        <td>{r.meter}</td>
                         <td>{r.month}</td>
+                        <td>{r.previousQuantity === null ? '—' : `${r.previousQuantity} ${r.unit}`}</td>
                         <td>
                           {r.quantity} {r.unit}
                         </td>
@@ -305,7 +324,7 @@ function HistoricImport({ orgId }: { orgId: string }) {
                 </table>
               </div>
               <div className="import-preview-footer">
-                <span className="muted">All rows are validated. Import when you’re ready.</span>
+                <span className="muted">Matching readings will be updated. Previous revisions remain in history.</span>
                 <Button
                   disabled={m.pending}
                   onClick={() => void m.run(() => upload(true), 'Consumption import completed.')}

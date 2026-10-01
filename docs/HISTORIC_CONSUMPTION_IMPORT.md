@@ -41,7 +41,7 @@ Validation errors retain the original workbook’s cell addresses in both layout
   no weekly hours, monthly driver observations, or site history are inferred.
 
 All invalid cells are listed with worksheet, cell reference and reason, paginated
-in groups of 50. Existing meter-month readings and duplicate rows are rejected.
+in groups of 50. Existing meter-month readings are updated through correction revisions; duplicate rows within one workbook are rejected.
 A confirmation signature detects changed meter/conversion/currency context.
 Retrying an already committed workbook does not create duplicate records.
 
@@ -128,3 +128,18 @@ Verification: `tests/driver-classifications.test.ts`,
 `scripts/driver-classifications-integration.ts` (part of `test:integration`), and
 `tests/e2e/driver-classifications.spec.ts`. Set `DRIVERS_REFERENCE_PATH` to exercise
 the supplied five-site, thirty-classification reference in the isolated database.
+
+### Updating existing consumption
+
+Re-importing a row for the same site, resolved meter, utility and month updates the
+current reading through an audited correction revision. Previous versions remain
+available to saved reports and reading history. The preview shows New, Update or
+Unchanged for each row, the meter, and the previous consumption quantity.
+Identical rows are skipped. A workbook containing invalid rows is rejected as a
+whole, and changed data since preview requires validation again. Retrying the same
+confirmed import does not create duplicate revisions. A previously imported file
+can be explicitly previewed again to restore its values after later corrections.
+
+Apply migration `202610010001_consumption_import_provenance` before deployment.
+Original `sourceProvenance` stays immutable; `importProvenance` identifies the latest
+workbook values and is preserved by subsequent manual corrections.
