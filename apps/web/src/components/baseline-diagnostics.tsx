@@ -16,7 +16,11 @@ const reasons = {
 function Probability({ statistic }: { statistic: CoefficientStatistic | undefined }) {
   if (!statistic) return <span>{reasons.NUMERICAL_RANGE}</span>;
   const p = statistic.probability;
-  if (p.status === 'OK') return <Value value={p.value} />;
+  if (p.status === 'OK') {
+    // Small probabilities must remain distinguishable from an exact zero.
+    if (p.value > 0 && p.value < 0.01) return <span title={String(p.value)}>{p.value.toExponential(2)}</span>;
+    return <Value value={p.value} />;
+  }
   if (p.status === 'UNDERFLOW')
     return (
       <span>
@@ -49,8 +53,8 @@ export function BaselineDiagnostics({
     <details>
       <summary>Regression diagnostics</summary>
       <p>
-        Experimental · unvalidated. Values are displayed to two decimal places; full precision remains in provenance. No
-        statistical acceptance decision is implied.
+        Experimental · unvalidated. Values are displayed to two decimal places; probabilities below 0.01 use scientific
+        notation. Full precision remains in provenance. No statistical acceptance decision is implied.
       </p>
       {interpretation ? (
         <div role="note" aria-label="Saved statistical interpretation">

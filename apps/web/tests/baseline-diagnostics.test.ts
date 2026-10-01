@@ -19,7 +19,7 @@ it('joins residual months by source revision and preserves small probabilities',
   const fit = fixture();
   fit.inference.terms[0].probability = { status: 'OK', value: 1e-18, logValue: Math.log(1e-18) };
   const html = renderToStaticMarkup(createElement(BaselineDiagnostics, { fit, observations }));
-  expect(html).toContain('1.00000e-18');
+  expect(html).toContain('title="1e-18">1.00e-18</span>');
   const rows = html.match(/<tr>.*?<\/tr>/g) ?? [];
   for (let i = 0; i < 4; i++) {
     expect(rows.find((row) => row.includes(`source-${i}`))).toContain(`2020-0${i + 1}</th>`);
@@ -56,4 +56,19 @@ it('shows persisted verdicts and leaves older baselines unlabelled', () => {
   const legacy = renderToStaticMarkup(createElement(BaselineDiagnostics, { fit, observations }));
   expect(legacy).toContain('No interpretation policy was saved');
   expect(legacy).not.toContain('Frozen historical verdict');
+});
+
+it('formats probability boundaries without losing small nonzero values', () => {
+  for (const [value, display] of [
+    [0, '0.00'],
+    [0.004, '4.00e-3'],
+    [0.009, '9.00e-3'],
+    [0.01, '0.01'],
+    [0.125, '0.13'],
+  ] as const) {
+    const fit = fixture();
+    fit.inference.terms[0].probability = { status: 'OK', value, logValue: Math.log(value) };
+    const html = renderToStaticMarkup(createElement(BaselineDiagnostics, { fit, observations }));
+    expect(html).toContain(`title="${value}">${display}</span>`);
+  }
 });
