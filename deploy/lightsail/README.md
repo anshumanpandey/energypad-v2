@@ -215,3 +215,12 @@ The read-only `check-backups.py` checks completed-bundle metadata freshness and 
 ### Synthetic restore CI gate
 
 CI runs `bash deploy/lightsail/test-restore-docker.sh` in a separate job after installing `postgres:18-bookworm`; deployments require it to pass. The script creates only isolated synthetic source/restore containers and private temporary archives, checks restored table counts and requires rejection of unresolved migration history. It never reads runtime environment files or production backups. Local execution requires authorized Docker access and the image already installed. This verifies the rehearsal mechanism, not production recovery readiness; the trusted-backup exercise remains required.
+
+### Deployment image retention
+
+Before loading a release, deployment removes older SHA-tagged `energiepad-v2` images.
+It retains the newest three existing releases, the recorded current release, and
+the incoming release if already present. Removal never uses force, so images
+referenced by containers remain protected. Database volumes, backups and other
+image repositories are not pruned. Install updated `deploy.sh` as
+`/usr/local/sbin/energiepad-deploy` on existing servers to enable this policy.

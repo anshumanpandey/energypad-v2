@@ -36,6 +36,19 @@ if grep -Eq '^APP_WRITE_FREEZE=.+$' /etc/energiepad/runtime.env && ! grep -qx 'A
 fi
 [[ ! -f release.env ]] || previous=$(cat release.env)
 export APP_IMAGE="energiepad-v2:$1"
+# Reclaim old app releases before loading another image. Docker lists newest first.
+# Keep the newest three, the recorded rollback release, and the incoming release.
+# Never force removal: images referenced by any container remain protected.
+images=$(docker image ls energiepad-v2 --format '{{.Repository}}:{{.Tag}}')
+retained=0
+while IFS= read -r image; do
+  [[ $image =~ ^energiepad-v2:[0-9a-f]{40}$ ]] || continue
+  retained=$((retained + 1))
+  if (( retained <= 3 )) || [[ $image == "${previous#APP_IMAGE=}" || $image == "$APP_IMAGE" ]]; then
+    continue
+  fi
+  docker image rm "$image" || echo "Retained image still in use: $image" >&2
+done <<< "$images"
 gzip -dc | docker image load
 docker image inspect "$APP_IMAGE" >/dev/null
 compose=(docker compose -f /opt/energiepad/compose.yml)
