@@ -162,7 +162,6 @@ export function DriverClassificationImport({ orgId }: { orgId: string }) {
             {preview.count} site/year rows · {preview.newCount} {preview.committed ? 'added' : 'new'} ·{' '}
             {preview.existingCount} already saved
           </p>
-          <ClassificationTable records={preview.records} />
           {!preview.committed && (
             <Button
               disabled={m.disabled}
@@ -171,6 +170,7 @@ export function DriverClassificationImport({ orgId }: { orgId: string }) {
               Import drivers
             </Button>
           )}
+          <ClassificationTable records={preview.records} />
         </section>
       )}
       <section className="panel import-preview" aria-label="Saved driver classifications">

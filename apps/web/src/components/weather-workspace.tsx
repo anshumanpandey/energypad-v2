@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { weatherJobLabels } from '@/domain/weather-jobs';
 import { request, useMutation } from './forms';
 import { Button } from './ui/button';
-import type { WeatherMonth } from '@/domain/weather';
+import { weatherDates, type WeatherMonth } from '@/domain/weather';
+import { weatherConfigurationSaved } from './weather-events';
 export type WeatherData = {
   jobs: {
     id: string;
@@ -68,6 +69,7 @@ export function WeatherWorkspace({
   const job = data.jobs.find((j) => j.configurationId === configId);
   const active = data.jobs.some((j) => ['QUEUED', 'RUNNING', 'RETRY_WAIT'].includes(j.status));
   const [pollError, setPollError] = useState('');
+  const [saveWarning, setSaveWarning] = useState('');
   useEffect(() => {
     if (!active) return;
     let stopped = false;
@@ -96,9 +98,11 @@ export function WeatherWorkspace({
       <p>
         Open-Meteo ERA5 provides modeled historical weather. Monthly degree days are calculated from daily mean
         temperatures using your explicit heating and cooling bases. Missing days prevent enrichment; they are never
-        replaced with zero.
+        replaced with zero. Saving settings automatically fetches weather for the selected completed year using these
+        coordinates and timezone. Progress updates here automatically.
       </p>
       {m.feedback}
+      {saveWarning && <p role="alert">{saveWarning}</p>}
       {manage && (
         <details open={!latest}>
           <summary>{latest ? 'Add a weather settings version' : 'Configure site weather'}</summary>
@@ -112,8 +116,28 @@ export function WeatherWorkspace({
               void m.run(async () => {
                 const saved = await request(`${base}/configuration`, 'POST', values);
                 setSelected(saved.id);
+                window.dispatchEvent(new CustomEvent(weatherConfigurationSaved, { detail: { base } }));
+                setSaveWarning('');
+                let eligible = true;
+                try {
+                  weatherDates(year);
+                } catch {
+                  eligible = false;
+                  setSaveWarning(
+                    'Settings saved. Select a completed year with at least seven days since year end to fetch historical weather.',
+                  );
+                }
+                if (eligible) {
+                  try {
+                    await request(`${base}/enrich`, 'POST', { configurationId: saved.id, year });
+                  } catch (error) {
+                    setSaveWarning(
+                      `Settings saved, but weather fetching could not start: ${error instanceof Error ? error.message : 'Please try again.'}`,
+                    );
+                  }
+                }
                 await reload();
-              }, 'Weather settings saved. Fetch weather for the selected year when ready.');
+              }, 'Weather settings saved. Weather status refreshed.');
             }}
           >
             <fieldset className="form-grid" disabled={m.disabled}>

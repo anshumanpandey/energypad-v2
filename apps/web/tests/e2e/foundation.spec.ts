@@ -541,6 +541,10 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await weather.getByLabel('Heating base (°C)').fill('15');
   await weather.getByLabel('Cooling base (°C)').fill('20');
   await weather.getByLabel('Weather settings source').fill('Synthetic browser settings');
+  // The initial save queues weather automatically; progress is simulated below.
+  await page.route(`**/api/v1/organisations/${org}/sites/${site.id}/energy/weather/enrich`, (route) =>
+    route.fulfill({ json: { status: 'QUEUED' } }),
+  );
   await weather.getByRole('button', { name: 'Save weather settings', exact: true }).click();
   await expect(weather.getByRole('status')).toContainText('Weather settings saved');
   const configId = await weather.getByLabel('Weather settings version').inputValue();

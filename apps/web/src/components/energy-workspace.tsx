@@ -16,6 +16,12 @@ import {
   type ConversionRevision,
 } from './energy-corrections';
 import { request, useMutation } from './forms';
+import {
+  sortConsumption,
+  utilityLabel,
+  type ConsumptionSort,
+  type ConsumptionSortKey,
+} from '../domain/consumption-sort';
 type EnergyData = {
   occupancy: OccupancyRecord[];
   patterns: PatternRecord[];
@@ -42,6 +48,7 @@ export function EnergyWorkspace({
   const currentYear = new Date().getUTCFullYear();
   const [siteId, setSiteId] = useState(sites[0]?.id ?? '');
   const [year, setYear] = useState(currentYear);
+  const [sort, setSort] = useState<ConsumptionSort>({ key: 'month', direction: 'desc' });
   const [loaded, setLoaded] = useState<{ siteId: string; year: number; data: EnergyData } | null>(null);
   const data = loaded?.siteId === siteId && loaded.year === year ? loaded.data : null;
   const base = `organisations/${orgId}/sites/${siteId}/energy`;
@@ -132,17 +139,45 @@ export function EnergyWorkspace({
                 <table className="energy-records-table">
                   <thead>
                     <tr>
-                      <th>Month / meter</th>
-                      <th>Utility</th>
-                      <th>Source</th>
-                      <th>Energy (kWh)</th>
-                      <th>Net / gross cost</th>
+                      {(
+                        [
+                          ['month', 'Month / meter', 'Sort by month, then utility'],
+                          ['utility', 'Utility', 'Sort by utility name'],
+                          ['source', 'Source', 'Sort by source quantity in the displayed units'],
+                          ['energy', 'Energy (kWh)', 'Sort by energy in kWh'],
+                          ['cost', 'Net / gross cost', 'Sort by gross cost; unknown costs appear last'],
+                        ] as [ConsumptionSortKey, string, string][]
+                      ).map(([key, label, title]) => (
+                        <th
+                          key={key}
+                          aria-sort={
+                            sort.key === key ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'
+                          }
+                        >
+                          <button
+                            type="button"
+                            className="energy-sort-button"
+                            title={title}
+                            onClick={() =>
+                              setSort((current) => ({
+                                key,
+                                direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+                              }))
+                            }
+                          >
+                            {label}{' '}
+                            <span aria-hidden="true">
+                              {sort.key === key ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'}
+                            </span>
+                          </button>
+                        </th>
+                      ))}
                       <th>Data quality</th>
                       <th>History and corrections</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {data.records.map((record) => (
+                    {sortConsumption(data.records, sort).map((record) => (
                       <tr key={record.id}>
                         <td>
                           <strong className="energy-record-month">{record.periodStart.slice(0, 7)}</strong>
@@ -150,15 +185,7 @@ export function EnergyWorkspace({
                             {data.meters.find((meter) => meter.id === record.meterId)?.name}
                           </span>
                         </td>
-                        <td>
-                          {record.fuel === 'SOLAR_PV'
-                            ? 'Solar PV'
-                            : record.fuel === 'ELECTRICITY'
-                              ? 'Grid electricity'
-                              : record.fuel === 'LPG'
-                                ? 'LPG'
-                                : record.fuel.charAt(0) + record.fuel.slice(1).toLowerCase()}
-                        </td>
+                        <td>{utilityLabel(record.fuel)}</td>
                         <td>
                           {record.sourceQuantity} {record.sourceUnit}
                         </td>

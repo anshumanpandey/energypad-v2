@@ -165,6 +165,11 @@ export function HistoricEmissionsImport({ orgId }: { orgId: string }) {
           <p>
             {preview.geography} · {preview.basis.replaceAll('_', ' ')} · kgCO₂e/kWh · Applies only to each listed site.
           </p>
+          {!preview.committed && (
+            <Button disabled={m.disabled} onClick={() => void m.run(() => upload(true), 'Emission factors imported.')}>
+              Import emission factors
+            </Button>
+          )}
           <div className="import-table-scroll" style={{ overflowX: 'auto' }}>
             <table className="import-preview-table">
               <thead>
@@ -191,11 +196,6 @@ export function HistoricEmissionsImport({ orgId }: { orgId: string }) {
               </tbody>
             </table>
           </div>
-          {!preview.committed && (
-            <Button disabled={m.disabled} onClick={() => void m.run(() => upload(true), 'Emission factors imported.')}>
-              Import emission factors
-            </Button>
-          )}
         </section>
       )}
     </section>

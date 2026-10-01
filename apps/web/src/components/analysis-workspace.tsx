@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { NraReviewPanel, type NraReviewRecord } from './nra-review';
 import { BaselineDiagnostics } from './baseline-diagnostics';
 import { request, useMutation } from './forms';
+import { weatherConfigurationSaved } from './weather-events';
 import type { AnalysisService } from '@/server/analysis/service';
 import type { BaselineDefinition, ReadinessIssue } from '@/server/analysis/contract';
 import type { RegressionInterpretation } from '@/domain/analysis/interpretation';
@@ -153,6 +154,32 @@ function SiteAnalysis({
     warnings: ReadinessIssue[];
   } | null>(null);
   const [issues, setIssues] = useState<ReadinessIssue[]>([]);
+  const [weatherOptionsError, setWeatherOptionsError] = useState('');
+  useEffect(() => {
+    if (archived) return;
+    let active = true;
+    let sequence = 0;
+    async function updateWeather(event: Event) {
+      const detail = (event as CustomEvent<{ base: string }>).detail;
+      if (detail?.base !== base.replace(/\/analysis$/, '/energy/weather')) return;
+      const current = ++sequence;
+      try {
+        const refreshed: Options = await request(`${base}/options`, 'GET');
+        if (active && current === sequence) {
+          setOptions((previous) => (previous ? { ...previous, weather: refreshed.weather } : refreshed));
+          setWeatherOptionsError('');
+        }
+      } catch {
+        if (active && current === sequence)
+          setWeatherOptionsError('Could not refresh weather configurations. Reload the page to try again.');
+      }
+    }
+    window.addEventListener(weatherConfigurationSaved, updateWeather);
+    return () => {
+      active = false;
+      window.removeEventListener(weatherConfigurationSaved, updateWeather);
+    };
+  }, [base, archived]);
   useEffect(() => {
     let active = true;
     Promise.all([
@@ -331,6 +358,7 @@ function SiteAnalysis({
                         </option>
                       ))}
                     </select>
+                    {weatherOptionsError && <span role="alert">{weatherOptionsError}</span>}
                   </label>
                   <label>
                     Estimated consumption

@@ -281,6 +281,15 @@ function HistoricImport({ orgId }: { orgId: string }) {
           )}
           {!preview.committed && (
             <>
+              <div className="import-preview-footer">
+                <span className="muted">Matching readings will be updated. Previous revisions remain in history.</span>
+                <Button
+                  disabled={m.pending}
+                  onClick={() => void m.run(() => upload(true), 'Consumption import completed.')}
+                >
+                  Import {preview.count} readings <ArrowRight size={16} aria-hidden="true" />
+                </Button>
+              </div>
               <div className="analysis-table">
                 <table>
                   <thead>
@@ -322,15 +331,6 @@ function HistoricImport({ orgId }: { orgId: string }) {
                     ))}
                   </tbody>
                 </table>
-              </div>
-              <div className="import-preview-footer">
-                <span className="muted">Matching readings will be updated. Previous revisions remain in history.</span>
-                <Button
-                  disabled={m.pending}
-                  onClick={() => void m.run(() => upload(true), 'Consumption import completed.')}
-                >
-                  Import {preview.count} readings <ArrowRight size={16} aria-hidden="true" />
-                </Button>
               </div>
             </>
           )}

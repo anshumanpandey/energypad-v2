@@ -114,4 +114,32 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   await expect(records).toContainText('Second gas meter');
   await page.getByLabel('Energy meter', { exact: true }).selectOption(secondGasMeter.id);
   await expect(records.getByRole('row')).toHaveCount(6);
+  const bodyRows = records.locator('tbody tr');
+  await expect(bodyRows.locator('td:nth-child(2)')).toHaveText([
+    'Gas',
+    'Gas',
+    'Grid electricity',
+    'Petrol',
+    'Solar PV',
+  ]);
+  await records.getByRole('button', { name: 'Source', exact: true }).click();
+  await expect(bodyRows.locator('td:nth-child(3)')).toHaveText(['75 kWh', '100 kWh', '200 kWh', '300 kWh', '400 kWh']);
+  await records.getByRole('button', { name: 'Source', exact: true }).click();
+  await expect(bodyRows.first()).toContainText('400 kWh');
+  await expect(records.getByRole('columnheader', { name: 'Source', exact: true })).toHaveAttribute(
+    'aria-sort',
+    'descending',
+  );
+  await records.getByRole('button', { name: 'Utility', exact: true }).click();
+  await records.getByRole('button', { name: 'Utility', exact: true }).click();
+  await expect(bodyRows.first().locator('td').nth(1)).toHaveText('Solar PV');
+  await records.getByRole('button', { name: 'Energy (kWh)', exact: true }).click();
+  await expect(bodyRows.first()).toContainText('75 kWh');
+  await records.getByRole('button', { name: 'Net / gross cost', exact: true }).click();
+  await expect(bodyRows.last()).toContainText('400 kWh');
+  await records.getByRole('button', { name: 'Month / meter', exact: true }).click();
+  await expect(records.getByRole('columnheader', { name: 'Month / meter', exact: true })).toHaveAttribute(
+    'aria-sort',
+    'ascending',
+  );
 });

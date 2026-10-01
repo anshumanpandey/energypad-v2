@@ -2708,18 +2708,39 @@ select[aria-invalid='true'] {
 .energy-records-table tbody tr:hover {
   background: #f3f7f0;
 }
-.energy-records-table td:nth-child(2),
 .energy-records-table td:nth-child(3),
-.energy-records-table td:nth-child(4) {
+.energy-records-table td:nth-child(4),
+.energy-records-table td:nth-child(5) {
   font-variant-numeric: tabular-nums;
 }
-.energy-records-table th:nth-child(2),
 .energy-records-table th:nth-child(3),
 .energy-records-table th:nth-child(4),
-.energy-records-table td:nth-child(2),
+.energy-records-table th:nth-child(5),
 .energy-records-table td:nth-child(3),
-.energy-records-table td:nth-child(4) {
+.energy-records-table td:nth-child(4),
+.energy-records-table td:nth-child(5) {
   text-align: right;
+}
+.energy-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+.energy-sort-button:hover {
+  color: #173f2b;
+}
+.energy-sort-button:focus-visible {
+  outline: 2px solid #386a48;
+  outline-offset: 4px;
+  border-radius: 2px;
 }
 .energy-record-month,
 .energy-record-meter {
