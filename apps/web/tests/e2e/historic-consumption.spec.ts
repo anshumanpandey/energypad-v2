@@ -142,4 +142,23 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
     'aria-sort',
     'ascending',
   );
+  await records.getByLabel('Filter consumption month').selectOption('01');
+  await records.getByLabel('Filter consumption utility').selectOption('GAS');
+  await expect(bodyRows).toHaveCount(2);
+  await expect(records.getByText('2 of 5 readings', { exact: true })).toBeVisible();
+  await records.getByLabel('Filter consumption month').selectOption('02');
+  await expect(records.getByText('No readings match the selected month and utility.')).toBeVisible();
+  await records.getByLabel('Filter consumption month').selectOption('01');
+  await records.getByLabel('Filter consumption utility').selectOption('SOLAR_PV');
+  await expect(bodyRows).toHaveCount(1);
+  await expect(bodyRows.first()).toContainText('200 kWh');
+  await records.getByRole('button', { name: 'Clear filters', exact: true }).click();
+  await expect(bodyRows).toHaveCount(5);
+  await records.getByLabel('Filter consumption utility').selectOption('SOLAR_PV');
+  await page.getByLabel('Year', { exact: true }).selectOption('2021');
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  await expect(records.getByLabel('Filter consumption utility')).toHaveValue('');
+  await expect(records.getByLabel('Filter consumption month')).toHaveValue('');
+  await expect(bodyRows).toHaveCount(1);
+  await expect(bodyRows.first()).toContainText('800 kWh');
 });

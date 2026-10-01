@@ -49,8 +49,22 @@ export function EnergyWorkspace({
   const [siteId, setSiteId] = useState(sites[0]?.id ?? '');
   const [year, setYear] = useState(currentYear);
   const [sort, setSort] = useState<ConsumptionSort>({ key: 'month', direction: 'desc' });
+  const [monthFilter, setMonthFilter] = useState('');
+  const [utilityFilter, setUtilityFilter] = useState('');
   const [loaded, setLoaded] = useState<{ siteId: string; year: number; data: EnergyData } | null>(null);
   const data = loaded?.siteId === siteId && loaded.year === year ? loaded.data : null;
+  const filteredRecords = (data?.records ?? []).filter(
+    (record) =>
+      (!monthFilter || record.periodStart.slice(5, 7) === monthFilter) &&
+      (!utilityFilter || record.fuel === utilityFilter),
+  );
+  const utilities = [...new Set((data?.records ?? []).map((record) => record.fuel))].sort((a, b) =>
+    utilityLabel(a).localeCompare(utilityLabel(b)),
+  );
+  function clearFilters() {
+    setMonthFilter('');
+    setUtilityFilter('');
+  }
   const base = `organisations/${orgId}/sites/${siteId}/energy`;
   async function load() {
     const [result, drivers, weather, pricing, catalog, occupancy, patterns, events] = await Promise.all([
@@ -88,7 +102,10 @@ export function EnergyWorkspace({
             <select
               aria-label="Energy site"
               value={siteId}
-              onChange={(e) => setSiteId(e.target.value)}
+              onChange={(e) => {
+                setSiteId(e.target.value);
+                clearFilters();
+              }}
               disabled={m.disabled}
             >
               {sites.map((site) => (
@@ -104,7 +121,10 @@ export function EnergyWorkspace({
               aria-label="Year"
               required
               value={year}
-              onChange={(e) => setYear(Number(e.target.value))}
+              onChange={(e) => {
+                setYear(Number(e.target.value));
+                clearFilters();
+              }}
               disabled={m.disabled}
             >
               {Array.from({ length: currentYear - 2000 + 1 }, (_, i) => currentYear - i).map((value) => (
@@ -125,15 +145,71 @@ export function EnergyWorkspace({
                 <span className="eyebrow">METER READINGS · {year}</span>
                 <h2 id="consumption-records-title">Consumption records</h2>
                 <p className="muted">
-                  {sites.find((site) => site.id === siteId)?.name} · All meters and utilities, including archived meters
+                  {sites.find((site) => site.id === siteId)?.name} · All meters, including archived meters
                 </p>
               </div>
-              <span className="energy-record-count">
-                {data.records.length} {data.records.length === 1 ? 'reading' : 'readings'}
+              <span className="energy-record-count" aria-live="polite">
+                {filteredRecords.length}
+                {monthFilter || utilityFilter ? ` of ${data.records.length}` : ''}{' '}
+                {filteredRecords.length === 1 ? 'reading' : 'readings'}
               </span>
             </div>
+            <div className="form-grid">
+              <label>
+                Month
+                <select
+                  aria-label="Filter consumption month"
+                  value={monthFilter}
+                  onChange={(event) => setMonthFilter(event.target.value)}
+                >
+                  <option value="">All months</option>
+                  {[
+                    'January',
+                    'February',
+                    'March',
+                    'April',
+                    'May',
+                    'June',
+                    'July',
+                    'August',
+                    'September',
+                    'October',
+                    'November',
+                    'December',
+                  ].map((month, index) => (
+                    <option key={month} value={String(index + 1).padStart(2, '0')}>
+                      {month}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Utility
+                <select
+                  aria-label="Filter consumption utility"
+                  value={utilityFilter}
+                  onChange={(event) => setUtilityFilter(event.target.value)}
+                >
+                  <option value="">All utilities</option>
+                  {utilities.map((fuel) => (
+                    <option key={fuel} value={fuel}>
+                      {utilityLabel(fuel)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {(monthFilter || utilityFilter) && (
+              <div className="button-row">
+                <Button type="button" variant="ghost" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              </div>
+            )}
             {!data.records.length ? (
               <p className="energy-records-empty">No readings recorded for this year.</p>
+            ) : !filteredRecords.length ? (
+              <p className="energy-records-empty">No readings match the selected month and utility.</p>
             ) : (
               <div className="energy-records-scroll" role="region" aria-label="Consumption records table" tabIndex={0}>
                 <table className="energy-records-table">
@@ -177,7 +253,7 @@ export function EnergyWorkspace({
                     </tr>
                   </thead>
                   <tbody>
-                    {sortConsumption(data.records, sort).map((record) => (
+                    {sortConsumption(filteredRecords, sort).map((record) => (
                       <tr key={record.id}>
                         <td>
                           <strong className="energy-record-month">{record.periodStart.slice(0, 7)}</strong>

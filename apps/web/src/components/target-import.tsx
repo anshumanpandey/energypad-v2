@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { FileSpreadsheet, Upload, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
 import { responseError, useMutation } from './forms';
 import { targetColumns } from '@/domain/target-import';
@@ -34,59 +35,99 @@ export function TargetImport({ orgId }: { orgId: string }) {
           <h2>Import energy and carbon targets</h2>
           <p>Upload the Targets sheet to save monthly targets for each site and utility.</p>
         </div>
+        <span className="import-format">
+          <FileSpreadsheet size={15} aria-hidden="true" /> Excel · .xlsx
+        </span>
       </div>
+      <ol className="import-steps" aria-label="Import progress">
+        {['Choose workbook', 'Review targets', 'Import data'].map((step, index) => (
+          <li key={step} aria-current={(preview?.committed ? 2 : preview ? 1 : 0) === index ? 'step' : undefined}>
+            <span>{index + 1}</span>
+            {step}
+          </li>
+        ))}
+      </ol>
       <div className="import-layout">
-        <div className="panel import-upload-card stack-form">
-          <label>
-            Targets workbook
-            <input
-              type="file"
-              accept=".xlsx"
-              disabled={m.disabled}
-              onChange={(e) => {
-                setFile(e.target.files?.[0] ?? null);
-                setPreview(null);
-              }}
-            />
-          </label>
-          <Button disabled={m.disabled || !file} onClick={() => void m.run(() => upload(false), 'Targets validated.')}>
-            Validate targets
-          </Button>
-          <p className="muted">Validation does not save data. Review the rows before importing.</p>
+        <div className="panel import-upload-card">
+          <div className="import-card-heading">
+            <span className="import-icon">
+              <Upload size={21} aria-hidden="true" />
+            </span>
+            <div>
+              <h3>Upload your workbook</h3>
+              <p>Every populated cell is checked before saving.</p>
+            </div>
+          </div>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void m.run(() => upload(false), 'Targets validated. Review before importing.');
+            }}
+          >
+            <label className="import-file-field">
+              Targets workbook
+              <input
+                type="file"
+                accept=".xlsx"
+                required
+                disabled={m.disabled}
+                onChange={(e) => {
+                  setFile(e.target.files?.[0] ?? null);
+                  setPreview(null);
+                }}
+              />
+            </label>
+            <div className="import-upload-footer">
+              <span className="muted">XLSX · Up to 2 MB · 2,000 rows</span>
+              <Button type="submit" disabled={m.disabled || !file}>
+                {m.pending ? 'Checking workbook…' : 'Validate targets'} <ArrowRight size={16} aria-hidden="true" />
+              </Button>
+            </div>
+          </form>
         </div>
-        <aside className="import-guide">
-          <h3>Required format</h3>
-          <p>Sheet: Targets · Headers on row 1 · Fixed column order A–G</p>
-          <ol>
-            {targetColumns.map((column) => (
-              <li key={column}>{column}</li>
+        <aside className="import-guide" aria-label="Targets workbook requirements">
+          <h3>Expected column order</h3>
+          <ol className="import-column-list">
+            {targetColumns.map((column, index) => (
+              <li key={column}>
+                <span>{String.fromCharCode(65 + index)}</span>
+                {column}
+              </li>
             ))}
           </ol>
+          <p>
+            Use the <strong>Targets</strong> sheet with headers on row 1. Each site code must already exist.
+          </p>
           <p>
             Energy uses kWh or MWh; carbon uses kilograms. Both targets must be non-negative numbers. Saved formula
             results and formatted numeric cells are supported.
           </p>
-          <p>
-            Site codes must already exist in this workspace. Diesel uses the Oil utility, as in consumption imports.
-          </p>
+          <p>Diesel uses the Oil utility, as in consumption imports.</p>
         </aside>
       </div>
-      {m.feedback}
+      <div className="import-feedback">{m.feedback}</div>
       {preview && (
         <section className="panel import-preview" aria-label="Targets import preview">
-          <h3>{preview.committed ? 'Targets imported' : 'Review targets'}</h3>
-          <p>
-            {preview.count} rows · {preview.created} new · {preview.updated}{' '}
-            {preview.committed ? 'updated' : 'to update'} · {preview.unchanged} unchanged
-          </p>
+          <div className="import-card-heading">
+            <span className="import-icon">
+              <CheckCircle2 size={21} aria-hidden="true" />
+            </span>
+            <div>
+              <h3>{preview.committed ? 'Targets imported' : 'Review targets'}</h3>
+              <p>
+                {preview.count} rows · {preview.created} new · {preview.updated}{' '}
+                {preview.committed ? 'updated' : 'to update'} · {preview.unchanged} unchanged
+              </p>
+            </div>
+          </div>
           {!preview.committed && (
             <div className="import-preview-footer">
-              <span>Matching targets will be updated; previous revisions stay in history.</span>
+              <span className="muted">Matching targets will be updated; previous revisions stay in history.</span>
               <Button
                 disabled={m.disabled}
                 onClick={() => void m.run(() => upload(true), 'Targets imported successfully.')}
               >
-                Import {preview.count} targets
+                Import {preview.count} targets <ArrowRight size={16} aria-hidden="true" />
               </Button>
             </div>
           )}

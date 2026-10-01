@@ -28,7 +28,7 @@ test('Data Targets validates every cell, saves monthly targets and updates exist
   await page.goto(`/org/${org.id}/data`);
   await page.getByRole('tab', { name: 'Targets', exact: true }).click();
   async function upload() {
-    await page.getByLabel('Targets workbook').setInputFiles({
+    await page.getByLabel('Targets workbook', { exact: true }).setInputFiles({
       name: 'targets.xlsx',
       mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       buffer: Buffer.from(await book.xlsx.writeBuffer()),
