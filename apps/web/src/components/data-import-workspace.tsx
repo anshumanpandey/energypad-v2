@@ -4,6 +4,7 @@ import { Building2, ChartColumn, FileSpreadsheet, Upload, CheckCircle2, ChevronD
 import { ImportWorkspace } from './import-workspace';
 import { HistoricEmissionsImport } from './historic-emissions-import';
 import { DriverClassificationImport } from './driver-classification-import';
+import { TargetImport } from './target-import';
 import { Button } from './ui/button';
 import { responseError, useMutation } from './forms';
 import { historicCompactColumns } from '@/domain/historic-consumption';
@@ -31,7 +32,7 @@ type Preview = {
 };
 export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches: { id: string; status: string }[] }) {
   const [tab, setTab] = useState('sites');
-  const tabs = ['sites', 'consumption', 'emissions', 'drivers'];
+  const tabs = ['sites', 'consumption', 'emissions', 'drivers', 'targets'];
   return (
     <>
       <div className="data-import-tabs" role="tablist" aria-label="Data imports">
@@ -69,7 +70,9 @@ export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches
                 ? 'Consumption'
                 : value === 'emissions'
                   ? 'Emissions'
-                  : 'Drivers'}
+                  : value === 'drivers'
+                    ? 'Drivers'
+                    : 'Targets'}
           </button>
         ))}
       </div>
@@ -80,8 +83,10 @@ export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches
           <HistoricImport orgId={orgId} />
         ) : tab === 'emissions' ? (
           <HistoricEmissionsImport orgId={orgId} />
-        ) : (
+        ) : tab === 'drivers' ? (
           <DriverClassificationImport orgId={orgId} />
+        ) : (
+          <TargetImport orgId={orgId} />
         )}
       </div>
     </>

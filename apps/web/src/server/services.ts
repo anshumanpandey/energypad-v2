@@ -1,7 +1,9 @@
 import 'server-only';
 import { db } from './db';
+import { TargetImportService } from './target-import';
 import { FoundationService } from './foundation';
 import { mailer } from './mail';
+export const targetImportService = new TargetImportService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
 
 export const foundation = new FoundationService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
 

@@ -26,6 +26,8 @@ test('Data Drivers tab validates cell addresses, saves classifications and persi
   await page.goto(`/org/${org.id}/data`);
   await page.getByRole('tab', { name: 'Sites', exact: true }).focus();
   await page.keyboard.press('End');
+  await expect(page.getByRole('tab', { name: 'Targets', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
   await expect(page.getByRole('tab', { name: 'Drivers', exact: true })).toBeFocused();
   const book = new ExcelJS.Workbook(),
     sheet = book.addWorksheet('Drivers');
