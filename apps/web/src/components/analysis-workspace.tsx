@@ -675,8 +675,8 @@ function RunForm({
   const [nra, setNra] = useState('NONE');
   const [firstDate, setFirstDate] = useState(reportingYear ? `${reportingYear}-01-01` : ''),
     [lastDate, setLastDate] = useState(reportingYear ? `${reportingYear}-12-31` : '');
-  const first = firstDate.slice(0, 7),
-    last = lastDate.slice(0, 7);
+  const first = reportingYear ? `${reportingYear}-01` : firstDate.slice(0, 7),
+    last = reportingYear ? `${reportingYear}-12` : lastDate.slice(0, 7);
   const months: string[] = [];
   if (/^\d{4}-\d{2}$/.test(first) && /^\d{4}-\d{2}$/.test(last)) {
     let [y, m] = first.split('-').map(Number);
@@ -695,7 +695,9 @@ function RunForm({
       <span className="eyebrow">REPORTING</span>
       <h2>Create reporting run</h2>
       <p id="reporting-date-help" className="muted">
-        Select any date in each month. Reporting includes both selected months in full.
+        {reportingYear
+          ? `This annual report covers January–December ${reportingYear}, using the previous year's baseline.`
+          : 'Select any date in each month. Reporting includes both selected months in full.'}
       </p>
       <form
         aria-label="Reporting run"
@@ -732,30 +734,42 @@ function RunForm({
         }}
       >
         <fieldset className="form-grid" disabled={disabled}>
-          <label>
-            Reporting first month
-            <DateInput
-              type="date"
-              min="1900-01-01"
-              max="2199-12-31"
-              aria-describedby="reporting-date-help"
-              required
-              value={firstDate}
-              onValueChange={setFirstDate}
-            />
-          </label>
-          <label>
-            Reporting last month
-            <DateInput
-              type="date"
-              min="1900-01-01"
-              max="2199-12-31"
-              aria-describedby="reporting-date-help"
-              required
-              value={lastDate}
-              onValueChange={setLastDate}
-            />
-          </label>
+          {reportingYear ? (
+            <div role="note" aria-label="Automatic reporting period">
+              <strong>Reporting period</strong>
+              <p>
+                01/01/{reportingYear} – 31/12/{reportingYear}
+              </p>
+              <span>All 12 months are required. Change the Year selection above to report on another year.</span>
+            </div>
+          ) : (
+            <>
+              <label>
+                Reporting first month
+                <DateInput
+                  type="date"
+                  min="1900-01-01"
+                  max="2199-12-31"
+                  aria-describedby="reporting-date-help"
+                  required
+                  value={firstDate}
+                  onValueChange={setFirstDate}
+                />
+              </label>
+              <label>
+                Reporting last month
+                <DateInput
+                  type="date"
+                  min="1900-01-01"
+                  max="2199-12-31"
+                  aria-describedby="reporting-date-help"
+                  required
+                  value={lastDate}
+                  onValueChange={setLastDate}
+                />
+              </label>
+            </>
+          )}
           <label>
             Non-routine adjustment
             <select value={nra} onChange={(e) => setNra(e.target.value)}>

@@ -61,13 +61,17 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
       source: 'Synthetic operating hours',
     });
 
-  await post(`/sites/${site.id}/energy`, { meterId: meter.id, month: '2021-05', quantity: '120', estimated: false });
-  await post(`/sites/${site.id}/energy/drivers`, {
-    month: '2021-05',
-    driver: 'POPULATION',
-    value: '13',
-    source: 'Synthetic reporting driver',
-  });
+  // Leave January missing first to verify annual reporting cannot silently shorten its period.
+  for (let i = 2; i <= 12; i++) {
+    const month = `2021-${String(i).padStart(2, '0')}`;
+    await post(`/sites/${site.id}/energy`, { meterId: meter.id, month, quantity: '120', estimated: false });
+    await post(`/sites/${site.id}/energy/drivers`, {
+      month,
+      driver: 'POPULATION',
+      value: '13',
+      source: 'Synthetic reporting driver',
+    });
+  }
 
   await page.goto(`/org/${org}/energy`);
   const report = page.getByRole('region', { name: 'Waste Report', exact: true });
@@ -86,17 +90,28 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await report.getByRole('button', { name: 'Back to baseline' }).click();
   await expect(automaticPeriod).toContainText('01/01/2020 – 31/12/2020');
   await report.getByRole('button', { name: '2 Reporting period' }).click();
-  await expect(report.getByLabel('Reporting first month')).toHaveValue('01/01/2021');
-  await expect(report.getByLabel('Reporting last month')).toHaveValue('31/12/2021');
-  await report.getByLabel('Reporting first month').fill('15/05/2021');
-  await report.getByLabel('Reporting last month').fill('15/05/2021');
+  await expect(report.getByLabel('Reporting first month')).toHaveCount(0);
+  await expect(report.getByLabel('Reporting last month')).toHaveCount(0);
+  await expect(report.getByRole('note', { name: 'Automatic reporting period' })).toContainText(
+    '01/01/2021 – 31/12/2021',
+  );
   await report.getByRole('button', { name: 'Save reporting run' }).click();
   await expect(report.getByRole('alert').filter({ hasText: 'Reporting needs attention' })).toBeVisible();
   await expect(report.getByRole('button', { name: '2 Reporting period' })).toHaveAttribute('aria-current', 'step');
+  await post(`/sites/${site.id}/energy`, { meterId: meter.id, month: '2021-01', quantity: '120', estimated: false });
+  await post(`/sites/${site.id}/energy/drivers`, {
+    month: '2021-01',
+    driver: 'POPULATION',
+    value: '13',
+    source: 'Synthetic reporting driver',
+  });
   await report.getByLabel('Outside baseline driver range').selectOption('ALLOW_WITH_WARNING');
   await report.getByRole('button', { name: 'Save reporting run' }).click();
   await expect(report.getByRole('heading', { name: 'Reporting results · experimental' })).toBeVisible();
-  await expect(report.getByLabel('Reporting first month')).toBeHidden();
+  const results = report.getByRole('region', { name: 'Monthly reporting results' });
+  await expect(results.getByRole('row')).toHaveCount(13);
+  await expect(results.getByRole('rowheader', { name: '2021-01', exact: true })).toBeVisible();
+  await expect(results.getByRole('rowheader', { name: '2021-12', exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('waste-report-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(report.getByRole('button', { name: '3 Results' })).toHaveAttribute('aria-current', 'step');
@@ -108,13 +123,13 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
     .click();
   await expect(report.getByRole('heading', { name: 'Reporting results · experimental' })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('waste-report-mobile.png'), fullPage: true });
-  await page.getByRole('combobox', { name: 'Year', exact: true }).selectOption('2022');
-  await expect(automaticPeriod).toContainText('01/01/2021 – 31/12/2021');
+  await page.getByRole('combobox', { name: 'Year', exact: true }).selectOption('2023');
+  await expect(automaticPeriod).toContainText('01/01/2022 – 31/12/2022');
   await expect(report.getByRole('button', { name: '2 Reporting period' })).toBeDisabled();
   await expect(report.getByRole('button', { name: '3 Results' })).toBeDisabled();
   await report.getByLabel('Population', { exact: true }).check();
   await report.getByRole('button', { name: 'Check readiness' }).click();
   await expect(report.getByText('Baseline needs attention', { exact: true })).toBeVisible();
-  await expect(report.getByRole('status').filter({ hasText: 'Baseline needs attention' })).toContainText('2021-01');
+  await expect(report.getByRole('status').filter({ hasText: 'Baseline needs attention' })).toContainText('2022-01');
   expect(errors).toEqual([]);
 });
