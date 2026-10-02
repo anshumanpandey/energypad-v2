@@ -109,6 +109,11 @@ export const runDefinition = z
         message: 'Map each reporting month once when NRA is enabled; omit mappings otherwise.',
       });
   });
+// Apply the current policy only to new runs; historical snapshots retain their recorded comparison.
+export const newRunDefinition = runDefinition.transform((request) => ({
+  ...request,
+  policy: { ...request.policy, comparison: 'GREATER_THAN' as const },
+}));
 export type BaselineDefinition = z.infer<typeof baselineDefinition>;
 export type RunDefinition = z.infer<typeof runDefinition>;
 export type ReadinessIssue = { month: string | null; code: string; message: string };

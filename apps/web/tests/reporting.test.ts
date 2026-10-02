@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { newRunDefinition, runDefinition } from '../src/server/analysis/contract';
 import { calculateReporting, projectReportingModel, type ReportingInput } from '../src/domain/analysis/reporting';
 import { fitRegression } from '../src/domain/analysis/regression';
 const site = { organisationId: '11111111-1111-4111-8111-111111111111', siteId: '22222222-2222-4222-8222-222222222222' };
@@ -266,4 +267,15 @@ describe('experimental reporting', () => {
     expect(projectReportingModel(make('MWh'))).toBeNull();
     expect(projectReportingModel(fitRegression({}))).toBeNull();
   });
+});
+
+it.each([79, 80, 81, 119, 120, 121])('new runs always use strict significance for actual %i', (actual) => {
+  const data = input();
+  data.rows[0].consumption.kwh = actual;
+  data.baseline.model.residualStandardError = 10;
+  const request = { period: data.period, policy: data.policy, references: [] };
+  expect(runDefinition.parse(request).policy.comparison).toBe('AT_LEAST');
+  data.policy = newRunDefinition.parse(request).policy;
+  expect(data.policy.comparison).toBe('GREATER_THAN');
+  expect(calculated(data).significance.significant).toBe(Math.abs(100 - actual) > 20);
 });

@@ -90,6 +90,7 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await report.getByRole('button', { name: 'Back to baseline' }).click();
   await expect(automaticPeriod).toContainText('01/01/2020 – 31/12/2020');
   await report.getByRole('button', { name: '2 Reporting period' }).click();
+  await expect(report.getByLabel('Significance boundary')).toHaveCount(0);
   await expect(report.getByLabel('Reporting first month')).toHaveCount(0);
   await expect(report.getByLabel('Reporting last month')).toHaveCount(0);
   await expect(report.getByRole('note', { name: 'Automatic reporting period' })).toContainText(

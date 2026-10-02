@@ -13,6 +13,7 @@ import {
   historyPageInput,
   baselineDefinition,
   runDefinition,
+  newRunDefinition,
   snapshotHash,
   type BaselineDefinition,
 } from './contract';
@@ -168,7 +169,7 @@ export class AnalysisService extends FoundationService {
     });
   }
   async run(actor: Actor, org: string, siteId: string, baselineId: string, input: unknown) {
-    const request = runDefinition.parse(input);
+    const request = newRunDefinition.parse(input);
     uuid.parse(baselineId);
     return this.transaction(async (tx) => {
       await this.access(tx, actor, org, siteId, 'write');

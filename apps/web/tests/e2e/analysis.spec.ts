@@ -141,7 +141,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   );
   await page.getByRole('button', { name: 'Load older baselines', exact: true }).click();
   await expect(page.getByRole('button', { name: /^View run/ })).toHaveCount(2);
-  await page.getByLabel('Significance boundary').selectOption('GREATER_THAN');
+  await expect(page.getByLabel('Significance boundary')).toHaveCount(0);
+  await page.getByLabel('Significance basis').selectOption('PRE_NRA');
   await page.getByRole('button', { name: 'Save reporting run' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Experimental reporting run saved' })).toBeVisible();
   await page.getByRole('button', { name: /^Load older runs for/ }).click();

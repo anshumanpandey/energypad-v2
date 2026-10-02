@@ -711,7 +711,7 @@ function RunForm({
               version: 'experimental-workflow-v1',
               nra,
               significanceBasis: f.get('basis'),
-              comparison: f.get('comparison'),
+              comparison: 'GREATER_THAN',
               sigmaMultiplier: 2,
               zeroThreshold: f.get('zeroThreshold'),
               negativePrediction: f.get('negativePrediction'),
@@ -787,13 +787,6 @@ function RunForm({
             </select>
           </label>
           <label>
-            Significance boundary
-            <select name="comparison">
-              <option value="AT_LEAST">At least 2 × baseline SE</option>
-              <option value="GREATER_THAN">Greater than 2 × baseline SE</option>
-            </select>
-          </label>
-          <label>
             Zero threshold
             <select name="zeroThreshold">
               <option value="UNDEFINED">Leave significance undefined</option>
@@ -841,8 +834,8 @@ function RunForm({
           </fieldset>
         )}
         <p className="muted">
-          Review these experimental policies before saving. Significance uses twice the baseline residual standard
-          error; the threshold is unchanged by NRA.
+          A month is significant only when the absolute waste or saving is greater than twice the baseline residual
+          standard error. A value equal to the threshold is not significant; NRA does not change the threshold.
         </p>
         <Issues issues={issues} />
         <Button type="submit" disabled={disabled}>
