@@ -1,4 +1,5 @@
 'use client';
+import { useEnergyYear } from './energy-year';
 import { latestConsumptionQuality } from '@/domain/consumption-quality';
 import { formatEnergyValue } from './format-energy-value';
 import { EventWorkspace, type EventRecord } from './event-workspace';
@@ -55,7 +56,9 @@ export function EnergyWorkspace({
   const m = useMutation();
   const currentYear = new Date().getUTCFullYear();
   const [siteId, setSiteId] = useState(sites[0]?.id ?? '');
-  const [year, setYear] = useState(currentYear);
+  const [localYear, setLocalYear] = useState(currentYear);
+  const selection = useEnergyYear();
+  const { year, setYear } = selection ?? { year: localYear, setYear: setLocalYear };
   const [sort, setSort] = useState<ConsumptionSort>({ key: 'month', direction: 'desc' });
   const [monthFilter, setMonthFilter] = useState('');
   const [utilityFilter, setUtilityFilter] = useState('');

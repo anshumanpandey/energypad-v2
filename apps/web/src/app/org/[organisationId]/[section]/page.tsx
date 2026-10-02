@@ -38,6 +38,7 @@ import { SitesWorkspace, PortfoliosWorkspace } from '@/components/sites-workspac
 import { DataImportWorkspace } from '@/components/data-import-workspace';
 import { Button } from '@/components/ui/button';
 import { AnalysisWorkspace } from '@/components/analysis-workspace';
+import { EnergyYearProvider } from '@/components/energy-year';
 import { EnergyWorkspace } from '@/components/energy-workspace';
 
 export default async function WorkspacePage({
@@ -208,24 +209,26 @@ export default async function WorkspacePage({
             <p>Record monthly consumption and check the completeness of your meter data.</p>
           </div>
         </div>
-        <EnergyWorkspace orgId={org.id} sites={sites} manage={manage} />
-        <section className="waste-report stack-form" aria-labelledby="waste-report-title">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">EXPECTED VS ACTUAL CONSUMPTION</span>
-              <h2 id="waste-report-title">Waste Report</h2>
-              <p>Build a baseline, compare a reporting period and review potential waste or savings.</p>
+        <EnergyYearProvider>
+          <EnergyWorkspace orgId={org.id} sites={sites} manage={manage} />
+          <section className="waste-report stack-form" aria-labelledby="waste-report-title">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">EXPECTED VS ACTUAL CONSUMPTION</span>
+                <h2 id="waste-report-title">Waste Report</h2>
+                <p>Build a baseline, compare a reporting period and review potential waste or savings.</p>
+              </div>
             </div>
-          </div>
-          <AnalysisWorkspace
-            wizard
-            orgId={org.id}
-            sites={await accessible(() => analysisService.historySites(actor, org.id))}
-            manage={can(membership.role, 'analysis:write')}
-            approve={can(membership.role, 'analysis:approve')}
-            actorId={actor.userId}
-          />
-        </section>
+            <AnalysisWorkspace
+              wizard
+              orgId={org.id}
+              sites={await accessible(() => analysisService.historySites(actor, org.id))}
+              manage={can(membership.role, 'analysis:write')}
+              approve={can(membership.role, 'analysis:approve')}
+              actorId={actor.userId}
+            />
+          </section>
+        </EnergyYearProvider>
         <p className="page-note">
           <Link href={`${base}/analysis`}>
             Advanced Analysis <ArrowRight size={14} />

@@ -1,4 +1,5 @@
 'use client';
+import { useEnergyYear } from './energy-year';
 import { formatEnergyValue } from './format-energy-value';
 import { WasteDirection } from './waste-direction';
 import { DateInput } from './ui/date-input';
@@ -84,6 +85,8 @@ export function AnalysisWorkspace({
   manage: boolean;
 }) {
   const [siteId, setSiteId] = useState(sites[0]?.id ?? '');
+  const selection = useEnergyYear();
+  const reportingYear = wizard ? (selection?.year ?? new Date().getUTCFullYear()) : undefined;
   const archived = sites.find((s) => s.id === siteId)?.archived ?? false;
   return (
     <div className="analysis-workspace stack-form">
@@ -112,7 +115,8 @@ export function AnalysisWorkspace({
             </select>
           </label>
           <SiteAnalysis
-            key={`${siteId}:${archived}`}
+            key={`${siteId}:${archived}:${reportingYear}`}
+            reportingYear={reportingYear}
             base={`organisations/${orgId}/sites/${siteId}/analysis`}
             manage={manage && !archived}
             archived={archived}
@@ -126,6 +130,7 @@ export function AnalysisWorkspace({
   );
 }
 function SiteAnalysis({
+  reportingYear,
   base,
   manage,
   archived,
@@ -133,6 +138,7 @@ function SiteAnalysis({
   actorId,
   wizard,
 }: {
+  reportingYear?: number;
   wizard: boolean;
   base: string;
   manage: boolean;
@@ -254,7 +260,9 @@ function SiteAnalysis({
               <span className="eyebrow">1 · BASELINE</span>
               <h2>Baseline setup</h2>
               <p>
-                Select one to three drivers and a complete monthly period. Source revisions are preserved when you save.
+                {reportingYear
+                  ? `The baseline uses January–December ${reportingYear - 1}, the year before the selected reporting year (${reportingYear}). Select one to three drivers.`
+                  : 'Select one to three drivers and a complete monthly period. Source revisions are preserved when you save.'}
               </p>
             </div>
             {!options.meters.length ? (
@@ -272,10 +280,12 @@ function SiteAnalysis({
                   const definition = {
                     meterId: f.get('meterId'),
                     energyUseId: f.get('energyUseId') || null,
-                    period: {
-                      firstMonth: String(f.get('firstMonth')).slice(0, 7),
-                      lastMonth: String(f.get('lastMonth')).slice(0, 7),
-                    },
+                    period: reportingYear
+                      ? { firstMonth: `${reportingYear - 1}-01`, lastMonth: `${reportingYear - 1}-12` }
+                      : {
+                          firstMonth: String(f.get('firstMonth')).slice(0, 7),
+                          lastMonth: String(f.get('lastMonth')).slice(0, 7),
+                        },
                     drivers,
                     weather: drivers.some((d) => ['HDD', 'CDD', 'DAYLIGHT'].includes(d))
                       ? { configurationId: f.get('weatherId'), methodology: 'daily-mean-degree-days-v1' }
@@ -327,28 +337,42 @@ function SiteAnalysis({
                       ))}
                     </select>
                   </label>
-                  <label>
-                    Baseline first month
-                    <DateInput
-                      type="date"
-                      name="firstMonth"
-                      min="1900-01-01"
-                      max="2199-12-31"
-                      aria-describedby="baseline-date-help"
-                      required
-                    />
-                  </label>
-                  <label>
-                    Baseline last month
-                    <DateInput
-                      type="date"
-                      name="lastMonth"
-                      min="1900-01-01"
-                      max="2199-12-31"
-                      aria-describedby="baseline-date-help"
-                      required
-                    />
-                  </label>
+                  {reportingYear ? (
+                    <div role="note" aria-label="Automatic baseline period">
+                      <strong>Baseline period</strong>
+                      <p>
+                        01/01/{reportingYear - 1} – 31/12/{reportingYear - 1}
+                      </p>
+                      <span>
+                        Uses all 12 months of the previous year. Missing data will be listed when you check readiness.
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <label>
+                        Baseline first month
+                        <DateInput
+                          type="date"
+                          name="firstMonth"
+                          min="1900-01-01"
+                          max="2199-12-31"
+                          aria-describedby="baseline-date-help"
+                          required
+                        />
+                      </label>
+                      <label>
+                        Baseline last month
+                        <DateInput
+                          type="date"
+                          name="lastMonth"
+                          min="1900-01-01"
+                          max="2199-12-31"
+                          aria-describedby="baseline-date-help"
+                          required
+                        />
+                      </label>
+                    </>
+                  )}
                   <label>
                     Weather configuration
                     <select name="weatherId">
@@ -391,9 +415,11 @@ function SiteAnalysis({
                     </label>
                   ))}
                 </fieldset>
-                <p id="baseline-date-help" className="muted">
-                  Select any date in each month. The baseline includes both selected months in full.
-                </p>
+                {!reportingYear && (
+                  <p id="baseline-date-help" className="muted">
+                    Select any date in each month. The baseline includes both selected months in full.
+                  </p>
+                )}
                 <p className="muted">
                   Experimental fitting policy: relative rank tolerance 1 × 10⁻¹⁰. A ready baseline is not methodology
                   approval.
@@ -571,6 +597,7 @@ function SiteAnalysis({
             {manage && (
               <RunForm
                 key={baseline.id}
+                reportingYear={reportingYear}
                 baseline={baseline}
                 issues={issues}
                 disabled={m.disabled}
@@ -633,19 +660,21 @@ function SiteAnalysis({
   );
 }
 function RunForm({
+  reportingYear,
   baseline,
   disabled,
   issues,
   submit,
 }: {
+  reportingYear?: number;
   baseline: Baseline;
   disabled: boolean;
   issues: ReadinessIssue[];
   submit: (input: unknown) => Promise<void>;
 }) {
   const [nra, setNra] = useState('NONE');
-  const [firstDate, setFirstDate] = useState(''),
-    [lastDate, setLastDate] = useState('');
+  const [firstDate, setFirstDate] = useState(reportingYear ? `${reportingYear}-01-01` : ''),
+    [lastDate, setLastDate] = useState(reportingYear ? `${reportingYear}-12-31` : '');
   const first = firstDate.slice(0, 7),
     last = lastDate.slice(0, 7);
   const months: string[] = [];

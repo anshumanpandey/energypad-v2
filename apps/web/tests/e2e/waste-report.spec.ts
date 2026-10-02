@@ -39,53 +39,57 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
     fuel: 'ELECTRICITY',
     unit: 'kWh',
   });
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 12; i++) {
     await post(`/sites/${site.id}/energy`, {
       meterId: meter.id,
-      month: `2020-0${i}`,
+      month: `2020-${String(i).padStart(2, '0')}`,
       quantity: String(100 + 2 * i + (i % 2)),
-      estimated: i === 6,
+      estimated: false,
     });
     await post(`/sites/${site.id}/energy/drivers`, {
-      month: `2020-0${i}`,
+      month: `2020-${String(i).padStart(2, '0')}`,
       driver: 'POPULATION',
       value: String(i),
       source: 'Synthetic browser test',
     });
   }
-  for (let i = 1; i <= 6; i++)
+  for (let i = 1; i <= 12; i++)
     await post(`/sites/${site.id}/energy/drivers`, {
-      month: `2020-0${i}`,
+      month: `2020-${String(i).padStart(2, '0')}`,
       driver: 'OPERATING_HOURS',
       value: String(i === 3 ? 0 : i === 5 ? 200 : i === 6 ? 50 : 100),
       source: 'Synthetic operating hours',
     });
+
+  await post(`/sites/${site.id}/energy`, { meterId: meter.id, month: '2021-05', quantity: '120', estimated: false });
+  await post(`/sites/${site.id}/energy/drivers`, {
+    month: '2021-05',
+    driver: 'POPULATION',
+    value: '13',
+    source: 'Synthetic reporting driver',
+  });
 
   await page.goto(`/org/${org}/energy`);
   const report = page.getByRole('region', { name: 'Waste Report', exact: true });
   await expect(report.getByRole('heading', { name: 'Waste Report', exact: true })).toBeVisible();
   await expect(report.getByRole('button', { name: '2 Reporting period' })).toBeDisabled();
   await expect(report.getByRole('button', { name: '3 Results' })).toBeDisabled();
-  const firstDate = report.getByLabel('Baseline first month');
-  await expect(firstDate).toHaveAttribute('placeholder', 'DD/MM/YYYY');
-  await firstDate.fill('31/02/2020');
-  await expect(firstDate).toHaveAttribute('aria-invalid', 'true');
-  expect(await firstDate.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(false);
-  await report.getByRole('button', { name: 'Open calendar' }).first().click();
-  await page.keyboard.press('Escape');
-  await report.locator('.date-input-calendar').first().fill('2020-01-15');
-  await expect(firstDate).toHaveValue('15/01/2020');
-  await expect(firstDate).not.toHaveAttribute('aria-invalid', 'true');
-  await report.getByLabel('Baseline last month').fill('15/04/2020');
+  await page.getByRole('combobox', { name: 'Year', exact: true }).selectOption('2021');
+  const automaticPeriod = report.getByRole('note', { name: 'Automatic baseline period' });
+  await expect(automaticPeriod).toContainText('01/01/2020 – 31/12/2020');
+  await expect(report.getByLabel('Baseline first month')).toHaveCount(0);
+  await expect(report.getByLabel('Baseline last month')).toHaveCount(0);
   await report.getByLabel('Population', { exact: true }).check();
   await report.getByRole('button', { name: 'Save experimental baseline' }).click();
   await expect(report.getByRole('button', { name: '2 Reporting period' })).toHaveAttribute('aria-current', 'step');
-  await expect(report.getByLabel('Baseline first month')).toBeHidden();
+  await expect(automaticPeriod).toBeHidden();
   await report.getByRole('button', { name: 'Back to baseline' }).click();
-  await expect(report.getByLabel('Baseline first month')).toHaveValue('15/01/2020');
+  await expect(automaticPeriod).toContainText('01/01/2020 – 31/12/2020');
   await report.getByRole('button', { name: '2 Reporting period' }).click();
-  await report.getByLabel('Reporting first month').fill('15/05/2020');
-  await report.getByLabel('Reporting last month').fill('15/05/2020');
+  await expect(report.getByLabel('Reporting first month')).toHaveValue('01/01/2021');
+  await expect(report.getByLabel('Reporting last month')).toHaveValue('31/12/2021');
+  await report.getByLabel('Reporting first month').fill('15/05/2021');
+  await report.getByLabel('Reporting last month').fill('15/05/2021');
   await report.getByRole('button', { name: 'Save reporting run' }).click();
   await expect(report.getByRole('alert').filter({ hasText: 'Reporting needs attention' })).toBeVisible();
   await expect(report.getByRole('button', { name: '2 Reporting period' })).toHaveAttribute('aria-current', 'step');
@@ -104,5 +108,13 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
     .click();
   await expect(report.getByRole('heading', { name: 'Reporting results · experimental' })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('waste-report-mobile.png'), fullPage: true });
+  await page.getByRole('combobox', { name: 'Year', exact: true }).selectOption('2022');
+  await expect(automaticPeriod).toContainText('01/01/2021 – 31/12/2021');
+  await expect(report.getByRole('button', { name: '2 Reporting period' })).toBeDisabled();
+  await expect(report.getByRole('button', { name: '3 Results' })).toBeDisabled();
+  await report.getByLabel('Population', { exact: true }).check();
+  await report.getByRole('button', { name: 'Check readiness' }).click();
+  await expect(report.getByText('Baseline needs attention', { exact: true })).toBeVisible();
+  await expect(report.getByRole('status').filter({ hasText: 'Baseline needs attention' })).toContainText('2021-01');
   expect(errors).toEqual([]);
 });
