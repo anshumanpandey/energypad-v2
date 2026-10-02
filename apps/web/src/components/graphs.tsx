@@ -1,3 +1,4 @@
+import { formatEnergyValue } from './format-energy-value';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { carbonSummaryInput } from '@/domain/carbon';
@@ -53,7 +54,7 @@ export async function Graphs({
         ? 'No saved reporting result for this month'
         : row.status === 'BLOCKED'
           ? row.issues.map((issue) => issue.message).join('; ')
-          : `${row.direction.replaceAll('_', ' ')} · actual ${row.actualKwh} kWh · adjusted expected ${row.adjustedExpectedKwh} kWh`,
+          : `${row.direction.replaceAll('_', ' ')} · actual ${formatEnergyValue(row.actualKwh)} kWh · adjusted expected ${formatEnergyValue(row.adjustedExpectedKwh)} kWh`,
     };
   });
   return (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { formatEnergyValue } from './format-energy-value';
 import { WasteDirectionText } from './waste-direction';
 import { useGraphMonth } from './graph-month';
 
@@ -36,7 +37,8 @@ export function MetricChart({
     })
     .join(' ');
   const active = points.find((p) => (selected ? p.month === selected : p.month.slice(5, 7) === month));
-  const display = (p: ChartPoint) => (finite(p) ? `${p.value} ${unit}` : 'Unavailable');
+  const displayValue = (p: ChartPoint) => (tone === 'waste' ? formatEnergyValue(p.value, 'Unavailable') : p.value);
+  const display = (p: ChartPoint) => (finite(p) ? `${displayValue(p)} ${unit}` : 'Unavailable');
   return (
     <section className={`panel metric-chart metric-chart-${tone}`} aria-label={title}>
       <div className="metric-chart-heading">
@@ -58,7 +60,11 @@ export function MetricChart({
             <g key={fraction} className="metric-chart-grid">
               <line x1="75" x2="680" y1={y(value)} y2={y(value)} />
               <text x="68" y={y(value) + 4} textAnchor="end">
-                {Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value)}
+                {Intl.NumberFormat('en', {
+                  notation: 'compact',
+                  minimumFractionDigits: tone === 'waste' ? 2 : 0,
+                  maximumFractionDigits: tone === 'waste' ? 2 : 1,
+                }).format(value)}
               </text>
             </g>
           );
@@ -126,7 +132,7 @@ export function MetricChart({
               {points.map((p) => (
                 <tr key={p.month}>
                   <th>{p.month}</th>
-                  <td>{finite(p) ? p.value : 'Unavailable'}</td>
+                  <td>{finite(p) ? displayValue(p) : 'Unavailable'}</td>
                   <td>
                     <WasteDirectionText text={p.note || '—'} />
                   </td>
