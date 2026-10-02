@@ -59,8 +59,11 @@ test('saving weather fetches status and updates baseline configurations without 
   await page.goto(`/org/${org.id}/energy`);
   const configuration = page.getByRole('combobox', { name: 'Weather configuration', exact: true });
   await expect(configuration).toBeVisible();
-  await page.getByRole('combobox', { name: 'Estimated consumption', exact: true }).selectOption('ALLOW_WITH_WARNING');
+  // Choose the year before editing the baseline: changing it resets the Waste Report setup.
   await page.getByLabel('Year', { exact: true }).selectOption('2020');
+  await expect(page.getByRole('note', { name: 'Automatic baseline period' })).toContainText('01/01/2019 – 31/12/2019');
+  const estimatedConsumption = page.getByRole('combobox', { name: 'Estimated consumption', exact: true });
+  await estimatedConsumption.selectOption('ALLOW_WITH_WARNING');
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   const weather = page.getByRole('region', { name: 'Historical weather', exact: true });
   for (const [label, value] of [
@@ -73,6 +76,7 @@ test('saving weather fetches status and updates baseline configurations without 
   ]) {
     await weather.getByLabel(label, { exact: true }).fill(value);
   }
+  await expect(estimatedConsumption).toHaveValue('ALLOW_WITH_WARNING');
   await weather.getByRole('button', { name: 'Save weather settings', exact: true }).click();
   const loading = weather.getByRole('status').filter({ hasText: 'Fetching weather status for 2020' });
   await expect(loading).toBeVisible();
