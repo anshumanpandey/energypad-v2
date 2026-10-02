@@ -45,6 +45,26 @@ try {
   assert.deepEqual(result.records[0].qualityFlags, []);
   assert.equal((result.records[0].attributeSnapshot as { population: string }).population, '0');
   console.log('✓ 12 months, conversion, VAT, currency, zero drivers and complete coverage');
+  assert.equal(result.latestSiteAttributes?.population?.toString(), '0');
+  await sites.addAttributes(actor, org.id, site.id, {
+    effectiveFrom: '2026-01-01',
+    population: '123.456',
+    weeklyHours: '50.125',
+    floorArea: '250.75',
+  });
+  await sites.addAttributes(actor, org.id, site.id, {
+    effectiveFrom: '2025-01-01',
+    population: '9',
+    weeklyHours: '10',
+    floorArea: '11',
+  });
+  const refreshed = await energy.records(actor, org.id, site.id, 2024);
+  assert.equal(refreshed.latestSiteAttributes?.population?.toString(), '123.456');
+  assert.equal(refreshed.latestSiteAttributes?.weeklyHours?.toString(), '50.125');
+  assert.equal(refreshed.latestSiteAttributes?.floorArea?.toString(), '250.75');
+  assert.deepEqual(refreshed.records[0].attributeSnapshot, result.records[0].attributeSnapshot);
+  console.log('✓ latest effective site attributes are independent of reading year and preserve snapshots');
+
   await assert.rejects(energy.add(actor, org.id, site.id, { meterId: meter.id, month: '2024-01', quantity: '10' }));
   await assert.rejects(energy.add(stranger, org.id, site.id, { meterId: meter.id, month: '2025-01', quantity: '10' }));
   await assert.rejects(
@@ -133,6 +153,7 @@ try {
   assert.equal(concurrent.filter((r) => r.status === 'fulfilled').length, 1);
   const incomplete = await energy.records(actor, org.id, missingSite.id, 2024);
   assert.equal(incomplete.coverage[0].missing.length, 11);
+  assert.equal(incomplete.latestSiteAttributes, null);
   assert.equal(incomplete.records[0].grossCost, null);
   assert.ok((incomplete.records[0].qualityFlags as string[]).includes('Missing population'));
   await sites.archiveMeter(actor, org.id, missingSite.id, second.id);

@@ -115,6 +115,23 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   await page.getByLabel('Energy meter', { exact: true }).selectOption(secondGasMeter.id);
   await expect(records.getByRole('row')).toHaveCount(6);
   const bodyRows = records.locator('tbody tr');
+  await expect(bodyRows.locator('td:nth-child(6)')).toHaveText(Array(5).fill('Unknown'));
+  await post(`${base}/sites/${london.id}/attributes`, {
+    effectiveFrom: '2026-01-01',
+    population: '123.456',
+    weeklyHours: '50.125',
+    floorArea: '250.75',
+  });
+  await post(`${base}/sites/${london.id}/attributes`, {
+    effectiveFrom: '2025-01-01',
+    population: '9',
+    weeklyHours: '10',
+    floorArea: '11',
+  });
+  await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
+  await expect(bodyRows.locator('td:nth-child(6)')).toHaveText(Array(5).fill('123.46'));
+  await expect(bodyRows.locator('td:nth-child(7)')).toHaveText(Array(5).fill('50.13'));
+  await expect(bodyRows.locator('td:nth-child(8)')).toHaveText(Array(5).fill('250.75'));
   await expect(bodyRows.locator('td:nth-child(2)')).toHaveText([
     'Gas',
     'Gas',

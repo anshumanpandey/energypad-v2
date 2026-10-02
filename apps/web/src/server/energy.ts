@@ -27,6 +27,11 @@ export class EnergyService extends FoundationService {
     const meters = await this.db.meter.findMany({ where: { organisationId: org, siteId }, orderBy: { code: 'asc' } });
     return {
       records,
+      latestSiteAttributes: await this.db.siteAttributeHistory.findFirst({
+        where: { organisationId: org, siteId },
+        orderBy: { effectiveFrom: 'desc' },
+        select: { effectiveFrom: true, population: true, weeklyHours: true, floorArea: true },
+      }),
       meters,
       conversions: await this.db.unitConversionVersion.findMany({
         where: { organisationId: org, siteId },

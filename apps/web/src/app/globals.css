@@ -2759,15 +2759,24 @@ select[aria-invalid='true'] {
 }
 .energy-records-table td:nth-child(3),
 .energy-records-table td:nth-child(4),
-.energy-records-table td:nth-child(5) {
+.energy-records-table td:nth-child(5),
+.energy-records-table td:nth-child(6),
+.energy-records-table td:nth-child(7),
+.energy-records-table td:nth-child(8) {
   font-variant-numeric: tabular-nums;
 }
 .energy-records-table th:nth-child(3),
 .energy-records-table th:nth-child(4),
 .energy-records-table th:nth-child(5),
+.energy-records-table th:nth-child(6),
+.energy-records-table th:nth-child(7),
+.energy-records-table th:nth-child(8),
 .energy-records-table td:nth-child(3),
 .energy-records-table td:nth-child(4),
-.energy-records-table td:nth-child(5) {
+.energy-records-table td:nth-child(5),
+.energy-records-table td:nth-child(6),
+.energy-records-table td:nth-child(7),
+.energy-records-table td:nth-child(8) {
   text-align: right;
 }
 .energy-sort-button {

@@ -24,6 +24,12 @@ import {
   type ConsumptionSortKey,
 } from '../domain/consumption-sort';
 type EnergyData = {
+  latestSiteAttributes: {
+    effectiveFrom: string;
+    population: string | null;
+    weeklyHours: string | null;
+    floorArea: string | null;
+  } | null;
   occupancy: OccupancyRecord[];
   patterns: PatternRecord[];
   events: EventRecord[];
@@ -207,6 +213,11 @@ export function EnergyWorkspace({
                 </Button>
               </div>
             )}
+            <p className="field-hint">
+              {data.latestSiteAttributes
+                ? `Site attributes use the latest history entry (${data.latestSiteAttributes.effectiveFrom.slice(0, 10).split('-').reverse().join('/')}) for every month. Recorded data quality reflects the original reading.`
+                : 'No site attribute history is available. Add population, weekly operating hours and floor area in Sites.'}
+            </p>
             {!data.records.length ? (
               <p className="energy-records-empty">No readings recorded for this year.</p>
             ) : !filteredRecords.length ? (
@@ -249,7 +260,10 @@ export function EnergyWorkspace({
                           </button>
                         </th>
                       ))}
-                      <th>Data quality</th>
+                      <th>Population</th>
+                      <th>Weekly operating hours</th>
+                      <th>Floor area (m²)</th>
+                      <th>Recorded data quality</th>
                       <th>History and corrections</th>
                     </tr>
                   </thead>
@@ -283,6 +297,9 @@ export function EnergyWorkspace({
                         <td>
                           {formatEnergyValue(record.netCost)} / {formatEnergyValue(record.grossCost)} {record.currency}
                         </td>
+                        <td>{formatEnergyValue(data.latestSiteAttributes?.population)}</td>
+                        <td>{formatEnergyValue(data.latestSiteAttributes?.weeklyHours)}</td>
+                        <td>{formatEnergyValue(data.latestSiteAttributes?.floorArea)}</td>
                         <td>
                           {record.qualityFlags.length ? (
                             <ul className="energy-quality-list">
