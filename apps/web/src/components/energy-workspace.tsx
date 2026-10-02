@@ -1,4 +1,5 @@
 'use client';
+import { latestConsumptionQuality } from '@/domain/consumption-quality';
 import { formatEnergyValue } from './format-energy-value';
 import { EventWorkspace, type EventRecord } from './event-workspace';
 import { PatternWorkspace, type PatternRecord } from './pattern-workspace';
@@ -215,7 +216,7 @@ export function EnergyWorkspace({
             )}
             <p className="field-hint">
               {data.latestSiteAttributes
-                ? `Site attributes use the latest history entry (${data.latestSiteAttributes.effectiveFrom.slice(0, 10).split('-').reverse().join('/')}) for every month. Recorded data quality reflects the original reading.`
+                ? `Site attributes use the latest history entry (${data.latestSiteAttributes.effectiveFrom.slice(0, 10).split('-').reverse().join('/')}) for every month. Data quality uses these latest attributes alongside reading-specific warnings.`
                 : 'No site attribute history is available. Add population, weekly operating hours and floor area in Sites.'}
             </p>
             {!data.records.length ? (
@@ -263,65 +264,69 @@ export function EnergyWorkspace({
                       <th>Population</th>
                       <th>Weekly operating hours</th>
                       <th>Floor area (m²)</th>
-                      <th>Recorded data quality</th>
+                      <th>Data quality</th>
                       <th>History and corrections</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sortConsumption(filteredRecords, sort).map((record) => (
-                      <tr key={record.id}>
-                        <td>
-                          <strong className="energy-record-month">{record.periodStart.slice(0, 7)}</strong>
-                          <span className="energy-record-meter">
-                            {data.meters.find((meter) => meter.id === record.meterId)?.name}
-                          </span>
-                        </td>
-                        <td>{utilityLabel(record.fuel)}</td>
-                        <td>
-                          {formatEnergyValue(record.sourceQuantity)} {record.sourceUnit}
-                        </td>
-                        <td>
-                          <strong className="energy-record-value">{formatEnergyValue(record.normalizedKwh)}</strong>
-                          <details>
-                            <summary>Conversion details</summary>
-                            <p>
-                              {formatEnergyValue(record.conversionFactor)} kWh/{record.sourceUnit}
-                            </p>
-                            <p>
-                              {data.conversions.find((c) => c.id === record.conversionId)?.source ??
-                                'Exact kWh/MWh dimensional conversion'}
-                            </p>
-                            <p>Version: {record.conversionVersion}</p>
-                          </details>
-                        </td>
-                        <td>
-                          {formatEnergyValue(record.netCost)} / {formatEnergyValue(record.grossCost)} {record.currency}
-                        </td>
-                        <td>{formatEnergyValue(data.latestSiteAttributes?.population)}</td>
-                        <td>{formatEnergyValue(data.latestSiteAttributes?.weeklyHours)}</td>
-                        <td>{formatEnergyValue(data.latestSiteAttributes?.floorArea)}</td>
-                        <td>
-                          {record.qualityFlags.length ? (
-                            <ul className="energy-quality-list">
-                              {record.qualityFlags.map((flag) => (
-                                <li key={flag}>{flag}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <span className="energy-quality-ok">No input issues detected</span>
-                          )}
-                        </td>
-                        <td>
-                          <ReadingCorrections
-                            base={base}
-                            record={record}
-                            uses={data.pricing.uses}
-                            manage={manage}
-                            reload={load}
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    {sortConsumption(filteredRecords, sort).map((record) => {
+                      const qualityFlags = latestConsumptionQuality(record.qualityFlags, data.latestSiteAttributes);
+                      return (
+                        <tr key={record.id}>
+                          <td>
+                            <strong className="energy-record-month">{record.periodStart.slice(0, 7)}</strong>
+                            <span className="energy-record-meter">
+                              {data.meters.find((meter) => meter.id === record.meterId)?.name}
+                            </span>
+                          </td>
+                          <td>{utilityLabel(record.fuel)}</td>
+                          <td>
+                            {formatEnergyValue(record.sourceQuantity)} {record.sourceUnit}
+                          </td>
+                          <td>
+                            <strong className="energy-record-value">{formatEnergyValue(record.normalizedKwh)}</strong>
+                            <details>
+                              <summary>Conversion details</summary>
+                              <p>
+                                {formatEnergyValue(record.conversionFactor)} kWh/{record.sourceUnit}
+                              </p>
+                              <p>
+                                {data.conversions.find((c) => c.id === record.conversionId)?.source ??
+                                  'Exact kWh/MWh dimensional conversion'}
+                              </p>
+                              <p>Version: {record.conversionVersion}</p>
+                            </details>
+                          </td>
+                          <td>
+                            {formatEnergyValue(record.netCost)} / {formatEnergyValue(record.grossCost)}{' '}
+                            {record.currency}
+                          </td>
+                          <td>{formatEnergyValue(data.latestSiteAttributes?.population)}</td>
+                          <td>{formatEnergyValue(data.latestSiteAttributes?.weeklyHours)}</td>
+                          <td>{formatEnergyValue(data.latestSiteAttributes?.floorArea)}</td>
+                          <td>
+                            {qualityFlags.length ? (
+                              <ul className="energy-quality-list">
+                                {qualityFlags.map((flag) => (
+                                  <li key={flag}>{flag}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <span className="energy-quality-ok">No input issues detected</span>
+                            )}
+                          </td>
+                          <td>
+                            <ReadingCorrections
+                              base={base}
+                              record={record}
+                              uses={data.pricing.uses}
+                              manage={manage}
+                              reload={load}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
