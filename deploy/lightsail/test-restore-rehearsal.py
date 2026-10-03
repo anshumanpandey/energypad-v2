@@ -47,6 +47,8 @@ if os.environ.get("DOCKER_TEST_FAILURE") in args:
         run = next(call for call in calls if call[0] == "run")
         self.assertEqual(run[run.index("--network") + 1], "none")
         self.assertEqual(run[-1], "postgres:18-bookworm")
+        probe = next(call for call in calls if "pg_isready" in call)
+        self.assertEqual(probe[probe.index("-h") + 1], "127.0.0.1")
         for forbidden in ["--volume", "-v", "--mount", "--publish", "-p", "--env-file"]:
             self.assertNotIn(forbidden, run)
         restore = next(call for call in calls if "pg_restore" in call)

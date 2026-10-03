@@ -63,6 +63,10 @@ if a[0] == 'exec':
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('failed-migration rejection passed', result.stdout)
         self.assertEqual(len([c for c in calls if c[0] == 'run']), 3)
+        probes = [c for c in calls if 'pg_isready' in c]
+        self.assertEqual(len(probes), 3)
+        for probe in probes:
+            self.assertEqual(probe[probe.index('-h') + 1], '127.0.0.1')
         self.assert_cleaned(calls)
 
     def test_failed_dump_cleans_source(self):

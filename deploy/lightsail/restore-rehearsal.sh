@@ -49,7 +49,9 @@ docker run --detach --pull never --name "$name" --network none \
   "$image" >/dev/null
 ready=false
 for ((attempt=0; attempt<60; attempt++)); do
-  if docker exec "$name" pg_isready -U postgres -d rehearsal >/dev/null 2>&1; then
+  # The temporary initialization server has no TCP listener. Wait until database
+  # creation and initialization finish before attempting the restore.
+  if docker exec "$name" pg_isready -h 127.0.0.1 -U postgres -d rehearsal >/dev/null 2>&1; then
     ready=true
     break
   fi

@@ -24,7 +24,9 @@ docker run --detach --pull never --name "$source_name" --network none \
   --env POSTGRES_HOST_AUTH_METHOD=trust --env POSTGRES_DB=fixture "$image" >/dev/null
 ready=false
 for ((attempt=0; attempt<60; attempt++)); do
-  if docker exec "$source_name" pg_isready -U postgres -d fixture >/dev/null 2>&1; then
+  # The image's temporary initialization server only listens on a Unix socket.
+  # Wait for the final TCP listener, after POSTGRES_DB has been created.
+  if docker exec "$source_name" pg_isready -h 127.0.0.1 -U postgres -d fixture >/dev/null 2>&1; then
     ready=true
     break
   fi
