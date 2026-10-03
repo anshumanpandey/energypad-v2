@@ -198,7 +198,7 @@ export function SitesWorkspace({
         </form>
       )}
       <section className="panel stack-form" aria-labelledby="sites-table-heading">
-        <h2 id="sites-table-heading">Sites</h2>
+        <h2 id="sites-table-heading">Site list</h2>
         <div className="sites-table-scroll" role="region" aria-label="Sites table" tabIndex={0}>
           <table className="import-preview-table">
             <thead>
