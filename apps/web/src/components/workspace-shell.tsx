@@ -48,7 +48,7 @@ export function WorkspaceShell({
     { key: 'overview', name: 'Overview', icon: LayoutDashboard },
     { key: 'graphs', name: 'Graphs', icon: ChartColumn },
     { key: 'sites', name: 'Sites', icon: Building2 },
-    { key: 'energy', name: 'Energy', icon: Zap },
+    { key: 'energy', name: 'Upload', icon: Zap },
     { key: 'targets', name: 'Targets & Monitoring', icon: Layers3 },
     { key: 'site-performance', name: 'Site Performance', icon: Layers3 },
     { key: 'waste-savings', name: 'Waste & Savings', icon: Zap },

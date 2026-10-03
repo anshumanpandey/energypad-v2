@@ -96,7 +96,8 @@ export function TargetImport({ orgId }: { orgId: string }) {
             ))}
           </ol>
           <p>
-            Use the <strong>Targets</strong> sheet with headers on row 1. Each site code must already exist.
+            Use the <strong>Targets</strong> sheet with headers on row 1. Enter an existing site name in the first
+            column.
           </p>
           <p>
             Energy uses kWh or MWh; carbon uses kilograms. Both targets must be non-negative numbers. Saved formula

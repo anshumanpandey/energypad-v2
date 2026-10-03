@@ -1,3 +1,4 @@
+import { matchingWorkbookSites } from '../domain/workbook-sites';
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
@@ -59,14 +60,14 @@ export class HistoricEmissionsService extends EmissionFactorService {
           if (
             code &&
             !errors.some((e) => e.row === row.row && e.column === 1) &&
-            sites.filter((site) => site.code.toLowerCase() === code.toLowerCase()).length !== 1
+            matchingWorkbookSites(sites, code).length !== 1
           )
             errors.push(
-              emissionCellIssue(row.row, 1, 'Site Code must identify one existing active site in this organisation.'),
+              emissionCellIssue(row.row, 1, 'Site name must identify one existing active site in this organisation.'),
             );
         }
         for (const row of parsed.records) {
-          const matches = sites.filter((site) => site.code.toLowerCase() === row.siteCode.toLowerCase());
+          const matches = matchingWorkbookSites(sites, row.siteCode);
           if (matches.length !== 1) continue;
           const site = matches[0];
           const period = monthPeriod(row.month);
@@ -98,7 +99,7 @@ export class HistoricEmissionsService extends EmissionFactorService {
           prepared.push({
             row: row.row,
             siteId: site.id,
-            site: site.code,
+            site: site.name,
             month: row.month,
             existingId: existing?.id ?? null,
             data: {

@@ -1,3 +1,4 @@
+import { matchingWorkbookSites } from '../domain/workbook-sites';
 import { createHash } from 'node:crypto';
 import { Prisma, type ConsumptionRecord } from '@prisma/client';
 import { energyConversions, monthPeriod } from '../domain/energy';
@@ -116,11 +117,11 @@ export class HistoricConsumptionService extends EnergyService {
           const seen = new Set<string>();
           const defaultMeters: DefaultMeter[] = [];
           for (const row of parsed.records) {
-            const matches = sites.filter((s) => s.code.toLowerCase() === row.siteCode.toLowerCase());
+            const matches = matchingWorkbookSites(sites, row.siteCode);
             const site = matches.length === 1 ? matches[0] : undefined;
             if (!site) {
               errors.push(
-                historicIssue(row.row, 1, 'Site Code must identify one existing active site in this organisation.'),
+                historicIssue(row.row, 1, 'Site name must identify one existing active site in this organisation.'),
               );
               continue;
             }
@@ -155,7 +156,7 @@ export class HistoricConsumptionService extends EnergyService {
               site.meters.push(meter);
               defaultMeters.push({
                 id: meter.id,
-                site: site.code,
+                site: site.name,
                 code,
                 name: meter.name,
                 fuel: meter.fuel,
@@ -395,7 +396,7 @@ export class HistoricConsumptionService extends EnergyService {
               action: r.action,
               meter: r.meter,
               previousQuantity: r.previous?.sourceQuantity.toString() ?? null,
-              site: sites.find((s) => s.id === r.data.siteId)!.code,
+              site: sites.find((s) => s.id === r.data.siteId)!.name,
               month: (r.data.periodStart as Date).toISOString().slice(0, 7),
               quantity: String(r.data.sourceQuantity),
               unit: r.data.sourceUnit,

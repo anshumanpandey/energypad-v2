@@ -1,3 +1,4 @@
+import { matchingWorkbookSites } from '../domain/workbook-sites';
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { MonthlyPlanService } from './monthly-plans';
@@ -35,14 +36,14 @@ export class TargetImportService extends MonthlyPlanService {
         const saved = await tx.monthlyPlanVersion.findMany({
           where: { organisationId: org, kind: 'TARGET', replacement: { is: null } },
         });
-        const match = (code: string) => sites.filter((s) => s.code.toLowerCase() === code.trim().toLowerCase());
+        const match = (code: string) => matchingWorkbookSites(sites, code);
         for (const row of sheets[0]?.rows ?? []) {
           if (
             row.cells[0]?.trim() &&
             match(row.cells[0]).length !== 1 &&
             !errors.some((e) => e.row === row.row && e.column === 1)
           )
-            errors.push(targetIssue(row.row, 1, 'Site Code must match one active site in this workspace.'));
+            errors.push(targetIssue(row.row, 1, 'Site name must match one active site in this workspace.'));
         }
         const prepared = parsed.records.flatMap((row) => {
           const matches = match(row.site);
@@ -61,7 +62,7 @@ export class TargetImportService extends MonthlyPlanService {
           return [
             {
               ...row,
-              site: site.code,
+              site: site.name,
               siteId: site.id,
               previousId: previous?.id ?? null,
               action: !previous ? 'New' : same ? 'Unchanged' : 'Update',

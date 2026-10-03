@@ -56,7 +56,7 @@ export function parseTargets(sheet: ImportSheet | undefined, errors: WorkbookCel
   const seen = new Map<string, number>();
   for (const { row, cells } of sheet.rows) {
     const v = Array.from({ length: 7 }, (_, i) => cells[i]?.trim() ?? '');
-    if (!v[0] || v[0].length > 50) add(row, 1, 'Enter an existing site code (at most 50 characters).');
+    if (!v[0] || v[0].length > 160) add(row, 1, 'Enter an existing site name (at most 160 characters).');
     if (!/^(19|20|21)\d{2}$/.test(v[1])) add(row, 2, 'Use a year from 1900 to 2199.');
     const month = /^(0?[1-9]|1[0-2])$/.test(v[2]) ? Number(v[2]) : months.indexOf(v[2].toLowerCase()) + 1;
     if (!month) add(row, 3, 'Use Jan–Dec or a month number from 1 to 12.');

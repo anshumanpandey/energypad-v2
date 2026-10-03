@@ -30,11 +30,42 @@ type Preview = {
     currency: string | null;
   }[];
 };
-export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches: { id: string; status: string }[] }) {
-  const [tab, setTab] = useState('sites');
-  const tabs = ['sites', 'consumption', 'emissions', 'drivers', 'targets'];
+export function DataImportWorkspace({
+  orgId,
+  batches,
+  workflow = false,
+}: {
+  orgId: string;
+  batches: { id: string; status: string }[];
+  workflow?: boolean;
+}) {
+  const [tab, setTab] = useState(workflow ? 'emissions' : 'sites');
+  const tabs = workflow
+    ? ['emissions', 'targets', 'drivers', 'consumption']
+    : ['sites', 'consumption', 'emissions', 'drivers', 'targets'];
   return (
     <>
+      {workflow && (
+        <section className="panel">
+          <h2>Download and fill your template</h2>
+          <p>
+            Download the Excel workbook, fill the Emissions, Targets and Drivers sheets, then add Historic Consumption.
+            Upload and review each sheet using the options below.
+          </p>
+          <p>
+            Enter an existing site name in the first column of each sheet, including columns labelled Site Code. Site
+            names must identify one active site in this workspace. Keep the worksheet headers and Drivers header row in
+            place. Setpoints are not imported here.
+          </p>
+          <a
+            className="button"
+            href="/templates/historic-data.xlsx"
+            download="site_mit site historic data V2 drivers sheet.xlsx"
+          >
+            Download Template
+          </a>
+        </section>
+      )}
       <div className="data-import-tabs" role="tablist" aria-label="Data imports">
         {tabs.map((value) => (
           <button
@@ -47,7 +78,7 @@ export function DataImportWorkspace({ orgId, batches }: { orgId: string; batches
               event.preventDefault();
               const next =
                 event.key === 'Home'
-                  ? 'sites'
+                  ? tabs[0]
                   : event.key === 'End'
                     ? tabs[tabs.length - 1]
                     : tabs[(tabs.indexOf(value) + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];

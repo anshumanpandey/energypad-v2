@@ -106,7 +106,7 @@ export function parseHistoric(sheet: ImportSheet | undefined, errors: WorkbookCe
     });
     const v = Array.from({ length: 13 }, (_, i) => cells[i]?.trim() ?? '');
     for (const [i, max] of [
-      [0, 50],
+      [0, 160],
       [3, 100],
     ])
       if (!v[i] || v[i].length > max) add(row, i + 1, `Use a required text value of at most ${max} characters.`);

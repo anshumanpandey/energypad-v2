@@ -205,10 +205,11 @@ export default async function WorkspacePage({
         <div className="page-heading">
           <div>
             <span className="eyebrow">ENERGY DATA</span>
-            <h1>Energy</h1>
-            <p>Record monthly consumption and check the completeness of your meter data.</p>
+            <h1>Upload</h1>
+            <p>Upload emissions, targets and drivers, then import your monthly consumption.</p>
           </div>
         </div>
+        {manage && <DataImportWorkspace orgId={org.id} batches={[]} workflow />}
         <EnergyYearProvider>
           <EnergyWorkspace orgId={org.id} sites={sites} manage={manage} />
           <section className="waste-report stack-form" aria-labelledby="waste-report-title">

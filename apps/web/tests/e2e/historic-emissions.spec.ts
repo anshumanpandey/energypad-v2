@@ -27,10 +27,24 @@ test('Emissions tab reports every failed cell and imports valid site factors onc
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('tab', { name: 'Emissions', exact: true })).toBeFocused();
+  await page.goto(`/org/${org.id}/energy`);
+  await expect(page.getByRole('heading', { name: 'Upload', exact: true })).toBeVisible();
+  const template = page.getByRole('link', { name: 'Download Template', exact: true });
+  const download = await page.request.get((await template.getAttribute('href'))!);
+  expect(download.ok()).toBe(true);
+  expect(await download.body()).toEqual(await readFile('public/templates/historic-data.xlsx'));
+  await expect(page.getByRole('tab', { selected: true })).toHaveText('Emissions');
+  await page.getByRole('tab', { name: 'Targets', exact: true }).click();
+  await expect(page.getByLabel('Targets workbook', { exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: 'Drivers', exact: true }).click();
+  await expect(page.getByLabel('Drivers workbook', { exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: 'Consumption', exact: true }).click();
+  await expect(page.getByLabel('Consumption workbook', { exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: 'Emissions', exact: true }).click();
   const book = new ExcelJS.Workbook();
   const sheet = book.addWorksheet('Emissions');
   sheet.addRow(['', ...emissionsColumns.slice(1)]);
-  sheet.addRow(['site_mit', 'bad', '13', 'Gas', 'litres', { error: '#VALUE!' }]);
+  sheet.addRow(['MIT site', 'bad', '13', 'Gas', 'litres', { error: '#VALUE!' }]);
   async function upload() {
     await page.getByLabel('Emissions workbook', { exact: true }).setInputFiles({
       name: 'emissions.xlsx',

@@ -75,7 +75,7 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   ).toBe(400);
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });
   for (const [name, section] of [
-    ['Energy', 'energy'],
+    ['Upload', 'energy'],
     ['Carbon', 'carbon'],
     ['Opportunities', 'opportunities'],
     ['AI Analyst', 'ai-analyst'],
@@ -106,10 +106,10 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
     if (section === 'billing')
       await expect(page.getByRole('heading', { name: 'Plan entitlements', exact: true })).toBeVisible();
   }
-  await navigation.getByRole('link', { name: 'Energy', exact: true }).click();
+  await navigation.getByRole('link', { name: 'Upload', exact: true }).click();
   await page.getByRole('link', { name: 'Advanced Analysis', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Advanced Analysis', exact: true })).toBeVisible();
-  await expect(navigation.getByRole('link', { name: 'Energy', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(navigation.getByRole('link', { name: 'Upload', exact: true })).toHaveAttribute('aria-current', 'page');
   await page.getByRole('link', { name: 'Settings', exact: true }).click();
   await page.getByLabel('Organisation name').fill('Northstar Energy');
   await page.getByRole('button', { name: 'Save changes' }).click();
@@ -419,7 +419,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
     data: { code: 'E1', name: 'Main electricity', fuel: 'ELECTRICITY', unit: 'MWh' },
   });
   expect(meterResponse.ok()).toBe(true);
-  await page.getByRole('link', { name: 'Energy', exact: true }).click();
+  await page.getByRole('link', { name: 'Upload', exact: true }).click();
   await page.getByLabel('Year', { exact: true }).selectOption('2024');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   await expect(page.getByRole('heading', { name: 'Record monthly consumption' })).toBeVisible();
@@ -939,7 +939,7 @@ test('Sprint 3 operating patterns, corrections and reviewed import', async ({ pa
     data: { code: 'HEAT', name: 'Heating', fuel: 'ELECTRICITY', source: 'Reviewed end use' },
   });
   expect(use.ok()).toBe(true);
-  await page.getByRole('link', { name: 'Energy', exact: true }).click();
+  await page.getByRole('link', { name: 'Upload', exact: true }).click();
   await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   const panel = page.getByRole('region', { name: 'Operating patterns', exact: true });
@@ -1047,7 +1047,7 @@ test('Sprint 3 operational events and log import', async ({ page }, testInfo) =>
     data: { code: 'HEAT', name: 'Heating', fuel: 'ELECTRICITY', source: 'Reviewed end use' },
   });
   expect(use.ok()).toBe(true);
-  await page.getByRole('link', { name: 'Energy', exact: true }).click();
+  await page.getByRole('link', { name: 'Upload', exact: true }).click();
   await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   const panel = page.getByRole('region', { name: 'Operational events', exact: true });
