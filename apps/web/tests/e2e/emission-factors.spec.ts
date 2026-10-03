@@ -225,7 +225,8 @@ test('carbon factors save, reset and retain corrected versions', async ({ page }
   const energyResults = page.getByRole('region', { name: 'Portfolio energy results' });
   await expect(energyResults).toContainText('Annual consumption: 1200 kWh');
   await expect(energyResults).toContainText('Annual net cost: Unavailable');
-  await energyResults.getByText('Carbon browser site · CARBON', { exact: false }).click();
+  await expect(energyResults).not.toContainText('· CARBON');
+  await energyResults.getByText('Carbon browser site', { exact: false }).click();
   await expect(energyResults).toContainText('conversionVersion');
   await page.getByRole('combobox', { name: 'Energy fuel', exact: true }).selectOption('GAS');
   await expect(energyResults).toHaveCount(0);

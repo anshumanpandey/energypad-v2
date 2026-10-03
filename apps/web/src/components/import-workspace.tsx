@@ -160,7 +160,11 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
                         <legend>{fieldLabels[field]}</legend>
                         <label>
                           Source column for {fieldLabels[field]}
-                          <select name={`column:${field}`} defaultValue={index < 0 ? '' : index}>
+                          <select
+                            aria-label={`Source column for ${fieldLabels[field]}`}
+                            name={`column:${field}`}
+                            defaultValue={index < 0 ? '' : index}
+                          >
                             <option value="">Not mapped</option>
                             {selected?.headers.map((h, i) => (
                               <option key={i} value={i}>
@@ -171,7 +175,11 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
                         </label>
                         <label>
                           Default for {fieldLabels[field]}
-                          <input name={`default:${field}`} maxLength={300} />
+                          <input
+                            aria-label={`Default for ${fieldLabels[field]}`}
+                            name={`default:${field}`}
+                            maxLength={300}
+                          />
                         </label>
                       </fieldset>
                     );

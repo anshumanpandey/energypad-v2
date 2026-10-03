@@ -50,14 +50,16 @@ test('Data Drivers tab validates cell addresses, saves classifications and persi
   sheet.getCell('D7').value = 'NR';
   await upload();
   await expect(errors).toHaveCount(0);
-  await expect(page.getByRole('region', { name: 'Driver classification preview' })).toContainText('London (LON)');
+  await expect(page.getByRole('region', { name: 'Driver classification preview' })).toContainText('London');
+  await expect(page.getByRole('region', { name: 'Driver classification preview' })).not.toContainText('(LON)');
   await page.screenshot({ path: testInfo.outputPath('drivers-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('drivers-mobile.png'), fullPage: true });
   await page.getByRole('button', { name: 'Import drivers', exact: true }).click();
   const saved = page.getByRole('region', { name: 'Saved driver classifications', exact: true });
-  await expect(saved).toContainText('London (LON)');
+  await expect(saved).toContainText('London');
+  await expect(saved).not.toContainText('(LON)');
   await expect(saved).toContainText('NR · Non-routine');
   await page.reload();
   await page.getByRole('tab', { name: 'Drivers', exact: true }).click();
