@@ -5,6 +5,7 @@ import { ImportWorkspace } from './import-workspace';
 import { HistoricEmissionsImport } from './historic-emissions-import';
 import { DriverClassificationImport } from './driver-classification-import';
 import { TargetImport } from './target-import';
+import { WorkbookImport } from './workbook-import';
 import { Button } from './ui/button';
 import { responseError, useMutation } from './forms';
 import { historicCompactColumns } from '@/domain/historic-consumption';
@@ -39,33 +40,11 @@ export function DataImportWorkspace({
   batches: { id: string; status: string }[];
   workflow?: boolean;
 }) {
-  const [tab, setTab] = useState(workflow ? 'emissions' : 'sites');
-  const tabs = workflow
-    ? ['emissions', 'targets', 'drivers', 'consumption']
-    : ['sites', 'consumption', 'emissions', 'drivers', 'targets'];
+  const [tab, setTab] = useState('sites');
+  const tabs = ['sites', 'consumption', 'emissions', 'drivers', 'targets'];
+  if (workflow) return <WorkbookImport orgId={orgId} />;
   return (
     <>
-      {workflow && (
-        <section className="panel">
-          <h2>Download and fill your template</h2>
-          <p>
-            Download the Excel workbook, fill the Emissions, Targets and Drivers sheets, then add Historic Consumption.
-            Upload and review each sheet using the options below.
-          </p>
-          <p>
-            Enter an existing site name in the first column of each sheet, including columns labelled Site Code. Site
-            names must identify one active site in this workspace. Keep the worksheet headers and Drivers header row in
-            place. Setpoints are not imported here.
-          </p>
-          <a
-            className="button"
-            href="/templates/historic-data.xlsx"
-            download="site_mit site historic data V2 drivers sheet.xlsx"
-          >
-            Download Template
-          </a>
-        </section>
-      )}
       <div className="data-import-tabs" role="tablist" aria-label="Data imports">
         {tabs.map((value) => (
           <button
