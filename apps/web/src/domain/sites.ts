@@ -37,6 +37,7 @@ export const siteInput = z
     portfolioId: uuid.nullish().transform((v) => v ?? null),
     type: text(),
     address: text(300),
+    addressLine2: text(300),
     postCode: text(32),
     town: text(),
     country: text(100),
@@ -66,11 +67,41 @@ export const meterInput = z
   })
   .strict();
 export type SiteInput = z.output<typeof siteInput>;
+export const manualSiteInput = siteInput.omit({ code: true });
+// Labels and aliases shared by manual entry and the supplied site workbook.
+export const siteTemplateFields = [
+  ['name', 'Site Name'],
+  ['address', 'Address Line 1'],
+  ['addressLine2', 'Address Line 2'],
+  ['town', 'City'],
+  ['region', 'State'],
+  ['postCode', 'Postcode'],
+] as const;
+export const siteTemplateAttributeFields = [
+  ['population', 'Population'],
+  ['weeklyHours', 'Work Hours per week'],
+] as const;
+export function siteColumnIndex(headers: string[], field: string) {
+  const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const aliases: Record<string, string[]> = {
+    name: ['Site Name', 'name'],
+    address: ['Address Line 1', 'address'],
+    addressLine2: ['Address Line 2'],
+    town: ['City', 'town'],
+    region: ['State', 'region'],
+    weeklyHours: ['Work Hours per week', 'workinghours', 'weeklyHours'],
+    floorArea: ['size', 'floorArea'],
+  };
+  return headers.findIndex((header) =>
+    (aliases[field] ?? [field]).some((alias) => normalize(header) === normalize(alias)),
+  );
+}
 export const importFields = [
   'code',
   'name',
   'type',
   'address',
+  'addressLine2',
   'postCode',
   'town',
   'country',

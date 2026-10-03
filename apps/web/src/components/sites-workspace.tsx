@@ -1,6 +1,7 @@
 'use client';
 import { DateInput } from './ui/date-input';
 import { fuels } from '@/domain/fuels';
+import { siteTemplateFields, siteTemplateAttributeFields } from '@/domain/sites';
 import { useState, useEffect, useId, useRef, type FormEvent, type ReactNode } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
@@ -21,6 +22,7 @@ type Site = {
   portfolioId?: string | null;
   type?: string | null;
   address?: string | null;
+  addressLine2?: string | null;
   postCode?: string | null;
   town?: string | null;
   country?: string | null;
@@ -30,22 +32,11 @@ type Site = {
   meters?: Meter[];
   attributes?: History[];
 };
-const fields = [
-  ['code', 'Site code'],
-  ['name', 'Site name'],
-  ['type', 'Site type'],
-  ['address', 'Address'],
-  ['postCode', 'Postcode'],
-  ['town', 'Town'],
-  ['country', 'Country'],
-  ['region', 'Region'],
-  ['currency', 'Currency (3-letter code)'],
-  ['externalLegacyId', 'Legacy reference'],
-] as const;
+const fields = siteTemplateFields;
 const historyFields = [
   ['population', 'Population'],
   ['floorArea', 'Floor area (m²)'],
-  ['weeklyHours', 'Operating hours per week'],
+  ['weeklyHours', 'Work Hours per week'],
   ['vatPercent', 'VAT (%)'],
 ] as const;
 function values(event: FormEvent<HTMLFormElement>) {
@@ -55,7 +46,6 @@ function values(event: FormEvent<HTMLFormElement>) {
 export function SitesWorkspace({
   orgId,
   sites,
-  portfolios,
   manage,
 }: {
   orgId: string;
@@ -86,20 +76,26 @@ export function SitesWorkspace({
     <div className="stack-form">
       {m.feedback}
       {manage && (
-        <Button
-          disabled={m.disabled}
-          onClick={() => {
-            setSelected(null);
-            setEditing(true);
-          }}
-        >
-          Add site
-        </Button>
+        <div className="button-row">
+          <Button
+            disabled={m.disabled}
+            onClick={() => {
+              setSelected(null);
+              setEditing(true);
+            }}
+          >
+            Add site
+          </Button>
+          <a href="/templates/sites.xlsx" download>
+            Download site template
+          </a>
+          <a href="#upload-sites">Upload sites</a>
+        </div>
       )}
       {!sites.length && (
         <p>
           {manage
-            ? 'Add a site or import a workbook from Data.'
+            ? 'Add a site manually or download, fill in and upload the site template below.'
             : 'No sites assigned yet. Ask your owner or admin for access.'}
         </p>
       )}
@@ -107,7 +103,6 @@ export function SitesWorkspace({
         {sites.map((site) => (
           <section className="panel" key={site.id}>
             <h2>{site.name}</h2>
-            <p>{site.code}</p>
             <Button variant="secondary" disabled={m.disabled} onClick={() => void m.run(() => detail(site.id), '')}>
               View site
             </Button>
@@ -121,7 +116,17 @@ export function SitesWorkspace({
           onSubmit={(e) => {
             const input = values(e);
             void m.run(async () => {
-              const data = Object.fromEntries(Object.entries(input).map(([k, v]) => [k, v || null]));
+              const data: Record<string, unknown> = Object.fromEntries(
+                Object.entries(input).map(([k, v]) => [k, v || null]),
+              );
+              if (!selected) {
+                const { population, weeklyHours, effectiveFrom } = data;
+                delete data.population;
+                delete data.weeklyHours;
+                delete data.effectiveFrom;
+                if (population !== null || weeklyHours !== null)
+                  data.attributes = { population, weeklyHours, effectiveFrom };
+              }
               const site = await request(
                 `${base}/sites${selected ? `/${selected.id}` : ''}`,
                 selected ? 'PATCH' : 'POST',
@@ -139,22 +144,35 @@ export function SitesWorkspace({
                 <input
                   name={key}
                   defaultValue={selected?.[key] ?? ''}
-                  required={key === 'code' || key === 'name'}
-                  maxLength={key === 'code' ? 50 : key === 'address' ? 300 : 160}
+                  required={key === 'name'}
+                  maxLength={key === 'address' || key === 'addressLine2' ? 300 : key === 'postCode' ? 32 : 160}
                 />
               </label>
             ))}
-            <label>
-              Portfolio
-              <select aria-label="Portfolio" name="portfolioId" defaultValue={selected?.portfolioId ?? ''}>
-                <option value="">Unassigned</option>
-                {portfolios.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {!selected &&
+              siteTemplateAttributeFields.map(([key, label]) => (
+                <label key={key}>
+                  {label}
+                  <input
+                    name={key}
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    max={key === 'weeklyHours' ? 168 : 99999999999}
+                  />
+                </label>
+              ))}
+            {!selected && (
+              <label>
+                Attribute effective date
+                <DateInput
+                  name="effectiveFrom"
+                  type="date"
+                  required
+                  defaultValue={new Date().toISOString().slice(0, 10)}
+                />
+              </label>
+            )}
           </div>
           <div className="button-row">
             <Button disabled={m.disabled}>Save site</Button>
@@ -171,11 +189,18 @@ export function SitesWorkspace({
               <p className="site-details-eyebrow">Site details</p>
               <h2>{selected.name}</h2>
               <p className="site-details-address">
-                {[selected.address, selected.town, selected.postCode, selected.country].filter(Boolean).join(', ') ||
-                  'No address recorded.'}
+                {[
+                  selected.address,
+                  selected.addressLine2,
+                  selected.town,
+                  selected.region,
+                  selected.postCode,
+                  selected.country,
+                ]
+                  .filter(Boolean)
+                  .join(', ') || 'No address recorded.'}
               </p>
             </div>
-            <span className="site-code-badge">{selected.code}</span>
           </header>
           <dl className="site-details-grid">
             {fields

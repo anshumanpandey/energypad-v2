@@ -1,10 +1,11 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { FoundationService, type Actor } from './foundation';
 import { resolvePlanAccess, requireSiteCapacity } from '../domain/plan-access';
 import { DomainError, uuid } from '../domain/policy';
 import {
   siteInput,
+  manualSiteInput,
   attributesInput,
   portfolioInput,
   meterInput,
@@ -64,7 +65,8 @@ export class SiteService extends FoundationService {
     });
   }
   async createSite(actor: Actor, org: string, input: unknown) {
-    const data = siteInput.parse(input);
+    const supplied = manualSiteInput.extend({ code: siteInput.shape.code.optional() }).parse(input);
+    const data = siteInput.parse({ ...supplied, code: supplied.code ?? `SITE-${randomUUID()}` });
     return this.db.$transaction(async (tx) => {
       await this.writeAccess(tx, actor, org);
       await this.capacity(tx, org, 1);
@@ -72,12 +74,12 @@ export class SiteService extends FoundationService {
     });
   }
   async updateSite(actor: Actor, org: string, id: string, input: unknown) {
-    const { attributes, ...data } = siteInput.parse(input);
+    const { attributes, ...data } = siteInput.partial().parse(input);
     if (attributes) throw new DomainError('HISTORY_REQUIRED', 'Add attribute changes through a new history entry.');
     return this.db.$transaction(async (tx) => {
       await this.writeAccess(tx, actor, org);
       await this.ownedSite(tx, org, id);
-      await this.validatePortfolio(tx, org, data.portfolioId);
+      if (data.portfolioId !== undefined) await this.validatePortfolio(tx, org, data.portfolioId);
       const site = await tx.site.update({ where: { id }, data });
       await this.audit(tx, actor, org, 'site.updated', id);
       return site;

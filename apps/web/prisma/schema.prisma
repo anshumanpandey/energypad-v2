@@ -159,6 +159,7 @@ model Site {
   portfolio Portfolio? @relation(fields: [portfolioId, organisationId], references: [id, organisationId])
   type String?
   address String?
+  addressLine2 String?
   postCode String?
   town String?
   country String?

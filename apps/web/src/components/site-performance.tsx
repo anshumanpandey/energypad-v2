@@ -147,8 +147,7 @@ export async function SitePerformance({
             <p>
               All ranked energy values require the same full months and fuel, normalised to kWh. Cost excludes VAT and
               requires complete costs in {result.definition.currency}; currencies are never converted or mixed. Missing
-              values stay unranked at the end. Equal values share a rank, with site code and ID providing a stable
-              order.
+              values stay unranked at the end. Equal values share a rank and appear in a stable order.
             </p>
             <p>
               Targets are current annual carbon limits for the same selected meters, geography and basis. Monthly
@@ -189,8 +188,6 @@ export async function SitePerformance({
                           {r.name}
                         </Link>
                         <small>
-                          {' '}
-                          · {r.code}
                           {r.type ? ` · ${r.type}` : ''}
                         </small>
                       </th>

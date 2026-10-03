@@ -4,7 +4,14 @@ import { responseError } from './forms';
 import { useState, type FormEvent } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
-import { importFields, type ImportSheet, type RowIssue, type SiteInput } from '@/domain/sites';
+import {
+  siteTemplateFields,
+  siteTemplateAttributeFields,
+  siteColumnIndex,
+  type ImportSheet,
+  type RowIssue,
+  type SiteInput,
+} from '@/domain/sites';
 type Batch = {
   id: string;
   status: string;
@@ -12,22 +19,9 @@ type Batch = {
   mapping?: { sheet: number } | null;
   result?: { records?: { row: number; data: SiteInput }[]; issues?: RowIssue[]; count?: number } | null;
 };
-const fieldLabels: Record<string, string> = {
-  code: 'Site code',
-  name: 'Site name',
-  type: 'Site type',
-  address: 'Address',
-  postCode: 'Postcode',
-  town: 'Town',
-  country: 'Country',
-  region: 'Region',
-  currency: 'Currency',
-  externalLegacyId: 'Legacy reference',
-  population: 'Population',
-  floorArea: 'Floor area (m²)',
-  weeklyHours: 'Operating hours per week',
-  vatPercent: 'VAT (%)',
-};
+const templateFields = [...siteTemplateFields, ...siteTemplateAttributeFields];
+const importFields = templateFields.map(([field]) => field);
+const fieldLabels: Record<string, string> = Object.fromEntries(templateFields);
 export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { id: string; status: string }[] }) {
   const [batch, setBatch] = useState<Batch | null>(null),
     [sheet, setSheet] = useState(0),
@@ -61,7 +55,6 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
         sheet,
         columns,
         defaults,
-        codePrefix: data.get('codePrefix'),
         effectiveFrom: data.get('effectiveFrom'),
         businessEmail: data.get('businessEmail') ?? '',
         confirmCurrentOrganisation: data.get('confirm') === 'on',
@@ -87,10 +80,14 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
     <div className="stack-form">
       {m.feedback}
       <section className="panel stack-form">
-        <h2>1. Upload a workbook</h2>
+        <h2>Upload sites</h2>
+        <a href="/templates/sites.xlsx" download>
+          Download site template
+        </a>
         <p>
-          Import new sites from an XLSX file (2 MB maximum, 2,000 rows per sheet). Password and credential columns are
-          discarded before staging. User access is managed through Team members.
+          Upload the site template with Site Name, Address Line 1, Address Line 2, City, State, Postcode, Population,
+          and Work Hours per week (2 MB maximum, 2,000 rows per sheet). Password and credential columns are discarded
+          before staging. User access is managed through Team members.
         </p>
         <form
           className="stack-form"
@@ -114,7 +111,7 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
             Excel workbook
             <input name="workbook" type="file" accept=".xlsx" required />
           </label>
-          <Button disabled={m.disabled}>Upload workbook</Button>
+          <Button disabled={m.disabled}>Upload sites</Button>
         </form>
       </section>
       {batch && (
@@ -152,13 +149,12 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
                 className="stack-form"
               >
                 <p>
-                  Map site fields or provide a default. Leave irrelevant columns unmapped. Floor area must be in m² and
-                  operating hours must be weekly. No unit conversion is performed.
+                  Template columns are matched automatically. Check the mapping or provide a default. Work hours must be
+                  weekly.
                 </p>
                 <div className="form-grid">
                   {importFields.map((field) => {
-                    const alias = field === 'floorArea' ? 'size' : field === 'weeklyHours' ? 'workinghours' : field;
-                    const index = selected?.headers.findIndex((h) => h.toLowerCase() === alias.toLowerCase()) ?? -1;
+                    const index = siteColumnIndex(selected?.headers ?? [], field);
                     return (
                       <fieldset key={field} className="import-mapping-field">
                         <legend>{fieldLabels[field]}</legend>
@@ -182,16 +178,8 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
                   })}
                 </div>
                 <label>
-                  Code prefix for rows without a code
-                  <input
-                    name="codePrefix"
-                    maxLength={35}
-                    placeholder="Optional, e.g. IMPORT (produces IMPORT-2 for row 2)"
-                  />
-                </label>
-                <label>
                   Attribute effective date
-                  <DateInput name="effectiveFrom" type="date" />
+                  <DateInput name="effectiveFrom" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
                 </label>
                 {sourceEmails.length > 0 && (
                   <label>
@@ -235,7 +223,6 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
                       <thead>
                         <tr>
                           <th>Row</th>
-                          <th>Code</th>
                           <th>Name</th>
                           <th>Location</th>
                           <th>Attributes</th>
@@ -245,9 +232,12 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
                         {batch.result.records?.slice(0, 50).map((r) => (
                           <tr key={r.row}>
                             <td>{r.row}</td>
-                            <td>{r.data.code}</td>
                             <td>{r.data.name}</td>
-                            <td>{[r.data.address, r.data.town, r.data.country].filter(Boolean).join(', ')}</td>
+                            <td>
+                              {[r.data.address, r.data.addressLine2, r.data.town, r.data.region, r.data.postCode]
+                                .filter(Boolean)
+                                .join(', ')}
+                            </td>
                             <td>
                               {r.data.attributes
                                 ? `From ${r.data.attributes.effectiveFrom}: population ${r.data.attributes.population ?? 'unknown'}, area ${r.data.attributes.floorArea ?? 'unknown'} m², hours ${r.data.attributes.weeklyHours ?? 'unknown'}/week`
@@ -270,7 +260,7 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
                       }, 'Import complete.')
                     }
                   >
-                    Commit import
+                    Create all sites
                   </Button>
                 </>
               )}

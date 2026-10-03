@@ -7,6 +7,7 @@ import { SiteService } from '../src/server/sites';
 import { actorFor } from '../src/server/foundation';
 import { DomainError } from '../src/domain/policy';
 import { readWorkbook } from '../src/server/workbook';
+import { siteColumnIndex, siteTemplateFields, siteTemplateAttributeFields } from '../src/domain/sites';
 const { db, cleanup } = await testDatabase();
 const service = new SiteService(db, { async send() {} }, 'http://localhost:3100');
 let count = 0;
@@ -28,6 +29,51 @@ const viewer = actorFor(
   (await db.user.create({ data: { email: 'sites-viewer@example.test', emailVerified: new Date() } })).id,
 );
 try {
+  await check('manual template entry and bulk template upload generate internal codes', async () => {
+    const org = await service.createOrganisation(owner, { name: 'Template tests', currency: 'GBP', timezone: 'UTC' });
+    const manual = await service.createSite(owner, org.id, {
+      name: 'Manual Office',
+      address: '1 High Street',
+      addressLine2: 'Floor 2',
+      town: 'London',
+      region: 'London',
+      postCode: 'SW1A 1AA',
+      attributes: { effectiveFrom: '2026-10-03', population: '0', weeklyHours: '40' },
+    });
+    assert.match(manual.code, /^SITE-/);
+    const edited = await service.updateSite(owner, org.id, manual.id, { name: 'Renamed Office' });
+    assert.equal(edited.code, manual.code);
+    assert.equal(edited.addressLine2, 'Floor 2');
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(Uint8Array.from(await readFile('public/templates/sites.xlsx')).buffer);
+    const sheet = workbook.getWorksheet('sites')!;
+    sheet.getRow(2).values = ['Uploaded Office A', '2 High Street', 'Suite 3', 'London', 'London', 'SW1A 2AA', 12, 40];
+    sheet.getRow(3).values = ['Uploaded Office B', '3 High Street', '', 'Manchester', '', 'M1 1AA', 0, 168];
+    const batch = await service.upload(owner, org.id, new Uint8Array(await workbook.xlsx.writeBuffer()));
+    const sheets = batch.sheets as unknown as Awaited<ReturnType<typeof readWorkbook>>;
+    const columns = Object.fromEntries(
+      [...siteTemplateFields, ...siteTemplateAttributeFields].map(([field]) => [
+        field,
+        siteColumnIndex(sheets[0].headers, field),
+      ]),
+    );
+    const preview = await service.mapImport(owner, org.id, batch.id, {
+      sheet: 0,
+      columns,
+      defaults: {},
+      effectiveFrom: '2026-10-03',
+      confirmCurrentOrganisation: true,
+    });
+    assert.equal(preview.status, 'READY');
+    await service.commitImport(owner, org.id, batch.id);
+    await service.commitImport(owner, org.id, batch.id);
+    const sites = await db.site.findMany({ where: { organisationId: org.id }, include: { attributes: true } });
+    assert.equal(sites.length, 3);
+    assert.equal(new Set(sites.map((site) => site.code)).size, 3);
+    const uploaded = sites.find((site) => site.name === 'Uploaded Office A')!;
+    assert.equal(uploaded.addressLine2, 'Suite 3');
+    assert.equal(uploaded.attributes[0].weeklyHours?.toString(), '40');
+  });
   const org = await service.createOrganisation(owner, { name: 'Site tests', currency: 'GBP', timezone: 'UTC' });
   const other = await service.createOrganisation(stranger, { name: 'Other tests', currency: 'GBP', timezone: 'UTC' });
   await db.membership.create({ data: { organisationId: org.id, userId: viewer.userId, role: 'SITE_MANAGER' } });

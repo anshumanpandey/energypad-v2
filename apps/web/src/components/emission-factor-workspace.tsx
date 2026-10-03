@@ -188,7 +188,7 @@ export function EmissionFactorWorkspace({
                         </strong>
                         <br />
                         {r.basis.replaceAll('_', ' ')}
-                        <p>{r.site ? `Site: ${r.site.code} · ${r.site.name}` : 'All sites'}</p>
+                        <p>{r.site ? `Site: ${r.site.name}` : 'All sites'}</p>
                       </td>
                       <td>
                         {r.factor} {r.unit}

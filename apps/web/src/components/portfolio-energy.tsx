@@ -134,7 +134,7 @@ export function PortfolioEnergy({ orgId, portfolios }: { orgId: string; portfoli
           {result.sites.map((s) => (
             <details key={s.id}>
               <summary>
-                {s.name} · {s.code} · {s.energy.kwh === null ? 'Energy unavailable' : `${s.energy.kwh} kWh`} ·{' '}
+                {s.name} · {s.energy.kwh === null ? 'Energy unavailable' : `${s.energy.kwh} kWh`} ·{' '}
                 {s.energy.netCost === null ? 'Cost unavailable' : `${s.energy.netCost} ${s.energy.currency}`}
               </summary>
               <p>

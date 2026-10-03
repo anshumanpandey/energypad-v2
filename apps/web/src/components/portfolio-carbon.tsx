@@ -122,8 +122,6 @@ export function PortfolioCarbon({ orgId, portfolios }: { orgId: string; portfoli
                   <tr key={site.id}>
                     <td>
                       <strong>{site.name}</strong>
-                      <br />
-                      {site.code}
                     </td>
                     <td>
                       {site.summary.status === 'EMPTY' ? 'No active meters' : site.summary.status}

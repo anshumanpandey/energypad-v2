@@ -1,5 +1,6 @@
 import { WorkbookCellError, type WorkbookCellIssue } from '../domain/workbook-errors';
 import ExcelJS from 'exceljs';
+import { createHash } from 'node:crypto';
 import { unzipSync, zipSync } from 'fflate';
 import { DomainError } from '../domain/policy';
 import { siteInput, type ImportMapping, type ImportSheet, type RowIssue, type SiteInput } from '../domain/sites';
@@ -158,6 +159,7 @@ export function previewRows(sheets: ImportSheet[], mapping: ImportMapping) {
   if (emails.size && !mapping.businessEmail)
     throw reject('Choose the source business email to import into this organisation.');
   const codes = new Set<string>();
+  const sourceKey = createHash('sha256').update(JSON.stringify(sheets)).digest('hex').slice(0, 32);
   for (const row of sheet.rows) {
     if (emailIndex >= 0 && mapping.businessEmail && row.cells[emailIndex]?.toLowerCase() !== mapping.businessEmail)
       continue;
@@ -169,6 +171,7 @@ export function previewRows(sheets: ImportSheet[], mapping: ImportMapping) {
       if (row.cells[column]) values[field] = row.cells[column];
     }
     if (!values.code && mapping.codePrefix) values.code = `${mapping.codePrefix}-${row.row}`;
+    if (!values.code) values.code = `SITE-${sourceKey}-${mapping.sheet}-${row.row}`;
     const { population, floorArea, weeklyHours, vatPercent, ...site } = values;
     const attributes = [population, floorArea, weeklyHours, vatPercent].some((v) => v !== undefined)
       ? { effectiveFrom: mapping.effectiveFrom, population, floorArea, weeklyHours, vatPercent }
