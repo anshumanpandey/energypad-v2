@@ -27,7 +27,7 @@ test('upload shows every failed cell and clears the list after a corrected uploa
     mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     buffer: Buffer.from(await book.xlsx.writeBuffer()),
   });
-  await page.getByRole('button', { name: 'Upload workbook', exact: true }).click();
+  await page.getByRole('button', { name: 'Upload sites', exact: true }).click();
   const errors = page.getByRole('region', { name: 'Failed import cells' });
   await expect(errors.getByRole('heading', { name: 'Failed cells (56)' })).toBeVisible();
   await expect(errors.locator('li')).toHaveCount(50);
@@ -45,7 +45,7 @@ test('upload shows every failed cell and clears the list after a corrected uploa
     mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     buffer: Buffer.from(await book.xlsx.writeBuffer()),
   });
-  await page.getByRole('button', { name: 'Upload workbook', exact: true }).click();
+  await page.getByRole('button', { name: 'Upload sites', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Workbook ready' })).toBeVisible();
   await expect(errors).toHaveCount(0);
 });

@@ -282,10 +282,13 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await expect(page.getByLabel('Portfolio name', { exact: true })).toHaveValue('Regional sites');
   await page.getByRole('link', { name: 'Sites', exact: true }).click();
   await page.getByRole('button', { name: 'Add site', exact: true }).click();
-  await page.getByLabel('Site code', { exact: true }).fill('MANUAL');
+  await expect(page.getByLabel('Site code', { exact: true })).toHaveCount(0);
   await page.getByLabel('Site name', { exact: true }).fill('Manual Site');
-  await page.getByLabel('Currency (3-letter code)').fill('gBp');
-  await page.getByLabel('Portfolio', { exact: true }).selectOption({ label: 'Regional sites' });
+  await page.getByLabel('Address Line 1', { exact: true }).fill('1 High Street');
+  await page.getByLabel('Address Line 2', { exact: true }).fill('Floor 2');
+  await page.getByLabel('City', { exact: true }).fill('London');
+  await page.getByLabel('State', { exact: true }).fill('London');
+  await page.getByLabel('Postcode', { exact: true }).fill('SW1A 1AA');
   await page.getByRole('button', { name: 'Save site', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Attribute history' })).toBeVisible();
   await page.getByRole('button', { name: 'Add History Entry', exact: true }).click();
@@ -335,32 +338,38 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await expect(newMeter.getByLabel('Meter code')).toHaveValue('MAIN');
   await expect(newMeter.getByLabel('Meter name')).toHaveValue('Duplicate meter');
   await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
-  await page.getByRole('link', { name: 'Data', exact: true }).click();
-  const workbook = new ExcelJS.Workbook(),
-    sheet = workbook.addWorksheet('Sites');
-  sheet.addRow(['code', 'name', 'password']);
-  sheet.addRow(['IMPORT-1', 'Imported Site', 'synthetic-secret-do-not-store']);
-  sheet.addRow(['', 'Second Imported Site', 'synthetic-secret-do-not-store']);
+  const templateDownload = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download site template', exact: true }).first().click();
+  expect((await templateDownload).suggestedFilename()).toBe('sites.xlsx');
+  const template = await page.request.get('/templates/sites.xlsx');
+  expect(template.ok()).toBe(true);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(Uint8Array.from(await template.body()).buffer);
+  const sheet = workbook.getWorksheet('sites')!;
+  sheet.getRow(2).values = ['Imported Site', '2 High Street', 'Suite 3', 'London', 'London', 'SW1A 2AA', 12, 169];
+  sheet.getRow(3).values = ['Second Imported Site', '', '', 'Manchester', '', 'M1 1AA', 0, 40];
   await page.getByLabel('Excel workbook').setInputFiles({
     name: 'sites.xlsx',
     mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     buffer: Buffer.from(await workbook.xlsx.writeBuffer()),
   });
-  await page.getByRole('button', { name: 'Upload workbook' }).click();
+  await page.getByRole('button', { name: 'Upload sites', exact: true }).click();
   await expect(page.getByRole('heading', { name: '2. Map and validate' })).toBeVisible();
   await expect(page.getByText('synthetic-secret-do-not-store')).toHaveCount(0);
   await page.getByLabel('I confirm these sites belong').check();
   await page.getByRole('button', { name: 'Validate and preview' }).click();
   await expect(page.getByRole('button', { name: 'Download row errors' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Commit import' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Create all sites' })).toBeDisabled();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download row errors' }).click();
   expect((await downloadPromise).suggestedFilename()).toBe('import-errors.csv');
-  await page.getByLabel('Code prefix for rows without a code').fill('IMPORTED');
+  await page.getByLabel('Source column for Work Hours per week', { exact: true }).selectOption('');
+  await page.getByLabel('Default for Work Hours per week', { exact: true }).fill('40');
   await page.getByRole('button', { name: 'Validate and preview' }).click();
-  await expect(page.getByRole('button', { name: 'Commit import' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Create all sites' })).toBeEnabled();
+  await expect(page.getByRole('columnheader', { name: 'Code', exact: true })).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath('import-preview.png'), fullPage: true });
-  await page.getByRole('button', { name: 'Commit import' }).click();
+  await page.getByRole('button', { name: 'Create all sites' }).click();
   await expect(page.getByText('Import complete: 2 sites created.', { exact: false })).toBeVisible();
   await page.reload();
   await page.getByRole('link', { name: 'Sites', exact: true }).click();
@@ -368,11 +377,12 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await expect(page.getByRole('heading', { name: 'Second Imported Site', exact: true })).toBeVisible();
   const sites = await (await page.request.get(`/api/v1/organisations/${orgPath.split('/')[2]}/sites`)).json();
   expect(sites).toHaveLength(3);
-  const manualSite = sites.find((site: { code: string }) => site.code === 'MANUAL');
+  const manualSite = sites.find((site: { name: string }) => site.name === 'Manual Site');
+  expect(manualSite.code).toMatch(/^SITE-/);
   const savedSite = await (
     await page.request.get(`/api/v1/organisations/${orgPath.split('/')[2]}/sites/${manualSite.id}`)
   ).json();
-  expect(savedSite.currency).toBe('GBP');
+  expect(savedSite.addressLine2).toBe('Floor 2');
 });
 
 test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ page }, testInfo) => {
