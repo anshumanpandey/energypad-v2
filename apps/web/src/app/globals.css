@@ -2962,3 +2962,90 @@ select[aria-invalid='true'] {
 .waste-direction-waste {
   color: #b91c1c;
 }
+
+.annual-comparison {
+  min-width: 0;
+  border-top: 3px solid #356f9a;
+}
+.annual-comparison-totals,
+.annual-comparison-labels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+  margin: 20px 0;
+}
+.annual-comparison-totals > div {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  background: #eef5fb;
+  border-radius: 10px;
+}
+.annual-comparison-totals > div:last-child {
+  background: #eef8f3;
+}
+.annual-comparison-totals strong {
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  overflow-wrap: anywhere;
+}
+.annual-comparison-labels strong:first-child {
+  text-align: right;
+  color: #245a85;
+}
+.annual-comparison-labels strong:last-child {
+  color: #17634c;
+}
+.annual-comparison-rows {
+  display: grid;
+  gap: 6px;
+}
+.annual-comparison-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr);
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+}
+.annual-comparison-row[aria-current='true'] {
+  background: #f0f5fa;
+  outline: 1px solid #bfd0df;
+}
+.annual-comparison-month {
+  text-align: center;
+  font-weight: 650;
+  font-size: 0.8rem;
+}
+.annual-comparison-side {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.annual-comparison-side > span {
+  overflow-wrap: anywhere;
+}
+.annual-comparison-actual {
+  text-align: right;
+  color: #245a85;
+}
+.annual-comparison-target {
+  color: #17634c;
+}
+.annual-comparison-track {
+  height: 8px;
+  background: #e8eef3;
+}
+.annual-comparison-track i {
+  display: block;
+  height: 8px;
+  background: #356f9a;
+}
+.annual-comparison-actual i {
+  margin-left: auto;
+  border-radius: 6px 0 0 6px;
+}
+.annual-comparison-target i {
+  background: #23745d;
+  border-radius: 0 6px 6px 0;
+}

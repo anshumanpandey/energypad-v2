@@ -1,3 +1,5 @@
+import { ConsumptionTargetChart } from './consumption-target-chart';
+import { consumptionTargetChart } from '@/domain/consumption-target-chart';
 import { formatEnergyValue } from './format-energy-value';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -5,7 +7,7 @@ import { carbonSummaryInput } from '@/domain/carbon';
 import { factorBases } from '@/domain/emission-factors';
 import type { Actor } from '@/server/foundation';
 import { accessible } from '@/server/page-auth';
-import { analysisService, carbonService } from '@/server/services';
+import { analysisService, carbonService, monthlyPlanService } from '@/server/services';
 import { MetricChart, type ChartPoint } from './metric-chart';
 import { GraphMonthProvider, GraphMonthSelect } from './graph-month';
 import { Button } from './ui/button';
@@ -33,14 +35,26 @@ export async function Graphs({
   const data =
     siteId && definition.success
       ? await accessible(async () => {
-          const [overview, emissions, runs] = await Promise.all([
+          const [overview, emissions, runs, plans] = await Promise.all([
             carbonService.overview(actor, organisationId, siteId, definition.data),
             carbonService.chartEmissions(actor, organisationId, siteId, definition.data),
             analysisService.wasteRuns(actor, organisationId, siteId, { limit: 50 }),
+            monthlyPlanService.list(actor, organisationId, siteId, definition.data.year),
           ]);
           const runId = text('run') || runs.items[0]?.id;
           const waste = runId ? await analysisService.wasteSummary(actor, organisationId, siteId, runId) : null;
-          return { overview, emissions, runs, waste, runId };
+          return {
+            overview,
+            emissions,
+            runs,
+            waste,
+            runId,
+            comparison: consumptionTargetChart(
+              overview.energy.months,
+              overview.carbon.meters.map((m) => m.fuel),
+              plans,
+            ),
+          };
         })
       : null;
   const year = definition.success ? definition.data.year : null;
@@ -128,6 +142,7 @@ export async function Graphs({
                   {sites.find((s) => s.id === siteId)?.name} · January–December {year}. Consumption and emissions
                   include registered active meters, which may overlap; these are not a net site inventory.
                 </p>
+                <ConsumptionTargetChart year={year!} data={data.comparison} />
                 <div className="graphs-grid">
                   <MetricChart
                     title="Consumption"

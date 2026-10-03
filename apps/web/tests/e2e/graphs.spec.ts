@@ -47,16 +47,35 @@ test('graphs preserve recorded zero, missing coverage, filters and site isolatio
     firstDay: '2020-01-01',
     lastDay: '2020-12-31',
   });
+  await post(`/sites/${site.id}/monthly-plans`, {
+    kind: 'TARGET',
+    month: '2020-ALL',
+    fuel: 'ELECTRICITY',
+    unit: 'kWh',
+    energy: '200',
+    conversionFactor: '1',
+    source: 'Chart target fixture',
+    requestKey: randomUUID(),
+  });
   const path = `/org/${organisation.id}/graphs`;
   await page.goto(`${path}?site=${site.id}&year=2020`);
   await expect(page.getByRole('link', { name: 'Graphs', exact: true })).toHaveAttribute('aria-current', 'page');
   const consumption = page.getByRole('region', { name: 'Consumption', exact: true });
   await expect(consumption).toContainText('2/12 months available');
+  const comparison = page.getByRole('region', { name: 'Consumption vs target', exact: true });
+  await expect(comparison.getByRole('listitem')).toHaveCount(12);
+  await expect(comparison.locator('.annual-comparison-totals')).toContainText('Unavailable');
+  await expect(comparison.locator('.annual-comparison-totals')).toContainText('2400.00 kWh');
+  await expect(comparison.getByRole('listitem').first()).toHaveAttribute(
+    'aria-label',
+    '2020-01: consumption 0.00 kWh; target 200.00 kWh',
+  );
   const month = page.getByLabel('Month', { exact: true });
   await expect(month).toHaveValue('01');
   await expect(consumption.locator('.metric-chart-detail')).toContainText('2020-01: 0 kWh');
   const beforeMonthChange = page.url();
   await month.selectOption('02');
+  await expect(comparison.locator('[aria-current="true"]')).toHaveAttribute('aria-label', /^2020-02:/);
   for (const title of ['Consumption', 'Emissions', 'Waste & savings']) {
     const chart = page.getByRole('region', { name: title, exact: true });
     await expect(chart.locator('.metric-chart-detail')).toContainText('2020-02:');
@@ -85,6 +104,18 @@ test('graphs preserve recorded zero, missing coverage, filters and site isolatio
   await expect(page.getByRole('region', { name: 'Waste & savings', exact: true })).toContainText(
     '0/12 months available',
   );
+  for (let i = 3; i <= 12; i++)
+    await post(`/sites/${site.id}/energy`, {
+      meterId: meter.id,
+      month: `2020-${String(i).padStart(2, '0')}`,
+      quantity: '100',
+    });
+  await page.reload();
+  await expect(comparison.locator('.annual-comparison-totals')).toContainText('1100.00 kWh');
+  await expect(comparison.locator('.annual-comparison-totals')).toContainText('2400.00 kWh');
+  const left = await comparison.locator('.annual-comparison-actual').first().boundingBox();
+  const right = await comparison.locator('.annual-comparison-target').first().boundingBox();
+  expect(left!.x + left!.width).toBeLessThan(right!.x);
   await page.screenshot({ path: testInfo.outputPath('graphs-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
