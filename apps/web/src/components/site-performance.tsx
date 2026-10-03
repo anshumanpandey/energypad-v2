@@ -187,9 +187,7 @@ export async function SitePerformance({
                         >
                           {r.name}
                         </Link>
-                        <small>
-                          {r.type ? ` · ${r.type}` : ''}
-                        </small>
+                        <small>{r.type ? ` · ${r.type}` : ''}</small>
                       </th>
                       <td>
                         {r.meterCount} / {r.completeMonths} of {r.expectedMonths}

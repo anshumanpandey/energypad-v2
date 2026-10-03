@@ -34,9 +34,7 @@ function ClassificationTable({ records }: { records: Row[] }) {
         <tbody>
           {records.map((r) => (
             <tr key={`${r.site}:${r.year}`}>
-              <td>
-                {r.siteName}
-              </td>
+              <td>{r.siteName}</td>
               <td>{r.year}</td>
               {classificationFields.map((field) => (
                 <td key={field}>
