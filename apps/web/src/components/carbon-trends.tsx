@@ -225,8 +225,7 @@ export async function CarbonTrends({
                           {value(s.months[i].kgCO2e)}
                           <p>
                             {s.months[i].readySites}/{s.months[i].expectedSites} sites ready · {s.months[i].readyMeters}
-                            /{s.months[i].expectedMeters} meters ready · {s.months[i].estimated} estimated readings in
-                            ready data
+                            /{s.months[i].expectedMeters} meters ready
                           </p>
                         </td>
                       ))}
@@ -307,8 +306,7 @@ export async function CarbonTrends({
                             {meter.evidence && (
                               <p>
                                 Reading {meter.evidence.readingId ?? 'Unavailable'} · revision{' '}
-                                {meter.evidence.readingRevision} · conversion {meter.evidence.conversionVersion} ·{' '}
-                                {meter.evidence.estimated ? 'Estimated' : 'Not marked estimated'}
+                                {meter.evidence.readingRevision} · conversion {meter.evidence.conversionVersion}
                                 <br />
                                 Factor {meter.evidence.factorId ?? 'Unavailable'} · revision{' '}
                                 {meter.evidence.factorRevision} · {meter.evidence.factor} kgCO2e/kWh ·{' '}

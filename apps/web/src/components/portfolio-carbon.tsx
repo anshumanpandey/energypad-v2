@@ -141,8 +141,7 @@ export function PortfolioCarbon({ orgId, portfolios }: { orgId: string; portfoli
                               {m.name} · {m.status}
                             </strong>
                             <p>
-                              {m.kgCO2e ?? 'No total'} {m.kgCO2e !== null ? 'kgCO2e' : ''} · {m.estimatedMonths}{' '}
-                              estimated months
+                              {m.kgCO2e ?? 'No total'} {m.kgCO2e !== null ? 'kgCO2e' : ''}
                             </p>
                             <p>{m.issue}</p>
                             {m.runId && (

@@ -156,7 +156,6 @@ export async function Overview({
                         <th>Month</th>
                         <th>Energy (kWh)</th>
                         <th>Net cost</th>
-                        <th>Estimated readings</th>
                         <th>Evidence</th>
                       </tr>
                     </thead>
@@ -166,7 +165,6 @@ export async function Overview({
                           <td>{month.month}</td>
                           <td>{month.kwh ?? 'Unavailable'}</td>
                           <td>{display(month.netCost, month.currency ?? '')}</td>
-                          <td>{month.estimated}</td>
                           <td>
                             <details>
                               <summary>{month.evidence.length} source readings</summary>

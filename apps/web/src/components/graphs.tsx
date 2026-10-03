@@ -126,8 +126,7 @@ export async function Graphs({
               <>
                 <p className="page-note">
                   {sites.find((s) => s.id === siteId)?.name} · January–December {year}. Consumption and emissions
-                  include registered active meters, which may overlap; these are not a net site inventory. Estimated
-                  readings are included and identified in the data tables.
+                  include registered active meters, which may overlap; these are not a net site inventory.
                 </p>
                 <div className="graphs-grid">
                   <MetricChart
@@ -138,7 +137,7 @@ export async function Graphs({
                     points={data.overview.energy.months.map((m) => ({
                       month: m.month,
                       value: m.kwh,
-                      note: `${m.estimated} estimated readings${m.kwh === null ? ' · incomplete coverage' : ''}`,
+                      note: m.kwh === null ? 'Incomplete coverage' : '',
                     }))}
                   />
                   <MetricChart
@@ -149,7 +148,7 @@ export async function Graphs({
                     points={data.emissions.map((m) => ({
                       month: m.month,
                       value: m.kgCO2e,
-                      note: `${m.readyMeters}/${m.expectedMeters} meters ready · ${m.estimated} estimated readings${m.issues.length ? ` · ${m.issues.join('; ')}` : ''}`,
+                      note: `${m.readyMeters}/${m.expectedMeters} meters ready${m.issues.length ? ` · ${m.issues.join('; ')}` : ''}`,
                     }))}
                   />
                 </div>

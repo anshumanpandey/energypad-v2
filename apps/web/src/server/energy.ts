@@ -359,7 +359,6 @@ export class EnergyService extends FoundationService {
           ...(changed ? ['Site attributes changed during this month'] : []),
         ];
     const qualityFlags = [
-      ...(data.estimated ? ['Estimated reading'] : []),
       ...attributeFlags,
       ...(data.netCost !== null && data.vatPercent === null ? ['VAT unknown; gross cost unavailable'] : []),
     ];
@@ -380,7 +379,7 @@ export class EnergyService extends FoundationService {
       conversionId: preserveConversion ? previous.conversionId : (version?.id ?? null),
       conversionFactor: conversion.factor,
       conversionVersion: conversion.version,
-      estimated: data.estimated,
+      estimated: false,
       netCost,
       vatPercent: data.vatPercent,
       vatCost,

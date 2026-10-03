@@ -10,7 +10,7 @@ export function latestConsumptionQuality(
 ): string[] {
   const warnings = new Set<string>(Object.values(attributeWarnings));
   return [
-    ...recordedFlags.filter((flag) => !warnings.has(flag)),
+    ...recordedFlags.filter((flag) => !warnings.has(flag) && flag !== 'Estimated reading'),
     ...Object.entries(attributeWarnings)
       .filter(([field]) => attributes?.[field as keyof typeof attributeWarnings] == null)
       .map(([, warning]) => warning),

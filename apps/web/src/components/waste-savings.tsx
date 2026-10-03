@@ -288,9 +288,7 @@ export async function WasteSavings({
                   (r) =>
                     r.status === 'CALCULATED' && (
                       <details key={r.month}>
-                        <summary>
-                          {r.month} source evidence{r.reading?.estimated ? ' · estimated reading' : ''}
-                        </summary>
+                        <summary>{r.month} source evidence</summary>
                         <p>
                           Reading {r.consumptionId} · revision {r.reading?.revision ?? 'Unavailable'} · conversion{' '}
                           {r.reading?.conversionVersion ?? 'Unavailable'}

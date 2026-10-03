@@ -107,8 +107,7 @@ export function ReadingCorrections({
             <article className="site-history-entry" key={r.id}>
               <RevisionMeta value={r} />
               <p>
-                {formatEnergyValue(r.sourceQuantity)} {r.sourceUnit} → {formatEnergyValue(r.normalizedKwh)} kWh ·{' '}
-                {r.estimated ? 'Estimated' : 'Actual'}
+                {formatEnergyValue(r.sourceQuantity)} {r.sourceUnit} → {formatEnergyValue(r.normalizedKwh)} kWh · Actual
               </p>
               <p>
                 Net {formatEnergyValue(r.netCost)} · VAT {formatEnergyValue(r.vatPercent)}% /{' '}
@@ -176,7 +175,6 @@ export function ReadingCorrections({
                   meterId: record.meterId,
                   month: record.periodStart.slice(0, 7),
                   quantity: values.get('quantity'),
-                  estimated: values.get('estimated') === 'on',
                   netCost: values.get('netCost') || null,
                   vatPercent: values.get('vatPercent') || null,
                   currency: values.get('currency') || null,
@@ -252,10 +250,6 @@ export function ReadingCorrections({
             <label>
               Corrected end use
               <input name="endUse" maxLength={100} defaultValue={record.endUse} />
-            </label>
-            <label className="checkbox-label">
-              <input name="estimated" type="checkbox" defaultChecked={record.estimated} />
-              Estimated reading
             </label>
             {!['kWh', 'MWh'].includes(record.sourceUnit) && (
               <label className="checkbox-label">

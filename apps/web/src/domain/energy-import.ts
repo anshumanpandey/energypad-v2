@@ -6,7 +6,6 @@ export const energyImportFields = [
   'month',
   'quantity',
   'unit',
-  'estimated',
   'netCost',
   'vatPercent',
   'currency',
@@ -14,11 +13,22 @@ export const energyImportFields = [
   'energyUseCode',
   'externalLegacyId',
 ] as const;
+// Older saved mappings can still be loaded; reading status no longer affects imports.
+function withoutLegacyReadingStatus(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  return Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'estimated'));
+}
 export const energyMappingInput = z
   .object({
     sheet: z.number().int().min(0).max(9),
-    columns: z.partialRecord(z.enum(energyImportFields), z.number().int().min(0).max(49)),
-    defaults: z.partialRecord(z.enum(energyImportFields), z.string().max(500)),
+    columns: z.preprocess(
+      withoutLegacyReadingStatus,
+      z.partialRecord(z.enum(energyImportFields), z.number().int().min(0).max(49)),
+    ),
+    defaults: z.preprocess(
+      withoutLegacyReadingStatus,
+      z.partialRecord(z.enum(energyImportFields), z.string().max(500)),
+    ),
     confirmed: z.literal(true),
   })
   .strict();
@@ -41,13 +51,10 @@ export function mapEnergyRows(sheets: ImportSheet[], mapping: EnergyMapping, met
     );
     if (values.unit !== meterUnit)
       issues.push({ row: row.row, field: 'unit', message: `Source unit must match this meter (${meterUnit}).` });
-    if (!['actual', 'estimated'].includes(values.estimated.toLowerCase()))
-      issues.push({ row: row.row, field: 'estimated', message: 'Specify actual or estimated.' });
     const parsed = consumptionInput.safeParse({
       meterId,
       month: values.month,
       quantity: values.quantity,
-      estimated: values.estimated.toLowerCase() === 'estimated',
       netCost: values.netCost || null,
       vatPercent: values.vatPercent || null,
       currency: values.currency || null,

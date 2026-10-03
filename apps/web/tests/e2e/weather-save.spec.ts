@@ -62,8 +62,9 @@ test('saving weather fetches status and updates baseline configurations without 
   // Choose the year before editing the baseline: changing it resets the Waste Report setup.
   await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await expect(page.getByRole('note', { name: 'Automatic baseline period' })).toContainText('01/01/2019 – 31/12/2019');
-  const estimatedConsumption = page.getByRole('combobox', { name: 'Estimated consumption', exact: true });
-  await estimatedConsumption.selectOption('ALLOW_WITH_WARNING');
+  const population = page.getByLabel('Population', { exact: true });
+  await population.check();
+  await expect(page.getByLabel('Estimated consumption', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
   const weather = page.getByRole('region', { name: 'Historical weather', exact: true });
   for (const [label, value] of [
@@ -76,7 +77,7 @@ test('saving weather fetches status and updates baseline configurations without 
   ]) {
     await weather.getByLabel(label, { exact: true }).fill(value);
   }
-  await expect(estimatedConsumption).toHaveValue('ALLOW_WITH_WARNING');
+  await expect(population).toBeChecked();
   await weather.getByRole('button', { name: 'Save weather settings', exact: true }).click();
   const loading = weather.getByRole('status').filter({ hasText: 'Fetching weather status for 2020' });
   await expect(loading).toBeVisible();
@@ -86,9 +87,7 @@ test('saving weather fetches status and updates baseline configurations without 
   await expect(configuration.locator('option')).toHaveCount(2);
   const savedId = await weather.getByLabel('Weather settings version').inputValue();
   await configuration.selectOption(savedId);
-  await expect(page.getByRole('combobox', { name: 'Estimated consumption', exact: true })).toHaveValue(
-    'ALLOW_WITH_WARNING',
-  );
+  await expect(population).toBeChecked();
   expect(queueCount).toBe(1);
   job = Object.assign({}, job, { status: 'SUCCEEDED' });
   await weather.getByRole('button', { name: 'Refresh weather status', exact: true }).click();
@@ -100,9 +99,7 @@ test('saving weather fetches status and updates baseline configurations without 
   await expect(weather.getByRole('alert')).toContainText('Settings saved, but weather fetching could not start');
   await expect(configuration.locator('option')).toHaveCount(3);
   await expect(configuration).toHaveValue(savedId);
-  await expect(page.getByRole('combobox', { name: 'Estimated consumption', exact: true })).toHaveValue(
-    'ALLOW_WITH_WARNING',
-  );
+  await expect(population).toBeChecked();
   await expect(weather.getByRole('button', { name: 'Fetch weather for 2020', exact: true })).toBeVisible();
   await expect(loading).toHaveCount(0);
   await page.getByLabel('Year', { exact: true }).selectOption(String(new Date().getUTCFullYear()));

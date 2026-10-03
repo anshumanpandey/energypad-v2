@@ -76,7 +76,7 @@ describe('carbon report exports', () => {
     expect(csv).toContain('"OUTDATED",""');
     expect(csv).toContain('"SAVED_RESULT","0.123456789123"');
     expect(csv).toContain('METER status determines current coverage');
-    expect(csv).toContain('"reading","2","fixed-kwh-v1","factor","3","0.123456789","true"');
+    expect(csv).toContain('"reading","2","fixed-kwh-v1","factor","3","0.123456789"');
     expect(csv).toContain('monthly-exact-factor-v1');
   });
   it('escapes delimiter/quote characters and neutralizes spreadsheet formulas', () => {

@@ -39,3 +39,16 @@ it('validates sourced conversion ranges and precision', () => {
   ])
     expect(conversionInput.safeParse(input).success).toBe(false);
 });
+
+it('normalizes legacy estimated requests to Actual', () => {
+  for (const estimated of [true, false, undefined]) {
+    expect(
+      consumptionInput.parse({
+        meterId: '123e4567-e89b-42d3-a456-426614174000',
+        month: '2024-01',
+        quantity: '12',
+        estimated,
+      }).estimated,
+    ).toBe(false);
+  }
+});

@@ -84,7 +84,7 @@ try {
   await assert.rejects(carbon.benchmark(stranger, org.id, summaryDefinition));
 
   assert.equal(filledOverview.energy.netCost, null);
-  assert.equal(filledOverview.energy.months[1].estimated, 1);
+  assert.equal(filledOverview.energy.months[1].estimated, 0);
   const noFactors = await carbon.calculate(actor, org.id, site.id, { ...definition, requestKey: randomUUID() });
   assert.equal(snapshot(noFactors).status, 'BLOCKED');
   assert.equal(snapshot(noFactors).totalKgCO2e, null);
@@ -184,7 +184,7 @@ try {
   assert.equal(trend.series[1].totalKgCO2e, '180');
   assert.equal(trend.series[0].totalKgCO2e, null);
   assert.equal(trend.series[1].months[0].kgCO2e, '10');
-  assert.equal(trend.series[1].months[1].estimated, 1);
+  assert.equal(trend.series[1].months[1].estimated, 0);
   assert.equal(trend.change.difference, null);
   await assert.rejects(carbon.trends(stranger, org.id, trendDefinition));
   assert.equal(
@@ -192,14 +192,14 @@ try {
     null,
   );
 
-  assert.equal(readySummary.meters[0].estimatedMonths, 1);
+  assert.equal(readySummary.meters[0].estimatedMonths, 0);
   assert.equal(readySummary.meters[0].runId, complete.id);
   assert.equal(
     (await carbon.summary(actor, org.id, site.id, { ...summaryDefinition, geography: 'US' })).meters[0].status,
     'MISSING',
   );
   assert.equal(snapshot(complete).status, 'COMPLETE');
-  assert.equal(snapshot(complete).rows[1].estimated, true);
+  assert.equal(snapshot(complete).rows[1].estimated, false);
   assert.equal(snapshot(complete).rows[0].factorId, firstFactor.id);
   assert.equal((await carbon.calculate(actor, org.id, site.id, { ...definition, requestKey: key })).id, complete.id);
   await assert.rejects(carbon.calculate(actor, org.id, site.id, { ...definition, year: 2021, requestKey: key }));

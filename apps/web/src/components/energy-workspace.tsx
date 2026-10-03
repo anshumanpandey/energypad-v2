@@ -418,7 +418,6 @@ export function EnergyWorkspace({
                     meterId: values.get('meterId'),
                     month: values.get('month'),
                     quantity: values.get('quantity'),
-                    estimated: values.get('estimated') === 'on',
                     netCost: values.get('netCost') || null,
                     vatPercent: values.get('vatPercent') || null,
                     currency: values.get('currency') || null,
@@ -481,10 +480,6 @@ export function EnergyWorkspace({
                   <input name="vatPercent" type="number" min="0" max="100" step="0.001" />
                 </label>
               </div>
-              <label className="checkbox-label">
-                <input name="estimated" type="checkbox" />
-                Estimated reading
-              </label>
               <Button disabled={m.disabled}>Save consumption</Button>
             </form>
           )}

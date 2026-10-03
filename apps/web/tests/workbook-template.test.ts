@@ -35,7 +35,7 @@ it('reuses named consumption mappings across sheet and column reordering without
   const saved = saveEnergyTemplate([consumption], {
     sheet: 0,
     columns: { month: 0, quantity: 1 },
-    defaults: { unit: 'kWh', estimated: 'actual' },
+    defaults: { unit: 'kWh' },
     confirmed: true,
   });
   const resolved = applyEnergyTemplate([driver, { ...consumption, headers: ['Amount', 'Month'] }], saved);
@@ -84,4 +84,17 @@ it('does not replace blank mapped cells with defaults, and validates mapped setp
   expect(mapped.issues).toEqual([]);
   expect(mapped.records[0].data.temperature).toBe('0');
   expect(mapped.records[0].row).toBe(4);
+});
+
+it('loads legacy consumption templates without requiring their obsolete reading status header', () => {
+  const sheets = [{ name: 'Readings', headers: ['Month', 'Quantity'], rows: [{ row: 2, cells: ['2020-01', '12'] }] }];
+  const mapping = applyEnergyTemplate(sheets, {
+    version: 1,
+    kind: 'consumption',
+    sheetName: 'Readings',
+    columns: { month: 'Month', quantity: 'Quantity', estimated: 'Removed status column' },
+    defaults: { unit: 'kWh', estimated: 'estimated' },
+  });
+  expect(mapping.columns).toEqual({ month: 0, quantity: 1 });
+  expect(mapping.defaults).toEqual({ unit: 'kWh' });
 });

@@ -86,7 +86,7 @@ export function CarbonTargets({
       <h3>Annual carbon targets</h3>
       <p>
         Set an absolute annual limit in kgCO2e per meter. Assessments compare a selected saved calculation, including
-        its estimated inputs, with the target revision. They are historical results; check the site summary for current
+        its source inputs, with the target revision. They are historical results; check the site summary for current
         input coverage.
       </p>
       {mutation.feedback}

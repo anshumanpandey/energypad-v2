@@ -57,7 +57,7 @@ export const baselineDefinition = z
           .max(0.01),
       })
       .strict(),
-    estimatedConsumption: z.enum(['BLOCK', 'ALLOW_WITH_WARNING']),
+    estimatedConsumption: z.enum(['BLOCK', 'ALLOW_WITH_WARNING']).default('BLOCK'),
     supersedesId: z.uuid().nullable(),
   })
   .strict()

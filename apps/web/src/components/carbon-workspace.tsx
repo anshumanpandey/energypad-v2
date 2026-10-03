@@ -27,7 +27,7 @@ export function CarbonWorkspace({
       <p>
         {archived
           ? 'Browse retained calculations, target revisions and assessments for this archived site.'
-          : 'Calculate one meter at a time. Every month needs consumption and one factor covering the entire month. Mid-month factor changes require resolution; consumption is not prorated. Estimated readings remain identified in the result.'}
+          : 'Calculate one meter at a time. Every month needs consumption and one factor covering the entire month. Mid-month factor changes require resolution; consumption is not prorated.'}
       </p>
       <label>
         Carbon site
@@ -271,10 +271,7 @@ function SiteCarbon({
                 {run.snapshot.rows.map((row) => (
                   <tr key={row.month}>
                     <td>{row.month}</td>
-                    <td>
-                      {row.normalizedKwh ?? '—'}
-                      {row.estimated ? ' (estimated)' : ''}
-                    </td>
+                    <td>{row.normalizedKwh ?? '—'}</td>
                     <td>{row.factor ?? '—'}</td>
                     <td>{row.kgCO2e ?? '—'}</td>
                     <td>

@@ -84,12 +84,6 @@ export async function assemble(
         'Supply exactly one current consumption record for this meter/end use and month.',
       );
     const record = matches.length === 1 ? matches[0] : null;
-    if (record?.estimated)
-      (definition.estimatedConsumption === 'BLOCK' ? issues : warnings).push({
-        month,
-        code: 'ESTIMATED_CONSUMPTION',
-        message: 'Consumption is estimated.',
-      });
     const drivers = definition.drivers.map((code) => {
       const definition = driverDefinitions[code];
       if (code === 'POPULATION' || code === 'OPERATING_HOURS') {

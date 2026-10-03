@@ -10,7 +10,11 @@ export const consumptionInput = z
     meterId: uuid,
     month: z.string().regex(/^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/, 'Choose a month between 1900 and 2199.'),
     quantity: amount,
-    estimated: z.boolean().default(false),
+    // Accept legacy clients while normalizing every new reading to Actual.
+    estimated: z
+      .boolean()
+      .optional()
+      .transform(() => false),
     netCost: amount.nullish().transform((v) => v ?? null),
     vatPercent: amount
       .refine((v) => Number(v) <= 100, 'VAT must be between 0 and 100.')

@@ -206,7 +206,7 @@ export async function SitePerformance({
                       <td>{value(r.carbonGap)}</td>
                       <td>
                         {r.energyIssue ?? 'Energy complete'}; {r.costIssue ?? 'Cost complete'}; {r.targetStatus};{' '}
-                        {r.energyTargetIssue ?? 'Energy targets complete'}; {r.estimated} estimated readings
+                        {r.energyTargetIssue ?? 'Energy targets complete'}
                       </td>
                     </tr>
                   ))}
@@ -230,7 +230,6 @@ export async function SitePerformance({
                         <th>Month</th>
                         <th>kWh</th>
                         <th>Net cost</th>
-                        <th>Estimates</th>
                         <th>Reading revisions / conversion versions</th>
                       </tr>
                     </thead>
@@ -240,7 +239,6 @@ export async function SitePerformance({
                           <th>{m.month}</th>
                           <td>{value(m.kwh)}</td>
                           <td>{value(m.netCost, m.currency ?? '')}</td>
-                          <td>{m.estimated}</td>
                           <td>
                             {m.evidence.map((e) => (
                               <p key={e.id}>

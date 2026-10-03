@@ -8,14 +8,14 @@ const mapping = energyMappingInput.parse({
   defaults: { unit: 'kWh', estimated: 'actual' },
   confirmed: true,
 });
-it('requires explicit source units and reading status while preserving zero', () => {
+it('requires source units and imports Actual readings while preserving zero', () => {
   const result = mapEnergyRows(sheets, mapping, meter, 'kWh');
   expect(result.issues).toEqual([]);
   expect(result.records[0].data.quantity).toBe('0');
+  expect(result.records[0].data.estimated).toBe(false);
   expect(result.records[0].data.netCost).toBeNull();
   expect(mapEnergyRows(sheets, { ...mapping, defaults: {} }, meter, 'kWh').issues.map((i) => i.field)).toEqual([
     'unit',
-    'estimated',
   ]);
 });
 it('rejects duplicate months, missing columns, unsupported dates and oversized sheets', () => {
@@ -40,4 +40,16 @@ it('rejects duplicate months, missing columns, unsupported dates and oversized s
       'kWh',
     ),
   ).toThrow('1–120');
+});
+
+it('ignores obsolete estimated status mappings without requiring a status column', () => {
+  const legacy = energyMappingInput.parse({
+    sheet: 0,
+    columns: { month: 0, quantity: 1, estimated: 49 },
+    defaults: { unit: 'kWh', estimated: 'estimated' },
+    confirmed: true,
+  });
+  const result = mapEnergyRows(sheets, legacy, meter, 'kWh');
+  expect(result.issues).toEqual([]);
+  expect(result.records[0].data.estimated).toBe(false);
 });

@@ -9,7 +9,6 @@ it('uses latest attributes, preserves reading warnings and leaves recorded flags
     'VAT unknown; gross cost unavailable',
   ];
   expect(latestConsumptionQuality(recorded, { population: '0', weeklyHours: null, floorArea: '100' })).toEqual([
-    'Estimated reading',
     'VAT unknown; gross cost unavailable',
     'Missing weekly operating hours',
   ]);

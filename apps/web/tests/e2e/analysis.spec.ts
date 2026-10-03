@@ -104,8 +104,8 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   await page.getByRole('button', { name: 'Save reporting run' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Experimental reporting run saved' })).toBeVisible();
   await expect(page.getByRole('button', { name: /^View run/ })).toHaveCount(1);
-  // Save a baseline allowing estimated reporting values; policies are frozen with the baseline.
-  await page.getByLabel('Estimated consumption').selectOption('ALLOW_WITH_WARNING');
+  // Save another baseline revision for reporting history.
+  await page.getByLabel('Baseline to supersede (optional)').selectOption({ index: 1 });
   await page.getByRole('button', { name: 'Save experimental baseline' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Experimental baseline saved' })).toBeVisible();
   await page.getByRole('button', { name: 'Load older baselines', exact: true }).click();
@@ -136,7 +136,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   const table = page.getByRole('region', { name: 'Monthly reporting results' });
   await expect(table.getByRole('row').filter({ hasText: '2020-05' }).getByRole('cell').nth(2)).toHaveText('10.00');
   await expect(table.getByRole('row').filter({ hasText: '2020-06' }).getByRole('cell').nth(2)).toHaveText('1.50');
-  await expect(page.getByRole('region', { name: 'Reporting results', exact: true })).toContainText(
+  await expect(page.getByRole('region', { name: 'Reporting results', exact: true })).not.toContainText(
     'Consumption is estimated.',
   );
   await page.getByRole('button', { name: 'Load older baselines', exact: true }).click();
@@ -322,16 +322,15 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   } finally {
     await viewerContext.close();
   }
-  // Frozen input warnings must survive direct save and baseline-only history reads.
+  // Actual-only readings remain free of estimate warnings after saving and loading history.
   await page.reload();
   await page.getByLabel('Baseline first month').fill('15/01/2020');
   await page.getByLabel('Baseline last month').fill('15/06/2020');
   await page.getByLabel('Population', { exact: true }).check();
-  await page.getByLabel('Estimated consumption').selectOption('ALLOW_WITH_WARNING');
   await page.getByRole('button', { name: 'Save experimental baseline' }).click();
   const selectedBaseline = page.getByRole('region', { name: 'Selected baseline', exact: true });
   const baselineWarnings = selectedBaseline.getByRole('note', { name: 'Baseline input warnings' });
-  await expect(baselineWarnings).toContainText('2020-06: Consumption is estimated.');
+  await expect(baselineWarnings).toHaveCount(0);
   await expect(page.getByRole('status').filter({ hasText: 'Experimental baseline saved' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Reporting results', exact: true })).toHaveCount(0);
   await page.reload();
@@ -339,7 +338,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     .getByRole('button', { name: /^Load baseline/ })
     .first()
     .click();
-  await expect(baselineWarnings).toContainText('2020-06: Consumption is estimated.');
+  await expect(baselineWarnings).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Reporting results', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Load older baselines', exact: true }).click();
   await expect(page.getByRole('button', { name: /^Load baseline/ })).toHaveCount(2);
@@ -790,7 +789,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     .getByRole('button', { name: /^Load baseline/ })
     .first()
     .click();
-  await expect(baselineWarnings).toContainText('2020-06: Consumption is estimated.');
+  await expect(baselineWarnings).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Save reporting run' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Load older baselines', exact: true }).click();
   await page

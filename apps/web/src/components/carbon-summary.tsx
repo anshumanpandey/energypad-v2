@@ -102,7 +102,7 @@ export function CarbonSummaryPanel({ base }: { base: string }) {
                     <td>{m.status}</td>
                     <td>{m.kgCO2e ?? '—'}</td>
                     <td>
-                      {m.issue ?? `${m.estimatedMonths} months use estimated consumption.`}
+                      {m.issue ?? 'Actual consumption readings.'}
                       {m.runId && (
                         <details>
                           <summary>Saved run</summary>

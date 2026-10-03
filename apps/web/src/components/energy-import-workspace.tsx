@@ -38,7 +38,6 @@ const labels: Record<(typeof energyImportFields)[number], string> = {
   month: 'Month (YYYY-MM)',
   quantity: 'Quantity',
   unit: 'Source unit',
-  estimated: 'Reading status (actual / estimated)',
   netCost: 'Net cost',
   vatPercent: 'VAT (%)',
   currency: 'Currency',

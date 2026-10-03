@@ -1534,7 +1534,8 @@ try {
   });
   const estimatedRequest = { ...request, period: { firstMonth: '2020-06', lastMonth: '2020-06' } };
   const blockedEstimate = await analysis.run(owner, org.id, site.id, first.baseline.id, estimatedRequest);
-  assert.equal(blockedEstimate.status, 'BLOCKED');
+  assert.equal(blockedEstimate.status, 'SAVED');
+  assert.equal(estimated.estimated, false);
   const allowedBaseline = await analysis.createBaseline(owner, org.id, site.id, {
     ...definition,
     estimatedConsumption: 'ALLOW_WITH_WARNING',
@@ -1542,7 +1543,7 @@ try {
   if (allowedBaseline.status !== 'SAVED') throw Error('Estimated policy baseline failed');
   const allowedRun = await analysis.run(owner, org.id, site.id, allowedBaseline.baseline.id, estimatedRequest);
   assert.equal(allowedRun.status, 'SAVED');
-  assert.ok(JSON.stringify(allowedRun).includes('ESTIMATED_CONSUMPTION'));
+  assert.ok(!JSON.stringify(allowedRun).includes('ESTIMATED_CONSUMPTION'));
   // Database uniqueness prevents a second original reading for the same meter/month.
   await assert.rejects(
     db.consumptionRecord.create({
@@ -1583,7 +1584,7 @@ try {
     beforeRollback,
   );
   console.log(
-    '✓ pinned weather versions, missing weather, insufficient fit data, estimated policy, duplicate prevention and audit-failure rollback',
+    '✓ pinned weather versions, missing weather, insufficient fit data, Actual reading normalization, duplicate prevention and audit-failure rollback',
   );
   console.log('✓ missing inputs block persistence, composite scope constraints and database immutability');
   // Dense tied timestamps and more than the old 100-entry cap exercise keyset pagination.

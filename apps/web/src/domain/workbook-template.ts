@@ -78,6 +78,15 @@ export const workbookTemplate = z
     defaults: z.record(z.string().max(100), z.string().max(500)),
   })
   .strict()
+  .transform((t) =>
+    t.kind === 'consumption'
+      ? {
+          ...t,
+          columns: Object.fromEntries(Object.entries(t.columns).filter(([key]) => key !== 'estimated')),
+          defaults: Object.fromEntries(Object.entries(t.defaults).filter(([key]) => key !== 'estimated')),
+        }
+      : t,
+  )
   .superRefine((t, ctx) => {
     const fields: readonly string[] = workbookFields[t.kind];
     for (const field of [...Object.keys(t.columns), ...Object.keys(t.defaults)])

@@ -290,7 +290,6 @@ function SiteAnalysis({
                     weather: drivers.some((d) => ['HDD', 'CDD', 'DAYLIGHT'].includes(d))
                       ? { configurationId: f.get('weatherId'), methodology: 'daily-mean-degree-days-v1' }
                       : null,
-                    estimatedConsumption: f.get('estimatedConsumption'),
                     supersedesId: f.get('supersedesId') || null,
                     fitPolicy: { version: 'experimental-workflow-v1', relativeRankTolerance: 1e-10 },
                   };
@@ -384,13 +383,6 @@ function SiteAnalysis({
                       ))}
                     </select>
                     {weatherOptionsError && <span role="alert">{weatherOptionsError}</span>}
-                  </label>
-                  <label>
-                    Estimated consumption
-                    <select name="estimatedConsumption">
-                      <option value="BLOCK">Block estimated readings</option>
-                      <option value="ALLOW_WITH_WARNING">Allow with a warning</option>
-                    </select>
                   </label>
                   {manage && (
                     <label>

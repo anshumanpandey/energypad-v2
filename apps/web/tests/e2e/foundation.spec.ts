@@ -469,7 +469,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await page.getByLabel('Month (YYYY-MM) column', { exact: true }).selectOption('0');
   await page.getByLabel('Quantity column', { exact: true }).selectOption('1');
   await page.getByLabel('Source unit default', { exact: true }).fill('m3');
-  await page.getByLabel('Reading status (actual / estimated) default', { exact: true }).fill('actual');
+  await expect(page.getByLabel('Reading status (actual / estimated) default', { exact: true })).toHaveCount(0);
   const savedMappingDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save mapping template v1', exact: true }).click();
   const savedMappingPath = await (await savedMappingDownload).path();

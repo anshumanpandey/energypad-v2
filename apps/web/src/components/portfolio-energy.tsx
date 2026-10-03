@@ -114,7 +114,6 @@ export function PortfolioEnergy({ orgId, portfolios }: { orgId: string; portfoli
                   <th>Sites ready</th>
                   <th>kWh</th>
                   <th>Net cost</th>
-                  <th>Estimated readings</th>
                 </tr>
               </thead>
               <tbody>
@@ -126,7 +125,6 @@ export function PortfolioEnergy({ orgId, portfolios }: { orgId: string; portfoli
                     </td>
                     <td>{m.kwh ?? 'Unavailable'}</td>
                     <td>{m.netCost === null ? 'Unavailable' : `${m.netCost} ${m.currency}`}</td>
-                    <td>{m.estimated}</td>
                   </tr>
                 ))}
               </tbody>

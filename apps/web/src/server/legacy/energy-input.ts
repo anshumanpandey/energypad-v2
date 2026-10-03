@@ -64,7 +64,10 @@ export const legacyEnergyBundle = z
                 meterId: uuid,
                 month: z.string().regex(/^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/),
                 sourceUnit: z.enum(['kWh', 'MWh', 'm3', 'litre', 'kg']),
-                estimated: z.boolean(),
+                estimated: z
+                  .boolean()
+                  .optional()
+                  .transform(() => false),
                 currency: z
                   .string()
                   .toUpperCase()
