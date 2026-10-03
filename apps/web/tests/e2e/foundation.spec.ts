@@ -283,7 +283,7 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await page.getByRole('link', { name: 'Sites', exact: true }).click();
   await page.getByRole('button', { name: 'Add site', exact: true }).click();
   await expect(page.getByLabel('Site code', { exact: true })).toHaveCount(0);
-  await page.getByLabel('Site name', { exact: true }).fill('Manual Site');
+  await page.getByLabel('Site Name', { exact: true }).fill('Manual Site');
   await page.getByLabel('Address Line 1', { exact: true }).fill('1 High Street');
   await page.getByLabel('Address Line 2', { exact: true }).fill('Floor 2');
   await page.getByLabel('City', { exact: true }).fill('London');
