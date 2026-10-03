@@ -5,6 +5,7 @@ import { siteTemplateFields, siteTemplateAttributeFields } from '@/domain/sites'
 import { useState, useEffect, useId, useRef, type FormEvent, type ReactNode } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
+import { ImportWorkspace } from './import-workspace';
 type Portfolio = { id: string; name: string };
 type Meter = { id: string; code: string; name: string; fuel: string; unit: string };
 type History = {
@@ -47,15 +48,17 @@ export function SitesWorkspace({
   orgId,
   sites,
   manage,
+  batches,
 }: {
   orgId: string;
   sites: Site[];
-  portfolios: Portfolio[];
   manage: boolean;
+  batches: { id: string; status: string }[];
 }) {
   const [selected, setSelected] = useState<Site | null>(null),
     [editing, setEditing] = useState(false);
   const [entry, setEntry] = useState<'meter' | 'history' | null>(null);
+  const [mode, setMode] = useState<'manual' | 'upload' | null>(null);
   const [notice, setNotice] = useState('');
   const m = useMutation(),
     base = `organisations/${orgId}`;
@@ -71,6 +74,7 @@ export function SitesWorkspace({
   async function detail(id: string) {
     setSelected(await request(`${base}/sites/${id}`, 'GET'));
     setEditing(false);
+    setMode(null);
   }
   return (
     <div className="stack-form">
@@ -78,39 +82,43 @@ export function SitesWorkspace({
       {manage && (
         <div className="button-row">
           <Button
+            variant={mode === 'manual' ? 'primary' : 'secondary'}
+            aria-expanded={mode === 'manual'}
+            aria-controls="manual-site-section"
             disabled={m.disabled}
             onClick={() => {
               setSelected(null);
               setEditing(true);
+              setMode('manual');
+              setEntry(null);
             }}
           >
-            Add site
+            Add Manually
           </Button>
-          <a href="/templates/sites.xlsx" download>
-            Download site template
-          </a>
-          <a href="#upload-sites">Upload sites</a>
+          <Button
+            variant={mode === 'upload' ? 'primary' : 'secondary'}
+            aria-expanded={mode === 'upload'}
+            aria-controls="upload-sites-section"
+            disabled={m.disabled}
+            onClick={() => {
+              setMode('upload');
+              setSelected(null);
+              setEditing(false);
+              setEntry(null);
+            }}
+          >
+            Upload Sites
+          </Button>
         </div>
       )}
-      {!sites.length && (
-        <p>
-          {manage
-            ? 'Add a site manually or download, fill in and upload the site template below.'
-            : 'No sites assigned yet. Ask your owner or admin for access.'}
-        </p>
+      {manage && mode === 'upload' && (
+        <section id="upload-sites-section" aria-label="Upload sites">
+          <ImportWorkspace orgId={orgId} batches={batches} />
+        </section>
       )}
-      <div className="site-grid">
-        {sites.map((site) => (
-          <section className="panel" key={site.id}>
-            <h2>{site.name}</h2>
-            <Button variant="secondary" disabled={m.disabled} onClick={() => void m.run(() => detail(site.id), '')}>
-              View site
-            </Button>
-          </section>
-        ))}
-      </div>
       {editing && manage && (
         <form
+          id="manual-site-section"
           key={selected?.id ?? 'new'}
           className="panel stack-form"
           onSubmit={(e) => {
@@ -176,12 +184,70 @@ export function SitesWorkspace({
           </div>
           <div className="button-row">
             <Button disabled={m.disabled}>Save site</Button>
-            <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setEditing(false);
+                setMode(null);
+              }}
+            >
               Cancel
             </Button>
           </div>
         </form>
       )}
+      <section className="panel stack-form" aria-labelledby="sites-table-heading">
+        <h2 id="sites-table-heading">Sites</h2>
+        <div className="sites-table-scroll" role="region" aria-label="Sites table" tabIndex={0}>
+          <table className="import-preview-table">
+            <thead>
+              <tr>
+                {fields.map(([key, label]) => (
+                  <th scope="col" key={key}>
+                    {label}
+                  </th>
+                ))}
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sites.map((site) => (
+                <tr key={site.id}>
+                  {fields.map(([key]) =>
+                    key === 'name' ? (
+                      <th scope="row" key={key}>
+                        {site.name}
+                      </th>
+                    ) : (
+                      <td key={key}>{site[key] || '—'}</td>
+                    ),
+                  )}
+                  <td>
+                    <Button
+                      variant="secondary"
+                      disabled={m.disabled}
+                      aria-label={`View site ${site.name}`}
+                      onClick={() => void m.run(() => detail(site.id), '')}
+                    >
+                      View site
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+              {!sites.length && (
+                <tr>
+                  <td colSpan={fields.length + 1}>
+                    {manage
+                      ? 'No sites yet. Choose Add Manually or Upload Sites to create your sites.'
+                      : 'No sites assigned yet. Ask your owner or admin for access.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
       {selected && !editing && (
         <section className="panel stack-form site-details">
           <header className="site-details-header">

@@ -19,7 +19,7 @@ test('meter validation names, highlights and focuses the invalid field', async (
   const org = await post('organisations', { name: 'Meter validation workspace', currency: 'GBP', timezone: 'UTC' });
   await post(`organisations/${org.id}/sites`, { code: 'abc', name: 'Meter validation site' });
   await page.goto(`/org/${org.id}/sites`);
-  await page.getByRole('button', { name: 'View site', exact: true }).click();
+  await page.getByRole('button', { name: 'View site Meter validation site', exact: true }).click();
   await page.getByRole('button', { name: 'Add Meter', exact: true }).click();
   const form = page.locator('form').filter({ has: page.getByRole('heading', { name: 'New meter', exact: true }) });
   await form.getByLabel('Meter code', { exact: true }).fill('G');

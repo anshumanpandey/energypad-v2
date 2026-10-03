@@ -1821,6 +1821,13 @@ small {
   border-collapse: collapse;
   font-size: 13px;
 }
+.sites-table-scroll {
+  min-width: 0;
+  overflow-x: auto;
+}
+.sites-table-scroll table {
+  min-width: 700px;
+}
 .import-preview-table th,
 .import-preview-table td {
   text-align: left;

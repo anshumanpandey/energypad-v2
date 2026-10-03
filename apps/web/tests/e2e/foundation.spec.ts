@@ -281,7 +281,14 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await page.getByRole('button', { name: 'Create portfolio', exact: true }).click();
   await expect(page.getByLabel('Portfolio name', { exact: true })).toHaveValue('Regional sites');
   await page.getByRole('link', { name: 'Sites', exact: true }).click();
-  await page.getByRole('button', { name: 'Add site', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Download Template', exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Excel workbook')).toHaveCount(0);
+  await expect(page.getByLabel('Site Name', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Upload Sites', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Download Template', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Add Manually', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Download Template', exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Excel workbook')).toHaveCount(0);
   await expect(page.getByLabel('Site code', { exact: true })).toHaveCount(0);
   await page.getByLabel('Site Name', { exact: true }).fill('Manual Site');
   await page.getByLabel('Address Line 1', { exact: true }).fill('1 High Street');
@@ -291,6 +298,9 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await page.getByLabel('Postcode', { exact: true }).fill('SW1A 1AA');
   await page.getByRole('button', { name: 'Save site', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Attribute history' })).toBeVisible();
+  const sitesTable = page.getByRole('region', { name: 'Sites table', exact: true });
+  await expect(sitesTable.getByRole('row', { name: /Manual Site/ })).toContainText('Floor 2');
+  await expect(sitesTable.getByRole('row', { name: /Manual Site/ })).toContainText('SW1A 1AA');
   await page.getByRole('button', { name: 'Add History Entry', exact: true }).click();
   await page.getByLabel('Effective date').fill('01/01/2026');
   await page.getByLabel('Population', { exact: true }).fill('0');
@@ -339,7 +349,9 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await expect(newMeter.getByLabel('Meter name')).toHaveValue('Duplicate meter');
   await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
   const templateDownload = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'Download site template', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Upload Sites', exact: true }).click();
+  await expect(page.getByLabel('Site Name', { exact: true })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Download Template', exact: true }).click();
   expect((await templateDownload).suggestedFilename()).toBe('sites.xlsx');
   const template = await page.request.get('/templates/sites.xlsx');
   expect(template.ok()).toBe(true);
@@ -373,8 +385,8 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await expect(page.getByText('Import complete: 2 sites created.', { exact: false })).toBeVisible();
   await page.reload();
   await page.getByRole('link', { name: 'Sites', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Imported Site', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Second Imported Site', exact: true })).toBeVisible();
+  await expect(sitesTable.getByRole('rowheader', { name: 'Imported Site', exact: true })).toBeVisible();
+  await expect(sitesTable.getByRole('rowheader', { name: 'Second Imported Site', exact: true })).toBeVisible();
   const sites = await (await page.request.get(`/api/v1/organisations/${orgPath.split('/')[2]}/sites`)).json();
   expect(sites).toHaveLength(3);
   const manualSite = sites.find((site: { name: string }) => site.name === 'Manual Site');
@@ -383,6 +395,9 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
     await page.request.get(`/api/v1/organisations/${orgPath.split('/')[2]}/sites/${manualSite.id}`)
   ).json();
   expect(savedSite.addressLine2).toBe('Floor 2');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('sites-table-mobile.png'), fullPage: true });
 });
 
 test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ page }, testInfo) => {

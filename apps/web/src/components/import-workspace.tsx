@@ -80,9 +80,9 @@ export function ImportWorkspace({ orgId, batches }: { orgId: string; batches: { 
     <div className="stack-form">
       {m.feedback}
       <section className="panel stack-form">
-        <h2>Upload sites</h2>
+        <h2>Upload Sites</h2>
         <a href="/templates/sites.xlsx" download>
-          Download site template
+          Download Template
         </a>
         <p>
           Upload the site template with Site Name, Address Line 1, Address Line 2, City, State, Postcode, Population,

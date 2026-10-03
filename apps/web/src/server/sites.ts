@@ -64,6 +64,23 @@ export class SiteService extends FoundationService {
       },
     });
   }
+  async siteTable(actor: Actor, org: string) {
+    const accessibleSites = await this.listSites(actor, org);
+    return this.db.site.findMany({
+      where: { organisationId: org, archivedAt: null, id: { in: accessibleSites.map((site) => site.id) } },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        address: true,
+        addressLine2: true,
+        town: true,
+        region: true,
+        postCode: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
   async createSite(actor: Actor, org: string, input: unknown) {
     const supplied = manualSiteInput.extend({ code: siteInput.shape.code.optional() }).parse(input);
     const data = siteInput.parse({ ...supplied, code: supplied.code ?? `SITE-${randomUUID()}` });

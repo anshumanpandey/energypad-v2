@@ -36,7 +36,6 @@ import { can, canManageRole, roleLabels, hasFeature } from '@/domain/policy';
 import { InviteForm, MemberActions, OrganisationForm, RevokeInvite } from '@/components/forms';
 import { SitesWorkspace, PortfoliosWorkspace } from '@/components/sites-workspace';
 import { DataImportWorkspace } from '@/components/data-import-workspace';
-import { ImportWorkspace } from '@/components/import-workspace';
 import { Button } from '@/components/ui/button';
 import { AnalysisWorkspace } from '@/components/analysis-workspace';
 import { EnergyYearProvider } from '@/components/energy-year';
@@ -509,7 +508,7 @@ export default async function WorkspacePage({
     );
   }
   if (section === 'sites') {
-    const portfolios = await siteService.portfolios(actor, org.id);
+    const tableSites = await siteService.siteTable(actor, org.id);
     const batches = manage ? await siteService.imports(actor, org.id) : [];
     return (
       <>
@@ -518,12 +517,7 @@ export default async function WorkspacePage({
           title="Sites"
           text="Manage locations, meters and effective-dated site attributes."
         />
-        <SitesWorkspace orgId={org.id} sites={sites} portfolios={portfolios} manage={manage} />
-        {manage && (
-          <div id="upload-sites">
-            <ImportWorkspace orgId={org.id} batches={batches} />
-          </div>
-        )}
+        <SitesWorkspace orgId={org.id} sites={tableSites} batches={batches} manage={manage} />
       </>
     );
   }
