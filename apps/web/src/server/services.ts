@@ -11,6 +11,8 @@ import { SiteService } from './sites';
 export const siteService = new SiteService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
 
 import { EnergyService } from './energy';
+import { UtilityGraphService } from './utility-graphs';
+export const utilityGraphService = new UtilityGraphService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
 export const energyService = new EnergyService(db, mailer, process.env.AUTH_URL ?? 'http://localhost:3100');
 
 import { EnergyImportService } from './energy-import';

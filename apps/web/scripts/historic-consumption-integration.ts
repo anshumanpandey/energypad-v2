@@ -1,4 +1,5 @@
 import { SiteService } from '../src/server/sites';
+import { UtilityGraphService } from '../src/server/utility-graphs';
 import { readFile } from 'node:fs/promises';
 import { HistoricEmissionsService } from '../src/server/historic-emissions';
 import { TargetImportService } from '../src/server/target-import';
@@ -288,6 +289,33 @@ try {
   assert.equal(targetPreview.count, 96);
   await targets.process(actor, latestOrg.id, latestBytes, targetPreview.signature);
   assert.equal(await db.monthlyPlanVersion.count({ where: { organisationId: latestOrg.id, fuel: 'ALL' } }), 96);
+  const graphs = new UtilityGraphService(db, { async send() {} }, 'http://localhost:3100');
+  const graphRows = await graphs.records(actor, latestOrg.id);
+  assert.equal(graphRows.length, 96);
+  assert.equal(new Set(graphRows.map((r) => r.siteId)).size, 4);
+  assert.deepEqual([...new Set(graphRows.map((r) => r.month.slice(0, 4)))].sort(), ['2025', '2026']);
+  assert.ok(graphRows.every((r) => r.consumption !== null && r.emissions !== null));
+  const londonJanuary = graphRows.find((r) => r.siteName === 'London' && r.month === '2025-01')!;
+  const londonReadings = await db.consumptionRecord.findMany({
+    where: { siteId: londonJanuary.siteId, periodStart: new Date('2025-01-01') },
+  });
+  assert.equal(
+    Number(londonJanuary.consumption),
+    londonReadings.reduce((total, r) => total + Number(r.normalizedKwh), 0),
+  );
+  const januaryFactor = await db.emissionFactorVersion.findFirstOrThrow({
+    where: { siteId: londonJanuary.siteId, validFrom: new Date('2025-01-01') },
+  });
+  assert.equal(Number(londonJanuary.emissions), Number(londonJanuary.consumption) * Number(januaryFactor.factor));
+  await assert.rejects(() => graphs.records(stranger, latestOrg.id));
+  const graphManager = await db.membership.create({
+    data: { organisationId: latestOrg.id, userId: stranger.userId, role: 'SITE_MANAGER' },
+  });
+  assert.deepEqual(await graphs.records(stranger, latestOrg.id), []);
+  await db.siteAssignment.create({
+    data: { organisationId: latestOrg.id, membershipId: graphManager.id, siteId: londonJanuary.siteId },
+  });
+  assert.ok((await graphs.records(stranger, latestOrg.id)).every((r) => r.siteId === londonJanuary.siteId));
   const gapOrg = await service.createOrganisation(actor, {
     name: 'Confirmed missing months',
     currency: 'GBP',
@@ -356,6 +384,10 @@ try {
   const confirmedTargets = await targets.process(actor, gapOrg.id, gapPlanBytes, undefined, true);
   await targets.process(actor, gapOrg.id, gapPlanBytes, confirmedTargets.signature, true);
   assert.equal(await db.monthlyPlanVersion.count({ where: { organisationId: gapOrg.id } }), 12);
+  const gapGraph = await graphs.records(actor, gapOrg.id);
+  assert.equal(gapGraph.find((r) => r.month === '2020-03')!.consumption, '0');
+  assert.equal(gapGraph.find((r) => r.month === '2020-03')!.zeroFilled, true);
+  assert.equal(gapGraph.find((r) => r.month === '2020-02')!.consumption, '17');
   console.log(
     'Historic consumption integration passed: costs, source hours, isolation, atomicity, stale previews, duplicates, factors and ambiguous meters.',
   );
