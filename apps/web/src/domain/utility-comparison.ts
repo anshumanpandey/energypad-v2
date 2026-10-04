@@ -1,5 +1,5 @@
 import type { UtilityGraphRow, UtilityCostTarget } from './utility-graphs';
-function sum(values: (string | null)[]) {
+export function sumUtilityAmounts(values: (string | null)[]) {
   if (!values.length || values.some((v) => v === null)) return null;
   const parts = values.map((value) => {
     const match = /^(\d+)(?:\.(\d+))?(?:e([+-]?\d+))?$/i.exec(value!);
@@ -17,6 +17,7 @@ function sum(values: (string | null)[]) {
 }
 
 export function utilityComparison(rows: UtilityGraphRow[], targets: UtilityCostTarget[], fuel: string) {
+  const sum = sumUtilityAmounts;
   const groups = [...new Set(rows.map((r) => `${r.siteId}|${r.month}`))];
   return groups.map((key) => {
     const matching = rows.filter((r) => `${r.siteId}|${r.month}` === key);
@@ -38,10 +39,12 @@ export function utilityComparison(rows: UtilityGraphRow[], targets: UtilityCostT
       ...first,
       fuel: fuel || 'ALL',
       consumption: sum(matching.map((r) => r.consumption)),
+      emissions: sum(matching.map((r) => r.emissions)),
       cost: currencies.size === 1 ? sum(matching.map((r) => r.cost)) : null,
       grossCost: currencies.size === 1 ? sum(matching.map((r) => r.grossCost ?? null)) : null,
       currency: currencies.size === 1 ? first.currency : null,
       targetEnergy: complete ? sum(selected.map((t) => t.energy)) : null,
+      targetCarbon: complete ? sum(selected.map((t) => t.carbon ?? null)) : null,
       targetCost: complete && targetCurrencies.size === 1 ? sum(selected.map((t) => t.cost)) : null,
       targetGrossCost: complete && targetCurrencies.size === 1 ? sum(selected.map((t) => t.grossCost ?? null)) : null,
       targetCurrency: targetCurrencies.size === 1 ? (selected[0]?.currency ?? null) : null,

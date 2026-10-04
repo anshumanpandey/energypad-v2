@@ -1,5 +1,6 @@
 import { SiteService } from '../src/server/sites';
 import { UtilityGraphService } from '../src/server/utility-graphs';
+import { carbonRollingComparison } from '../src/domain/carbon-footprint';
 import { readFile } from 'node:fs/promises';
 import { HistoricEmissionsService } from '../src/server/historic-emissions';
 import { TargetImportService } from '../src/server/target-import';
@@ -297,6 +298,20 @@ try {
   assert.ok(graphRows.every((r) => r.consumption !== null && r.emissions !== null));
   assert.ok(graphRows.some((r) => r.siteName === 'Glasgow' && r.month.startsWith('2026') && r.fuel === 'DIESEL'));
   assert.ok(graphRows.some((r) => r.siteName === 'Glasgow' && r.month.startsWith('2025') && r.fuel === 'PETROL'));
+  const carbonTargets = await graphs.targets(actor, latestOrg.id);
+  assert.equal(carbonTargets.length, 96);
+  assert.ok(carbonTargets.every((t) => t.carbon !== null && t.carbon !== undefined));
+  const londonHistory = graphRows.filter((r) => r.siteName === 'London');
+  const carbonComparison = carbonRollingComparison(londonHistory, carbonTargets, '2026', '01', '');
+  assert.deepEqual(
+    carbonComparison.map((p) => p.month),
+    ['2025-10', '2025-11', '2025-12', '2026-01'],
+  );
+  assert.ok(carbonComparison.every((p) => p.actual !== null && p.target !== null && p.percent !== null));
+  assert.equal(
+    carbonComparison[3].target,
+    carbonTargets.find((t) => t.siteId === londonHistory[0].siteId && t.month === '2026-01')!.carbon,
+  );
   const costBook = new ExcelJS.Workbook();
   await costBook.xlsx.load(latestBytes as never);
   const costSheet = costBook.getWorksheet('Targets')!;

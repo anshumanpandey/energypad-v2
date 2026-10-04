@@ -16,6 +16,7 @@ export type UtilityCostTarget = {
   month: string;
   fuel: string;
   energy: string;
+  carbon?: string | null;
   cost: string | null;
   grossCost?: string | null;
   currency: string | null;

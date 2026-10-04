@@ -20,6 +20,7 @@ export class UtilityGraphService extends FoundationService {
         month: plan.month,
         fuel: plan.fuel,
         energy: payload.normalizedKwh,
+        carbon: payload.carbon || null,
         cost: payload.cost || null,
         grossCost: payload.grossCost || null,
         currency: payload.currency || null,

@@ -8,6 +8,7 @@ import { utilityLabel } from '@/domain/consumption-sort';
 import { formatEnergyValue } from './format-energy-value';
 import { Button } from './ui/button';
 import { UtilityBars } from './utility-bars';
+import { CarbonFootprintCharts } from './carbon-footprint-charts';
 
 const months = [
   'January',
@@ -41,7 +42,7 @@ export function UtilityGraphs({
   const [filters, setFilters] = useState({ site: firstSite, year: '', month: '01', fuel: '' });
   const [costBasis, setCostBasis] = useState<'net' | 'gross'>('net');
   const [view, setView] = useState<'graph' | 'table'>('graph');
-  const title = kind === 'consumption' ? 'Consumption' : 'Emissions';
+  const title = kind === 'consumption' ? 'Consumption' : 'Carbon Footprint';
   const unit = kind === 'consumption' ? 'kWh' : 'kgCO2e';
   const years = [...new Set(rows.map((r) => r.month.slice(0, 4)))].sort().reverse();
   const fuels = [...new Set(rows.map((r) => r.fuel))].sort();
@@ -215,6 +216,17 @@ export function UtilityGraphs({
           view={view}
           selectedMonth={filters.month}
           costBasis={costBasis}
+        />
+      )}
+      {kind === 'emissions' && chartRows.length > 0 && (
+        <CarbonFootprintCharts
+          rows={view === 'graph' ? chartRows : visible}
+          history={filterUtilityRows(rows, { site: selectedSite, fuel: filters.fuel, year: '', month: '' })}
+          targets={targets.filter((t) => t.siteId === selectedSite)}
+          year={filters.year || [...new Set(chartRows.map((r) => r.month.slice(0, 4)))].sort().at(-1) || ''}
+          month={filters.month}
+          fuel={filters.fuel}
+          view={view}
         />
       )}
     </div>
