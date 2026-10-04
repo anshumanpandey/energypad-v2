@@ -102,7 +102,13 @@ export function DataImportWorkspace({
     </>
   );
 }
-export function HistoricImport({ orgId }: { orgId: string }) {
+export function HistoricImport({
+  orgId,
+  workbookLabel = 'Consumption workbook',
+}: {
+  orgId: string;
+  workbookLabel?: string;
+}) {
   const m = useMutation();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -166,7 +172,7 @@ export function HistoricImport({ orgId }: { orgId: string }) {
             }}
           >
             <label className="import-file-field">
-              <span>Consumption workbook</span>
+              <span>{workbookLabel}</span>
               <input
                 type="file"
                 accept=".xlsx"

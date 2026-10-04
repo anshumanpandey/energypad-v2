@@ -211,7 +211,7 @@ export default async function WorkspacePage({
           </div>
         </div>
         {manage && <DataImportWorkspace orgId={org.id} batches={[]} workflow />}
-        {manage && <HistoricImport orgId={org.id} />}
+        {manage && <HistoricImport orgId={org.id} workbookLabel="Latest consumption workbook" />}
         <AllConsumption orgId={org.id} sites={sites} />
         <EnergyYearProvider>
           <EnergyWorkspace orgId={org.id} sites={sites} manage={manage} />
