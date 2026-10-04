@@ -34,3 +34,11 @@ it('does not invent target costs or sum mixed currencies', () => {
   expect(utilityComparison([row], [], '')[0].targetCost).toBeNull();
   expect(utilityComparison([row, { ...row, fuel: 'ELECTRICITY', currency: 'USD' }], [], '')[0].cost).toBeNull();
 });
+it('keeps net and gross costs distinct and does not infer a missing gross target', () => {
+  const targets = [
+    { siteId: 'a', month: row.month, fuel: 'ALL', energy: '12', cost: '10', grossCost: '12', currency: 'GBP' },
+  ];
+  const result = utilityComparison([{ ...row, cost: '15', grossCost: '18' }], targets, '')[0];
+  expect(result).toMatchObject({ cost: '15', grossCost: '18', targetCost: '10', targetGrossCost: '12' });
+  expect(utilityComparison([row], [{ ...targets[0], grossCost: null }], '')[0].targetGrossCost).toBeNull();
+});

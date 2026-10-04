@@ -38,6 +38,7 @@ export class TargetImportService extends MonthlyPlanService {
         energy: '0',
         carbon: '0',
         ...(r.cost !== undefined ? { cost: '0' } : {}),
+        ...(r.grossCost !== undefined ? { grossCost: '0' } : {}),
         zeroFilled: true,
       }),
       fillMissing,
@@ -74,6 +75,11 @@ export class TargetImportService extends MonthlyPlanService {
             old.carbon !== '' &&
             new Prisma.Decimal(old.carbon).equals(row.carbon) &&
             new Prisma.Decimal(old.conversionFactor).equals(row.unit === 'MWh' ? 1000 : 1) &&
+            (row.grossCost === undefined ||
+              (old.grossCost !== undefined &&
+                old.grossCost !== '' &&
+                new Prisma.Decimal(old.grossCost).equals(row.grossCost) &&
+                old.currency === row.currency)) &&
             (row.cost === undefined ||
               (old.cost !== undefined &&
                 old.cost !== '' &&
@@ -86,7 +92,8 @@ export class TargetImportService extends MonthlyPlanService {
               siteId: site.id,
               previousId: previous?.id ?? null,
               cost: row.cost ?? old?.cost,
-              currency: row.cost === undefined ? old?.currency : row.currency,
+              grossCost: row.grossCost ?? old?.grossCost,
+              currency: row.cost === undefined && row.grossCost === undefined ? old?.currency : row.currency,
               action: !previous ? 'New' : same ? 'Unchanged' : 'Update',
             },
           ];
@@ -115,6 +122,7 @@ export class TargetImportService extends MonthlyPlanService {
                 energy: row.energy,
                 carbon: row.carbon,
                 cost: row.cost,
+                grossCost: row.grossCost,
                 currency: row.currency,
                 conversionFactor: row.unit === 'MWh' ? '1000' : '1',
                 source: row.zeroFilled

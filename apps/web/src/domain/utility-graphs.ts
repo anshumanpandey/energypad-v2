@@ -6,6 +6,7 @@ export type UtilityGraphRow = {
   consumption: string | null;
   emissions: string | null;
   cost: string | null;
+  grossCost?: string | null;
   currency: string | null;
   notes: string[];
   zeroFilled: boolean;
@@ -16,6 +17,7 @@ export type UtilityCostTarget = {
   fuel: string;
   energy: string;
   cost: string | null;
+  grossCost?: string | null;
   currency: string | null;
 };
 

@@ -199,6 +199,10 @@ export function MonthlyPlans({
                       />
                     </label>
                     <label>
+                      Monthly gross target cost (optional, including VAT)
+                      <input name="grossCost" inputMode="decimal" defaultValue={selected?.payload.grossCost} />
+                    </label>
+                    <label>
                       Conversion factor (kWh per source unit)
                       <input
                         name="conversionFactor"
@@ -271,6 +275,7 @@ export function MonthlyPlans({
                     <th>Normalised kWh</th>
                     <th>Carbon kgCO2e</th>
                     <th>Target cost</th>
+                    <th>Gross target cost</th>
                     <th>End uses</th>
                     <th>Version / source</th>
                     <th>Action</th>
@@ -288,6 +293,7 @@ export function MonthlyPlans({
                       <td>{r.payload.normalizedKwh}</td>
                       <td>{r.payload.carbon || 'Not supplied'}</td>
                       <td>{r.payload.cost ? `${r.payload.cost} ${r.payload.currency}` : 'Not supplied'}</td>
+                      <td>{r.payload.grossCost ? `${r.payload.grossCost} ${r.payload.currency}` : 'Not supplied'}</td>
                       <td>{r.payload.energyUses.map((u) => `${u.code}: ${u.name}`).join('; ') || 'None'}</td>
                       <td>
                         Revision {r.revision} · {r.replacement ? 'Superseded' : 'Current'}

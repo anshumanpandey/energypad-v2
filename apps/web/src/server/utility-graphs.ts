@@ -21,6 +21,7 @@ export class UtilityGraphService extends FoundationService {
         fuel: plan.fuel,
         energy: payload.normalizedKwh,
         cost: payload.cost || null,
+        grossCost: payload.grossCost || null,
         currency: payload.currency || null,
       };
     });
@@ -100,6 +101,7 @@ export class UtilityGraphService extends FoundationService {
                   consumption: sum(rows.map((r) => r.normalizedKwh)),
                   emissions: sum(rows.map((r) => r.kgCO2e)),
                   cost: currencies.size === 1 ? sum(originals.map((r) => r?.netCost?.toString())) : null,
+                  grossCost: currencies.size === 1 ? sum(originals.map((r) => r?.grossCost?.toString())) : null,
                   currency: currencies.size === 1 ? [...currencies][0]! : null,
                   notes: [...new Set(rows.filter((r) => r.issue).map((r) => r.issue!))],
                   zeroFilled: originals.some(

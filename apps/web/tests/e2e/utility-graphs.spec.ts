@@ -37,6 +37,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
       month,
       quantity,
       netCost: '15',
+      vatPercent: '20',
       currency: 'GBP',
     });
   }
@@ -59,12 +60,17 @@ test('consumption and emissions menus filter the same data in graph and table vi
     energy: '80',
     carbon: '',
     cost: '12',
+    grossCost: '14.40',
     currency: 'GBP',
     conversionFactor: '1',
     source: 'Browser target budget',
     requestKey: randomUUID(),
   });
   await page.reload();
+  await expect(page.getByLabel('Consumption site', { exact: true })).toHaveValue(leeds.id);
+  await expect(
+    page.getByLabel('Consumption site', { exact: true }).getByRole('option', { name: 'All sites', exact: true }),
+  ).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Consumption', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('img', { name: 'Consumption monthly line graph', exact: true })).toBeVisible();
   await page.getByLabel('Consumption site', { exact: true }).selectOption(london.id);
@@ -78,12 +84,24 @@ test('consumption and emissions menus filter the same data in graph and table vi
   const costTable = page.getByRole('region', { name: 'Actual vs target cost table', exact: true });
   await expect(costTable.getByRole('cell', { name: '15.00 GBP', exact: true })).toBeVisible();
   await expect(costTable.getByRole('cell', { name: '12.00 GBP', exact: true })).toBeVisible();
+  await page.getByLabel('Cost basis', { exact: true }).selectOption('gross');
+  await expect(costTable.getByRole('cell', { name: '18.00 GBP', exact: true })).toBeVisible();
+  await expect(costTable.getByRole('cell', { name: '14.40 GBP', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Graph view', exact: true }).click();
   await expect(page.getByLabel('Consumption year', { exact: true })).toHaveValue('2025');
+  const diverging = page.getByRole('img', { name: 'Actual vs target consumption diverging bar graph', exact: true });
+  await expect(diverging).toBeVisible();
+  await expect(diverging.locator('[data-selected-month="2025-01"]')).toHaveCount(1);
+  await expect(diverging.locator('[data-series="actual"][data-value="100"]')).toHaveCount(1);
+  await expect(diverging.locator('[data-series="target"][data-value="80"]')).toHaveCount(1);
+  await page.getByLabel('Consumption month', { exact: true }).selectOption('02');
+  await expect(diverging.locator('[data-selected-month="2025-02"]')).toHaveCount(1);
+  await expect(diverging.locator('[data-series="actual"][data-value="100"]')).toHaveCount(1);
   await expect(
-    page.getByRole('img', { name: 'Actual vs target cost · GBP monthly line graph', exact: true }),
+    page.getByRole('img', { name: 'Actual vs target cost · GBP monthly bar graph', exact: true }),
   ).toBeVisible();
   await page.getByRole('link', { name: 'Emissions', exact: true }).click();
+  await expect(page.getByLabel('Emissions site', { exact: true })).toHaveValue(leeds.id);
   await page.getByLabel('Emissions site', { exact: true }).selectOption(london.id);
   await page.getByLabel('Emissions year', { exact: true }).selectOption('2025');
   await page.getByLabel('Emissions month', { exact: true }).selectOption('01');

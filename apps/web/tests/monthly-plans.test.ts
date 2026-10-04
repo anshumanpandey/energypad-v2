@@ -15,6 +15,8 @@ describe('monthly plan contract', () => {
   it('accepts zero target cost and requires an explicit currency', () => {
     expect(monthlyPlanInput.safeParse({ ...input, cost: '0', currency: 'GBP' }).success).toBe(true);
     expect(monthlyPlanInput.safeParse({ ...input, cost: '10' }).success).toBe(false);
+    expect(monthlyPlanInput.safeParse({ ...input, grossCost: '12', currency: 'GBP' }).success).toBe(true);
+    expect(monthlyPlanInput.safeParse({ ...input, grossCost: '12' }).success).toBe(false);
   });
   it('expands all months in order without dividing or changing supplied values', () => {
     expect(expandPlanMonths(monthlyPlanInput.parse(input).month)).toEqual(

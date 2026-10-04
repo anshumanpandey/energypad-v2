@@ -302,19 +302,33 @@ try {
   const costSheet = costBook.getWorksheet('Targets')!;
   costSheet.getCell('F1').value = 'Target Cost';
   costSheet.getCell('G1').value = 'Currency';
+  costSheet.getCell('H1').value = 'Target Gross Cost';
   costSheet.getCell('F2').value = 30;
   costSheet.getCell('G2').value = 'GBP';
+  costSheet.getCell('H2').value = 36;
   const costBytes = new Uint8Array(await costBook.xlsx.writeBuffer());
   const costPreview = await targets.process(actor, latestOrg.id, costBytes);
   assert.equal(costPreview.updated, 1);
   await targets.process(actor, latestOrg.id, costBytes, costPreview.signature);
-  assert.ok((await graphs.targets(actor, latestOrg.id)).some((t) => t.cost === '30' && t.currency === 'GBP'));
+  assert.ok(
+    (await graphs.targets(actor, latestOrg.id)).some(
+      (t) => t.cost === '30' && t.grossCost === '36' && t.currency === 'GBP',
+    ),
+  );
   const retainedCosts = await targets.process(actor, latestOrg.id, latestBytes);
   assert.equal(retainedCosts.unchanged, 96);
   const londonJanuary = graphRows.find((r) => r.siteName === 'London' && r.month === '2025-01')!;
   const londonReadings = await db.consumptionRecord.findMany({
     where: { siteId: londonJanuary.siteId, periodStart: new Date('2025-01-01') },
   });
+  assert.equal(
+    Number(londonJanuary.grossCost),
+    londonReadings.reduce((sum, r) => sum + Number(r.grossCost), 0),
+  );
+  assert.equal(
+    Number(londonJanuary.cost),
+    londonReadings.reduce((sum, r) => sum + Number(r.netCost), 0),
+  );
   assert.equal(
     Number(londonJanuary.consumption),
     londonReadings.reduce((total, r) => total + Number(r.normalizedKwh), 0),

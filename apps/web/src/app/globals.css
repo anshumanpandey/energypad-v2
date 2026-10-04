@@ -3102,3 +3102,7 @@ select[aria-invalid='true'] {
   height: 12px;
   border-radius: 50%;
 }
+.utility-selected-month {
+  background: #e9f3dc;
+  font-weight: 600;
+}

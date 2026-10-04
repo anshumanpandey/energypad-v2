@@ -7,6 +7,7 @@ import { utilityComparison } from '@/domain/utility-comparison';
 import { utilityLabel } from '@/domain/consumption-sort';
 import { formatEnergyValue } from './format-energy-value';
 import { Button } from './ui/button';
+import { UtilityBars } from './utility-bars';
 
 const months = [
   'January',
@@ -36,13 +37,17 @@ export function UtilityGraphs({
   targets: UtilityCostTarget[];
 }) {
   const router = useRouter();
-  const [filters, setFilters] = useState({ site: '', year: '', month: '', fuel: '' });
+  const firstSite = sites[0]?.id ?? '';
+  const [filters, setFilters] = useState({ site: firstSite, year: '', month: '01', fuel: '' });
+  const [costBasis, setCostBasis] = useState<'net' | 'gross'>('net');
   const [view, setView] = useState<'graph' | 'table'>('graph');
   const title = kind === 'consumption' ? 'Consumption' : 'Emissions';
   const unit = kind === 'consumption' ? 'kWh' : 'kgCO2e';
   const years = [...new Set(rows.map((r) => r.month.slice(0, 4)))].sort().reverse();
   const fuels = [...new Set(rows.map((r) => r.fuel))].sort();
-  const visible = filterUtilityRows(rows, filters);
+  const selectedSite = sites.some((site) => site.id === filters.site) ? filters.site : firstSite;
+  const visible = filterUtilityRows(rows, { ...filters, site: selectedSite });
+  const chartRows = filterUtilityRows(rows, { ...filters, site: selectedSite, month: '' });
   const available = visible.filter((r) => r[kind] !== null);
   const total =
     visible.length && available.length === visible.length
@@ -89,10 +94,10 @@ export function UtilityGraphs({
               {label}
               <select
                 aria-label={`${title} ${label.toLowerCase()}`}
-                value={filters[key]}
+                value={key === 'site' ? selectedSite : filters[key]}
                 onChange={(event) => setFilters({ ...filters, [key]: event.target.value })}
               >
-                <option value="">{all}</option>
+                {key !== 'site' && <option value="">{all}</option>}
                 {items.map((item) => (
                   <option key={item.value} value={item.value}>
                     {item.label}
@@ -101,6 +106,19 @@ export function UtilityGraphs({
               </select>
             </label>
           ))}
+          {kind === 'consumption' && (
+            <label>
+              Cost basis
+              <select
+                aria-label="Cost basis"
+                value={costBasis}
+                onChange={(event) => setCostBasis(event.target.value as 'net' | 'gross')}
+              >
+                <option value="net">Net (excluding VAT)</option>
+                <option value="gross">Gross (including VAT)</option>
+              </select>
+            </label>
+          )}
         </div>
         <div className="utility-graph-actions">
           <div role="group" aria-label={`${title} view`}>
@@ -113,7 +131,8 @@ export function UtilityGraphs({
           </div>
           <Button
             onClick={() => {
-              setFilters({ site: '', year: '', month: '', fuel: '' });
+              setFilters({ site: firstSite, year: '', month: '01', fuel: '' });
+              setCostBasis('net');
             }}
           >
             Reset filters
@@ -138,7 +157,7 @@ export function UtilityGraphs({
           <p>No data for this selection. Upload consumption data or choose different filters.</p>
         </section>
       ) : view === 'graph' ? (
-        <UtilityLines rows={visible} kind={kind} title={title} unit={unit} />
+        <UtilityLines rows={chartRows} kind={kind} title={title} unit={unit} selectedMonth={filters.month} />
       ) : (
         <section className="panel">
           <div className="analysis-table" role="region" aria-label={`${title} table`} tabIndex={0}>
@@ -152,21 +171,27 @@ export function UtilityGraphs({
                   <th>
                     {title} ({unit})
                   </th>
-                  <th>Net cost</th>
+                  <th>{costBasis === 'gross' ? 'Gross cost' : 'Net cost'}</th>
                   <th>Data status</th>
                 </tr>
               </thead>
               <tbody>
                 {visible.map((row) => (
-                  <tr key={`${row.siteId}-${row.fuel}-${row.month}`}>
+                  <tr
+                    key={`${row.siteId}-${row.fuel}-${row.month}`}
+                    className={row.month.slice(5, 7) === filters.month ? 'utility-selected-month' : undefined}
+                    aria-current={row.month.slice(5, 7) === filters.month ? 'true' : undefined}
+                  >
                     <td>{row.siteName}</td>
                     <td>{row.month.slice(0, 4)}</td>
                     <td>{months[Number(row.month.slice(5, 7)) - 1]}</td>
                     <td>{utilityLabel(row.fuel)}</td>
                     <td title={row[kind] ?? undefined}>{formatEnergyValue(row[kind], 'Unavailable')}</td>
                     <td>
-                      {formatEnergyValue(row.cost, 'Unavailable')}
-                      {row.cost !== null && row.currency ? ` ${row.currency}` : ''}
+                      {formatEnergyValue(costBasis === 'gross' ? row.grossCost : row.cost, 'Unavailable')}
+                      {(costBasis === 'gross' ? row.grossCost : row.cost) != null && row.currency
+                        ? ` ${row.currency}`
+                        : ''}
                     </td>
                     <td>
                       {row[kind] === null
@@ -183,7 +208,14 @@ export function UtilityGraphs({
         </section>
       )}
       {kind === 'consumption' && visible.length > 0 && (
-        <CostComparison rows={visible} targets={targets} fuel={filters.fuel} view={view} />
+        <CostComparison
+          rows={view === 'graph' ? chartRows : visible}
+          targets={targets}
+          fuel={filters.fuel}
+          view={view}
+          selectedMonth={filters.month}
+          costBasis={costBasis}
+        />
       )}
     </div>
   );
@@ -194,21 +226,30 @@ function CostComparison({
   targets,
   fuel,
   view,
+  selectedMonth,
+  costBasis,
 }: {
   rows: UtilityGraphRow[];
   targets: UtilityCostTarget[];
   fuel: string;
   view: 'graph' | 'table';
+  selectedMonth: string;
+  costBasis: 'net' | 'gross';
 }) {
   const comparison = utilityComparison(rows, targets, fuel);
   const series = comparison.flatMap((row) => [
-    { ...row, siteId: `${row.siteId}-actual`, siteName: `${row.siteName} · Actual` },
+    {
+      ...row,
+      cost: costBasis === 'gross' ? row.grossCost : row.cost,
+      siteId: `${row.siteId}-actual`,
+      siteName: `${row.siteName} · Actual`,
+    },
     {
       ...row,
       siteId: `${row.siteId}-target`,
       siteName: `${row.siteName} · Target`,
       consumption: row.targetEnergy,
-      cost: row.targetCost,
+      cost: costBasis === 'gross' ? row.targetGrossCost : row.targetCost,
       currency: row.targetCurrency,
     },
   ]);
@@ -218,8 +259,8 @@ function CostComparison({
       <section className="panel">
         <h2>Actual vs target consumption and cost</h2>
         <p>
-          Cost uses net amounts excluding VAT. Missing target costs remain unavailable. Set monthly target cost and
-          currency in Targets &amp; Monitoring.
+          {costBasis === 'gross' ? 'Gross cost includes VAT.' : 'Net cost excludes VAT.'} Missing target costs remain
+          unavailable. Set monthly target cost and currency in Targets &amp; Monitoring.
         </p>
         {fuel && (
           <p>Site-wide targets cannot be allocated to an individual fuel; a fuel-specific target is required.</p>
@@ -227,14 +268,29 @@ function CostComparison({
       </section>
       {view === 'graph' ? (
         <>
-          <UtilityLines rows={series} kind="consumption" title="Actual vs target consumption" unit="kWh" />
+          <UtilityBars
+            points={comparison.map((row) => ({ month: row.month, actual: row.consumption, target: row.targetEnergy }))}
+            title="Actual vs target consumption"
+            unit="kWh"
+            diverging
+            selectedMonth={selectedMonth}
+          />
           {currencies.map((currency) => (
-            <UtilityLines
+            <UtilityBars
               key={currency}
-              rows={series.map((r) => ({ ...r, cost: r.currency === currency ? r.cost : null }))}
-              kind="cost"
+              points={comparison.map((row) => ({
+                month: row.month,
+                actual: row.currency === currency ? (costBasis === 'gross' ? row.grossCost : row.cost) : null,
+                target:
+                  row.targetCurrency === currency
+                    ? costBasis === 'gross'
+                      ? row.targetGrossCost
+                      : row.targetCost
+                    : null,
+              }))}
               title={`Actual vs target cost · ${currency}`}
               unit={currency}
+              selectedMonth={selectedMonth}
             />
           ))}
           {!currencies.length && (
@@ -254,23 +310,30 @@ function CostComparison({
                   <th>Month</th>
                   <th>Actual consumption (kWh)</th>
                   <th>Target consumption (kWh)</th>
-                  <th>Actual net cost</th>
-                  <th>Target net cost</th>
+                  <th>Actual {costBasis} cost</th>
+                  <th>Target {costBasis} cost</th>
                 </tr>
               </thead>
               <tbody>
                 {comparison.map((row) => (
-                  <tr key={`${row.siteId}-${row.month}`}>
+                  <tr
+                    key={`${row.siteId}-${row.month}`}
+                    className={row.month.slice(5, 7) === selectedMonth ? 'utility-selected-month' : undefined}
+                    aria-current={row.month.slice(5, 7) === selectedMonth ? 'true' : undefined}
+                  >
                     <td>{row.siteName}</td>
                     <td>{row.month}</td>
                     <td>{formatEnergyValue(row.consumption, 'Unavailable')}</td>
                     <td>{formatEnergyValue(row.targetEnergy, 'Unavailable')}</td>
                     <td>
-                      {formatEnergyValue(row.cost, 'Unavailable')} {row.cost !== null ? row.currency : ''}
+                      {formatEnergyValue(costBasis === 'gross' ? row.grossCost : row.cost, 'Unavailable')}{' '}
+                      {(costBasis === 'gross' ? row.grossCost : row.cost) !== null ? row.currency : ''}
                     </td>
                     <td>
-                      {formatEnergyValue(row.targetCost, 'Unavailable')}{' '}
-                      {row.targetCost !== null ? row.targetCurrency : ''}
+                      {formatEnergyValue(costBasis === 'gross' ? row.targetGrossCost : row.targetCost, 'Unavailable')}{' '}
+                      {(costBasis === 'gross' ? row.targetGrossCost : row.targetCost) !== null
+                        ? row.targetCurrency
+                        : ''}
                     </td>
                   </tr>
                 ))}
@@ -288,11 +351,13 @@ function UtilityLines({
   kind,
   title,
   unit,
+  selectedMonth,
 }: {
   rows: UtilityGraphRow[];
   kind: 'consumption' | 'emissions' | 'cost';
   title: string;
   unit: string;
+  selectedMonth: string;
 }) {
   const dates = [...new Set(rows.map((r) => r.month))].sort();
   const series = [...new Set(rows.map((r) => `${r.siteId}|${r.fuel}`))].map((key) => ({
@@ -316,6 +381,19 @@ function UtilityLines({
           <title>
             {title} by site, month and fuel in {unit}
           </title>
+          {dates.map((date, index) =>
+            date.slice(5, 7) === selectedMonth ? (
+              <rect
+                key={`selected-${date}`}
+                data-selected-month={date}
+                x={x(index) - 13}
+                y="35"
+                width="26"
+                height="210"
+                fill="#e9f3dc"
+              />
+            ) : null,
+          )}
           {[0, 0.5, 1].map((fraction) => (
             <g key={fraction}>
               <line x1="80" x2="740" y1={y(maximum * fraction)} y2={y(maximum * fraction)} stroke="#dce5e3" />
@@ -326,7 +404,13 @@ function UtilityLines({
           ))}
           {dates.map((date, index) =>
             dates.length <= 24 || index % Math.ceil(dates.length / 12) === 0 ? (
-              <text key={date} transform={`translate(${x(index)},260) rotate(-35)`} textAnchor="end" fontSize="11">
+              <text
+                key={date}
+                transform={`translate(${x(index)},260) rotate(-35)`}
+                textAnchor="end"
+                fontSize="11"
+                fontWeight={date.slice(5, 7) === selectedMonth ? 'bold' : 'normal'}
+              >
                 {date}
               </text>
             ) : null,
@@ -350,7 +434,9 @@ function UtilityLines({
                       key={row.month}
                       cx={x(index)}
                       cy={y(Number(row[kind]))}
-                      r="5"
+                      r={row.month.slice(5, 7) === selectedMonth ? 7 : 5}
+                      stroke={row.month.slice(5, 7) === selectedMonth ? '#142d29' : undefined}
+                      strokeWidth="2"
                       fill={color}
                       tabIndex={0}
                       role="img"

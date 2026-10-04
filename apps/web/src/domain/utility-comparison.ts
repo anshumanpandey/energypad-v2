@@ -39,9 +39,11 @@ export function utilityComparison(rows: UtilityGraphRow[], targets: UtilityCostT
       fuel: fuel || 'ALL',
       consumption: sum(matching.map((r) => r.consumption)),
       cost: currencies.size === 1 ? sum(matching.map((r) => r.cost)) : null,
+      grossCost: currencies.size === 1 ? sum(matching.map((r) => r.grossCost ?? null)) : null,
       currency: currencies.size === 1 ? first.currency : null,
       targetEnergy: complete ? sum(selected.map((t) => t.energy)) : null,
       targetCost: complete && targetCurrencies.size === 1 ? sum(selected.map((t) => t.cost)) : null,
+      targetGrossCost: complete && targetCurrencies.size === 1 ? sum(selected.map((t) => t.grossCost ?? null)) : null,
       targetCurrency: targetCurrencies.size === 1 ? (selected[0]?.currency ?? null) : null,
     };
   });

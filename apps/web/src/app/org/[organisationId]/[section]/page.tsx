@@ -64,6 +64,7 @@ export default async function WorkspacePage({
   if (section === 'consumption' || section === 'emissions')
     return (
       <UtilityGraphs
+        key={section}
         rows={await accessible(() => utilityGraphService.records(actor, org.id))}
         targets={await accessible(() => utilityGraphService.targets(actor, org.id))}
         sites={sites}

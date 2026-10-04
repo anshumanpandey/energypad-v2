@@ -14,6 +14,7 @@ export const monthlyPlanInput = z
     energy: monthlyAmount,
     carbon: z.union([monthlyAmount, z.literal('')]).default(''),
     cost: z.union([monthlyAmount, z.literal('')]).optional(),
+    grossCost: z.union([monthlyAmount, z.literal('')]).optional(),
     currency: z
       .union([
         z
@@ -32,7 +33,8 @@ export const monthlyPlanInput = z
   })
   .strict()
   .superRefine((v, ctx) => {
-    if (v.cost && !v.currency) ctx.addIssue({ code: 'custom', message: 'Choose a currency for the target cost.' });
+    if ((v.cost || v.grossCost) && !v.currency)
+      ctx.addIssue({ code: 'custom', message: 'Choose a currency for the target cost.' });
     if (v.fuel === 'ALL' && (v.kind !== 'TARGET' || v.unit !== 'kWh'))
       ctx.addIssue({ code: 'custom', message: 'Site-wide values require a consumption target in kWh.' });
     if (

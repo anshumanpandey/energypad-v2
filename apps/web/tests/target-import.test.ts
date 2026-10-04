@@ -9,6 +9,11 @@ const sheet = (rows: string[][], headers = targetColumns) => ({
 describe('Targets worksheet', () => {
   it('accepts optional target cost and currency in full and compact templates', () => {
     expect(
+      parseTargets(
+        sheet([[...row, '10', 'GBP', '12']], [...targetColumns, 'Target Cost', 'Currency', 'Target Gross Cost']),
+      ).records[0],
+    ).toMatchObject({ cost: '10', grossCost: '12', currency: 'GBP' });
+    expect(
       parseTargets(sheet([[...row, '0', 'GBP']], [...targetColumns, 'Target Cost', 'Currency'])).records[0],
     ).toMatchObject({ cost: '0', currency: 'GBP' });
     const compact = parseTargets(
