@@ -7,6 +7,7 @@ import { formatEnergyValue } from './format-energy-value';
 import { UtilityBars } from './utility-bars';
 import { MonthlyChartSummary } from './monthly-chart-summary';
 import { monthlyActuals } from '@/domain/monthly-chart-summary';
+import { sortChartValues, type UtilityChartSort } from '@/domain/utility-chart-sort';
 
 const colors = ['#168578', '#4989c6', '#cd7334', '#9b4c9e', '#578138', '#b74655'];
 export function CarbonFootprintCharts({
@@ -17,6 +18,7 @@ export function CarbonFootprintCharts({
   month,
   fuel,
   view,
+  sortBy,
 }: {
   rows: UtilityGraphRow[];
   history: UtilityGraphRow[];
@@ -25,12 +27,14 @@ export function CarbonFootprintCharts({
   month: string;
   fuel: string;
   view: 'graph' | 'table';
+  sortBy: UtilityChartSort;
 }) {
-  const comparison = utilityComparison(rows, targets, fuel);
+  const comparison = sortChartValues(utilityComparison(rows, targets, fuel), sortBy, (r) => r.emissions);
   const period = month ? `${year}-${month}` : '';
   const summaryPoints = monthlyActuals(history, 'emissions');
-  const recent = carbonRollingComparison(history, targets, year, month, fuel);
-  const summary = carbonRecentSummary(recent);
+  const chronologicalRecent = carbonRollingComparison(history, targets, year, month, fuel);
+  const summary = carbonRecentSummary(chronologicalRecent);
+  const recent = sortChartValues(chronologicalRecent, sortBy, (r) => r.actual);
   const fuels = [...new Set(history.filter((r) => recent.some((p) => p.month === r.month)).map((r) => r.fuel))].sort();
   const maximum = Math.max(
     1,
@@ -45,6 +49,7 @@ export function CarbonFootprintCharts({
           title="Actual vs target emissions"
           unit="kg"
           diverging
+          sortBy={sortBy}
           selectedMonth={month}
           period={period}
           summaryPoints={summaryPoints}
@@ -130,6 +135,7 @@ export function CarbonFootprintCharts({
                         role="img"
                         aria-label={label}
                         data-selected-month={selected ? point.month : undefined}
+                        data-month={point.month}
                       >
                         <title>{label}</title>
                         {selected && <rect x={x - 72} y="20" width="145" height="275" rx="12" fill="#e9f3dc" />}
@@ -226,6 +232,7 @@ export function CarbonFootprintCharts({
                   {recent.map((point, index) => (
                     <g
                       key={point.month}
+                      data-month={point.month}
                       data-selected-month={point.month.slice(5, 7) === month ? point.month : undefined}
                     >
                       {point.month.slice(5, 7) === month && (

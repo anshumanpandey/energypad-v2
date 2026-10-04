@@ -2,18 +2,20 @@
 import { formatEnergyValue } from './format-energy-value';
 import { MonthlyChartSummary } from './monthly-chart-summary';
 import type { MonthlyAmount } from '@/domain/monthly-chart-summary';
+import { sortChartValues, type UtilityChartSort } from '@/domain/utility-chart-sort';
 
 export type UtilityBarPoint = { month: string; actual: string | null; target: string | null };
 export function UtilityBars({
-  points,
+  points: sourcePoints,
   title,
   unit,
   diverging = false,
   selectedMonth,
   actualOnly = false,
   period = '',
-  summaryPoints = points,
+  summaryPoints = sourcePoints,
   targetNote,
+  sortBy = 'month',
 }: {
   points: UtilityBarPoint[];
   title: string;
@@ -24,7 +26,9 @@ export function UtilityBars({
   period?: string;
   summaryPoints?: MonthlyAmount[];
   targetNote?: string;
+  sortBy?: UtilityChartSort;
 }) {
+  const points = sortChartValues(sourcePoints, sortBy, (r) => r.actual);
   const maximum = Math.max(1, ...points.flatMap((p) => [Number(p.actual ?? 0), Number(p.target ?? 0)]));
   const height = diverging ? Math.max(180, points.length * 30 + 90) : 340;
   const baseline = diverging ? 470 : 250;
@@ -113,6 +117,7 @@ export function UtilityBars({
                 aria-label={label}
                 aria-current={selected ? 'true' : undefined}
                 data-selected-month={selected ? point.month : undefined}
+                data-month={point.month}
               >
                 <title>{label}</title>
                 {selected && (

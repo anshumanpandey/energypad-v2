@@ -120,6 +120,18 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await page.getByLabel('Consumption year', { exact: true }).selectOption('2025');
   await page.getByLabel('Consumption month', { exact: true }).selectOption('01');
   await page.getByLabel('Consumption fuel type', { exact: true }).selectOption('GAS');
+  await page.getByLabel('Consumption sort by', { exact: true }).selectOption('high-to-low');
+  const consumptionGraph = page.getByRole('img', { name: 'Consumption monthly line graph', exact: true });
+  await expect(consumptionGraph.locator('text[data-month]').first()).toHaveAttribute('data-month', '2025-01');
+  await page.getByLabel('Consumption sort by', { exact: true }).selectOption('low-to-high');
+  await expect(consumptionGraph.locator('text[data-month]').first()).toHaveAttribute('data-month', '2025-10');
+  await expect(
+    page
+      .getByRole('img', { name: 'Actual vs target consumption diverging bar graph', exact: true })
+      .locator('g[data-month]')
+      .first(),
+  ).toHaveAttribute('data-month', '2025-10');
+  await page.getByLabel('Consumption sort by', { exact: true }).selectOption('month');
   await page.getByRole('button', { name: 'Table view', exact: true }).click();
   const table = page.getByRole('region', { name: 'Consumption table', exact: true });
   await expect(table.getByRole('row')).toHaveCount(2);
@@ -161,6 +173,11 @@ test('consumption and emissions menus filter the same data in graph and table vi
   const recent = page.getByRole('region', { name: 'Recent carbon emissions', exact: true });
   await expect(recent).toContainText('Previous three months average: 30.00 kg');
   await expect(recent.getByText('2024-10', { exact: true })).toBeVisible();
+  await page.getByLabel('Carbon Footprint sort by', { exact: true }).selectOption('high-to-low');
+  await expect(gauge.locator('g[data-month]').first()).toHaveAttribute('data-month', '2025-01');
+  await page.getByLabel('Carbon Footprint sort by', { exact: true }).selectOption('low-to-high');
+  await expect(gauge.locator('g[data-month]').first()).toHaveAttribute('data-month', '2024-10');
+  await expect(recent).toContainText('Previous three months average: 30.00 kg');
   await page.getByRole('button', { name: 'Table view', exact: true }).click();
   await expect(
     page
@@ -197,6 +214,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await page.getByRole('link', { name: 'Carbon Footprint', exact: true }).click();
   await page.getByRole('button', { name: 'Table view', exact: true }).click();
   await page.getByRole('button', { name: 'Reset filters', exact: true }).click();
+  await expect(page.getByLabel('Carbon Footprint sort by', { exact: true })).toHaveValue('month');
   await page.getByLabel('Carbon Footprint site', { exact: true }).selectOption(leeds.id);
   await page.getByLabel('Carbon Footprint month', { exact: true }).selectOption('02');
   await expect(

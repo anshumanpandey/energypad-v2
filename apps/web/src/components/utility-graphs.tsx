@@ -11,6 +11,7 @@ import { UtilityBars } from './utility-bars';
 import { CarbonFootprintCharts } from './carbon-footprint-charts';
 import { MonthlyChartSummary } from './monthly-chart-summary';
 import { monthlyActuals } from '@/domain/monthly-chart-summary';
+import { sortChartValues, type UtilityChartSort } from '@/domain/utility-chart-sort';
 
 const months = [
   'January',
@@ -44,12 +45,13 @@ export function UtilityGraphs({
   const [filters, setFilters] = useState({ site: firstSite, year: '', month: '01', fuel: '' });
   const [costBasis, setCostBasis] = useState<'net' | 'gross'>('net');
   const [view, setView] = useState<'graph' | 'table'>('graph');
+  const [sortBy, setSortBy] = useState<UtilityChartSort>('month');
   const title = kind === 'consumption' ? 'Consumption' : 'Carbon Footprint';
   const unit = kind === 'consumption' ? 'kWh' : 'kg';
   const years = [...new Set(rows.map((r) => r.month.slice(0, 4)))].sort().reverse();
   const fuels = [...new Set(rows.map((r) => r.fuel))].sort();
   const selectedSite = sites.some((site) => site.id === filters.site) ? filters.site : firstSite;
-  const visible = filterUtilityRows(rows, { ...filters, site: selectedSite });
+  const visible = sortChartValues(filterUtilityRows(rows, { ...filters, site: selectedSite }), sortBy, (r) => r[kind]);
   const chartRows = filterUtilityRows(rows, { ...filters, site: selectedSite, month: '' });
   const history = filterUtilityRows(rows, { site: selectedSite, fuel: filters.fuel, year: '', month: '' });
   const reportingYear = filters.year || [...new Set(chartRows.map((r) => r.month.slice(0, 4)))].sort().at(-1) || '';
@@ -125,6 +127,18 @@ export function UtilityGraphs({
               </select>
             </label>
           )}
+          <label>
+            Sort by
+            <select
+              aria-label={`${title} sort by`}
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value as UtilityChartSort)}
+            >
+              <option value="month">Month order</option>
+              <option value="high-to-low">Actual: high to low</option>
+              <option value="low-to-high">Actual: low to high</option>
+            </select>
+          </label>
         </div>
         <div className="utility-graph-actions">
           <div role="group" aria-label={`${title} view`}>
@@ -139,6 +153,7 @@ export function UtilityGraphs({
             onClick={() => {
               setFilters({ site: firstSite, year: '', month: '01', fuel: '' });
               setCostBasis('net');
+              setSortBy('month');
             }}
           >
             Reset filters
@@ -171,6 +186,7 @@ export function UtilityGraphs({
           selectedMonth={filters.month}
           history={history}
           period={period}
+          sortBy={sortBy}
         />
       ) : (
         <section className="panel">
@@ -232,6 +248,7 @@ export function UtilityGraphs({
           view={view}
           selectedMonth={filters.month}
           costBasis={costBasis}
+          sortBy={sortBy}
         />
       )}
       {kind === 'emissions' && chartRows.length > 0 && (
@@ -243,6 +260,7 @@ export function UtilityGraphs({
           month={filters.month}
           fuel={filters.fuel}
           view={view}
+          sortBy={sortBy}
         />
       )}
     </div>
@@ -258,6 +276,7 @@ function CostComparison({
   selectedMonth,
   period,
   costBasis,
+  sortBy,
 }: {
   rows: UtilityGraphRow[];
   history: UtilityGraphRow[];
@@ -267,8 +286,9 @@ function CostComparison({
   selectedMonth: string;
   period: string;
   costBasis: 'net' | 'gross';
+  sortBy: UtilityChartSort;
 }) {
-  const comparison = utilityComparison(rows, targets, fuel);
+  const comparison = sortChartValues(utilityComparison(rows, targets, fuel), sortBy, (r) => r.consumption);
   const currencies = [...new Set(history.map((r) => r.currency).filter((c): c is string => !!c))];
   const costField = costBasis === 'gross' ? 'grossCost' : 'cost';
   return (
@@ -285,6 +305,7 @@ function CostComparison({
           title="Actual vs target consumption"
           unit="kWh"
           diverging
+          sortBy={sortBy}
           selectedMonth={selectedMonth}
           period={period}
           summaryPoints={monthlyActuals(history, 'consumption')}
@@ -326,9 +347,13 @@ function CostComparison({
           history.filter((r) => r.currency === currency),
           costField,
         );
-        const costPoints = monthlyActuals(
-          rows.filter((r) => r.currency === currency),
-          costField,
+        const costPoints = sortChartValues(
+          monthlyActuals(
+            rows.filter((r) => r.currency === currency),
+            costField,
+          ),
+          sortBy,
+          (r) => r.actual,
         );
         return view === 'graph' ? (
           <UtilityBars
@@ -338,6 +363,7 @@ function CostComparison({
             unit={currency}
             selectedMonth={selectedMonth}
             actualOnly
+            sortBy={sortBy}
             period={period}
             summaryPoints={costHistory}
             targetNote={costBasis === 'gross' ? 'Gross cost includes VAT.' : 'Net cost excludes VAT.'}
@@ -388,6 +414,7 @@ function UtilityLines({
   selectedMonth,
   history,
   period,
+  sortBy,
 }: {
   rows: UtilityGraphRow[];
   kind: 'consumption' | 'emissions' | 'cost';
@@ -396,8 +423,9 @@ function UtilityLines({
   selectedMonth: string;
   history: UtilityGraphRow[];
   period: string;
+  sortBy: UtilityChartSort;
 }) {
-  const dates = [...new Set(rows.map((r) => r.month))].sort();
+  const dates = sortChartValues(monthlyActuals(rows, kind), sortBy, (r) => r.actual).map((r) => r.month);
   const series = [...new Set(rows.map((r) => `${r.siteId}|${r.fuel}`))].map((key) => ({
     key,
     rows: rows.filter((r) => `${r.siteId}|${r.fuel}` === key),
@@ -445,6 +473,7 @@ function UtilityLines({
             dates.length <= 24 || index % Math.ceil(dates.length / 12) === 0 ? (
               <text
                 key={date}
+                data-month={date}
                 transform={`translate(${x(index)},260) rotate(-35)`}
                 textAnchor="end"
                 fontSize="11"
