@@ -10,6 +10,14 @@ export type UtilityGraphRow = {
   notes: string[];
   zeroFilled: boolean;
 };
+export type UtilityCostTarget = {
+  siteId: string;
+  month: string;
+  fuel: string;
+  energy: string;
+  cost: string | null;
+  currency: string | null;
+};
 
 export function filterUtilityRows(
   rows: UtilityGraphRow[],

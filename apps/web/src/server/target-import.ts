@@ -32,7 +32,14 @@ export class TargetImportService extends MonthlyPlanService {
     const gaps = missingImportMonths(
       parsed.records,
       (r) => ({ site: r.site, scope: `${r.fuel} · ${r.unit}` }),
-      (r, month) => ({ ...r, month, energy: '0', carbon: '0', zeroFilled: true }),
+      (r, month) => ({
+        ...r,
+        month,
+        energy: '0',
+        carbon: '0',
+        ...(r.cost !== undefined ? { cost: '0' } : {}),
+        zeroFilled: true,
+      }),
       fillMissing,
     );
     return this.db.$transaction(
@@ -66,13 +73,20 @@ export class TargetImportService extends MonthlyPlanService {
             new Prisma.Decimal(old.energy).equals(row.energy) &&
             old.carbon !== '' &&
             new Prisma.Decimal(old.carbon).equals(row.carbon) &&
-            new Prisma.Decimal(old.conversionFactor).equals(row.unit === 'MWh' ? 1000 : 1);
+            new Prisma.Decimal(old.conversionFactor).equals(row.unit === 'MWh' ? 1000 : 1) &&
+            (row.cost === undefined ||
+              (old.cost !== undefined &&
+                old.cost !== '' &&
+                new Prisma.Decimal(old.cost).equals(row.cost) &&
+                old.currency === row.currency));
           return [
             {
               ...row,
               site: site.name,
               siteId: site.id,
               previousId: previous?.id ?? null,
+              cost: row.cost ?? old?.cost,
+              currency: row.cost === undefined ? old?.currency : row.currency,
               action: !previous ? 'New' : same ? 'Unchanged' : 'Update',
             },
           ];
@@ -100,6 +114,8 @@ export class TargetImportService extends MonthlyPlanService {
                 unit: row.unit,
                 energy: row.energy,
                 carbon: row.carbon,
+                cost: row.cost,
+                currency: row.currency,
                 conversionFactor: row.unit === 'MWh' ? '1000' : '1',
                 source: row.zeroFilled
                   ? `Missing Targets month ${row.month}; user confirmed zero fill; SHA256 ${fingerprint}`

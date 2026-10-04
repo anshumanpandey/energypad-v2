@@ -295,6 +295,22 @@ try {
   assert.equal(new Set(graphRows.map((r) => r.siteId)).size, 4);
   assert.deepEqual([...new Set(graphRows.map((r) => r.month.slice(0, 4)))].sort(), ['2025', '2026']);
   assert.ok(graphRows.every((r) => r.consumption !== null && r.emissions !== null));
+  assert.ok(graphRows.some((r) => r.siteName === 'Glasgow' && r.month.startsWith('2026') && r.fuel === 'DIESEL'));
+  assert.ok(graphRows.some((r) => r.siteName === 'Glasgow' && r.month.startsWith('2025') && r.fuel === 'PETROL'));
+  const costBook = new ExcelJS.Workbook();
+  await costBook.xlsx.load(latestBytes as never);
+  const costSheet = costBook.getWorksheet('Targets')!;
+  costSheet.getCell('F1').value = 'Target Cost';
+  costSheet.getCell('G1').value = 'Currency';
+  costSheet.getCell('F2').value = 30;
+  costSheet.getCell('G2').value = 'GBP';
+  const costBytes = new Uint8Array(await costBook.xlsx.writeBuffer());
+  const costPreview = await targets.process(actor, latestOrg.id, costBytes);
+  assert.equal(costPreview.updated, 1);
+  await targets.process(actor, latestOrg.id, costBytes, costPreview.signature);
+  assert.ok((await graphs.targets(actor, latestOrg.id)).some((t) => t.cost === '30' && t.currency === 'GBP'));
+  const retainedCosts = await targets.process(actor, latestOrg.id, latestBytes);
+  assert.equal(retainedCosts.unchanged, 96);
   const londonJanuary = graphRows.find((r) => r.siteName === 'London' && r.month === '2025-01')!;
   const londonReadings = await db.consumptionRecord.findMany({
     where: { siteId: londonJanuary.siteId, periodStart: new Date('2025-01-01') },

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { filterUtilityRows, type UtilityGraphRow } from '@/domain/utility-graphs';
+import { filterUtilityRows, type UtilityGraphRow, type UtilityCostTarget } from '@/domain/utility-graphs';
+import { utilityComparison } from '@/domain/utility-comparison';
 import { utilityLabel } from '@/domain/consumption-sort';
 import { formatEnergyValue } from './format-energy-value';
 import { Button } from './ui/button';
@@ -27,10 +28,12 @@ export function UtilityGraphs({
   rows,
   sites,
   kind,
+  targets,
 }: {
   rows: UtilityGraphRow[];
   sites: { id: string; name: string }[];
   kind: 'consumption' | 'emissions';
+  targets: UtilityCostTarget[];
 }) {
   const router = useRouter();
   const [filters, setFilters] = useState({ site: '', year: '', month: '', fuel: '' });
@@ -179,7 +182,104 @@ export function UtilityGraphs({
           </div>
         </section>
       )}
+      {kind === 'consumption' && visible.length > 0 && (
+        <CostComparison rows={visible} targets={targets} fuel={filters.fuel} view={view} />
+      )}
     </div>
+  );
+}
+
+function CostComparison({
+  rows,
+  targets,
+  fuel,
+  view,
+}: {
+  rows: UtilityGraphRow[];
+  targets: UtilityCostTarget[];
+  fuel: string;
+  view: 'graph' | 'table';
+}) {
+  const comparison = utilityComparison(rows, targets, fuel);
+  const series = comparison.flatMap((row) => [
+    { ...row, siteId: `${row.siteId}-actual`, siteName: `${row.siteName} · Actual` },
+    {
+      ...row,
+      siteId: `${row.siteId}-target`,
+      siteName: `${row.siteName} · Target`,
+      consumption: row.targetEnergy,
+      cost: row.targetCost,
+      currency: row.targetCurrency,
+    },
+  ]);
+  const currencies = [...new Set(series.map((r) => r.currency).filter((c): c is string => !!c))];
+  return (
+    <>
+      <section className="panel">
+        <h2>Actual vs target consumption and cost</h2>
+        <p>
+          Cost uses net amounts excluding VAT. Missing target costs remain unavailable. Set monthly target cost and
+          currency in Targets &amp; Monitoring.
+        </p>
+        {fuel && (
+          <p>Site-wide targets cannot be allocated to an individual fuel; a fuel-specific target is required.</p>
+        )}
+      </section>
+      {view === 'graph' ? (
+        <>
+          <UtilityLines rows={series} kind="consumption" title="Actual vs target consumption" unit="kWh" />
+          {currencies.map((currency) => (
+            <UtilityLines
+              key={currency}
+              rows={series.map((r) => ({ ...r, cost: r.currency === currency ? r.cost : null }))}
+              kind="cost"
+              title={`Actual vs target cost · ${currency}`}
+              unit={currency}
+            />
+          ))}
+          {!currencies.length && (
+            <section className="panel">
+              <h2>Actual vs target cost</h2>
+              <p>No cost values available for this selection.</p>
+            </section>
+          )}
+        </>
+      ) : (
+        <section className="panel">
+          <div className="analysis-table" role="region" aria-label="Actual vs target cost table" tabIndex={0}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Site</th>
+                  <th>Month</th>
+                  <th>Actual consumption (kWh)</th>
+                  <th>Target consumption (kWh)</th>
+                  <th>Actual net cost</th>
+                  <th>Target net cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparison.map((row) => (
+                  <tr key={`${row.siteId}-${row.month}`}>
+                    <td>{row.siteName}</td>
+                    <td>{row.month}</td>
+                    <td>{formatEnergyValue(row.consumption, 'Unavailable')}</td>
+                    <td>{formatEnergyValue(row.targetEnergy, 'Unavailable')}</td>
+                    <td>
+                      {formatEnergyValue(row.cost, 'Unavailable')} {row.cost !== null ? row.currency : ''}
+                    </td>
+                    <td>
+                      {formatEnergyValue(row.targetCost, 'Unavailable')}{' '}
+                      {row.targetCost !== null ? row.targetCurrency : ''}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+    </>
   );
 }
 
@@ -190,7 +290,7 @@ function UtilityLines({
   unit,
 }: {
   rows: UtilityGraphRow[];
-  kind: 'consumption' | 'emissions';
+  kind: 'consumption' | 'emissions' | 'cost';
   title: string;
   unit: string;
 }) {

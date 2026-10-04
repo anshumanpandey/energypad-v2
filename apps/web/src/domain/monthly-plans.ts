@@ -13,6 +13,17 @@ export const monthlyPlanInput = z
     unit: z.enum(['kWh', 'MWh', 'm3', 'litre', 'kg']),
     energy: monthlyAmount,
     carbon: z.union([monthlyAmount, z.literal('')]).default(''),
+    cost: z.union([monthlyAmount, z.literal('')]).optional(),
+    currency: z
+      .union([
+        z
+          .string()
+          .trim()
+          .toUpperCase()
+          .regex(/^[A-Z]{3}$/),
+        z.literal(''),
+      ])
+      .optional(),
     conversionFactor: monthlyAmount.refine((v) => Number(v) > 0, 'The conversion factor must be positive.'),
     source: z.string().trim().min(3).max(1000),
     energyUseCodes: z.string().trim().max(1000).default(''),
@@ -21,6 +32,7 @@ export const monthlyPlanInput = z
   })
   .strict()
   .superRefine((v, ctx) => {
+    if (v.cost && !v.currency) ctx.addIssue({ code: 'custom', message: 'Choose a currency for the target cost.' });
     if (v.fuel === 'ALL' && (v.kind !== 'TARGET' || v.unit !== 'kWh'))
       ctx.addIssue({ code: 'custom', message: 'Site-wide values require a consumption target in kWh.' });
     if (

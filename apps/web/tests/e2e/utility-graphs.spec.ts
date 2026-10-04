@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 
 test('consumption and emissions menus filter the same data in graph and table views', async ({ page }, testInfo) => {
   const fixture = JSON.parse(await readFile('.local/e2e-report-schedules.json', 'utf8'));
@@ -31,7 +32,13 @@ test('consumption and emissions menus filter the same data in graph and table vi
       fuel,
       unit: 'kWh',
     });
-    await post(`${base}/sites/${site.id}/energy`, { meterId: meter.id, month, quantity });
+    await post(`${base}/sites/${site.id}/energy`, {
+      meterId: meter.id,
+      month,
+      quantity,
+      netCost: '15',
+      currency: 'GBP',
+    });
   }
   await post(`${base}/emission-factors`, {
     fuel: 'GAS',
@@ -44,6 +51,20 @@ test('consumption and emissions menus filter the same data in graph and table vi
     lastDay: '2025-12-31',
   });
   await page.goto(`/org/${org.id}/consumption`);
+  await post(`${base}/sites/${london.id}/monthly-plans`, {
+    kind: 'TARGET',
+    month: '2025-01',
+    fuel: 'GAS',
+    unit: 'kWh',
+    energy: '80',
+    carbon: '',
+    cost: '12',
+    currency: 'GBP',
+    conversionFactor: '1',
+    source: 'Browser target budget',
+    requestKey: randomUUID(),
+  });
+  await page.reload();
   await expect(page.getByRole('link', { name: 'Consumption', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('img', { name: 'Consumption monthly line graph', exact: true })).toBeVisible();
   await page.getByLabel('Consumption site', { exact: true }).selectOption(london.id);
@@ -54,8 +75,14 @@ test('consumption and emissions menus filter the same data in graph and table vi
   const table = page.getByRole('region', { name: 'Consumption table', exact: true });
   await expect(table.getByRole('row')).toHaveCount(2);
   await expect(table.getByRole('cell', { name: '100.00', exact: true })).toBeVisible();
+  const costTable = page.getByRole('region', { name: 'Actual vs target cost table', exact: true });
+  await expect(costTable.getByRole('cell', { name: '15.00 GBP', exact: true })).toBeVisible();
+  await expect(costTable.getByRole('cell', { name: '12.00 GBP', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Graph view', exact: true }).click();
   await expect(page.getByLabel('Consumption year', { exact: true })).toHaveValue('2025');
+  await expect(
+    page.getByRole('img', { name: 'Actual vs target cost · GBP monthly line graph', exact: true }),
+  ).toBeVisible();
   await page.getByRole('link', { name: 'Emissions', exact: true }).click();
   await page.getByLabel('Emissions site', { exact: true }).selectOption(london.id);
   await page.getByLabel('Emissions year', { exact: true }).selectOption('2025');
@@ -72,7 +99,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await page.getByLabel('Emissions month', { exact: true }).selectOption('02');
   await expect(
     page.getByRole('region', { name: 'Emissions table', exact: true }).getByText('Unavailable', { exact: true }),
-  ).toHaveCount(2);
+  ).toHaveCount(1);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: testInfo.outputPath('emissions-table-mobile.png'), fullPage: true });
 });

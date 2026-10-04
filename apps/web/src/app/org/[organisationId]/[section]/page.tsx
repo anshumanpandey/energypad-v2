@@ -65,6 +65,7 @@ export default async function WorkspacePage({
     return (
       <UtilityGraphs
         rows={await accessible(() => utilityGraphService.records(actor, org.id))}
+        targets={await accessible(() => utilityGraphService.targets(actor, org.id))}
         sites={sites}
         kind={section}
       />

@@ -7,6 +7,19 @@ const sheet = (rows: string[][], headers = targetColumns) => ({
   rows: rows.map((cells, i) => ({ row: i + 2, cells })),
 });
 describe('Targets worksheet', () => {
+  it('accepts optional target cost and currency in full and compact templates', () => {
+    expect(
+      parseTargets(sheet([[...row, '0', 'GBP']], [...targetColumns, 'Target Cost', 'Currency'])).records[0],
+    ).toMatchObject({ cost: '0', currency: 'GBP' });
+    const compact = parseTargets(
+      sheet(
+        [['site_mit', '2023', 'Jan', '150', '200', '25.50', 'GBP']],
+        ['Site Code', 'Year', 'Month', 'Target Energy', 'Target Carbon (Kg)', 'Target Cost', 'Currency'],
+      ),
+    );
+    expect(compact.errors).toEqual([]);
+    expect(compact.records[0]).toMatchObject({ fuel: 'ALL', cost: '25.50', currency: 'GBP' });
+  });
   it('accepts the fixed format, trimmed headings, zero, month numbers and independent petrol', () => {
     const parsed = parseTargets(
       sheet(

@@ -1,11 +1,30 @@
 import { Prisma } from '@prisma/client';
 import { FoundationService, type Actor } from './foundation';
 import { monthlyCarbonRows } from '../domain/carbon-monthly';
-import type { UtilityGraphRow } from '../domain/utility-graphs';
+import type { UtilityGraphRow, UtilityCostTarget } from '../domain/utility-graphs';
+import type { MonthlyPlanPayload } from '../domain/monthly-plans';
+import { importedFuel } from '../domain/imported-fuel';
 
 const Decimal = Prisma.Decimal.clone({ precision: 50 });
 
 export class UtilityGraphService extends FoundationService {
+  async targets(actor: Actor, organisationId: string): Promise<UtilityCostTarget[]> {
+    const sites = await this.listSites(actor, organisationId);
+    const plans = await this.db.monthlyPlanVersion.findMany({
+      where: { organisationId, siteId: { in: sites.map((s) => s.id) }, kind: 'TARGET', replacement: { is: null } },
+    });
+    return plans.map((plan) => {
+      const payload = plan.payload as unknown as MonthlyPlanPayload;
+      return {
+        siteId: plan.siteId,
+        month: plan.month,
+        fuel: plan.fuel,
+        energy: payload.normalizedKwh,
+        cost: payload.cost || null,
+        currency: payload.currency || null,
+      };
+    });
+  }
   async records(actor: Actor, organisationId: string) {
     return this.db.$transaction(
       async (tx) => {
@@ -49,14 +68,22 @@ export class UtilityGraphService extends FoundationService {
             const yearMeters = siteMeters.filter((m) => representedFuels.has(m.fuel));
             const results = yearMeters.map((meter) => ({
               meter,
+              displayFuel: (() => {
+                const reading = siteReadings.find(
+                  (r) => r.meterId === meter.id && r.periodStart.getUTCFullYear() === year,
+                );
+                return reading
+                  ? importedFuel(reading.fuel, reading.importProvenance ?? reading.sourceProvenance)
+                  : meter.fuel;
+              })(),
               rows: monthlyCarbonRows(
                 year,
                 siteReadings.filter((r) => r.meterId === meter.id),
                 factors,
               ),
             }));
-            for (const fuel of new Set(yearMeters.map((m) => m.fuel))) {
-              const matching = results.filter((r) => r.meter.fuel === fuel);
+            for (const fuel of new Set(results.map((r) => r.displayFuel))) {
+              const matching = results.filter((r) => r.displayFuel === fuel);
               for (let index = 0; index < 12; index++) {
                 const rows = matching.map((r) => r.rows[index]);
                 const sum = (values: (string | undefined)[]) =>

@@ -4,6 +4,7 @@ import { request } from './forms';
 import { Button } from './ui/button';
 import { formatEnergyValue } from './format-energy-value';
 import { utilityLabel } from '@/domain/consumption-sort';
+import { importedFuel } from '@/domain/imported-fuel';
 
 type Reading = {
   id: string;
@@ -20,6 +21,8 @@ type Reading = {
   site: { name: string };
   qualityFlags: string[];
   meter: { name: string };
+  importProvenance?: unknown;
+  sourceProvenance?: unknown;
 };
 
 export function AllConsumption({ orgId, sites }: { orgId: string; sites: { id: string; name: string }[] }) {
@@ -126,7 +129,9 @@ export function AllConsumption({ orgId, sites }: { orgId: string; sites: { id: s
                       <td>{record.site.name}</td>
                       <td>{record.periodStart.slice(0, 7)}</td>
                       <td>{record.meter.name}</td>
-                      <td>{utilityLabel(record.fuel)}</td>
+                      <td>
+                        {utilityLabel(importedFuel(record.fuel, record.importProvenance ?? record.sourceProvenance))}
+                      </td>
                       <td>{record.endUse}</td>
                       <td>
                         {formatEnergyValue(record.sourceQuantity)} {record.sourceUnit}

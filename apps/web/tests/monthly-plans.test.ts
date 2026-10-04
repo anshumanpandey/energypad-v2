@@ -12,6 +12,10 @@ const input = {
   requestKey: '11111111-1111-4111-8111-111111111111',
 };
 describe('monthly plan contract', () => {
+  it('accepts zero target cost and requires an explicit currency', () => {
+    expect(monthlyPlanInput.safeParse({ ...input, cost: '0', currency: 'GBP' }).success).toBe(true);
+    expect(monthlyPlanInput.safeParse({ ...input, cost: '10' }).success).toBe(false);
+  });
   it('expands all months in order without dividing or changing supplied values', () => {
     expect(expandPlanMonths(monthlyPlanInput.parse(input).month)).toEqual(
       Array.from({ length: 12 }, (_, i) => `2020-${String(i + 1).padStart(2, '0')}`),
