@@ -147,7 +147,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await expect(diverging).toBeVisible();
   await expect(diverging.locator('[data-selected-month="2025-01"]')).toHaveCount(1);
   await expect(diverging.locator('[data-series="actual"][data-value="100"]')).toHaveCount(1);
-  await expect(diverging.locator('[data-series="target"][data-value="80"]')).toHaveCount(1);
+  await expect(diverging.locator('[data-month="2025-01"] [data-series="target"][data-value="80"]')).toHaveCount(1);
   await page.getByLabel('Consumption month', { exact: true }).selectOption('02');
   await expect(diverging.locator('[data-selected-month="2025-02"]')).toHaveCount(1);
   await expect(diverging.locator('[data-series="actual"][data-value="100"]')).toHaveCount(1);
