@@ -333,7 +333,7 @@ try {
       .fingerprint,
     multiSite.fingerprint,
   );
-  assert.ok(portfolioReport.evidence.every((r) => r.algorithmVersion === 'monthly-exact-factor-v1'));
+  assert.ok(portfolioReport.evidence.every((r) => r.algorithmVersion === 'monthly-exact-factor-v2'));
   const siteReport = await carbon.report(actor, org.id, 'site', site.id, summaryDefinition);
   assert.equal(siteReport.evidence.length, 1);
   assert.equal(siteReport.evidence[0].id, newReading.id);
