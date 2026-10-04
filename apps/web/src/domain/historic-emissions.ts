@@ -4,6 +4,9 @@ import type { WorkbookCellIssue } from './workbook-errors';
 
 export const emissionsSheet = 'Emissions';
 export const emissionsColumns = ['Site Code', 'Year', 'Month', 'Utility Type', 'Fuel Unit', 'Emission Factor'];
+export const compactEmissionsColumns = ['Site Name', 'Year', 'Month', 'Emission Factor'];
+export const isCompactEmissions = (headers: readonly string[]) =>
+  headers[3]?.trim().toLowerCase() === 'emission factor';
 export const emissionCellIssue = (row: number, column: number, message: string): WorkbookCellIssue => ({
   ...historicIssue(row, column, message),
   sheet: emissionsSheet,
@@ -14,6 +17,8 @@ const fuels: Record<string, string> = {
   'solar pv': 'SOLAR_PV',
   gas: 'GAS',
   diesel: 'OIL',
+  'bio diesel': 'BIODIESEL',
+  biodiesel: 'BIODIESEL',
   oil: 'OIL',
   petrol: 'PETROL',
   lpg: 'LPG',
@@ -23,8 +28,23 @@ const fuels: Record<string, string> = {
 };
 const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 export function parseEmissions(sheet: ImportSheet | undefined, errors: WorkbookCellIssue[] = []) {
-  const records: { row: number; siteCode: string; month: string; fuel: string; factor: string }[] = [];
+  const compact = isCompactEmissions(sheet?.headers ?? []);
+  if (sheet && compact)
+    sheet = {
+      ...sheet,
+      headers: [...sheet.headers.slice(0, 3), 'Utility Type', 'Fuel Unit', ...sheet.headers.slice(3)],
+      rows: sheet.rows.map((r) => ({ ...r, cells: [...r.cells.slice(0, 3), 'ALL', 'kWh', ...r.cells.slice(3)] })),
+    };
+  const records: {
+    row: number;
+    siteCode: string;
+    month: string;
+    fuel: string;
+    factor: string;
+    zeroFilled?: boolean;
+  }[] = [];
   const add = (row: number, column: number, message: string) => {
+    if (compact && column >= 6) column -= 2;
     if (!errors.some((e) => e.row === row && e.column === column)) errors.push(emissionCellIssue(row, column, message));
   };
   if (!sheet) {
@@ -34,6 +54,7 @@ export function parseEmissions(sheet: ImportSheet | undefined, errors: WorkbookC
   emissionsColumns.forEach((name, i) => {
     const header = sheet.headers[i]?.trim() ?? '';
     if (i === 0 && !header) return; // The supplied template intentionally leaves A1 blank.
+    if (i === 0 && header.toLowerCase() === 'site name') return;
     if (header.toLowerCase() !== name.toLowerCase())
       add(1, i + 1, `Expected ${name} in column ${String.fromCharCode(65 + i)}.`);
   });
@@ -51,7 +72,7 @@ export function parseEmissions(sheet: ImportSheet | undefined, errors: WorkbookC
     if (!/^(19|20|21)\d{2}$/.test(v[1])) add(row, 2, 'Use a four-digit year from 1900 to 2199.');
     const month = /^(0?[1-9]|1[0-2])$/.test(v[2]) ? Number(v[2]) : months.indexOf(v[2].toLowerCase()) + 1;
     if (!month) add(row, 3, 'Use Jan–Dec or a month number from 1 to 12.');
-    const fuel = fuels[v[3].toLowerCase()];
+    const fuel = compact ? 'ALL' : fuels[v[3].toLowerCase()];
     if (!fuel) add(row, 4, 'Use Grid Electricity, Solar PV, Gas, Diesel, Oil, Petrol, LPG, Biomass, Heat or Other.');
     if (v[4].toLowerCase() !== 'kwh') add(row, 5, 'Use kWh. Emission Factor must be expressed per kWh.');
     if (!/^\d{1,9}(\.\d{1,9})?$/.test(v[5])) add(row, 6, 'Use a non-negative factor with up to nine decimal places.');

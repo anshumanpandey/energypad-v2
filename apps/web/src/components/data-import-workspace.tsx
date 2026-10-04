@@ -9,6 +9,8 @@ import { WorkbookImport } from './workbook-import';
 import { Button } from './ui/button';
 import { responseError, useMutation } from './forms';
 import { historicCompactColumns } from '@/domain/historic-consumption';
+import { MissingMonthConfirmation } from './missing-month-confirmation';
+import type { MissingImportMonth } from '@/domain/import-missing-months';
 type Preview = {
   committed: boolean;
   count: number;
@@ -112,6 +114,8 @@ export function HistoricImport({
   const m = useMutation();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [fillMissing, setFillMissing] = useState(false);
+  const [missing, setMissing] = useState<MissingImportMonth[]>([]);
   async function upload(commit: boolean) {
     if (!file) throw new Error('Choose an XLSX workbook.');
     const signature = preview?.signature;
@@ -122,6 +126,7 @@ export function HistoricImport({
         method: 'POST',
         headers: {
           'Content-Type': 'application/octet-stream',
+          'X-Fill-Missing-Months': String(fillMissing),
           ...(commit ? { 'X-Import-Signature': signature ?? '' } : {}),
         },
         body: file,
@@ -130,6 +135,7 @@ export function HistoricImport({
     const result = await response.json();
     if (!response.ok) throw responseError(result);
     setPreview(result);
+    setMissing(result.missingMonths ?? []);
   }
   return (
     <section className="consumption-import">
@@ -181,6 +187,8 @@ export function HistoricImport({
                 onChange={(event) => {
                   setFile(event.target.files?.[0] ?? null);
                   setPreview(null);
+                  setMissing([]);
+                  setFillMissing(false);
                 }}
               />
             </label>
@@ -274,6 +282,17 @@ export function HistoricImport({
         </div>
       </details>
       <div className="import-feedback">{m.feedback}</div>
+      {!preview?.committed && (
+        <MissingMonthConfirmation
+          missing={missing}
+          confirmed={fillMissing}
+          disabled={m.disabled}
+          onChange={(value) => {
+            setFillMissing(value);
+            setPreview(null);
+          }}
+        />
+      )}
       {preview && (
         <section className="panel import-preview">
           <div className="import-card-heading">

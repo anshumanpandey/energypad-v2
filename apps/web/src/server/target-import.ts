@@ -8,13 +8,14 @@ import { parseTargets, targetIssue } from '../domain/target-import';
 import type { MonthlyPlanPayload } from '../domain/monthly-plans';
 import { WorkbookCellError, type WorkbookCellIssue } from '../domain/workbook-errors';
 import { DomainError } from '../domain/policy';
+import { missingImportMonths } from '../domain/import-missing-months';
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const requestId = (value: unknown) => {
   const h = hash(value);
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
 };
 export class TargetImportService extends MonthlyPlanService {
-  async process(actor: Actor, org: string, bytes: Uint8Array, signature?: string) {
+  async process(actor: Actor, org: string, bytes: Uint8Array, signature?: string, fillMissing = false) {
     await this.membership(actor, org, 'organisation:update');
     const window = Math.floor(Date.now() / 3600000),
       key = `target-import:${org}:${window}`;
@@ -27,7 +28,13 @@ export class TargetImportService extends MonthlyPlanService {
     const errors: WorkbookCellIssue[] = [];
     const sheets = await readWorkbook(bytes, { sheetName: 'Targets', cellErrors: errors });
     const parsed = parseTargets(sheets[0], errors),
-      fingerprint = hash(sheets);
+      fingerprint = hash({ sheets, fillMissing });
+    const gaps = missingImportMonths(
+      parsed.records,
+      (r) => ({ site: r.site, scope: `${r.fuel} · ${r.unit}` }),
+      (r, month) => ({ ...r, month, energy: '0', carbon: '0', zeroFilled: true }),
+      fillMissing,
+    );
     return this.db.$transaction(
       async (tx) => {
         await this.lock(tx, org);
@@ -45,7 +52,7 @@ export class TargetImportService extends MonthlyPlanService {
           )
             errors.push(targetIssue(row.row, 1, 'Site name must match one active site in this workspace.'));
         }
-        const prepared = parsed.records.flatMap((row) => {
+        const prepared = gaps.records.flatMap((row) => {
           const matches = match(row.site);
           if (matches.length !== 1) return [];
           const site = matches[0];
@@ -53,6 +60,7 @@ export class TargetImportService extends MonthlyPlanService {
             (s) => s.siteId === site.id && s.month === row.month && s.fuel === row.fuel && s.unit === row.unit,
           );
           const old = previous?.payload as MonthlyPlanPayload | undefined;
+          if (row.zeroFilled && previous) return []; // Retain existing targets.
           const same =
             old &&
             new Prisma.Decimal(old.energy).equals(row.energy) &&
@@ -93,7 +101,9 @@ export class TargetImportService extends MonthlyPlanService {
                 energy: row.energy,
                 carbon: row.carbon,
                 conversionFactor: row.unit === 'MWh' ? '1000' : '1',
-                source: `Targets worksheet, row ${row.row}, SHA256 ${fingerprint}`,
+                source: row.zeroFilled
+                  ? `Missing Targets month ${row.month}; user confirmed zero fill; SHA256 ${fingerprint}`
+                  : `Targets worksheet, row ${row.row}, SHA256 ${fingerprint}`,
                 requestKey: requestId({ org, expected, row: row.row }),
               },
               row.previousId ?? undefined,
@@ -101,6 +111,8 @@ export class TargetImportService extends MonthlyPlanService {
             );
           }
         return {
+          missingMonths: gaps.missingMonths,
+          zeroFillConfirmed: fillMissing,
           committed: signature !== undefined || !pending.length,
           signature: expected,
           count: prepared.length,

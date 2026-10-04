@@ -5,6 +5,8 @@ import { Button } from './ui/button';
 import { responseError, useMutation } from './forms';
 import { emissionsColumns } from '@/domain/historic-emissions';
 import { factorBases } from '@/domain/emission-factors';
+import { MissingMonthConfirmation } from './missing-month-confirmation';
+import type { MissingImportMonth } from '@/domain/import-missing-months';
 type Preview = {
   committed: boolean;
   count: number;
@@ -29,6 +31,8 @@ export function HistoricEmissionsImport({ orgId }: { orgId: string }) {
   const [geography, setGeography] = useState('GB');
   const [basis, setBasis] = useState('LOCATION_BASED');
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [fillMissing, setFillMissing] = useState(false);
+  const [missing, setMissing] = useState<MissingImportMonth[]>([]);
   async function upload(commit: boolean) {
     if (!file) throw new Error('Choose an XLSX workbook.');
     const signature = preview?.signature;
@@ -41,6 +45,7 @@ export function HistoricEmissionsImport({ orgId }: { orgId: string }) {
         body: file,
         headers: {
           'Content-Type': 'application/octet-stream',
+          'X-Fill-Missing-Months': String(fillMissing),
           ...(commit ? { 'X-Import-Signature': signature ?? '' } : {}),
         },
       },
@@ -48,6 +53,7 @@ export function HistoricEmissionsImport({ orgId }: { orgId: string }) {
     const result = await response.json();
     if (!response.ok) throw responseError(result);
     setPreview(result);
+    setMissing(result.missingMonths ?? []);
   }
   return (
     <section className="consumption-import">
@@ -90,6 +96,8 @@ export function HistoricEmissionsImport({ orgId }: { orgId: string }) {
                 onChange={(event) => {
                   setFile(event.target.files?.[0] ?? null);
                   setPreview(null);
+                  setMissing([]);
+                  setFillMissing(false);
                 }}
               />
             </label>
@@ -155,6 +163,17 @@ export function HistoricEmissionsImport({ orgId }: { orgId: string }) {
         </aside>
       </div>
       {m.feedback}
+      {!preview?.committed && (
+        <MissingMonthConfirmation
+          missing={missing}
+          confirmed={fillMissing}
+          disabled={m.disabled}
+          onChange={(value) => {
+            setFillMissing(value);
+            setPreview(null);
+          }}
+        />
+      )}
       {preview && (
         <section className="panel import-preview" aria-label="Emissions import preview">
           <h3>{preview.committed ? 'Emission factors imported' : 'Review emission factors'}</h3>

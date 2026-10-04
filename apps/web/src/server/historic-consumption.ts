@@ -14,6 +14,7 @@ import {
   historicSourceColumn,
 } from '../domain/historic-consumption';
 import { readWorkbook } from './workbook';
+import { missingImportMonths, type MissingImportMonth } from '../domain/import-missing-months';
 const hash = (v: unknown) => createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const json = (v: unknown) => JSON.parse(JSON.stringify(v));
 type DefaultMeter = { id: string; site: string; code: string; name: string; fuel: string; unit: string };
@@ -24,6 +25,8 @@ type ImportResult = {
   updated: number;
   unchanged: number;
   signature: string;
+  missingMonths: MissingImportMonth[];
+  zeroFillConfirmed: boolean;
   defaultMeters: DefaultMeter[];
   records: {
     row: number;
@@ -51,7 +54,7 @@ const stableId = (value: unknown) => {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
 };
 export class HistoricConsumptionService extends EnergyService {
-  async process(actor: Actor, org: string, bytes: Uint8Array, signature?: string) {
+  async process(actor: Actor, org: string, bytes: Uint8Array, signature?: string, fillMissing = false) {
     await this.membership(actor, org, 'organisation:update');
     const window = Math.floor(Date.now() / 3600000);
     const bucket = await this.db.rateLimitBucket.upsert({
@@ -67,8 +70,23 @@ export class HistoricConsumptionService extends EnergyService {
       ignoredColumns: historicIgnoredColumns,
     });
     const parsed = parseHistoric(sheets[0], errors);
+    const gaps = missingImportMonths(
+      parsed.records,
+      (r) => ({ site: r.siteCode, scope: `${r.fuel} · ${r.unit} · ${r.endUse.trim().toLowerCase()}` }),
+      (r, month) => ({
+        ...r,
+        month,
+        quantity: '0',
+        grossCost: '0',
+        vatCost: '0',
+        population: null,
+        dailyHours: null,
+        zeroFilled: true,
+      }),
+      fillMissing,
+    );
     const column = (value: number) => historicSourceColumn(sheets[0]?.headers ?? [], value);
-    const fingerprint = `historic-v1:${hash(sheets)}`;
+    const fingerprint = `historic-v1:${hash({ sheets, fillMissing })}`;
     return this.db
       .$transaction(
         async (tx) => {
@@ -94,6 +112,8 @@ export class HistoricConsumptionService extends EnergyService {
                 committed: true,
                 count: ids.length,
                 signature,
+                missingMonths: gaps.missingMonths,
+                zeroFillConfirmed: fillMissing,
                 records: [],
                 defaultMeters: [],
                 created: batches.reduce((n, b) => n + Number((b.result as { created?: number }).created ?? 0), 0),
@@ -116,7 +136,16 @@ export class HistoricConsumptionService extends EnergyService {
           }[] = [];
           const seen = new Set<string>();
           const defaultMeters: DefaultMeter[] = [];
-          for (const row of parsed.records) {
+          const endUses = new Map<string, Set<string>>();
+          for (const row of gaps.records) {
+            const site = matchingWorkbookSites(sites, row.siteCode);
+            if (site.length !== 1) continue;
+            const key = `${site[0].id}:${row.fuel}:${row.unit}`;
+            const values = endUses.get(key) ?? new Set<string>();
+            values.add(row.endUse.trim().toLowerCase());
+            endUses.set(key, values);
+          }
+          for (const row of gaps.records) {
             const matches = matchingWorkbookSites(sites, row.siteCode);
             const site = matches.length === 1 ? matches[0] : undefined;
             if (!site) {
@@ -125,7 +154,16 @@ export class HistoricConsumptionService extends EnergyService {
               );
               continue;
             }
-            const meters = site.meters.filter((m) => !m.archivedAt && m.fuel === row.fuel && m.unit === row.unit);
+            const separateUses = (endUses.get(`${site.id}:${row.fuel}:${row.unit}`)?.size ?? 0) > 1;
+            const importCode = `IMPORT-${row.fuel}-${row.unit}-${hash(row.endUse.trim().toLowerCase()).slice(0, 8)}`;
+            const hasEndUseMeter = site.meters.some((m) => !m.archivedAt && m.code === importCode);
+            const meters = site.meters.filter(
+              (m) =>
+                !m.archivedAt &&
+                m.fuel === row.fuel &&
+                m.unit === row.unit &&
+                (!(separateUses || hasEndUseMeter) || m.code === importCode),
+            );
             if (meters.length > 1) {
               errors.push(
                 historicIssue(
@@ -138,7 +176,7 @@ export class HistoricConsumptionService extends EnergyService {
             }
             let meter = meters[0];
             if (!meter) {
-              const base = `IMPORT-${row.fuel}-${row.unit}`;
+              const base = separateUses ? importCode : `IMPORT-${row.fuel}-${row.unit}`;
               let code = base,
                 suffix = 2;
               while (site.meters.some((m) => m.code === code)) code = `${base}-${suffix++}`;
@@ -148,7 +186,7 @@ export class HistoricConsumptionService extends EnergyService {
                   organisationId: org,
                   siteId: site.id,
                   code,
-                  name: `Default ${row.fuel === 'SOLAR_PV' ? 'Solar PV' : row.fuel.toLowerCase()} (${row.unit})`,
+                  name: `Default ${row.fuel === 'SOLAR_PV' ? 'Solar PV' : row.fuel.toLowerCase()} (${row.unit})${separateUses ? ` · ${row.endUse}` : ''}`,
                   fuel: row.fuel,
                   unit: row.unit,
                 },
@@ -176,6 +214,7 @@ export class HistoricConsumptionService extends EnergyService {
             try {
               if (
                 defaultMeters.some((m) => m.id === meter.id) &&
+                !row.zeroFilled &&
                 !energyConversions[row.unit as keyof typeof energyConversions]
               ) {
                 const period = monthPeriod(row.month);
@@ -214,6 +253,7 @@ export class HistoricConsumptionService extends EnergyService {
                 },
               });
               const previous = overlaps[0] ?? null;
+              if (row.zeroFilled && previous) continue; // Never replace saved readings with inferred zeroes.
               if (
                 overlaps.length > 1 ||
                 (previous &&
@@ -240,7 +280,7 @@ export class HistoricConsumptionService extends EnergyService {
                 },
                 previous ? { previous, useLatestConversion: true } : undefined,
               );
-              if (!new Prisma.Decimal(data.conversionFactor as string).equals(row.factor)) {
+              if (!row.zeroFilled && !new Prisma.Decimal(data.conversionFactor as string).equals(row.factor)) {
                 errors.push(
                   historicIssue(
                     row.row,
@@ -266,9 +306,17 @@ export class HistoricConsumptionService extends EnergyService {
                   operatingHours: row.dailyHours,
                   operatingHoursBasis: 'HOURS_PER_DAY',
                   utilityType: row.utility,
-                  conversionFactor: row.factor,
+                  conversionFactor: row.zeroFilled ? String(data.conversionFactor) : row.factor,
+                  ...(row.zeroFilled
+                    ? { zeroFilled: true, reason: 'Missing workbook month; user confirmed zero fill' }
+                    : {}),
                 }),
               };
+              if (row.zeroFilled)
+                nextData.qualityFlags = [
+                  ...(data.qualityFlags as string[]),
+                  'Missing month filled with 0 after confirmation',
+                ];
               if (!previous) nextData.sourceProvenance = nextData.importProvenance;
               const provenance = (previous?.importProvenance ?? previous?.sourceProvenance) as {
                 population?: string | null;
@@ -311,6 +359,7 @@ export class HistoricConsumptionService extends EnergyService {
           }
           if (errors.length) throw new WorkbookCellError(errors.sort((a, b) => a.row - b.row || a.column - b.column));
           const current = hash({
+            fillMissing,
             defaultMeters,
             records: prepared.map((r) => ({
               ...r,
@@ -384,6 +433,8 @@ export class HistoricConsumptionService extends EnergyService {
             }
           }
           const result: ImportResult = {
+            missingMonths: gaps.missingMonths,
+            zeroFillConfirmed: fillMissing,
             defaultMeters,
             committed: signature !== undefined || prepared.every((r) => r.action === 'Unchanged'),
             count: prepared.length,

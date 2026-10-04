@@ -6,11 +6,15 @@ import { responseError, useMutation } from './forms';
 import { targetColumns } from '@/domain/target-import';
 import { utilityLabel } from '@/domain/consumption-sort';
 import type { TargetImportService } from '@/server/target-import';
+import { MissingMonthConfirmation } from './missing-month-confirmation';
+import type { MissingImportMonth } from '@/domain/import-missing-months';
 type Preview = Awaited<ReturnType<TargetImportService['process']>>;
 export function TargetImport({ orgId }: { orgId: string }) {
   const m = useMutation();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [fillMissing, setFillMissing] = useState(false);
+  const [missing, setMissing] = useState<MissingImportMonth[]>([]);
   async function upload(commit: boolean) {
     if (!file) throw new Error('Choose an XLSX workbook.');
     const signature = preview?.signature;
@@ -20,12 +24,14 @@ export function TargetImport({ orgId }: { orgId: string }) {
       body: file,
       headers: {
         'Content-Type': 'application/octet-stream',
+        'X-Fill-Missing-Months': String(fillMissing),
         ...(commit ? { 'X-Import-Signature': signature ?? '' } : {}),
       },
     });
     const data = await response.json();
     if (!response.ok) throw responseError(data);
     setPreview(data);
+    setMissing(data.missingMonths ?? []);
   }
   return (
     <section className="consumption-import">
@@ -74,6 +80,8 @@ export function TargetImport({ orgId }: { orgId: string }) {
                 onChange={(e) => {
                   setFile(e.target.files?.[0] ?? null);
                   setPreview(null);
+                  setMissing([]);
+                  setFillMissing(false);
                 }}
               />
             </label>
@@ -107,6 +115,17 @@ export function TargetImport({ orgId }: { orgId: string }) {
         </aside>
       </div>
       <div className="import-feedback">{m.feedback}</div>
+      {!preview?.committed && (
+        <MissingMonthConfirmation
+          missing={missing}
+          confirmed={fillMissing}
+          disabled={m.disabled}
+          onChange={(value) => {
+            setFillMissing(value);
+            setPreview(null);
+          }}
+        />
+      )}
       {preview && (
         <section className="panel import-preview" aria-label="Targets import preview">
           <div className="import-card-heading">

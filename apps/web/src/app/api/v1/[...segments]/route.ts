@@ -63,6 +63,7 @@ async function handle(request: Request, context: Context) {
           org,
           await readBytes(request, 2_000_000),
           s[3] === 'commit' ? (request.headers.get('X-Import-Signature') ?? '') : undefined,
+          request.headers.get('X-Fill-Missing-Months') === 'true',
         );
       if (s[2] === 'driver-classification-imports') {
         if (s.length === 3 && method === 'GET') return driverClassificationService.list(actor, org);
@@ -82,6 +83,7 @@ async function handle(request: Request, context: Context) {
           await readBytes(request, 2_000_000),
           { geography: query.get('geography'), basis: query.get('basis') },
           s[3] === 'commit' ? (request.headers.get('X-Import-Signature') ?? '') : undefined,
+          request.headers.get('X-Fill-Missing-Months') === 'true',
         );
       }
       if (
@@ -91,7 +93,13 @@ async function handle(request: Request, context: Context) {
         ['preview', 'commit'].includes(s[3])
       ) {
         const signature = s[3] === 'commit' ? (request.headers.get('X-Import-Signature') ?? '') : undefined;
-        return historicConsumptionService.process(actor, org, await readBytes(request, 2_000_000), signature);
+        return historicConsumptionService.process(
+          actor,
+          org,
+          await readBytes(request, 2_000_000),
+          signature,
+          request.headers.get('X-Fill-Missing-Months') === 'true',
+        );
       }
       if (s[2] === 'import-inventory' && s[3] === 'inconsistent' && s.length === 4 && method === 'GET')
         return importInventoryService.inconsistentBatches(

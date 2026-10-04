@@ -1,4 +1,7 @@
 import { SiteService } from '../src/server/sites';
+import { readFile } from 'node:fs/promises';
+import { HistoricEmissionsService } from '../src/server/historic-emissions';
+import { TargetImportService } from '../src/server/target-import';
 import assert from 'node:assert/strict';
 import ExcelJS from 'exceljs';
 import { actorFor } from '../src/server/foundation';
@@ -250,6 +253,109 @@ try {
   assert.equal(mixed.unchanged, 1);
   await service.process(actor, updateOrg.id, changedBytes, mixed.signature);
   assert.equal(await db.consumptionRecord.count({ where: { siteId: updateSite.id, replacement: { is: null } } }), 2);
+  // Exercise the actual latest public workbook through preview, commit and re-import.
+  const latestOrg = await service.createOrganisation(actor, {
+    name: 'Latest template',
+    currency: 'GBP',
+    timezone: 'UTC',
+  });
+  for (const name of ['London', 'Manchester', 'Leeds', 'Glasgow'])
+    await siteService.createSite(actor, latestOrg.id, { code: name, name });
+  const latestBytes = new Uint8Array(await readFile('public/templates/consumption-latest.xlsx'));
+  const latestPreview = await service.process(actor, latestOrg.id, latestBytes);
+  assert.equal(latestPreview.count, 192);
+  assert.equal(latestPreview.defaultMeters.length, 12);
+  await service.process(actor, latestOrg.id, latestBytes, latestPreview.signature);
+  assert.equal(await db.consumptionRecord.count({ where: { organisationId: latestOrg.id } }), 192);
+  const repeated = await service.process(actor, latestOrg.id, latestBytes);
+  assert.equal(repeated.unchanged, 192);
+  assert.equal(repeated.defaultMeters.length, 0);
+  const emissions = new HistoricEmissionsService(db, { async send() {} }, 'http://localhost:3100');
+  const factors = await emissions.process(actor, latestOrg.id, latestBytes, {
+    geography: 'GB',
+    basis: 'LOCATION_BASED',
+  });
+  assert.equal(factors.count, 96);
+  await emissions.process(
+    actor,
+    latestOrg.id,
+    latestBytes,
+    { geography: 'GB', basis: 'LOCATION_BASED' },
+    factors.signature,
+  );
+  const targets = new TargetImportService(db, { async send() {} }, 'http://localhost:3100');
+  const targetPreview = await targets.process(actor, latestOrg.id, latestBytes);
+  assert.equal(targetPreview.count, 96);
+  await targets.process(actor, latestOrg.id, latestBytes, targetPreview.signature);
+  assert.equal(await db.monthlyPlanVersion.count({ where: { organisationId: latestOrg.id, fuel: 'ALL' } }), 96);
+  const gapOrg = await service.createOrganisation(actor, {
+    name: 'Confirmed missing months',
+    currency: 'GBP',
+    timezone: 'UTC',
+  });
+  await siteService.createSite(actor, gapOrg.id, { code: 'London', name: 'London' });
+  const gapBytes = await workbook([row('London')]);
+  const warned = await service.process(actor, gapOrg.id, gapBytes);
+  assert.equal(warned.count, 1);
+  assert.equal(warned.missingMonths.length, 11);
+  assert.equal(await db.consumptionRecord.count({ where: { organisationId: gapOrg.id } }), 0);
+  await assert.rejects(service.process(actor, gapOrg.id, gapBytes, warned.signature, true), /changed/);
+  const confirmed = await service.process(actor, gapOrg.id, gapBytes, undefined, true);
+  assert.equal(confirmed.count, 12);
+  assert.equal(await db.consumptionRecord.count({ where: { organisationId: gapOrg.id } }), 0);
+  await service.process(actor, gapOrg.id, gapBytes, confirmed.signature, true);
+  const filled = await db.consumptionRecord.findMany({ where: { organisationId: gapOrg.id } });
+  assert.equal(filled.filter((r) => r.sourceQuantity.isZero()).length, 11);
+  assert.ok(
+    filled
+      .filter((r) => r.sourceQuantity.isZero())
+      .every(
+        (r) =>
+          Array.isArray(r.qualityFlags) && r.qualityFlags.includes('Missing month filled with 0 after confirmation'),
+      ),
+  );
+  const february = filled.find((r) => r.periodStart.getUTCMonth() === 1)!;
+  await service.correctReading(actor, gapOrg.id, february.siteId, february.id, {
+    reading: { meterId: february.meterId, month: '2020-02', quantity: '17' },
+    reason: 'Actual reading received after zero fill',
+    useLatestConversion: false,
+  });
+  const shortened = await service.process(actor, gapOrg.id, gapBytes, undefined, true);
+  assert.equal(shortened.records.filter((r) => r.quantity === '0').length, 0);
+  assert.equal(
+    (
+      await db.consumptionRecord.findFirstOrThrow({
+        where: { organisationId: gapOrg.id, periodStart: february.periodStart, replacement: { is: null } },
+      })
+    ).sourceQuantity.toString(),
+    '17',
+  );
+  const gapFactorsBook = new ExcelJS.Workbook();
+  const factorSheet = gapFactorsBook.addWorksheet('Emissions');
+  factorSheet.addRow(['Site Name', 'Year', 'Month', 'Emission Factor']);
+  factorSheet.addRow(['London', '2020', 'Jan', '0.4']);
+  const gapTargetsSheet = gapFactorsBook.addWorksheet('Targets');
+  gapTargetsSheet.addRow(['Site Code', 'Year', 'Month', 'Target Energy', 'Target Carbon (Kg)']);
+  gapTargetsSheet.addRow(['London', '2020', 'Jan', '90', '90']);
+  const gapPlanBytes = new Uint8Array(await gapFactorsBook.xlsx.writeBuffer());
+  const settings = { geography: 'GB', basis: 'LOCATION_BASED' };
+  const warnedFactors = await emissions.process(actor, gapOrg.id, gapPlanBytes, settings);
+  assert.equal(warnedFactors.missingMonths.length, 11);
+  assert.equal(warnedFactors.count, 1);
+  await assert.rejects(
+    emissions.process(actor, gapOrg.id, gapPlanBytes, settings, warnedFactors.signature, true),
+    /changed/,
+  );
+  const confirmedFactors = await emissions.process(actor, gapOrg.id, gapPlanBytes, settings, undefined, true);
+  await emissions.process(actor, gapOrg.id, gapPlanBytes, settings, confirmedFactors.signature, true);
+  assert.equal(await db.emissionFactorVersion.count({ where: { organisationId: gapOrg.id, factor: 0 } }), 11);
+  const warnedTargets = await targets.process(actor, gapOrg.id, gapPlanBytes);
+  assert.equal(warnedTargets.count, 1);
+  assert.equal(warnedTargets.missingMonths.length, 11);
+  await assert.rejects(targets.process(actor, gapOrg.id, gapPlanBytes, warnedTargets.signature, true), /changed/);
+  const confirmedTargets = await targets.process(actor, gapOrg.id, gapPlanBytes, undefined, true);
+  await targets.process(actor, gapOrg.id, gapPlanBytes, confirmedTargets.signature, true);
+  assert.equal(await db.monthlyPlanVersion.count({ where: { organisationId: gapOrg.id } }), 12);
   console.log(
     'Historic consumption integration passed: costs, source hours, isolation, atomicity, stale previews, duplicates, factors and ambiguous meters.',
   );

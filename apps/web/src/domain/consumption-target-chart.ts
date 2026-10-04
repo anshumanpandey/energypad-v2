@@ -7,16 +7,22 @@ export function consumptionTargetChart(
   plans: { month: string; fuel: string; kind: string; replacement: unknown; payload: unknown }[],
 ) {
   const selected = [...new Set(fuels)];
-  const current = plans.filter((p) => p.kind === 'TARGET' && !p.replacement && selected.includes(p.fuel));
+  const current = plans.filter(
+    (p) => p.kind === 'TARGET' && !p.replacement && (selected.includes(p.fuel) || p.fuel === 'ALL'),
+  );
   const rows = months.map((m) => {
     const targets = current.filter((p) => p.month === m.month);
+    const siteTargets = targets.filter((p) => p.fuel === 'ALL');
+    const utilityTargets = targets.filter((p) => p.fuel !== 'ALL');
     const complete =
-      selected.length > 0 && selected.every((fuel) => targets.filter((p) => p.fuel === fuel).length === 1);
+      selected.length > 0 &&
+      (siteTargets.length === 1 ||
+        (!siteTargets.length && selected.every((fuel) => utilityTargets.filter((p) => p.fuel === fuel).length === 1)));
     return {
       month: m.month,
       consumption: m.kwh,
       target: complete
-        ? targets
+        ? (siteTargets.length ? siteTargets : utilityTargets)
             .reduce((sum, p) => sum.plus((p.payload as MonthlyPlanPayload).normalizedKwh), new Decimal(0))
             .toString()
         : null,

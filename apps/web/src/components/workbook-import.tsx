@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { ImportRequestError, responseError, useMutation } from './forms';
 import { factorBases } from '@/domain/emission-factors';
+import { MissingMonthConfirmation } from './missing-month-confirmation';
+import type { MissingImportMonth } from '@/domain/import-missing-months';
 
 const sheets = [
   { name: 'Emissions', path: 'emissions-imports' },
@@ -12,6 +14,7 @@ const sheets = [
 ] as const;
 type Result = {
   signature: string;
+  missingMonths?: MissingImportMonth[];
   count: number;
   created?: number;
   newCount?: number;
@@ -29,10 +32,14 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
   const [saved, setSaved] = useState<string[]>([]);
   const [progress, setProgress] = useState('');
   const [done, setDone] = useState(false);
+  const [fillMissing, setFillMissing] = useState(false);
+  const [missing, setMissing] = useState<MissingImportMonth[]>([]);
   function reset() {
     setPreview(null);
     setSaved([]);
     setDone(false);
+    setFillMissing(false);
+    setMissing([]);
   }
   async function send(index: number, signature?: string): Promise<Result> {
     const sheet = sheets[index];
@@ -44,6 +51,7 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
         body: file,
         headers: {
           'Content-Type': 'application/octet-stream',
+          'X-Fill-Missing-Months': String(fillMissing),
           ...(signature === undefined ? {} : { 'X-Import-Signature': signature }),
         },
       },
@@ -72,7 +80,13 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
             .join(' '),
           failed.flatMap(({ error }) => (error instanceof ImportRequestError ? error.cellErrors : [])),
         );
-      setPreview(results.map((result) => (result as PromiseFulfilledResult<Result>).value));
+      const validated = results.map((result) => (result as PromiseFulfilledResult<Result>).value);
+      setPreview(validated);
+      setMissing(
+        validated.flatMap((result, i) =>
+          (result.missingMonths ?? []).map((item) => ({ ...item, scope: `${sheets[i].name} · ${item.scope}` })),
+        ),
+      );
       setSaved([]);
     } finally {
       setProgress('');
@@ -110,6 +124,10 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
         <p>
           Use an existing site name in the first column, including columns labelled Site Code. Keep the worksheet
           headers and the Drivers headers on row 6. Setpoints are not imported here.
+        </p>
+        <p>
+          The latest template uses site-wide emission factors (kgCO2e/kWh) and site-wide targets (kWh and kgCO2e).
+          Heating and Cooling readings are imported into separate meters.
         </p>
         <Button asChild variant="secondary">
           <a href="/templates/historic-data.xlsx" download="site_mit site historic data V2 drivers sheet.xlsx">
@@ -171,6 +189,17 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
       </div>
       {progress && <p role="status">{progress}</p>}
       {m.feedback}
+      {!done && (
+        <MissingMonthConfirmation
+          missing={missing}
+          confirmed={fillMissing}
+          disabled={m.disabled}
+          onChange={(value) => {
+            setFillMissing(value);
+            setPreview(null);
+          }}
+        />
+      )}
       {(preview || saved.length > 0) && (
         <section className="panel" aria-label="Workbook import preview">
           <h3>{done ? 'Workbook imported' : 'Review all four sheets'}</h3>

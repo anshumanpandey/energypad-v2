@@ -163,6 +163,7 @@ export function MonthlyPlans({
                     <label>
                       Fuel
                       <select name="fuel" defaultValue={selected?.fuel ?? 'ELECTRICITY'}>
+                        {selected?.fuel === 'ALL' && <option value="ALL">All site utilities</option>}
                         {fuels.map((fuel) => (
                           <option key={fuel}>{fuel}</option>
                         ))}

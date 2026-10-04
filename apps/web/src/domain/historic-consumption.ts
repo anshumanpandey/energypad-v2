@@ -72,6 +72,7 @@ export function parseHistoric(sheet: ImportSheet | undefined, errors: WorkbookCe
     factor: string;
     population: string | null;
     dailyHours: string | null;
+    zeroFilled?: boolean;
   }[] = [];
   const sourceHeaders = sheet?.headers ?? [];
   const compact = isCompactHistoric(sourceHeaders);

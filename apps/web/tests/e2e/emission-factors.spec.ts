@@ -263,7 +263,7 @@ test('carbon factors save, reset and retain corrected versions', async ({ page }
   const portfolioCsv = await readFile((await portfolioDownload.path())!, 'utf8');
   expect(portfolioCsv).toContain('"INCOMPLETE",""');
   expect(portfolioCsv).toContain('Site without meters');
-  expect(portfolioCsv).toContain('monthly-exact-factor-v1');
+  expect(portfolioCsv).toContain('monthly-exact-factor-v2');
   expect(portfolioCsv).toContain('"MONTH"');
 
   await page.screenshot({ path: testInfo.outputPath('portfolio-carbon.png'), fullPage: true });

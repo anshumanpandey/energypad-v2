@@ -31,9 +31,12 @@ export function monthlyCarbonRows(
       conversionVersion: reading.conversionVersion,
       estimated: reading.estimated,
     };
-    const matches = factors.filter(
-      (f) => f.fuel === reading.fuel && +f.validFrom <= +period.start && +f.validUntil >= +period.end,
+    const covering = factors.filter(
+      (f) =>
+        (!f.siteId || f.siteId === reading.siteId) && +f.validFrom <= +period.start && +f.validUntil >= +period.end,
     );
+    const specific = covering.filter((f) => f.fuel === reading.fuel);
+    const matches = specific.length ? specific : covering.filter((f) => f.fuel === 'ALL');
     if (matches.length !== 1)
       return {
         ...base,

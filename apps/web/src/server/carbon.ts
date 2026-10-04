@@ -25,7 +25,7 @@ import {
   type PortfolioCarbonSummary,
 } from '../domain/carbon';
 const Decimal = Prisma.Decimal.clone({ precision: 50 });
-export const carbonAlgorithmVersion = 'monthly-exact-factor-v1';
+export const carbonAlgorithmVersion = 'monthly-exact-factor-v2';
 export class CarbonService extends FoundationService {
   private async access(tx: Prisma.TransactionClient, actor: Actor, org: string, siteId: string, write: boolean) {
     uuid.parse(siteId);

@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
+import { emissionsColumns } from '../../src/domain/historic-emissions';
+import { targetColumns } from '../../src/domain/target-import';
 const ExcelJS = createRequire(import.meta.url)('exceljs') as typeof import('exceljs');
 
 test('one workbook validates and imports all four sheets with site names', async ({ page }, testInfo) => {
@@ -26,6 +28,9 @@ test('one workbook validates and imports all four sheets with site names', async
   expect(await download.body()).toEqual(await readFile('public/templates/historic-data.xlsx'));
   const book = new ExcelJS.Workbook();
   await book.xlsx.readFile('public/templates/historic-data.xlsx');
+  // This case exercises the older utility-specific layouts alongside the latest consumption layout.
+  book.getWorksheet('Emissions')!.getRow(1).values = emissionsColumns;
+  book.getWorksheet('Targets')!.getRow(1).values = targetColumns;
   for (const name of ['Emissions', 'Targets', 'Historic Consumption', 'Drivers']) {
     const sheet = book.getWorksheet(name)!;
     const start = name === 'Drivers' ? 7 : 2;
@@ -63,6 +68,20 @@ test('one workbook validates and imports all four sheets with site names', async
   await validate();
   const preview = page.getByRole('region', { name: 'Workbook import preview' });
   await expect(preview.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(4);
+  const missing = page
+    .getByRole('region', { name: 'Workbook upload' })
+    .getByRole('region', { name: 'Missing month warnings' });
+  await expect(missing).toContainText('33 missing month(s)');
+  await missing.getByRole('checkbox', { name: 'I confirm: fill missing months with 0' }).check();
+  await expect(page.getByRole('button', { name: 'Import all four sheets', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Validate workbook', exact: true }).click();
+  await expect(preview.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(4);
+  await expect(
+    preview
+      .getByRole('row', { name: /^Historic Consumption/ })
+      .getByRole('cell')
+      .first(),
+  ).toHaveText('12');
   await page.screenshot({ path: testInfo.outputPath('workbook-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

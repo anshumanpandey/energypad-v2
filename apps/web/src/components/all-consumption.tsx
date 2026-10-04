@@ -18,6 +18,7 @@ type Reading = {
   grossCost: string | null;
   currency: string | null;
   site: { name: string };
+  qualityFlags: string[];
   meter: { name: string };
 };
 
@@ -111,6 +112,7 @@ export function AllConsumption({ orgId, sites }: { orgId: string; sites: { id: s
                       'Energy (kWh)',
                       'Net cost',
                       'Gross cost',
+                      'Missing data',
                     ].map((label) => (
                       <th key={label} scope="col">
                         {label}
@@ -135,6 +137,12 @@ export function AllConsumption({ orgId, sites }: { orgId: string; sites: { id: s
                       </td>
                       <td>
                         {formatEnergyValue(record.grossCost)} {record.currency}
+                      </td>
+                      <td>
+                        {Array.isArray(record.qualityFlags) &&
+                        record.qualityFlags.includes('Missing month filled with 0 after confirmation')
+                          ? 'Missing month filled with 0 after confirmation'
+                          : '—'}
                       </td>
                     </tr>
                   ))}

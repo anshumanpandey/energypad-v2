@@ -5,11 +5,12 @@ import { z } from 'zod';
 import { EmissionFactorService } from './emission-factors';
 import type { Actor } from './foundation';
 import { readWorkbook } from './workbook';
-import { emissionsSheet, emissionCellIssue, parseEmissions } from '../domain/historic-emissions';
+import { emissionsSheet, emissionCellIssue, parseEmissions, isCompactEmissions } from '../domain/historic-emissions';
 import { WorkbookCellError, type WorkbookCellIssue } from '../domain/workbook-errors';
 import { emissionFactorInput } from '../domain/emission-factors';
 import { monthPeriod } from '../domain/energy';
 import { DomainError } from '../domain/policy';
+import { missingImportMonths } from '../domain/import-missing-months';
 
 const settingsSchema = z
   .object({
@@ -19,7 +20,14 @@ const settingsSchema = z
   .strict();
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export class HistoricEmissionsService extends EmissionFactorService {
-  async process(actor: Actor, org: string, bytes: Uint8Array, settingsInput: unknown, signature?: string) {
+  async process(
+    actor: Actor,
+    org: string,
+    bytes: Uint8Array,
+    settingsInput: unknown,
+    signature?: string,
+    fillMissing = false,
+  ) {
     await this.membership(actor, org, 'organisation:update');
     const settings = settingsSchema.parse(settingsInput);
     const window = Math.floor(Date.now() / 3600000);
@@ -33,7 +41,13 @@ export class HistoricEmissionsService extends EmissionFactorService {
     const errors: WorkbookCellIssue[] = [];
     const sheets = await readWorkbook(bytes, { sheetName: emissionsSheet, cellErrors: errors });
     const parsed = parseEmissions(sheets[0], errors);
-    const fingerprint = hash({ sheets, settings });
+    const gaps = missingImportMonths(
+      parsed.records,
+      (r) => ({ site: r.siteCode, scope: r.fuel }),
+      (r, month) => ({ ...r, month, factor: '0', zeroFilled: true }),
+      fillMissing,
+    );
+    const fingerprint = hash({ sheets, settings, fillMissing });
     return this.db.$transaction(
       async (tx) => {
         await this.lock(tx, org);
@@ -66,7 +80,7 @@ export class HistoricEmissionsService extends EmissionFactorService {
               emissionCellIssue(row.row, 1, 'Site name must identify one existing active site in this organisation.'),
             );
         }
-        for (const row of parsed.records) {
+        for (const row of gaps.records) {
           const matches = matchingWorkbookSites(sites, row.siteCode);
           if (matches.length !== 1) continue;
           const site = matches[0];
@@ -86,11 +100,12 @@ export class HistoricEmissionsService extends EmissionFactorService {
             overlaps[0].factor.equals(new Prisma.Decimal(row.factor))
               ? overlaps[0]
               : null;
+          if (row.zeroFilled && overlaps.length) continue; // Retain existing factors.
           if (overlaps.length && !existing) {
             errors.push(
               emissionCellIssue(
                 row.row,
-                6,
+                isCompactEmissions(sheets[0]?.headers ?? []) ? 4 : 6,
                 'A different current factor already covers this site, utility, month, geography and basis. Correct the existing factor before importing.',
               ),
             );
@@ -109,7 +124,9 @@ export class HistoricEmissionsService extends EmissionFactorService {
               factor: row.factor,
               firstDay: period.start.toISOString().slice(0, 10),
               lastDay: new Date(+period.end - 86400000).toISOString().slice(0, 10),
-              source: `Emissions worksheet, site ${site.code}, row ${row.row}, workbook ${fingerprint}`,
+              source: row.zeroFilled
+                ? `Missing Emissions month ${row.month}; user confirmed factor 0; workbook ${fingerprint}`
+                : `Emissions worksheet, site ${site.code}, row ${row.row}, workbook ${fingerprint}`,
             },
           });
         }
@@ -132,6 +149,8 @@ export class HistoricEmissionsService extends EmissionFactorService {
             });
         }
         return {
+          missingMonths: gaps.missingMonths,
+          zeroFillConfirmed: fillMissing,
           committed: signature !== undefined || !pending.length,
           count: prepared.length,
           newCount: pending.length,

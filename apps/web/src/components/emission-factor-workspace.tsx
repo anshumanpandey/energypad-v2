@@ -66,6 +66,7 @@ export function EmissionFactorWorkspace({
               <label>
                 Fuel
                 <select disabled={!!editing} name="fuel" defaultValue={editing?.fuel ?? 'ELECTRICITY'}>
+                  {editing?.fuel === 'ALL' && <option value="ALL">All site utilities</option>}
                   {fuels.map((f) => (
                     <option key={f}>{f}</option>
                   ))}

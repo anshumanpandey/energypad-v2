@@ -11,6 +11,7 @@ type SortableReading = {
 };
 
 export function utilityLabel(fuel: string) {
+  if (fuel === 'ALL') return 'All site utilities';
   if (fuel === 'SOLAR_PV') return 'Solar PV';
   if (fuel === 'ELECTRICITY') return 'Grid electricity';
   if (fuel === 'LPG') return 'LPG';

@@ -8,6 +8,15 @@ const plans = months.map((m) => ({
   replacement: null,
   payload: { normalizedKwh: '0.2' },
 }));
+it('uses a site-wide target once across all utilities without adding utility targets again', () => {
+  const result = consumptionTargetChart(
+    months,
+    ['GAS', 'ELECTRICITY'],
+    [...plans, ...plans.map((p) => ({ ...p, fuel: 'ALL' }))],
+  );
+  expect(result.target).toBe('2.4');
+  expect(result.rows[0].target).toBe('0.2');
+});
 it('uses current targets once per utility, normalized kWh and exact annual totals', () => {
   const result = consumptionTargetChart(
     months,

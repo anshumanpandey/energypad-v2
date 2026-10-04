@@ -9,7 +9,7 @@ export const monthlyPlanInput = z
   .object({
     kind: z.enum(['TARGET', 'MONITORING']),
     month: z.string().regex(/^(19|20|21)\d{2}-(0[1-9]|1[0-2]|ALL)$/),
-    fuel: z.enum(fuels),
+    fuel: z.enum([...fuels, 'ALL']),
     unit: z.enum(['kWh', 'MWh', 'm3', 'litre', 'kg']),
     energy: monthlyAmount,
     carbon: z.union([monthlyAmount, z.literal('')]).default(''),
@@ -21,6 +21,8 @@ export const monthlyPlanInput = z
   })
   .strict()
   .superRefine((v, ctx) => {
+    if (v.fuel === 'ALL' && (v.kind !== 'TARGET' || v.unit !== 'kWh'))
+      ctx.addIssue({ code: 'custom', message: 'Site-wide values require a consumption target in kWh.' });
     if (
       (v.unit === 'kWh' && Number(v.conversionFactor) !== 1) ||
       (v.unit === 'MWh' && Number(v.conversionFactor) !== 1000)

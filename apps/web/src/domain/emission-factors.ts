@@ -11,7 +11,7 @@ const date = z
 export const factorBases = ['LOCATION_BASED', 'MARKET_BASED', 'DIRECT'] as const;
 export const emissionFactorInput = z
   .object({
-    fuel: z.enum(fuels),
+    fuel: z.enum([...fuels, 'ALL']),
     geography: z
       .string()
       .trim()
