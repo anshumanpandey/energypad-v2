@@ -29,7 +29,10 @@ it('aggregates actual emissions and uses a site-wide target once', () => {
     '',
   );
   expect(result[3]).toMatchObject({ actual: '75', target: '25', percent: '300.00', issue: null });
-  expect(carbonRollingComparison([row], targets, '2025', '01', 'GAS')[3].target).toBeNull();
+  expect(carbonRollingComparison([row], targets, '2025', '01', 'GAS')[3]).toMatchObject({
+    target: '25',
+    percent: '200.00',
+  });
 });
 it('keeps missing data unavailable and treats zero emissions as a value without dividing by a zero target', () => {
   const targets = [

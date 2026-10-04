@@ -308,6 +308,9 @@ try {
     ['2025-10', '2025-11', '2025-12', '2026-01'],
   );
   assert.ok(carbonComparison.every((p) => p.actual !== null && p.target !== null && p.percent !== null));
+  const londonGasGauge = carbonRollingComparison(londonHistory, carbonTargets, '2026', '01', 'GAS');
+  assert.ok(londonGasGauge.every((p) => p.actual !== null && p.target !== null && p.percent !== null));
+  assert.equal(londonGasGauge[3].target, carbonComparison[3].target);
   assert.equal(
     carbonComparison[3].target,
     carbonTargets.find((t) => t.siteId === londonHistory[0].siteId && t.month === '2026-01')!.carbon,

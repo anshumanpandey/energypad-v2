@@ -3106,3 +3106,10 @@ select[aria-invalid='true'] {
   background: #e9f3dc;
   font-weight: 600;
 }
+.monthly-chart-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin: 1rem 0;
+  font-variant-numeric: tabular-nums;
+}

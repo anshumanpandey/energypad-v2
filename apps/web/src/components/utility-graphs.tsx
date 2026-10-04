@@ -9,6 +9,8 @@ import { formatEnergyValue } from './format-energy-value';
 import { Button } from './ui/button';
 import { UtilityBars } from './utility-bars';
 import { CarbonFootprintCharts } from './carbon-footprint-charts';
+import { MonthlyChartSummary } from './monthly-chart-summary';
+import { monthlyActuals } from '@/domain/monthly-chart-summary';
 
 const months = [
   'January',
@@ -43,12 +45,15 @@ export function UtilityGraphs({
   const [costBasis, setCostBasis] = useState<'net' | 'gross'>('net');
   const [view, setView] = useState<'graph' | 'table'>('graph');
   const title = kind === 'consumption' ? 'Consumption' : 'Carbon Footprint';
-  const unit = kind === 'consumption' ? 'kWh' : 'kgCO2e';
+  const unit = kind === 'consumption' ? 'kWh' : 'kg';
   const years = [...new Set(rows.map((r) => r.month.slice(0, 4)))].sort().reverse();
   const fuels = [...new Set(rows.map((r) => r.fuel))].sort();
   const selectedSite = sites.some((site) => site.id === filters.site) ? filters.site : firstSite;
   const visible = filterUtilityRows(rows, { ...filters, site: selectedSite });
   const chartRows = filterUtilityRows(rows, { ...filters, site: selectedSite, month: '' });
+  const history = filterUtilityRows(rows, { site: selectedSite, fuel: filters.fuel, year: '', month: '' });
+  const reportingYear = filters.year || [...new Set(chartRows.map((r) => r.month.slice(0, 4)))].sort().at(-1) || '';
+  const period = filters.month ? `${reportingYear}-${filters.month}` : '';
   const available = visible.filter((r) => r[kind] !== null);
   const total =
     visible.length && available.length === visible.length
@@ -150,7 +155,7 @@ export function UtilityGraphs({
           zero fills are included.
         </p>
         {kind === 'emissions' && (
-          <p>GB · Location based · kgCO2e per kWh. A utility factor takes priority over a site-wide factor.</p>
+          <p>Carbon emissions in kg · GB · Location based. A utility factor takes priority over a site-wide factor.</p>
         )}
       </section>
       {!visible.length ? (
@@ -158,9 +163,18 @@ export function UtilityGraphs({
           <p>No data for this selection. Upload consumption data or choose different filters.</p>
         </section>
       ) : view === 'graph' ? (
-        <UtilityLines rows={chartRows} kind={kind} title={title} unit={unit} selectedMonth={filters.month} />
+        <UtilityLines
+          rows={chartRows}
+          kind={kind}
+          title={title}
+          unit={unit}
+          selectedMonth={filters.month}
+          history={history}
+          period={period}
+        />
       ) : (
         <section className="panel">
+          <MonthlyChartSummary points={monthlyActuals(history, kind)} period={period} unit={unit} />
           <div className="analysis-table" role="region" aria-label={`${title} table`} tabIndex={0}>
             <table>
               <thead>
@@ -211,6 +225,8 @@ export function UtilityGraphs({
       {kind === 'consumption' && visible.length > 0 && (
         <CostComparison
           rows={view === 'graph' ? chartRows : visible}
+          history={history}
+          period={period}
           targets={targets}
           fuel={filters.fuel}
           view={view}
@@ -221,9 +237,9 @@ export function UtilityGraphs({
       {kind === 'emissions' && chartRows.length > 0 && (
         <CarbonFootprintCharts
           rows={view === 'graph' ? chartRows : visible}
-          history={filterUtilityRows(rows, { site: selectedSite, fuel: filters.fuel, year: '', month: '' })}
+          history={history}
           targets={targets.filter((t) => t.siteId === selectedSite)}
-          year={filters.year || [...new Set(chartRows.map((r) => r.month.slice(0, 4)))].sort().at(-1) || ''}
+          year={reportingYear}
           month={filters.month}
           fuel={filters.fuel}
           view={view}
@@ -235,118 +251,69 @@ export function UtilityGraphs({
 
 function CostComparison({
   rows,
+  history,
   targets,
   fuel,
   view,
   selectedMonth,
+  period,
   costBasis,
 }: {
   rows: UtilityGraphRow[];
+  history: UtilityGraphRow[];
   targets: UtilityCostTarget[];
   fuel: string;
   view: 'graph' | 'table';
   selectedMonth: string;
+  period: string;
   costBasis: 'net' | 'gross';
 }) {
   const comparison = utilityComparison(rows, targets, fuel);
-  const series = comparison.flatMap((row) => [
-    {
-      ...row,
-      cost: costBasis === 'gross' ? row.grossCost : row.cost,
-      siteId: `${row.siteId}-actual`,
-      siteName: `${row.siteName} · Actual`,
-    },
-    {
-      ...row,
-      siteId: `${row.siteId}-target`,
-      siteName: `${row.siteName} · Target`,
-      consumption: row.targetEnergy,
-      cost: costBasis === 'gross' ? row.targetGrossCost : row.targetCost,
-      currency: row.targetCurrency,
-    },
-  ]);
-  const currencies = [...new Set(series.map((r) => r.currency).filter((c): c is string => !!c))];
+  const currencies = [...new Set(history.map((r) => r.currency).filter((c): c is string => !!c))];
+  const costField = costBasis === 'gross' ? 'grossCost' : 'cost';
   return (
     <>
       <section className="panel">
-        <h2>Actual vs target consumption and cost</h2>
+        <h2>Actual vs target consumption</h2>
         <p>
-          {costBasis === 'gross' ? 'Gross cost includes VAT.' : 'Net cost excludes VAT.'} Missing target costs remain
-          unavailable. Set monthly target cost and currency in Targets &amp; Monitoring.
+          Fuel-specific targets take priority. When unavailable, the uploaded site-wide target is shown and labelled.
         </p>
-        {fuel && (
-          <p>Site-wide targets cannot be allocated to an individual fuel; a fuel-specific target is required.</p>
-        )}
       </section>
       {view === 'graph' ? (
-        <>
-          <UtilityBars
-            points={comparison.map((row) => ({ month: row.month, actual: row.consumption, target: row.targetEnergy }))}
-            title="Actual vs target consumption"
-            unit="kWh"
-            diverging
-            selectedMonth={selectedMonth}
-          />
-          {currencies.map((currency) => (
-            <UtilityBars
-              key={currency}
-              points={comparison.map((row) => ({
-                month: row.month,
-                actual: row.currency === currency ? (costBasis === 'gross' ? row.grossCost : row.cost) : null,
-                target:
-                  row.targetCurrency === currency
-                    ? costBasis === 'gross'
-                      ? row.targetGrossCost
-                      : row.targetCost
-                    : null,
-              }))}
-              title={`Actual vs target cost · ${currency}`}
-              unit={currency}
-              selectedMonth={selectedMonth}
-            />
-          ))}
-          {!currencies.length && (
-            <section className="panel">
-              <h2>Actual vs target cost</h2>
-              <p>No cost values available for this selection.</p>
-            </section>
-          )}
-        </>
+        <UtilityBars
+          points={comparison.map((row) => ({ month: row.month, actual: row.consumption, target: row.targetEnergy }))}
+          title="Actual vs target consumption"
+          unit="kWh"
+          diverging
+          selectedMonth={selectedMonth}
+          period={period}
+          summaryPoints={monthlyActuals(history, 'consumption')}
+          targetNote={
+            comparison.some((r) => r.targetScope === 'Site-wide target')
+              ? 'Target: site-wide total from the uploaded workbook.'
+              : 'Target: selected fuel.'
+          }
+        />
       ) : (
         <section className="panel">
-          <div className="analysis-table" role="region" aria-label="Actual vs target cost table" tabIndex={0}>
+          <MonthlyChartSummary points={monthlyActuals(history, 'consumption')} period={period} unit="kWh" />
+          <div className="analysis-table" role="region" aria-label="Actual vs target consumption table" tabIndex={0}>
             <table>
               <thead>
                 <tr>
-                  <th>Site</th>
                   <th>Month</th>
-                  <th>Actual consumption (kWh)</th>
-                  <th>Target consumption (kWh)</th>
-                  <th>Actual {costBasis} cost</th>
-                  <th>Target {costBasis} cost</th>
+                  <th>Actual (kWh)</th>
+                  <th>Target (kWh)</th>
+                  <th>Target scope</th>
                 </tr>
               </thead>
               <tbody>
-                {comparison.map((row) => (
-                  <tr
-                    key={`${row.siteId}-${row.month}`}
-                    className={row.month.slice(5, 7) === selectedMonth ? 'utility-selected-month' : undefined}
-                    aria-current={row.month.slice(5, 7) === selectedMonth ? 'true' : undefined}
-                  >
-                    <td>{row.siteName}</td>
-                    <td>{row.month}</td>
-                    <td>{formatEnergyValue(row.consumption, 'Unavailable')}</td>
-                    <td>{formatEnergyValue(row.targetEnergy, 'Unavailable')}</td>
-                    <td>
-                      {formatEnergyValue(costBasis === 'gross' ? row.grossCost : row.cost, 'Unavailable')}{' '}
-                      {(costBasis === 'gross' ? row.grossCost : row.cost) !== null ? row.currency : ''}
-                    </td>
-                    <td>
-                      {formatEnergyValue(costBasis === 'gross' ? row.targetGrossCost : row.targetCost, 'Unavailable')}{' '}
-                      {(costBasis === 'gross' ? row.targetGrossCost : row.targetCost) !== null
-                        ? row.targetCurrency
-                        : ''}
-                    </td>
+                {comparison.map((r) => (
+                  <tr key={r.month}>
+                    <th>{r.month}</th>
+                    <td>{formatEnergyValue(r.consumption, 'Unavailable')}</td>
+                    <td>{formatEnergyValue(r.targetEnergy, 'Unavailable')}</td>
+                    <td>{r.targetScope}</td>
                   </tr>
                 ))}
               </tbody>
@@ -354,22 +321,81 @@ function CostComparison({
           </div>
         </section>
       )}
+      {currencies.map((currency) => {
+        const costHistory = monthlyActuals(
+          history.filter((r) => r.currency === currency),
+          costField,
+        );
+        const costPoints = monthlyActuals(
+          rows.filter((r) => r.currency === currency),
+          costField,
+        );
+        return view === 'graph' ? (
+          <UtilityBars
+            key={currency}
+            points={costPoints.map((r) => ({ ...r, target: null }))}
+            title={`Cost · ${currency}`}
+            unit={currency}
+            selectedMonth={selectedMonth}
+            actualOnly
+            period={period}
+            summaryPoints={costHistory}
+            targetNote={costBasis === 'gross' ? 'Gross cost includes VAT.' : 'Net cost excludes VAT.'}
+          />
+        ) : (
+          <section key={currency} className="panel">
+            <h2>
+              {costBasis === 'gross' ? 'Gross' : 'Net'} cost ({currency})
+            </h2>
+            <MonthlyChartSummary points={costHistory} period={period} unit={currency} />
+            <div className="analysis-table" role="region" aria-label="Cost table" tabIndex={0}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {costPoints.map((r) => (
+                    <tr key={r.month}>
+                      <th>{r.month}</th>
+                      <td>
+                        {formatEnergyValue(r.actual, 'Unavailable')} {currency}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        );
+      })}
+      {!currencies.length && (
+        <section className="panel">
+          <h2>Cost</h2>
+          <p>No cost values available for this selection.</p>
+        </section>
+      )}
     </>
   );
 }
-
 function UtilityLines({
   rows,
   kind,
   title,
   unit,
   selectedMonth,
+  history,
+  period,
 }: {
   rows: UtilityGraphRow[];
   kind: 'consumption' | 'emissions' | 'cost';
   title: string;
   unit: string;
   selectedMonth: string;
+  history: UtilityGraphRow[];
+  period: string;
 }) {
   const dates = [...new Set(rows.map((r) => r.month))].sort();
   const series = [...new Set(rows.map((r) => `${r.siteId}|${r.fuel}`))].map((key) => ({
@@ -384,6 +410,7 @@ function UtilityLines({
       <h2>
         Monthly {title.toLowerCase()} ({unit})
       </h2>
+      <MonthlyChartSummary points={monthlyActuals(history, kind)} period={period} unit={unit} />
       <p>
         Each line represents one site and fuel. Hover or focus a point for its exact value. Lines break where data is
         unavailable.

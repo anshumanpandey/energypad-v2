@@ -1,5 +1,7 @@
 'use client';
 import { formatEnergyValue } from './format-energy-value';
+import { MonthlyChartSummary } from './monthly-chart-summary';
+import type { MonthlyAmount } from '@/domain/monthly-chart-summary';
 
 export type UtilityBarPoint = { month: string; actual: string | null; target: string | null };
 export function UtilityBars({
@@ -8,12 +10,20 @@ export function UtilityBars({
   unit,
   diverging = false,
   selectedMonth,
+  actualOnly = false,
+  period = '',
+  summaryPoints = points,
+  targetNote,
 }: {
   points: UtilityBarPoint[];
   title: string;
   unit: string;
   diverging?: boolean;
   selectedMonth: string;
+  actualOnly?: boolean;
+  period?: string;
+  summaryPoints?: MonthlyAmount[];
+  targetNote?: string;
 }) {
   const maximum = Math.max(1, ...points.flatMap((p) => [Number(p.actual ?? 0), Number(p.target ?? 0)]));
   const height = diverging ? Math.max(180, points.length * 30 + 90) : 340;
@@ -26,10 +36,14 @@ export function UtilityBars({
       <h2>
         {title} ({unit})
       </h2>
+      <MonthlyChartSummary points={summaryPoints} period={period} unit={unit} />
+      {targetNote && <p>{targetNote}</p>}
       <p>
         {diverging
-          ? 'Actual consumption extends left and target consumption extends right from zero, using the same scale.'
-          : 'Actual and target costs use the same scale.'}{' '}
+          ? 'Actual extends left and target extends right from zero, using the same scale.'
+          : actualOnly
+            ? 'Monthly recorded cost.'
+            : 'Actual and target use the same scale.'}{' '}
         The selected month is highlighted. Missing values are shown as a dash.
       </p>
       <div className="utility-chart-scroll">
@@ -38,9 +52,7 @@ export function UtilityBars({
           role="img"
           aria-label={`${title} ${diverging ? 'diverging' : 'monthly'} bar graph`}
         >
-          <title>
-            {title} in {unit}
-          </title>
+          <title>{`${title} in ${unit}`}</title>
           {diverging ? (
             <>
               <text x="310" y="22" textAnchor="middle">
@@ -90,7 +102,9 @@ export function UtilityBars({
             const selected = point.month.slice(5, 7) === selectedMonth;
             const rowY = 50 + index * 30;
             const x = 80 + step * index + step / 2;
-            const label = `${point.month}: actual ${formatEnergyValue(point.actual, 'Unavailable')}, target ${formatEnergyValue(point.target, 'Unavailable')} ${unit}`;
+            const label = actualOnly
+              ? `${point.month}: cost ${formatEnergyValue(point.actual, 'Unavailable')} ${unit}`
+              : `${point.month}: actual ${formatEnergyValue(point.actual, 'Unavailable')}, target ${formatEnergyValue(point.target, 'Unavailable')} ${unit}`;
             return (
               <g
                 key={point.month}
@@ -124,7 +138,7 @@ export function UtilityBars({
                     {point.month}
                   </text>
                 )}
-                {(['actual', 'target'] as const).map((kind, seriesIndex) => {
+                {(actualOnly ? (['actual'] as const) : (['actual', 'target'] as const)).map((kind, seriesIndex) => {
                   const value = point[kind];
                   const size = scale(value);
                   const color = seriesIndex ? '#4989c6' : '#168578';
@@ -132,7 +146,9 @@ export function UtilityBars({
                     ? seriesIndex
                       ? baseline
                       : baseline - size
-                    : x + (seriesIndex ? 2 : -step * 0.3);
+                    : actualOnly
+                      ? x - step * 0.14
+                      : x + (seriesIndex ? 2 : -step * 0.3);
                   const barY = diverging ? rowY : baseline - size;
                   const width = diverging ? size : step * 0.28;
                   const barHeight = diverging ? 21 : size;
@@ -181,10 +197,12 @@ export function UtilityBars({
           <span style={{ background: '#168578' }} />
           Actual
         </li>
-        <li>
-          <span style={{ background: '#4989c6' }} />
-          Target
-        </li>
+        {!actualOnly && (
+          <li>
+            <span style={{ background: '#4989c6' }} />
+            Target
+          </li>
+        )}
       </ul>
     </section>
   );

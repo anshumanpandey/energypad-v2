@@ -23,10 +23,14 @@ export function utilityComparison(rows: UtilityGraphRow[], targets: UtilityCostT
     const matching = rows.filter((r) => `${r.siteId}|${r.month}` === key);
     const first = matching[0];
     const plans = targets.filter((t) => t.siteId === first.siteId && t.month === first.month);
-    const siteWide = !fuel ? plans.filter((t) => t.fuel === 'ALL') : [];
-    const selected = siteWide.length
-      ? siteWide
-      : plans.filter((t) => matching.some((r) => r.fuel === t.fuel || (r.fuel === 'DIESEL' && t.fuel === 'OIL')));
+    const specific = plans.filter((t) =>
+      matching.some((r) => r.fuel === t.fuel || (r.fuel === 'DIESEL' && t.fuel === 'OIL')),
+    );
+    const specificComplete = matching.every(
+      (r) => specific.filter((t) => t.fuel === r.fuel || (r.fuel === 'DIESEL' && t.fuel === 'OIL')).length === 1,
+    );
+    const siteWide = !fuel || !specificComplete ? plans.filter((t) => t.fuel === 'ALL') : [];
+    const selected = siteWide.length ? siteWide : specific;
     const complete =
       siteWide.length === 1 ||
       (!siteWide.length &&
@@ -44,6 +48,7 @@ export function utilityComparison(rows: UtilityGraphRow[], targets: UtilityCostT
       grossCost: currencies.size === 1 ? sum(matching.map((r) => r.grossCost ?? null)) : null,
       currency: currencies.size === 1 ? first.currency : null,
       targetEnergy: complete ? sum(selected.map((t) => t.energy)) : null,
+      targetScope: siteWide.length ? 'Site-wide target' : 'Fuel target',
       targetCarbon: complete ? sum(selected.map((t) => t.carbon ?? null)) : null,
       targetCost: complete && targetCurrencies.size === 1 ? sum(selected.map((t) => t.cost)) : null,
       targetGrossCost: complete && targetCurrencies.size === 1 ? sum(selected.map((t) => t.grossCost ?? null)) : null,

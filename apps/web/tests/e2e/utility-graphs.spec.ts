@@ -63,6 +63,25 @@ test('consumption and emissions menus filter the same data in graph and table vi
           requestKey: randomUUID(),
         });
       }
+      for (const [period, value] of [
+        ['2025-10', '40'],
+        ['2025-11', '60'],
+        ['2025-12', '80'],
+        ['2026-01', '100'],
+      ]) {
+        await post(`${base}/sites/${site.id}/energy`, { meterId: meter.id, month: period, quantity: value });
+        await post(`${base}/sites/${site.id}/monthly-plans`, {
+          kind: 'TARGET',
+          month: period,
+          fuel: 'ALL',
+          unit: 'kWh',
+          energy: '80',
+          carbon: period === '2026-01' ? '25' : '20',
+          conversionFactor: '1',
+          source: 'Site-wide browser target',
+          requestKey: randomUUID(),
+        });
+      }
     }
   }
   await post(`${base}/emission-factors`, {
@@ -73,7 +92,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
     factor: '0.5',
     source: 'Browser fixture',
     firstDay: '2024-10-01',
-    lastDay: '2025-12-31',
+    lastDay: '2026-12-31',
   });
   await page.goto(`/org/${org.id}/consumption`);
   await post(`${base}/sites/${london.id}/monthly-plans`, {
@@ -105,12 +124,11 @@ test('consumption and emissions menus filter the same data in graph and table vi
   const table = page.getByRole('region', { name: 'Consumption table', exact: true });
   await expect(table.getByRole('row')).toHaveCount(2);
   await expect(table.getByRole('cell', { name: '100.00', exact: true })).toBeVisible();
-  const costTable = page.getByRole('region', { name: 'Actual vs target cost table', exact: true });
+  const costTable = page.getByRole('region', { name: 'Cost table', exact: true });
   await expect(costTable.getByRole('cell', { name: '15.00 GBP', exact: true })).toBeVisible();
-  await expect(costTable.getByRole('cell', { name: '12.00 GBP', exact: true })).toBeVisible();
+  await expect(costTable.getByRole('columnheader', { name: /target/i })).toHaveCount(0);
   await page.getByLabel('Cost basis', { exact: true }).selectOption('gross');
   await expect(costTable.getByRole('cell', { name: '18.00 GBP', exact: true })).toBeVisible();
-  await expect(costTable.getByRole('cell', { name: '14.40 GBP', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Graph view', exact: true }).click();
   await expect(page.getByLabel('Consumption year', { exact: true })).toHaveValue('2025');
   const diverging = page.getByRole('img', { name: 'Actual vs target consumption diverging bar graph', exact: true });
@@ -121,9 +139,10 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await page.getByLabel('Consumption month', { exact: true }).selectOption('02');
   await expect(diverging.locator('[data-selected-month="2025-02"]')).toHaveCount(1);
   await expect(diverging.locator('[data-series="actual"][data-value="100"]')).toHaveCount(1);
+  await expect(page.getByRole('img', { name: 'Cost · GBP monthly bar graph', exact: true })).toBeVisible();
   await expect(
-    page.getByRole('img', { name: 'Actual vs target cost · GBP monthly bar graph', exact: true }),
-  ).toBeVisible();
+    page.getByRole('img', { name: 'Cost · GBP monthly bar graph', exact: true }).locator('[data-series="target"]'),
+  ).toHaveCount(0);
   await page.getByRole('link', { name: 'Carbon Footprint', exact: true }).click();
   await expect(page.getByLabel('Carbon Footprint site', { exact: true })).toHaveValue(leeds.id);
   await page.getByLabel('Carbon Footprint site', { exact: true }).selectOption(london.id);
@@ -140,7 +159,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await expect(gauge.locator('[data-selected-month="2025-01"]').getByText('200.00%', { exact: true })).toBeVisible();
   await expect(gauge.locator('[data-selected-month="2025-01"]')).toHaveCount(1);
   const recent = page.getByRole('region', { name: 'Recent carbon emissions', exact: true });
-  await expect(recent).toContainText('Previous three months average: 30.00 kgCO2e');
+  await expect(recent).toContainText('Previous three months average: 30.00 kg');
   await expect(recent.getByText('2024-10', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Table view', exact: true }).click();
   await expect(
@@ -158,6 +177,25 @@ test('consumption and emissions menus filter the same data in graph and table vi
       .getByRole('region', { name: 'Carbon Footprint table', exact: true })
       .getByRole('cell', { name: '50.00', exact: true }),
   ).toBeVisible();
+  await page.getByRole('button', { name: 'Graph view', exact: true }).click();
+  await page.getByLabel('Carbon Footprint year', { exact: true }).selectOption('2026');
+  await expect(gauge.locator('[data-selected-month="2026-01"]').getByText('200.00%', { exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Carbon gauge', exact: true })).toContainText(
+    '25.00% increase vs previous month',
+  );
+  await expect(carbonBars.locator('[data-series="target"][data-value="25"]')).toHaveCount(1);
+  await page.getByRole('link', { name: 'Consumption', exact: true }).click();
+  await page.getByLabel('Consumption site', { exact: true }).selectOption(london.id);
+  await page.getByLabel('Consumption year', { exact: true }).selectOption('2026');
+  await page.getByLabel('Consumption fuel type', { exact: true }).selectOption('GAS');
+  await expect(
+    diverging.locator('[data-selected-month="2026-01"] [data-series="target"][data-value="80"]'),
+  ).toHaveCount(1);
+  await expect(page.getByRole('region', { name: 'Actual vs target consumption graph', exact: true })).toContainText(
+    'site-wide total',
+  );
+  await page.getByRole('link', { name: 'Carbon Footprint', exact: true }).click();
+  await page.getByRole('button', { name: 'Table view', exact: true }).click();
   await page.getByRole('button', { name: 'Reset filters', exact: true }).click();
   await page.getByLabel('Carbon Footprint site', { exact: true }).selectOption(leeds.id);
   await page.getByLabel('Carbon Footprint month', { exact: true }).selectOption('02');

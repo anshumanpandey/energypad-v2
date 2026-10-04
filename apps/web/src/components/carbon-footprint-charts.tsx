@@ -5,6 +5,8 @@ import { carbonRollingComparison, carbonRecentSummary } from '@/domain/carbon-fo
 import { utilityLabel } from '@/domain/consumption-sort';
 import { formatEnergyValue } from './format-energy-value';
 import { UtilityBars } from './utility-bars';
+import { MonthlyChartSummary } from './monthly-chart-summary';
+import { monthlyActuals } from '@/domain/monthly-chart-summary';
 
 const colors = ['#168578', '#4989c6', '#cd7334', '#9b4c9e', '#578138', '#b74655'];
 export function CarbonFootprintCharts({
@@ -25,6 +27,8 @@ export function CarbonFootprintCharts({
   view: 'graph' | 'table';
 }) {
   const comparison = utilityComparison(rows, targets, fuel);
+  const period = month ? `${year}-${month}` : '';
+  const summaryPoints = monthlyActuals(history, 'emissions');
   const recent = carbonRollingComparison(history, targets, year, month, fuel);
   const summary = carbonRecentSummary(recent);
   const fuels = [...new Set(history.filter((r) => recent.some((p) => p.month === r.month)).map((r) => r.fuel))].sort();
@@ -39,20 +43,29 @@ export function CarbonFootprintCharts({
         <UtilityBars
           points={comparison.map((r) => ({ month: r.month, actual: r.emissions, target: r.targetCarbon }))}
           title="Actual vs target emissions"
-          unit="kgCO2e"
+          unit="kg"
           diverging
           selectedMonth={month}
+          period={period}
+          summaryPoints={summaryPoints}
+          targetNote={
+            comparison.some((r) => r.targetScope === 'Site-wide target')
+              ? 'Target: site-wide carbon total from the uploaded workbook.'
+              : 'Target: selected fuel.'
+          }
         />
       ) : (
         <section className="panel">
           <h2>Actual vs target emissions</h2>
+          <MonthlyChartSummary points={summaryPoints} period={period} unit="kg" />
           <div className="analysis-table" role="region" aria-label="Actual vs target emissions table" tabIndex={0}>
             <table>
               <thead>
                 <tr>
                   <th>Month</th>
-                  <th>Actual (kgCO2e)</th>
-                  <th>Target (kgCO2e)</th>
+                  <th>Actual (kg)</th>
+                  <th>Target (kg)</th>
+                  <th>Target scope</th>
                 </tr>
               </thead>
               <tbody>
@@ -61,6 +74,7 @@ export function CarbonFootprintCharts({
                     <th>{r.month}</th>
                     <td>{formatEnergyValue(r.emissions, 'Unavailable')}</td>
                     <td>{formatEnergyValue(r.targetCarbon, 'Unavailable')}</td>
+                    <td>{r.targetScope}</td>
                   </tr>
                 ))}
               </tbody>
@@ -70,7 +84,7 @@ export function CarbonFootprintCharts({
       )}
       {fuel && (
         <p className="page-note">
-          A fuel-specific carbon target is required when a fuel is selected. Site-wide targets are shown with All fuels.
+          Fuel-specific targets take priority. If unavailable, the uploaded site-wide carbon target is shown.
         </p>
       )}
       {!recent.length ? (
@@ -81,6 +95,12 @@ export function CarbonFootprintCharts({
         <div className="graphs-grid">
           <section className="panel utility-lines" aria-label="Carbon gauge">
             <h2>Carbon gauge</h2>
+            <MonthlyChartSummary points={summaryPoints} period={period} unit="kg" />
+            <p>
+              {comparison.some((r) => r.targetScope === 'Site-wide target')
+                ? 'Gauge target: site-wide carbon total from the uploaded workbook.'
+                : 'Gauge target: selected fuel.'}
+            </p>
             <p>
               Actual emissions as a percentage of the carbon target, for the selected month and preceding three months.
               100% meets the target; higher values exceed it.
@@ -142,7 +162,7 @@ export function CarbonFootprintCharts({
                           {point.percent !== null ? `${point.percent}%` : 'Unavailable'}
                         </text>
                         <text x={x} y="278" textAnchor="middle" fontSize="12">
-                          {formatEnergyValue(point.actual, 'Unavailable')} kgCO2e
+                          {formatEnergyValue(point.actual, 'Unavailable')} kg
                         </text>
                       </g>
                     );
@@ -155,8 +175,8 @@ export function CarbonFootprintCharts({
                   <thead>
                     <tr>
                       <th>Month</th>
-                      <th>Actual kgCO2e</th>
-                      <th>Target kgCO2e</th>
+                      <th>Actual kg</th>
+                      <th>Target kg</th>
                       <th>Target used</th>
                     </tr>
                   </thead>
@@ -182,9 +202,10 @@ export function CarbonFootprintCharts({
           </section>
           <section className="panel utility-lines" aria-label="Recent carbon emissions">
             <h2>Carbon emissions · selected month vs previous three months</h2>
+            <MonthlyChartSummary points={summaryPoints} period={period} unit="kg" />
             <p>
-              Selected month: {formatEnergyValue(summary.current, 'Unavailable')} kgCO2e. Previous three months average:{' '}
-              {formatEnergyValue(summary.previousAverage, 'Unavailable')} kgCO2e.
+              Selected month: {formatEnergyValue(summary.current, 'Unavailable')} kg. Previous three months average:{' '}
+              {formatEnergyValue(summary.previousAverage, 'Unavailable')} kg.
             </p>
             {view === 'graph' ? (
               <div className="utility-chart-scroll">
@@ -193,7 +214,7 @@ export function CarbonFootprintCharts({
                   role="img"
                   aria-label="Carbon emissions by fuel for selected month and previous three months"
                 >
-                  <title>Monthly carbon emissions by fuel in kgCO2e</title>
+                  <title>Monthly carbon emissions by fuel in kg</title>
                   {[0, 0.5, 1].map((fraction) => (
                     <g key={fraction}>
                       <line x1="80" x2="720" y1={240 - fraction * 180} y2={240 - fraction * 180} stroke="#dce5e3" />
@@ -230,10 +251,10 @@ export function CarbonFootprintCharts({
                             key={fuelName}
                             tabIndex={0}
                             role="img"
-                            aria-label={`${point.month}, ${utilityLabel(fuelName)}: ${value ?? 'Unavailable'} kgCO2e`}
+                            aria-label={`${point.month}, ${utilityLabel(fuelName)}: ${value ?? 'Unavailable'} kg`}
                           >
                             <title>
-                              {point.month} · {utilityLabel(fuelName)}: {value ?? 'Unavailable'} kgCO2e
+                              {point.month} · {utilityLabel(fuelName)}: {value ?? 'Unavailable'} kg
                             </title>
                             {value === null ? (
                               <text x={x + width / 2} y="235" textAnchor="middle">
@@ -280,7 +301,7 @@ export function CarbonFootprintCharts({
                     <tr>
                       <th>Month</th>
                       <th>Fuel</th>
-                      <th>Emissions (kgCO2e)</th>
+                      <th>Emissions (kg)</th>
                     </tr>
                   </thead>
                   <tbody>

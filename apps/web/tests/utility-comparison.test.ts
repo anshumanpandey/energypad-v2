@@ -28,11 +28,25 @@ it('uses a site-wide target once, keeps decimal precision and preserves a zero c
     '',
   )[0];
   expect(result).toMatchObject({ consumption: '0.3', cost: '0.3', targetEnergy: '12', targetCost: '0' });
-  expect(utilityComparison([row], targets, 'GAS')[0].targetCost).toBeNull();
+  expect(utilityComparison([row], targets, 'GAS')[0]).toMatchObject({
+    targetCost: '0',
+    targetScope: 'Site-wide target',
+  });
 });
 it('does not invent target costs or sum mixed currencies', () => {
   expect(utilityComparison([row], [], '')[0].targetCost).toBeNull();
   expect(utilityComparison([row, { ...row, fuel: 'ELECTRICITY', currency: 'USD' }], [], '')[0].cost).toBeNull();
+});
+it('prefers a fuel target over the site-wide fallback when a fuel is selected', () => {
+  const targets = [
+    { siteId: 'a', month: row.month, fuel: 'ALL', energy: '100', carbon: '50', cost: null, currency: null },
+    { siteId: 'a', month: row.month, fuel: 'GAS', energy: '30', carbon: '15', cost: null, currency: null },
+  ];
+  expect(utilityComparison([row], targets, 'GAS')[0]).toMatchObject({
+    targetEnergy: '30',
+    targetCarbon: '15',
+    targetScope: 'Fuel target',
+  });
 });
 it('keeps net and gross costs distinct and does not infer a missing gross target', () => {
   const targets = [
