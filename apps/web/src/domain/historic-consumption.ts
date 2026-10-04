@@ -29,6 +29,8 @@ const fuels: Record<string, string> = {
   'solar pv': 'SOLAR_PV',
   gas: 'GAS',
   diesel: 'OIL',
+  'bio diesel': 'BIODIESEL',
+  biodiesel: 'BIODIESEL',
   oil: 'OIL',
   petrol: 'PETROL',
   lpg: 'LPG',
@@ -115,7 +117,8 @@ export function parseHistoric(sheet: ImportSheet | undefined, errors: WorkbookCe
     if (!month) add(row, 3, 'Use Jan–Dec or a month number from 1 to 12.');
     const fuel = fuels[v[4].toLowerCase()],
       unit = units[v[7].toLowerCase()];
-    if (!fuel) add(row, 5, 'Use Grid Electricity, Solar PV, Gas, Diesel, Oil, Petrol, LPG, Biomass, Heat or Other.');
+    if (!fuel)
+      add(row, 5, 'Use Grid Electricity, Solar PV, Gas, Diesel, Bio Diesel, Oil, Petrol, LPG, Biomass, Heat or Other.');
     if (!unit) add(row, 8, 'Use kWh, MWh, m3, litre (or l), or kg.');
     for (const i of [6, 8, 9, 10, 11, 12]) {
       if (!v[i] && [8, 9, 11, 12].includes(i)) continue;

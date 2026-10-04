@@ -14,6 +14,7 @@ export function utilityLabel(fuel: string) {
   if (fuel === 'SOLAR_PV') return 'Solar PV';
   if (fuel === 'ELECTRICITY') return 'Grid electricity';
   if (fuel === 'LPG') return 'LPG';
+  if (fuel === 'BIODIESEL') return 'Bio Diesel';
   return fuel.charAt(0) + fuel.slice(1).toLowerCase();
 }
 

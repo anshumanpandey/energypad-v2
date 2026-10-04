@@ -40,6 +40,7 @@ import { Button } from '@/components/ui/button';
 import { AnalysisWorkspace } from '@/components/analysis-workspace';
 import { EnergyYearProvider } from '@/components/energy-year';
 import { EnergyWorkspace } from '@/components/energy-workspace';
+import { AllConsumption } from '@/components/all-consumption';
 
 export default async function WorkspacePage({
   params,
@@ -210,6 +211,7 @@ export default async function WorkspacePage({
           </div>
         </div>
         {manage && <DataImportWorkspace orgId={org.id} batches={[]} workflow />}
+        <AllConsumption orgId={org.id} sites={sites} />
         <EnergyYearProvider>
           <EnergyWorkspace orgId={org.id} sites={sites} manage={manage} />
           <section className="waste-report stack-form" aria-labelledby="waste-report-title">

@@ -55,6 +55,8 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'consumption-records' && s.length === 3 && method === 'GET')
+        return energyService.allRecords(actor, org);
       if (s[2] === 'target-imports' && s.length === 4 && method === 'POST' && ['preview', 'commit'].includes(s[3]))
         return targetImportService.process(
           actor,

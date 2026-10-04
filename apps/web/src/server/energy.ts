@@ -12,6 +12,14 @@ import {
 } from '../domain/energy';
 
 export class EnergyService extends FoundationService {
+  async allRecords(actor: Actor, org: string) {
+    const sites = await this.listSites(actor, org);
+    return this.db.consumptionRecord.findMany({
+      where: { organisationId: org, siteId: { in: sites.map((site) => site.id) }, replacement: { is: null } },
+      orderBy: [{ periodStart: 'desc' }, { siteId: 'asc' }, { meterId: 'asc' }],
+      include: { site: { select: { name: true } }, meter: { select: { name: true } } },
+    });
+  }
   async records(actor: Actor, org: string, siteId: string, year: number) {
     if (!Number.isInteger(year) || year < 1900 || year > 2199) throw new DomainError('YEAR', 'Choose a valid year.');
     await this.getSite(actor, org, siteId);

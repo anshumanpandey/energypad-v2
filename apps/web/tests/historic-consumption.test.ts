@@ -16,6 +16,14 @@ const sheet = (rows = [cells]) => ({
   rows: rows.map((cells, i) => ({ row: i + 2, cells })),
 });
 describe('fixed historic consumption template', () => {
+  it.each(['Bio Diesel', 'biodiesel', 'BIO DIESEL'])('preserves %s as biodiesel', (label) => {
+    const data = [...cells];
+    data[4] = label;
+    const parsed = parseHistoric(sheet([data]));
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.records[0].fuel).toBe('BIODIESEL');
+    expect(parsed.records[0].utility).toBe(label);
+  });
   it.each(['Petrol', 'petrol', 'PETROL'])('accepts %s as an independent fuel', (label) => {
     const data = [...cells];
     data[4] = label;
