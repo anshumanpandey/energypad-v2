@@ -137,14 +137,18 @@ test('consumption and emissions menus filter the same data in graph and table vi
     name: 'Carbon gauge for selected month and previous three months',
     exact: true,
   });
-  await expect(gauge.getByText('200.00%', { exact: true })).toBeVisible();
+  await expect(gauge.locator('[data-selected-month="2025-01"]').getByText('200.00%', { exact: true })).toBeVisible();
   await expect(gauge.locator('[data-selected-month="2025-01"]')).toHaveCount(1);
   const recent = page.getByRole('region', { name: 'Recent carbon emissions', exact: true });
   await expect(recent).toContainText('Previous three months average: 30.00 kgCO2e');
   await expect(recent.getByText('2024-10', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Table view', exact: true }).click();
   await expect(
-    page.getByRole('region', { name: 'Carbon gauge table', exact: true }).getByText('200.00%', { exact: true }),
+    page
+      .getByRole('region', { name: 'Carbon gauge table', exact: true })
+      .getByRole('row')
+      .filter({ hasText: '2025-01' })
+      .getByText('200.00%', { exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole('region', { name: 'Recent carbon emissions table', exact: true }).getByRole('row'),
