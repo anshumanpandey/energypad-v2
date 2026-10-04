@@ -432,7 +432,12 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await expect(page.getByRole('status')).toContainText('Consumption recorded.');
   await expect(page.getByLabel('Quantity (meter units)')).toHaveValue('');
   await expect(page.getByText('Main electricity · 1/12 months recorded')).toBeVisible();
-  await expect(page.getByRole('cell').filter({ hasText: /^1250/ })).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'Consumption records table', exact: true })
+      .getByRole('cell')
+      .filter({ hasText: /^1250/ }),
+  ).toBeVisible();
   await expect(page.getByRole('cell', { name: '100.00 / 120.00 GBP', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: /Missing population/ })).toBeVisible();
   await page.getByLabel('Month', { exact: true }).fill('2024-02');
@@ -452,7 +457,12 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await page.reload();
   await page.getByLabel('Year', { exact: true }).selectOption('2024');
   await page.getByRole('button', { name: 'Load energy records' }).click();
-  await expect(page.getByRole('cell').filter({ hasText: /^1250/ })).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'Consumption records table', exact: true })
+      .getByRole('cell')
+      .filter({ hasText: /^1250/ }),
+  ).toBeVisible();
   const gas = await createMeter(page.request, `/api/v1/organisations/${org}/sites/${site.id}`, {
     code: 'G1',
     name: 'Gas meter',
@@ -474,7 +484,10 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await page.getByLabel('Quantity (meter units)').fill('100');
   await page.getByRole('button', { name: 'Save consumption' }).click();
   await expect(page.getByRole('status')).toContainText('Consumption recorded.');
-  const normalized = page.getByRole('cell').filter({ hasText: /^1050/ });
+  const normalized = page
+    .getByRole('region', { name: 'Consumption records table', exact: true })
+    .getByRole('cell')
+    .filter({ hasText: /^1050/ });
   await expect(normalized).toBeVisible();
   await normalized.getByText('Conversion details').click();
   await expect(normalized.getByText('Synthetic browser test reference', { exact: true })).toBeVisible();
@@ -709,10 +722,19 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await factorForm.getByLabel('Conversion correction reason').fill('Supplier corrected test factor');
   await factorForm.getByRole('button', { name: 'Save conversion correction', exact: true }).click();
   await expect(page.getByText('Source: Revised synthetic browser factor', { exact: true })).toBeVisible();
-  await expect(page.getByRole('cell').filter({ hasText: /^1050/ })).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'Consumption records table', exact: true })
+      .getByRole('cell')
+      .filter({ hasText: /^1050/ }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'View factor history', exact: true }).click();
   await expect(page.getByText('Supplier corrected test factor', { exact: true })).toBeVisible();
-  const gasRow = page.getByRole('row').filter({ hasText: 'Gas meter' }).filter({ hasText: '2024-01' });
+  const gasRow = page
+    .getByRole('region', { name: 'Consumption records table', exact: true })
+    .getByRole('row')
+    .filter({ hasText: 'Gas meter' })
+    .filter({ hasText: '2024-01' });
   await gasRow.getByRole('button', { name: 'Correct reading', exact: true }).click();
   const correctionForm = page.getByRole('form', { name: 'Correct monthly reading', exact: true });
   await correctionForm.getByLabel('Corrected quantity (m3)').fill('200');
@@ -901,7 +923,11 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
     .fill('Correct supplier display label');
   await catalogCorrection.getByRole('button', { name: 'Save catalog correction', exact: true }).click();
   await expect(catalogPanel.getByText('FUEL · POWER · Electricity supply · Revision 2', { exact: true })).toBeVisible();
-  const electricityRow = page.getByRole('row').filter({ hasText: 'Main electricity' }).filter({ hasText: '2021-01' });
+  const electricityRow = page
+    .getByRole('region', { name: 'Consumption records table', exact: true })
+    .getByRole('row')
+    .filter({ hasText: 'Main electricity' })
+    .filter({ hasText: '2021-01' });
   await electricityRow.getByRole('button', { name: 'Correct reading', exact: true }).click();
   const linkForm = page.getByRole('form', { name: 'Correct monthly reading', exact: true });
   await linkForm.getByRole('combobox', { name: 'Corrected registered end use', exact: true }).selectOption('LIGHTING');

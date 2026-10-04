@@ -35,7 +35,7 @@ import { foundation, siteService, analysisService } from '@/server/services';
 import { can, canManageRole, roleLabels, hasFeature } from '@/domain/policy';
 import { InviteForm, MemberActions, OrganisationForm, RevokeInvite } from '@/components/forms';
 import { SitesWorkspace, PortfoliosWorkspace } from '@/components/sites-workspace';
-import { DataImportWorkspace } from '@/components/data-import-workspace';
+import { DataImportWorkspace, HistoricImport } from '@/components/data-import-workspace';
 import { Button } from '@/components/ui/button';
 import { AnalysisWorkspace } from '@/components/analysis-workspace';
 import { EnergyYearProvider } from '@/components/energy-year';
@@ -211,6 +211,7 @@ export default async function WorkspacePage({
           </div>
         </div>
         {manage && <DataImportWorkspace orgId={org.id} batches={[]} workflow />}
+        {manage && <HistoricImport orgId={org.id} />}
         <AllConsumption orgId={org.id} sites={sites} />
         <EnergyYearProvider>
           <EnergyWorkspace orgId={org.id} sites={sites} manage={manage} />

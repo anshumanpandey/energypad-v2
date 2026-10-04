@@ -102,7 +102,7 @@ export function DataImportWorkspace({
     </>
   );
 }
-function HistoricImport({ orgId }: { orgId: string }) {
+export function HistoricImport({ orgId }: { orgId: string }) {
   const m = useMutation();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -132,6 +132,9 @@ function HistoricImport({ orgId }: { orgId: string }) {
           <span className="eyebrow">CONSUMPTION DATA</span>
           <h2>Import historic consumption</h2>
           <p>Bring your monthly readings into one place.</p>
+          <a href="/templates/consumption-latest.xlsx" download="site_mit site historic data V2 drivers sheet.xlsx">
+            Download latest consumption template
+          </a>
         </div>
         <span className="import-format">
           <FileSpreadsheet size={15} aria-hidden="true" /> Excel · .xlsx
