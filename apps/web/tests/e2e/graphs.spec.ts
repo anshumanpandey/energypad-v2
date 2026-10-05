@@ -79,7 +79,15 @@ test('graphs preserve recorded zero, missing coverage, filters and site isolatio
   for (const title of ['Consumption', 'Emissions', 'Waste & savings']) {
     const chart = page.getByRole('region', { name: title, exact: true });
     await expect(chart.locator('.metric-chart-detail')).toContainText('2020-02:');
-    await expect(chart.locator('.metric-chart-point[aria-current="true"]')).toHaveAttribute('aria-label', /^2020-02:/);
+    if (title === 'Waste & savings') {
+      await expect(chart).toContainText('No calculated values for this selection. Missing data is not zero.');
+      await expect(chart.locator('svg')).toHaveCount(0);
+    } else {
+      await expect(chart.locator('.metric-chart-point[aria-current="true"]')).toHaveAttribute(
+        'aria-label',
+        /^2020-02:/,
+      );
+    }
   }
   await expect(
     page.getByRole('region', { name: 'Emissions', exact: true }).locator('.metric-chart-detail'),
