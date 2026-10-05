@@ -3113,3 +3113,62 @@ select[aria-invalid='true'] {
   margin: 1rem 0;
   font-variant-numeric: tabular-nums;
 }
+/* Legacy Energy Tips and Reports workspace views. */
+.energy-tips-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.energy-tip-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  margin-bottom: 18px;
+}
+.reports-dashboard {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.reports-dashboard > * {
+  min-width: 0;
+}
+.reports-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.reports-summary-grid > *,
+.reports-pies > * {
+  min-width: 0;
+}
+.reports-pies {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.reports-pies svg,
+.report-coverage svg {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  margin: auto;
+  min-width: 0;
+}
+.reports-summary-grid .utility-lines > svg {
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .energy-tips-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reports-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .energy-tips-grid,
+  .reports-pies {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

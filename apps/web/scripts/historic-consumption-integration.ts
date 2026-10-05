@@ -298,6 +298,22 @@ try {
   assert.ok(graphRows.every((r) => r.consumption !== null && r.emissions !== null));
   assert.ok(graphRows.some((r) => r.siteName === 'Glasgow' && r.month.startsWith('2026') && r.fuel === 'DIESEL'));
   assert.ok(graphRows.some((r) => r.siteName === 'Glasgow' && r.month.startsWith('2025') && r.fuel === 'PETROL'));
+  const reportRows = await graphs.records(actor, latestOrg.id, true);
+  assert.ok(reportRows.every((row) => row.meterId && row.endUse));
+  assert.ok(reportRows.length > graphRows.length, 'Reports retain separate end-use meters for the same fuel');
+  for (const summary of graphRows) {
+    const matching = reportRows.filter(
+      (row) => row.siteId === summary.siteId && row.month === summary.month && row.fuel === summary.fuel,
+    );
+    assert.equal(
+      matching.reduce((total, row) => total + Number(row.consumption), 0),
+      Number(summary.consumption),
+    );
+    assert.equal(
+      matching.reduce((total, row) => total + Number(row.emissions), 0),
+      Number(summary.emissions),
+    );
+  }
   const carbonTargets = await graphs.targets(actor, latestOrg.id);
   assert.equal(carbonTargets.length, 96);
   assert.ok(carbonTargets.every((t) => t.carbon !== null && t.carbon !== undefined));

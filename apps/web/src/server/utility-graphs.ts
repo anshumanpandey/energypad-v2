@@ -27,7 +27,7 @@ export class UtilityGraphService extends FoundationService {
       };
     });
   }
-  async records(actor: Actor, organisationId: string) {
+  async records(actor: Actor, organisationId: string, detail = false) {
     return this.db.$transaction(
       async (tx) => {
         const member = await this.membership(actor, organisationId, undefined, tx);
@@ -84,8 +84,13 @@ export class UtilityGraphService extends FoundationService {
                 factors,
               ),
             }));
-            for (const fuel of new Set(results.map((r) => r.displayFuel))) {
-              const matching = results.filter((r) => r.displayFuel === fuel);
+            const groups = detail
+              ? results.map((result) => [result])
+              : [...new Set(results.map((r) => r.displayFuel))].map((fuel) =>
+                  results.filter((r) => r.displayFuel === fuel),
+                );
+            for (const matching of groups) {
+              const fuel = matching[0].displayFuel;
               for (let index = 0; index < 12; index++) {
                 const rows = matching.map((r) => r.rows[index]);
                 const sum = (values: (string | undefined)[]) =>
@@ -110,6 +115,21 @@ export class UtilityGraphService extends FoundationService {
                       Array.isArray(r?.qualityFlags) &&
                       r.qualityFlags.includes('Missing month filled with 0 after confirmation'),
                   ),
+                  ...(detail
+                    ? {
+                        meterId: matching[0].meter.id,
+                        endUse:
+                          [
+                            ...new Set(
+                              siteReadings
+                                .filter(
+                                  (r) => r.meterId === matching[0].meter.id && r.periodStart.getUTCFullYear() === year,
+                                )
+                                .map((r) => r.endUse),
+                            ),
+                          ].join(', ') || matching[0].meter.name,
+                      }
+                    : {}),
                 });
               }
             }

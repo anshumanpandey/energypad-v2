@@ -43,6 +43,8 @@ import { Button } from '@/components/ui/button';
 import { AnalysisWorkspace } from '@/components/analysis-workspace';
 import { EnergyYearProvider } from '@/components/energy-year';
 import { UploadDataTabs } from '@/components/upload-data-tabs';
+import { EnergyTips } from '@/components/energy-tips';
+import { ReportsDashboard } from '@/components/reports-dashboard';
 
 export default async function WorkspacePage({
   params,
@@ -74,6 +76,8 @@ export default async function WorkspacePage({
 
   if (section === 'graphs')
     return <Graphs actor={actor} organisationId={org.id} sites={sites} query={await searchParams} />;
+
+  if (section === 'energy-tips') return <EnergyTips />;
 
   if (section === 'ai-analyst')
     return (
@@ -133,14 +137,45 @@ export default async function WorkspacePage({
       />
     );
   }
-  if (section === 'reports')
+  if (section === 'reports') {
+    const query = await searchParams;
+    const rows = await accessible(() => utilityGraphService.records(actor, org.id, true));
+    const siteId = typeof query.site === 'string' ? query.site : (sites[0]?.id ?? '');
+    if (siteId && !sites.some((site) => site.id === siteId)) notFound();
+    const years = [
+      ...new Set(rows.filter((row) => row.siteId === siteId).map((row) => Number(row.month.slice(0, 4)))),
+    ].sort((a, b) => b - a);
+    const year = typeof query.year === 'string' ? Number(query.year) : (years[0] ?? new Date().getUTCFullYear());
+    if (!Number.isInteger(year) || year < 1900 || year > 2199) notFound();
+    if (!years.includes(year)) years.unshift(year);
+    const preview = siteId
+      ? (await accessible(() => analysisService.wastePreview(actor, org.id, siteId, year))).preview
+      : null;
     return (
       <>
         <div className="page-heading">
           <div>
             <span className="eyebrow">REPORTS AND EXPORTS</span>
             <h1>Reports</h1>
-            <p>Preview and export energy, savings, baseline and carbon evidence.</p>
+            <p>Monthly energy, financial cost, carbon impacts, waste and savings, and target performance.</p>
+          </div>
+        </div>
+        <ReportsDashboard
+          key={`${siteId}-${year}`}
+          orgId={org.id}
+          sites={sites}
+          siteId={siteId}
+          year={year}
+          years={years}
+          rows={rows.filter((row) => row.siteId === siteId && row.month.startsWith(`${year}-`))}
+          targets={await accessible(() => utilityGraphService.targets(actor, org.id))}
+          preview={preview}
+          manageWeather={can(membership.role, 'analysis:approve')}
+        />
+        <div className="page-heading">
+          <div>
+            <h2>Detailed reports and scheduled exports</h2>
+            <p>Retain and download calculation evidence or manage scheduled reports.</p>
           </div>
         </div>
         <section className="panel stack-form">
@@ -181,6 +216,7 @@ export default async function WorkspacePage({
         />
       </>
     );
+  }
   if (section === 'carbon') {
     const factors = await accessible(() => emissionFactorService.list(actor, org.id));
     return (

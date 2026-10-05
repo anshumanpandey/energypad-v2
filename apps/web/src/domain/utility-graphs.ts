@@ -10,6 +10,8 @@ export type UtilityGraphRow = {
   currency: string | null;
   notes: string[];
   zeroFilled: boolean;
+  meterId?: string;
+  endUse?: string;
 };
 export type UtilityCostTarget = {
   siteId: string;
