@@ -25,9 +25,13 @@ export function WasteCharts({
     : '';
   const gauge = wasteGauge(!month && throughMonth ? rows.filter((row) => row.month <= throughMonth) : rows, anchor);
   const percentage = gauge.percentage;
-  const angle = ((Math.max(-100, Math.min(100, percentage ?? 0)) + 100) / 200) * Math.PI;
-  const x = 180 - 115 * Math.cos(angle),
-    y = 165 - 115 * Math.sin(angle);
+  const monthlyGauge = gauge.months.map((month) => {
+    const row = rows.find((row) => row.month === month);
+    const value =
+      row?.variance != null && row.adjusted != null && row.adjusted > 0 ? (row.variance / row.adjusted) * 100 : null;
+    return { month, value };
+  });
+  const gaugeMaximum = Math.max(100, ...monthlyGauge.map((point) => Math.abs(point.value ?? 0)));
   const points = (key: 'variance' | 'cost') =>
     sortChartValues(rows, sort, (row) => (row[key] === null ? null : String(row[key]))).map((row) => ({
       month: row.month,
@@ -47,33 +51,57 @@ export function WasteCharts({
         <section className="panel metric-chart" aria-label="Waste/Savings Gauge">
           <h2>Waste/Savings Gauge (Percentage change in the last 3 months)</h2>
           <p>{gauge.months.length ? `${gauge.months[0]} to ${gauge.months[2]}` : 'No reporting period available.'}</p>
-          <svg
-            viewBox="0 0 360 235"
-            role="img"
-            aria-label={`Waste/Savings Gauge: ${percentage === null ? 'Unavailable' : `${formatEnergyValue(percentage)}%`}`}
-          >
-            <title>{`Three-month waste/savings percentage: ${percentage === null ? 'Unavailable' : `${formatEnergyValue(percentage)}%`}`}</title>
-            <path d="M 50 165 A 130 130 0 0 1 180 35" fill="none" stroke="#c55b44" strokeWidth="22" />
-            <path d="M 180 35 A 130 130 0 0 1 310 165" fill="none" stroke="#168578" strokeWidth="22" />
-            {percentage !== null && (
-              <>
-                <line x1="180" y1="165" x2={x} y2={y} stroke="#173d45" strokeWidth="5" />
-                <circle cx="180" cy="165" r="8" fill="#173d45" />
-              </>
-            )}
-            <text x="35" y="195" textAnchor="middle">
-              −100%
-            </text>
-            <text x="180" y="20" textAnchor="middle">
-              0%
-            </text>
-            <text x="320" y="195" textAnchor="middle">
-              +100%
-            </text>
-            <text x="180" y="230" textAnchor="middle" fontSize="28" fontWeight="bold">
+          <div className="utility-chart-scroll">
+            <svg
+              viewBox="0 0 620 320"
+              role="img"
+              aria-label={`Waste/Savings Gauge: ${percentage === null ? 'Unavailable' : `${formatEnergyValue(percentage)}%`}`}
+            >
+              <title>Three-month waste and savings percentages in the Carbon gauge style</title>
+              {monthlyGauge.map((point, index) => {
+                const x = 110 + index * 200;
+                const size = (Math.abs(point.value ?? 0) / gaugeMaximum) * 90;
+                const label = `${point.month}: ${point.value === null ? 'Unavailable' : `${formatEnergyValue(point.value)}%`}`;
+                return (
+                  <g key={point.month} role="img" aria-label={label} tabIndex={0} data-month={point.month}>
+                    <title>{label}</title>
+                    <text x={x} y="35" textAnchor="middle" fontSize="14">
+                      {point.month}
+                    </text>
+                    <rect x={x - 22} y="55" width="44" height="190" rx="22" fill="#edf1ef" />
+                    {point.value !== null && (
+                      <rect
+                        x={x - 22}
+                        y={point.value >= 0 ? 150 - Math.max(3, size) : 150}
+                        width="44"
+                        height={Math.max(3, size)}
+                        rx="8"
+                        fill={point.value >= 0 ? '#168578' : '#b74655'}
+                      />
+                    )}
+                    <line x1={x - 32} x2={x + 32} y1="150" y2="150" stroke="#4b635c" strokeDasharray="4 3" />
+                    <text x={x + 36} y="154" fontSize="11">
+                      0%
+                    </text>
+                    <text x={x} y="275" textAnchor="middle" fontSize="17" fontWeight="bold">
+                      {point.value === null
+                        ? 'Unavailable'
+                        : `${point.value > 0 ? '+' : ''}${formatEnergyValue(point.value)}%`}
+                    </text>
+                    <text x={x} y="297" textAnchor="middle" fontSize="12">
+                      {point.value === null ? 'Missing inputs' : point.value < 0 ? 'Wasted energy' : 'Avoided energy'}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+          <p>
+            <strong>
+              Three-month total:{' '}
               {percentage === null ? 'Unavailable' : `${percentage > 0 ? '+' : ''}${formatEnergyValue(percentage)}%`}
-            </text>
-          </svg>
+            </strong>
+          </p>
           <p>
             Three-month total avoided/wasted energy ÷ adjusted expected consumption × 100. Positive is saving; negative
             is waste.
@@ -82,9 +110,6 @@ export function WasteCharts({
             <p className="notice">
               Three consecutive months of calculated values and a positive expected total are required.
             </p>
-          )}
-          {percentage !== null && Math.abs(percentage) > 100 && (
-            <p>The needle is capped at the chart’s scale; the percentage above is the full calculated value.</p>
           )}
         </section>
         <MetricChart

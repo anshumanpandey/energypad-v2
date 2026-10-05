@@ -194,6 +194,9 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(graphPage.getByRole('status').filter({ hasText: 'Single routine adjustment' })).toBeVisible();
   await expect(graphPage.getByRole('status').filter({ hasText: '12 of 12 months calculated.' })).toBeVisible();
   await expect(graphPage.getByText('No previous-year data is required.', { exact: false })).toBeVisible();
+  const wasteGaugePanel = graphPage.getByRole('region', { name: 'Waste/Savings Gauge', exact: true });
+  await expect(wasteGaugePanel.locator('g[data-month]')).toHaveCount(3);
+  await expect(wasteGaugePanel.locator('path')).toHaveCount(0);
   await graphPage.screenshot({ path: testInfo.outputPath('waste-savings-graphs.png'), fullPage: true });
   await graphPage.getByRole('button', { name: 'Table view', exact: true }).click();
   await expect(graphPage.getByRole('button', { name: 'Table view', exact: true })).toHaveAttribute(
