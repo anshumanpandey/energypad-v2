@@ -161,11 +161,11 @@ export function WasteDashboard({
             </select>
           </label>
         </div>
-        <div role="group" aria-label="Calculation drivers">
+        <div className="utility-graph-actions" role="group" aria-label="Calculation drivers">
           {Object.entries(driverLabels)
             .filter(([code]) => other || ['HDD', 'CDD'].includes(code))
             .map(([code, label]) => (
-              <label key={code}>
+              <label className="checkbox-label" key={code}>
                 <input
                   type="checkbox"
                   disabled={pending || (!drivers.includes(code) && drivers.length >= 3)}
@@ -194,9 +194,11 @@ export function WasteDashboard({
           Positive values show savings; negative values show waste. Calculations are experimental. Missing inputs remain
           unavailable.
         </p>
-        <Link href={`/org/${orgId}/degree-days?site=${siteId}`}>View HDD &amp; CDD inputs</Link>
-        <Link href={`/org/${orgId}/waste-savings?site=${siteId}&evidence=1`}>Saved calculation evidence</Link>
-        <Link href={`/org/${orgId}/analysis`}>Advanced Analysis</Link>
+        <div className="utility-graph-actions">
+          <Link href={`/org/${orgId}/degree-days?site=${siteId}`}>View HDD &amp; CDD inputs</Link>
+          <Link href={`/org/${orgId}/waste-savings?site=${siteId}&evidence=1`}>Saved calculation evidence</Link>
+          <Link href={`/org/${orgId}/analysis`}>Advanced Analysis</Link>
+        </div>
       </section>
       {!meters.length && (
         <section className="panel">
