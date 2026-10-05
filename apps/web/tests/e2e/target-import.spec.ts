@@ -55,5 +55,12 @@ test('Data Targets validates every cell, saves monthly targets and updates exist
   await expect(page.getByRole('region', { name: 'Targets import preview' })).toContainText('1 unchanged');
   await page.goto(`/org/${org.id}/targets`);
   await page.getByLabel('Plan year').fill('2023');
-  await expect(page.getByRole('row').filter({ hasText: '175' }).filter({ hasText: 'PETROL' })).toBeVisible();
+  const updated = page
+    .getByRole('region', { name: 'Monthly plan history' })
+    .getByRole('row')
+    .filter({
+      has: page.getByRole('cell', { name: 'PETROL · 175 kWh', exact: true }),
+    });
+  await expect(updated).toBeVisible();
+  await expect(updated.getByRole('cell').nth(6)).toContainText('Current');
 });
