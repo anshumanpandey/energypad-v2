@@ -184,7 +184,7 @@ export function WasteDashboard({
           unavailable.
         </p>
         <div className="utility-graph-actions">
-          <Link href={`/org/${orgId}/degree-days?site=${siteId}`}>View HDD &amp; CDD inputs</Link>
+          <Link href={`/org/${orgId}/degree-days?site=${siteId}&year=${preview.year}`}>View HDD &amp; CDD inputs</Link>
           <Link href={`/org/${orgId}/waste-savings?site=${siteId}&evidence=1`}>Saved calculation evidence</Link>
           <Link href={`/org/${orgId}/analysis`}>Advanced Analysis</Link>
         </div>
@@ -200,6 +200,16 @@ export function WasteDashboard({
             <h2>
               {meter.name} · {meter.fuel.replaceAll('_', ' ')}
             </h2>
+            <p role="status">
+              {meter.rows.filter((row) => row.variance !== null).length
+                ? `${meter.rows.filter((row) => row.variance !== null).length} of ${meter.rows.length} months calculated.`
+                : 'Calculation unavailable: the required inputs or model checks need attention.'}
+            </p>
+            <p>
+              Expected consumption is fitted from {preview.year - 1} consumption and selected drivers. Avoided / wasted
+              energy = adjusted expected consumption − actual consumption. The gauge divides the latest three months’
+              total avoided / wasted energy by their total adjusted expected consumption.
+            </p>
             {meter.downloadable && (
               <a
                 href={`/api/v1/organisations/${orgId}/sites/${siteId}/analysis/waste-preview.xlsx?${new URLSearchParams({ year: String(preview.year), meter: meter.id, drivers: preview.drivers.join(',') })}`}
@@ -208,7 +218,7 @@ export function WasteDashboard({
               </a>
             )}
             {!!meter.issues.length && (
-              <details>
+              <details open>
                 <summary>Calculation inputs need attention ({meter.issues.length})</summary>
                 <ul>
                   {meter.issues.map((issue) => (

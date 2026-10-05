@@ -52,69 +52,73 @@ export function MetricChart({
       </div>
       <p>{description}</p>
       {!values.length && <p className="notice">No calculated values for this selection. Missing data is not zero.</p>}
-      <svg viewBox="0 0 720 270" role="img" aria-label={`${title} chart in ${unit}`}>
-        <title>{`${title}: monthly values in ${unit}. Use the data table for exact values.`}</title>
-        {[0, 0.5, 1].map((fraction) => {
-          const value = low + fraction * span;
-          return (
-            <g key={fraction} className="metric-chart-grid">
-              <line x1="75" x2="680" y1={y(value)} y2={y(value)} />
-              <text x="68" y={y(value) + 4} textAnchor="end">
-                {Intl.NumberFormat('en', {
-                  notation: 'compact',
-                  minimumFractionDigits: tone === 'waste' ? 2 : 0,
-                  maximumFractionDigits: tone === 'waste' ? 2 : 1,
-                }).format(value)}
-              </text>
-            </g>
-          );
-        })}
-        <line x1="75" x2="680" y1={y(0)} y2={y(0)} className="metric-chart-zero" />
-        <path d={linePath} className="metric-chart-line" aria-hidden="true" />
-        {points.map((point, index) => {
-          const x = 80 + step * index + step / 2;
-          const highlighted = point.month.slice(5, 7) === month;
-          const valid = finite(point);
-          const value = valid ? Number(point.value) : 0;
-          return (
-            <g key={point.month}>
-              <g
-                tabIndex={0}
-                role="img"
-                aria-label={`${point.month}: ${display(point)}${point.note ? `. ${point.note}` : ''}`}
-                onFocus={() => setSelected(point.month)}
-                onMouseEnter={() => setSelected(point.month)}
-                onBlur={() => setSelected(null)}
-                onMouseLeave={() => setSelected(null)}
-                className={`metric-chart-point ${value < 0 ? 'is-negative' : ''} ${highlighted ? 'is-selected' : ''}`}
-                aria-current={highlighted ? 'true' : undefined}
-              >
-                <title>{`${point.month}: ${display(point)}${point.note ? ` · ${point.note}` : ''}`}</title>
-                <rect x={x - step * 0.3} y="30" width={step * 0.6} height="200" fill="transparent" />
-                {valid ? (
-                  <circle className="metric-chart-dot" cx={x} cy={y(value)} r={highlighted ? 7 : 5} />
-                ) : (
-                  <text x={x} y={y(0) - 8} textAnchor="middle" className="metric-chart-missing">
-                    –
-                  </text>
-                )}
+      {values.length > 0 && (
+        <svg viewBox="0 0 720 270" role="img" aria-label={`${title} chart in ${unit}`}>
+          <title>{`${title}: monthly values in ${unit}. Use the data table for exact values.`}</title>
+          {[0, 0.5, 1].map((fraction) => {
+            const value = low + fraction * span;
+            return (
+              <g key={fraction} className="metric-chart-grid">
+                <line x1="75" x2="680" y1={y(value)} y2={y(value)} />
+                <text x="68" y={y(value) + 4} textAnchor="end">
+                  {Intl.NumberFormat('en', {
+                    notation: 'compact',
+                    minimumFractionDigits: tone === 'waste' ? 2 : 0,
+                    maximumFractionDigits: tone === 'waste' ? 2 : 1,
+                  }).format(value)}
+                </text>
               </g>
-              <text x={x} y="250" textAnchor="middle" className="metric-chart-month">
-                {
-                  ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][
-                    Number(point.month.slice(5, 7)) - 1
-                  ]
-                }
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+            );
+          })}
+          <line x1="75" x2="680" y1={y(0)} y2={y(0)} className="metric-chart-zero" />
+          <path d={linePath} className="metric-chart-line" aria-hidden="true" />
+          {points.map((point, index) => {
+            const x = 80 + step * index + step / 2;
+            const highlighted = point.month.slice(5, 7) === month;
+            const valid = finite(point);
+            const value = valid ? Number(point.value) : 0;
+            return (
+              <g key={point.month}>
+                <g
+                  tabIndex={0}
+                  role="img"
+                  aria-label={`${point.month}: ${display(point)}${point.note ? `. ${point.note}` : ''}`}
+                  onFocus={() => setSelected(point.month)}
+                  onMouseEnter={() => setSelected(point.month)}
+                  onBlur={() => setSelected(null)}
+                  onMouseLeave={() => setSelected(null)}
+                  className={`metric-chart-point ${value < 0 ? 'is-negative' : ''} ${highlighted ? 'is-selected' : ''}`}
+                  aria-current={highlighted ? 'true' : undefined}
+                >
+                  <title>{`${point.month}: ${display(point)}${point.note ? ` · ${point.note}` : ''}`}</title>
+                  <rect x={x - step * 0.3} y="30" width={step * 0.6} height="200" fill="transparent" />
+                  {valid ? (
+                    <circle className="metric-chart-dot" cx={x} cy={y(value)} r={highlighted ? 7 : 5} />
+                  ) : (
+                    <text x={x} y={y(0) - 8} textAnchor="middle" className="metric-chart-missing">
+                      –
+                    </text>
+                  )}
+                </g>
+                <text x={x} y="250" textAnchor="middle" className="metric-chart-month">
+                  {
+                    ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][
+                      Number(point.month.slice(5, 7)) - 1
+                    ]
+                  }
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      )}
       <p className="metric-chart-detail" aria-live="polite">
         {active ? (
           <WasteDirectionText text={`${active.month}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`} />
-        ) : (
+        ) : values.length ? (
           'Hover or focus a month to inspect its value. A dash marks unavailable data; lines break across missing months.'
+        ) : (
+          'See the calculation status above for the inputs that need attention.'
         )}
       </p>
       <details>

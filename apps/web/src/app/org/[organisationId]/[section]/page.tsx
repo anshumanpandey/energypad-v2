@@ -118,8 +118,21 @@ export default async function WorkspacePage({
         canApprove={can(membership.role, 'analysis:approve')}
       />
     );
-  if (section === 'degree-days')
-    return <DegreeDaysWorkspace orgId={org.id} sites={sites} manage={can(membership.role, 'organisation:update')} />;
+  if (section === 'degree-days') {
+    const query = await searchParams;
+    const site = typeof query.site === 'string' ? query.site : undefined;
+    if (site && !sites.some((item) => item.id === site)) notFound();
+    const year = typeof query.year === 'string' ? Number(query.year) : undefined;
+    return (
+      <DegreeDaysWorkspace
+        orgId={org.id}
+        sites={sites}
+        manage={can(membership.role, 'organisation:update')}
+        initialSite={site}
+        initialYear={year !== undefined && Number.isInteger(year) && year >= 1900 && year <= 2199 ? year : undefined}
+      />
+    );
+  }
   if (section === 'reports')
     return (
       <>

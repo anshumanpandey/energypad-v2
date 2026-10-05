@@ -146,6 +146,30 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await graphPage.getByRole('button', { name: 'Add other drivers', exact: true }).click();
   await graphPage.getByLabel('Population', { exact: true }).check();
   await expect(graphPage.getByRole('status').filter({ hasText: 'Single routine adjustment' })).toBeVisible();
+  await expect(graphPage.getByRole('status').filter({ hasText: 'Calculation unavailable:' })).toBeVisible();
+  await expect(graphPage.getByText('Calculation inputs need attention').locator('..')).toHaveAttribute('open', '');
+  await expect(
+    graphPage.getByRole('img', { name: 'Avoided Energy (+) and Wasted Energy (-) (kWh) chart in kWh', exact: true }),
+  ).toHaveCount(0);
+  // Correct the reporting driver into the fitted baseline range and verify the actual page calculates values.
+  const driverResponse = await page.request.get(`${base}/sites/${site.id}/energy/drivers?year=2021`);
+  expect(driverResponse.ok()).toBe(true);
+  const reportingDrivers = (await driverResponse.json()).observations;
+  for (const observation of reportingDrivers)
+    await post(`/sites/${site.id}/energy/drivers/observations/${observation.id}/correct`, {
+      reason: 'Use the corrected reporting observation',
+      observation: {
+        month: observation.month.slice(0, 7),
+        driver: 'POPULATION',
+        value: '6',
+        source: 'Corrected reporting driver within the baseline range',
+      },
+    });
+  await graphPage.getByRole('button', { name: 'Refresh data', exact: true }).click();
+  await expect(graphPage.getByRole('status').filter({ hasText: '12 of 12 months calculated.' })).toBeVisible();
+  await expect(
+    graphPage.getByRole('img', { name: 'Avoided Energy (+) and Wasted Energy (-) (kWh) chart in kWh', exact: true }),
+  ).toBeVisible();
   await graphPage.screenshot({ path: testInfo.outputPath('waste-savings-graphs.png'), fullPage: true });
   await graphPage.getByRole('button', { name: 'Table view', exact: true }).click();
   await expect(graphPage.getByRole('button', { name: 'Table view', exact: true })).toHaveAttribute(
@@ -155,6 +179,12 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   const monthly = graphPage.getByRole('region', { name: 'Waste and savings monthly results', exact: true });
   await expect(monthly).toBeVisible();
   await expect(monthly.getByRole('row')).toHaveCount(13);
+  const january = monthly
+    .getByRole('row')
+    .filter({ has: graphPage.getByRole('rowheader', { name: '2021-01', exact: true }) });
+  await expect(january.getByRole('cell').nth(0)).toHaveText('120.00');
+  await expect(january.getByRole('cell').nth(1)).toHaveText('112.51');
+  await expect(january.getByRole('cell').nth(3)).toHaveText('-7.49');
   await graphPage.getByLabel('Waste result month', { exact: true }).selectOption('03');
   await expect(monthly.getByRole('row')).toHaveCount(2);
   await expect(monthly.getByRole('row').nth(1)).toContainText('2021-03');

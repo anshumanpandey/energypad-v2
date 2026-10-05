@@ -7,13 +7,17 @@ export function DegreeDaysWorkspace({
   orgId,
   sites,
   manage,
+  initialSite,
+  initialYear,
 }: {
   orgId: string;
   sites: { id: string; name: string }[];
   manage: boolean;
+  initialSite?: string;
+  initialYear?: number;
 }) {
-  const [site, setSite] = useState(sites[0]?.id ?? '');
-  const [year, setYear] = useState(new Date().getUTCFullYear() - 1);
+  const [site, setSite] = useState(initialSite ?? sites[0]?.id ?? '');
+  const [year, setYear] = useState(initialYear ?? new Date().getUTCFullYear() - 1);
   const [loaded, setLoaded] = useState<{ key: string; data: WeatherData } | null>(null);
   const [error, setError] = useState<{ key: string; message: string } | null>(null);
   const base = `organisations/${orgId}/sites/${site}/energy/weather`;
