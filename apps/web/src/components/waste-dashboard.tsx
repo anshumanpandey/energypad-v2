@@ -217,6 +217,14 @@ export function WasteDashboard({
                 ? `${meter.rows.filter((row) => row.variance !== null).length} of ${meter.rows.length} months calculated.`
                 : 'Calculation unavailable: the required inputs or model checks need attention.'}
             </p>
+            {meter.baselineSource && (
+              <p>
+                Baseline {preview.year - 1}: {meter.baselineSource.name} (
+                {meter.baselineSource.fuel.replaceAll('_', ' ')}). Comparing the same uploaded{' '}
+                {meter.baselineSource.endUse} consumption in normalized kWh across the fuel change. Source readings are
+                retained in the calculation sheet.
+              </p>
+            )}
             <p>
               Expected consumption is fitted from {preview.year - 1} consumption and selected drivers. Avoided / wasted
               energy = adjusted expected consumption − actual consumption. The gauge divides the latest three months’

@@ -260,6 +260,73 @@ try {
   });
   await automatic.prepareCalculation(f.owner, f.orgId, apiSite.id, { year: reportingYear });
   assert.equal(await db.weatherYear.count({ where: { siteId: apiSite.id } }), 2);
+  const solar = await sites.saveMeter(f.owner, f.orgId, apiSite.id, {
+    code: 'SOLAR-HEATING',
+    name: 'Solar PV heating baseline',
+    fuel: 'SOLAR_PV',
+    unit: 'kWh',
+  });
+  const biodiesel = await sites.saveMeter(f.owner, f.orgId, apiSite.id, {
+    code: 'BIO-HEATING',
+    name: 'Biodiesel heating reporting',
+    fuel: 'BIODIESEL',
+    unit: 'kWh',
+  });
+  for (const result of fetched) {
+    for (const month of result.monthly as unknown as WeatherMonth[]) {
+      const expected = 100 + 2 * month.heatingDegreeDays + 3 * month.coolingDegreeDays;
+      const actual = expected - (result.year === reportingYear ? 7 : 0);
+      await energy.add(f.owner, f.orgId, apiSite.id, {
+        meterId: result.year === reportingYear ? biodiesel.id : solar.id,
+        month: month.month,
+        quantity: String(actual),
+        endUse: 'Heating',
+        netCost: (actual * 0.2).toFixed(3),
+        currency: 'GBP',
+        estimated: false,
+      });
+    }
+  }
+  const fuelChange = await service.wastePreview(f.owner, f.orgId, apiSite.id, reportingYear);
+  const thermal = fuelChange.preview.meters.find((meter) => meter.id === biodiesel.id)!;
+  assert.equal(thermal.baselineSource!.id, solar.id);
+  assert.equal(thermal.baselineSource!.endUse, 'heating');
+  thermal.rows.filter((row) => row.variance !== null).forEach((row) => assert.ok(Math.abs(row.variance! - 7) < 1e-7));
+  assert.equal(thermal.downloadable, true);
+  const evidence = fuelChange.sources.find((source) => source.meterId === biodiesel.id)!.source;
+  assert.equal(evidence.baseline.snapshot.definition.meterId, solar.id);
+  assert.equal(evidence.baseline.snapshot.assembly.scope.meterId, solar.id);
+  assert.ok(
+    JSON.stringify(evidence.baseline.snapshot.assembly.evidence).includes(
+      'same uploaded thermal end use in normalized kWh',
+    ),
+  );
+  const generated = new ExcelJS.Workbook();
+  await generated.xlsx.load(
+    (await calculationWorkbook(evidence, 'Leeds')) as unknown as Parameters<typeof generated.xlsx.load>[0],
+  );
+  assert.ok(generated.getWorksheet('Generated evidence'));
+  // Another reporting meter for the same use makes the comparison ambiguous; do not duplicate a baseline.
+  const additional = await sites.saveMeter(f.owner, f.orgId, apiSite.id, {
+    code: 'SECOND-HEAT',
+    name: 'Additional heating',
+    fuel: 'GAS',
+    unit: 'kWh',
+  });
+  await energy.add(f.owner, f.orgId, apiSite.id, {
+    meterId: additional.id,
+    month: `${reportingYear}-01`,
+    quantity: '10',
+    endUse: 'Heating',
+    estimated: false,
+  });
+  const ambiguous = await service.wastePreview(f.owner, f.orgId, apiSite.id, reportingYear);
+  assert.ok(
+    ambiguous.preview.meters.find((meter) => meter.id === biodiesel.id)!.rows.every((row) => row.variance === null),
+  );
+  console.log(
+    '✓ fuel changes match one consistent thermal end use, retain original baseline evidence and reject ambiguous series',
+  );
   console.log(
     '✓ automatic site geocoding, idempotent baseline/reporting fetches, current-year monthly weather and nonzero calculations',
   );

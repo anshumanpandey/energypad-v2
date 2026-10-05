@@ -45,6 +45,7 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
       meterId: meter.id,
       month: `2020-${String(i).padStart(2, '0')}`,
       quantity: String(100 + 2 * i + (i % 2)),
+      endUse: 'Heating',
       estimated: false,
     });
     await post(`/sites/${site.id}/energy/drivers`, {
@@ -237,6 +238,34 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   const book = new ExcelJS.Workbook();
   await book.xlsx.readFile((await (await download).path())!);
   expect(book.getWorksheet('Regression Analysis')!.getCell('A1').value).toContain('Single Routine Adjustment');
+  const changedFuel = await post(`/sites/${site.id}/meters`, {
+    code: 'BIO',
+    name: 'Biodiesel heating',
+    fuel: 'BIODIESEL',
+    unit: 'kWh',
+  });
+  for (let i = 1; i <= 12; i++)
+    await post(`/sites/${site.id}/energy`, {
+      meterId: changedFuel.id,
+      month: `2021-${String(i).padStart(2, '0')}`,
+      quantity: '100',
+      endUse: 'Heating',
+      netCost: '20',
+      currency: 'GBP',
+      estimated: false,
+    });
+  await graphPage.getByRole('button', { name: 'Refresh data', exact: true }).click();
+  await graphPage.getByLabel('Waste fuel type').selectOption('BIODIESEL');
+  await expect(graphPage.getByText('Comparing the same uploaded heating consumption', { exact: false })).toBeVisible();
+  await expect(graphPage.getByRole('status').filter({ hasText: '12 of 12 months calculated.' })).toBeVisible();
+  await graphPage.getByLabel('Waste result month', { exact: true }).selectOption('01');
+  const changedJanuary = graphPage
+    .getByRole('region', { name: 'Waste and savings monthly results', exact: true })
+    .getByRole('row')
+    .nth(1);
+  await expect(changedJanuary.getByRole('cell').nth(1)).toHaveText('112.51');
+  await expect(changedJanuary.getByRole('cell').nth(3)).toHaveText('12.51');
+  await expect(changedJanuary.getByRole('cell').nth(4)).toHaveText('2.50');
   await graphPage.close();
   await page.screenshot({ path: testInfo.outputPath('waste-report-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
