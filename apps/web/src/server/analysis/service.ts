@@ -621,7 +621,7 @@ export class AnalysisService extends FoundationService {
             estimatedConsumption: 'BLOCK',
             supersedesId: null,
           });
-          const baseline = await assemble(tx, org, siteId, definition);
+          const baseline = await assemble(tx, org, siteId, definition, { uploadedPopulation: true });
           if (sourceMeter) {
             baseline.evidence = json({
               ...(baseline.evidence as Record<string, unknown>),
@@ -642,7 +642,13 @@ export class AnalysisService extends FoundationService {
             if (!model) issues.push(fit.status === 'BLOCKED' ? fit.message : 'Baseline model is unavailable.');
             else {
               const period = { firstMonth: `${selectedYear}-01`, lastMonth: `${selectedYear}-12` };
-              const reporting = await assemble(tx, org, siteId, { ...definition, meterId: meter.id, period });
+              const reporting = await assemble(
+                tx,
+                org,
+                siteId,
+                { ...definition, meterId: meter.id, period },
+                { uploadedPopulation: true },
+              );
               // Missing months stay unavailable; they do not suppress valid months or actual consumption.
               output = calculateReporting({
                 baseline: {
@@ -661,13 +667,17 @@ export class AnalysisService extends FoundationService {
                   sigmaMultiplier: 2,
                   zeroThreshold: 'UNDEFINED',
                   negativePrediction: 'BLOCK',
-                  extrapolation: 'BLOCK',
+                  extrapolation: 'ALLOW_WITH_WARNING',
                 },
                 rows: reporting.rows.map((row) => ({
                   ...row,
                   consumption: {
                     ...row.consumption,
-                    kwh: reporting.issues.some((issue) => issue.month === null || issue.month === row.consumption.month)
+                    kwh: reporting.issues.some(
+                      (issue) =>
+                        (issue.month === null || issue.month === row.consumption.month) &&
+                        ['CONSUMPTION_PERIOD', 'DUPLICATE_CONSUMPTION', 'MISSING_CONSUMPTION'].includes(issue.code),
+                    )
                       ? null
                       : row.consumption.kwh,
                   },
@@ -687,6 +697,16 @@ export class AnalysisService extends FoundationService {
               issues.push(
                 ...reporting.issues.map((issue) => `${issue.month ?? 'Reporting'}: ${issue.message}`),
                 ...output.issues.map((issue) => `${issue.month ?? 'Reporting'}: ${issue.message}`),
+                ...output.rows.flatMap((row) =>
+                  row.status === 'CALCULATED'
+                    ? row.warnings
+                        .filter((warning) => warning.startsWith('EXTRAPOLATION:'))
+                        .map(
+                          (warning) =>
+                            `${row.month}: ${warning.slice(14)} is outside the baseline weather range; estimate uses extrapolation.`,
+                        )
+                    : [],
+                ),
               );
             }
           }

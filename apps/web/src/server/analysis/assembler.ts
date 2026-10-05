@@ -16,6 +16,7 @@ export async function assemble(
   org: string,
   siteId: string,
   definition: BaselineDefinition,
+  options: { uploadedPopulation?: boolean } = {},
 ) {
   const scope = { organisationId: org, siteId, meterId: definition.meterId, energyUseId: definition.energyUseId };
   const siteScope = { organisationId: org, siteId };
@@ -68,6 +69,31 @@ export async function assemble(
     const matches = observations.filter((o) => o.month.toISOString().slice(0, 7) === month && o.driver === code);
     if (matches.length > 1) fail(month, 'DUPLICATE_DRIVER', `Multiple current ${code} observations.`);
     const o = matches.length === 1 ? matches[0] : null;
+    if (!matches.length && code === 'POPULATION' && options.uploadedPopulation) {
+      const uploaded = records
+        .filter((record) => record.periodStart.toISOString().slice(0, 7) === month)
+        .flatMap((record) => {
+          const source = (record.importProvenance ?? record.sourceProvenance) as Record<string, unknown> | null;
+          const value = source?.population;
+          return source?.format === 'historic-consumption-v1' &&
+            (typeof value === 'string' || typeof value === 'number') &&
+            String(value).trim() !== '' &&
+            Number.isFinite(Number(value)) &&
+            Number(value) >= 0
+            ? [{ record, value: Number(value) }]
+            : [];
+        });
+      if (uploaded.length && new Set(uploaded.map((entry) => entry.value)).size === 1)
+        return {
+          id: `uploaded-population:${uploaded[0].record.id}`,
+          scope: siteScope,
+          month,
+          kind: code,
+          unit: driverDefinitions[code].unit,
+          value: uploaded[0].value,
+        };
+      if (uploaded.length) fail(month, 'DUPLICATE_DRIVER', 'Conflicting uploaded POPULATION values.');
+    }
     if (o && +o.month !== +monthPeriod(month).start)
       fail(month, 'DRIVER_PERIOD', 'Driver must identify a calendar month.');
     return o

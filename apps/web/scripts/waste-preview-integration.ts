@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import ExcelJS from 'exceljs';
+import { Prisma } from '@prisma/client';
 import { testDatabase } from './test-database';
 import { seedMultidriver } from './fixtures/analysis-multidriver';
 import { AnalysisService } from '../src/server/analysis/service';
@@ -177,7 +178,7 @@ try {
         return {
           days: request.dates.map((date) => ({
             date,
-            meanTemperature: Number(date.slice(5, 7)) * 2 - 5,
+            meanTemperature: Number(date.slice(5, 7)) * 2 - 5 - (Number(date.slice(0, 4)) === reportingYear ? 1 : 0),
             daylightSeconds: 43200,
           })),
           provenance: {
@@ -306,6 +307,55 @@ try {
     (await calculationWorkbook(evidence, 'Leeds')) as unknown as Parameters<typeof generated.xlsx.load>[0],
   );
   assert.ok(generated.getWorksheet('Generated evidence'));
+  await db.siteDriverClassification.create({
+    data: {
+      organisationId: f.orgId,
+      siteId: apiSite.id,
+      year: reportingYear - 1,
+      heating: 'R',
+      cooling: 'R',
+      population: 'NR',
+      operatingHours: 'N/A',
+      daylighting: 'N/A',
+      buildingSize: 'N/A',
+      source: 'Uploaded classification',
+      sourceRow: 2,
+      authorId: f.owner.userId,
+    },
+  });
+  for (const record of await db.consumptionRecord.findMany({
+    where: { siteId: apiSite.id, meterId: { in: [solar.id, biodiesel.id] } },
+  })) {
+    await db.consumptionRecord.create({
+      data: {
+        ...record,
+        id: crypto.randomUUID(),
+        supersedesId: record.id,
+        revision: record.revision + 1,
+        correctionReason: 'Fixture historic upload provenance',
+        importProvenance: { format: 'historic-consumption-v1', population: '100' },
+        sourceProvenance: record.sourceProvenance ?? Prisma.DbNull,
+        energyUseSnapshot: record.energyUseSnapshot ?? Prisma.DbNull,
+      } as Prisma.ConsumptionRecordUncheckedCreateInput,
+    });
+  }
+  const uploadedNra = await service.wastePreview(f.owner, f.orgId, apiSite.id, reportingYear, ['HDD', 'CDD']);
+  const adjusted = uploadedNra.preview.meters.find((meter) => meter.id === biodiesel.id)!;
+  assert.ok(adjusted.rows.some((row) => row.variance !== null));
+  const uploadedMonths = adjusted.rows.filter((row) => row.actual !== null).map((row) => row.month);
+  assert.ok(
+    !adjusted.issues.some(
+      (issue) => uploadedMonths.some((month) => issue.startsWith(month)) && issue.includes('Missing POPULATION'),
+    ),
+  );
+  assert.ok(JSON.stringify(uploadedNra.sources).includes('uploaded-population:'));
+  const extreme = await service.wastePreview(f.owner, f.orgId, apiSite.id, reportingYear, ['HDD', 'CDD']);
+  const extremeMeter = extreme.preview.meters.find((meter) => meter.id === biodiesel.id)!;
+  assert.notEqual(extremeMeter.rows[0].variance, null);
+  assert.ok(extremeMeter.issues.some((issue) => issue.includes('HDD is outside the baseline weather range')));
+  console.log(
+    '✓ automatic NRA uses uploaded population evidence and flags weather extrapolation without blanking charts',
+  );
   // Another reporting meter for the same use makes the comparison ambiguous; do not duplicate a baseline.
   const additional = await sites.saveMeter(f.owner, f.orgId, apiSite.id, {
     code: 'SECOND-HEAT',
