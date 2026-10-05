@@ -30,6 +30,8 @@ export async function calculationWorkbook(
   const sheet = book.addWorksheet('Regression Analysis');
   const baseline = snapshot.assembly.rows;
   const reporting = output.rows;
+  const selectedYearFit =
+    run.generated && snapshot.definition.period.firstMonth === output.inputSnapshot.period.firstMonth;
   const k = fit.coefficients.length;
   const width = Math.max(baseline.length, reporting.length) + 1;
   const section = (row: number, title: string) => {
@@ -63,9 +65,11 @@ export async function calculationWorkbook(
   section(1, `${siteName} · ${method}`);
   section(
     2,
-    `Baseline ${snapshot.definition.period.firstMonth} – ${snapshot.definition.period.lastMonth} · Reporting ${output.inputSnapshot.period.firstMonth} – ${output.inputSnapshot.period.lastMonth}`,
+    selectedYearFit
+      ? `Selected-year fit ${snapshot.definition.period.firstMonth} – ${snapshot.definition.period.lastMonth}. Expected values are fitted from this year's available consumption and drivers; no prior-year data is required.`
+      : `Baseline ${snapshot.definition.period.firstMonth} – ${snapshot.definition.period.lastMonth} · Reporting ${output.inputSnapshot.period.firstMonth} – ${output.inputSnapshot.period.lastMonth}`,
   );
-  section(4, 'A · Baseline inputs');
+  section(4, selectedYearFit ? 'A · Selected-year model inputs' : 'A · Baseline inputs');
   input(
     5,
     'Month',
@@ -117,7 +121,7 @@ export async function calculationWorkbook(
     'Month',
     baseline.map((row) => row.consumption.month),
   );
-  input(fittedRow, 'Fitted baseline (kWh)', []);
+  input(fittedRow, selectedYearFit ? 'Fitted selected-year consumption (kWh)' : 'Fitted baseline (kWh)', []);
   input(fittedRow + 1, 'Residual (kWh)', []);
   input(fittedRow + 2, 'Residual squared', []);
   baseline.forEach((row, index) => {

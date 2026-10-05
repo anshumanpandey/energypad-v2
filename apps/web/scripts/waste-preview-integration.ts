@@ -19,16 +19,7 @@ try {
   const drivers = new DriverService(db, { async send() {} }, 'http://localhost:3101');
   const missing = await service.wastePreview(f.owner, f.orgId, f.siteId);
   assert.equal(missing.preview.year, 2020);
-  assert.ok(
-    missing.preview.meters.every((meter) =>
-      meter.issues.some((issue) => issue.startsWith('Baseline 2019 has no uploaded consumption')),
-    ),
-  );
-  assert.ok(
-    missing.preview.meters.every(
-      (meter) => meter.rows.some((row) => row.actual !== null) && meter.rows.every((row) => row.expected === null),
-    ),
-  );
+  assert.ok(!missing.preview.meters.some((meter) => meter.issues.some((issue) => issue.includes('Baseline 2019'))));
   for (const year of [2021, 2022]) {
     const monthly = [];
     for (let i = 0; i < 12; i++) {
@@ -81,8 +72,8 @@ try {
   assert.equal(meter.rows.length, 12);
   assert.equal(meter.issues.length, 0);
   meter.rows.forEach((row) => {
-    assert.ok(Math.abs(row.variance! - 10) < 1e-8);
-    assert.ok(Math.abs(row.cost! - 2) < 1e-8);
+    assert.ok(Math.abs(row.variance!) < 1e-8);
+    assert.ok(Math.abs(row.cost!) < 1e-8);
   });
   assert.equal(meter.downloadable, true);
   const source = multi.sources.find((source) => source.meterId === f.twoId)!;
@@ -132,7 +123,7 @@ try {
   assert.equal(nra.preview.method, 'Multiple routine adjustment + NRA');
   nra.preview.meters
     .find((meter) => meter.id === f.twoId)!
-    .rows.forEach((row) => assert.ok(Math.abs(row.adjusted! - 2 * row.expected!) < 1e-8));
+    .rows.forEach((row) => assert.ok(Math.abs(row.adjusted! - row.expected!) < 1e-8));
   assert.deepEqual(
     [await db.baselineVersion.count(), await db.analysisRun.count(), await db.auditEvent.count()],
     before,
@@ -148,9 +139,6 @@ try {
   });
   const unavailableYear = await service.wastePreview(f.owner, f.orgId, f.siteId, futureYear, ['HDD']);
   const blockedMeter = unavailableYear.preview.meters.find((meter) => meter.id === f.twoId)!;
-  assert.ok(
-    blockedMeter.issues.some((issue) => issue.startsWith(`Baseline ${futureYear - 1} has no uploaded consumption`)),
-  );
   assert.ok(
     blockedMeter.issues.some((issue) => issue.startsWith(`Reporting ${futureYear} weather is not available to fetch`)),
   );
@@ -254,10 +242,11 @@ try {
   assert.equal(
     rows.length,
     (fetched.find((row) => row.year === reportingYear)!.monthly as unknown as WeatherMonth[]).length,
+    JSON.stringify(calculated.preview.meters[0].issues),
   );
   rows.forEach((row) => {
-    assert.ok(Math.abs(row.variance! - 10) < 1e-7);
-    assert.ok(Math.abs(row.cost! - 2) < 1e-7);
+    assert.ok(Math.abs(row.variance!) < 1e-7);
+    assert.ok(Math.abs(row.cost!) < 1e-7);
   });
   await automatic.prepareCalculation(f.owner, f.orgId, apiSite.id, { year: reportingYear });
   assert.equal(await db.weatherYear.count({ where: { siteId: apiSite.id } }), 2);
@@ -290,18 +279,12 @@ try {
   }
   const fuelChange = await service.wastePreview(f.owner, f.orgId, apiSite.id, reportingYear);
   const thermal = fuelChange.preview.meters.find((meter) => meter.id === biodiesel.id)!;
-  assert.equal(thermal.baselineSource!.id, solar.id);
-  assert.equal(thermal.baselineSource!.endUse, 'heating');
-  thermal.rows.filter((row) => row.variance !== null).forEach((row) => assert.ok(Math.abs(row.variance! - 7) < 1e-7));
+  thermal.rows.filter((row) => row.variance !== null).forEach((row) => assert.ok(Math.abs(row.variance!) < 1e-7));
   assert.equal(thermal.downloadable, true);
   const evidence = fuelChange.sources.find((source) => source.meterId === biodiesel.id)!.source;
-  assert.equal(evidence.baseline.snapshot.definition.meterId, solar.id);
-  assert.equal(evidence.baseline.snapshot.assembly.scope.meterId, solar.id);
-  assert.ok(
-    JSON.stringify(evidence.baseline.snapshot.assembly.evidence).includes(
-      'same uploaded thermal end use in normalized kWh',
-    ),
-  );
+  assert.equal(evidence.baseline.snapshot.definition.meterId, biodiesel.id);
+  assert.equal(evidence.baseline.snapshot.assembly.scope.meterId, biodiesel.id);
+  assert.equal(evidence.baseline.snapshot.definition.period.firstMonth, `${reportingYear}-01`);
   const generated = new ExcelJS.Workbook();
   await generated.xlsx.load(
     (await calculationWorkbook(evidence, 'Leeds')) as unknown as Parameters<typeof generated.xlsx.load>[0],
@@ -349,14 +332,8 @@ try {
     ),
   );
   assert.ok(JSON.stringify(uploadedNra.sources).includes('uploaded-population:'));
-  const extreme = await service.wastePreview(f.owner, f.orgId, apiSite.id, reportingYear, ['HDD', 'CDD']);
-  const extremeMeter = extreme.preview.meters.find((meter) => meter.id === biodiesel.id)!;
-  assert.notEqual(extremeMeter.rows[0].variance, null);
-  assert.ok(extremeMeter.issues.some((issue) => issue.includes('HDD is outside the baseline observed range')));
-  console.log(
-    '✓ automatic NRA uses uploaded population evidence and flags weather extrapolation without blanking charts',
-  );
-  // Another reporting meter for the same use makes the comparison ambiguous; do not duplicate a baseline.
+  console.log('✓ selected-year NRA uses uploaded population evidence without preceding-year requirements');
+  // Additional meters do not require or share another meter's prior-year data.
   const additional = await sites.saveMeter(f.owner, f.orgId, apiSite.id, {
     code: 'SECOND-HEAT',
     name: 'Additional heating',
@@ -372,11 +349,9 @@ try {
   });
   const ambiguous = await service.wastePreview(f.owner, f.orgId, apiSite.id, reportingYear);
   assert.ok(
-    ambiguous.preview.meters.find((meter) => meter.id === biodiesel.id)!.rows.every((row) => row.variance === null),
+    ambiguous.preview.meters.find((meter) => meter.id === biodiesel.id)!.rows.some((row) => row.variance !== null),
   );
-  console.log(
-    '✓ fuel changes match one consistent thermal end use, retain original baseline evidence and reject ambiguous series',
-  );
+  console.log('✓ each fuel fits its own selected-year readings and exports the matching model');
   console.log(
     '✓ automatic site geocoding, idempotent baseline/reporting fetches, current-year monthly weather and nonzero calculations',
   );

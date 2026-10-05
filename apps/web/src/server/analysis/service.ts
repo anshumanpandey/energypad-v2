@@ -489,7 +489,7 @@ export class AnalysisService extends FoundationService {
         where: {
           organisationId: org,
           siteId,
-          year: { in: [selectedYear - 1, selectedYear] },
+          year: selectedYear,
           OR: [{ methodology: weatherMethod }, { methodology: { startsWith: `${weatherMethod}:through:` } }],
         },
         select: { configurationId: true, year: true, methodology: true },
@@ -505,16 +505,14 @@ export class AnalysisService extends FoundationService {
         }
       };
       const configuration =
-        configurations.find((c) => [selectedYear - 1, selectedYear].every((y) => hasWeather(c.id, y))) ??
-        configurations[0];
+        configurations.find((c) => [selectedYear].every((y) => hasWeather(c.id, y))) ?? configurations[0];
       const preview: WastePreview = {
         year: selectedYear,
         years,
         drivers,
         weather: {
           required: drivers.some((code) => ['HDD', 'CDD', 'DAYLIGHT'].includes(code)),
-          ready:
-            !!configuration && [selectedYear - 1, selectedYear].every((value) => hasWeather(configuration.id, value)),
+          ready: !!configuration && [selectedYear].every((value) => hasWeather(configuration.id, value)),
           throughMonth: (() => {
             try {
               return weatherPeriod(selectedYear).end.slice(0, 7);
@@ -534,52 +532,6 @@ export class AnalysisService extends FoundationService {
       for (const meter of meters) {
         const records = readings.filter((row) => row.meterId === meter.id);
         if (!records.some((row) => row.periodStart.getUTCFullYear() === selectedYear)) continue;
-        // Imported meters split by fuel. Compare the same explicitly recorded thermal end use in normalized kWh
-        // when a fuel changes, retaining the original baseline records and source meter in the evidence.
-        const baselineRecords = records.filter((row) => row.periodStart.getUTCFullYear() === selectedYear - 1);
-        const endUses = [
-          ...new Set(
-            records
-              .filter((row) => row.periodStart.getUTCFullYear() === selectedYear)
-              .map((row) => row.endUse.trim().toLowerCase()),
-          ),
-        ];
-        const endUse = endUses.length === 1 && ['heating', 'cooling'].includes(endUses[0]) ? endUses[0] : null;
-        const reportingIds = endUse
-          ? [
-              ...new Set(
-                readings
-                  .filter(
-                    (row) =>
-                      row.periodStart.getUTCFullYear() === selectedYear && row.endUse.trim().toLowerCase() === endUse,
-                  )
-                  .map((row) => row.meterId),
-              ),
-            ]
-          : [];
-        const alternativeIds =
-          baselineRecords.length === 0 && endUse && reportingIds.length === 1
-            ? [
-                ...new Set(
-                  readings
-                    .filter(
-                      (row) =>
-                        row.periodStart.getUTCFullYear() === selectedYear - 1 &&
-                        row.endUse.trim().toLowerCase() === endUse,
-                    )
-                    .map((row) => row.meterId),
-                ),
-              ]
-            : [];
-        const candidate = alternativeIds.length === 1 ? meters.find((row) => row.id === alternativeIds[0]) : undefined;
-        const sourceMeter =
-          candidate &&
-          readings
-            .filter((row) => row.meterId === candidate.id && row.periodStart.getUTCFullYear() === selectedYear - 1)
-            .every((row) => row.endUse.trim().toLowerCase() === endUse)
-            ? candidate
-            : undefined;
-        const baselineMeter = sourceMeter ?? meter;
         const issues: string[] = [];
         let output: ReportingResult | null = null;
         let fit: RegressionResult | null = null;
@@ -596,25 +548,20 @@ export class AnalysisService extends FoundationService {
             issues.push(`Reporting ${selectedYear} weather is not available to fetch: ${error.message}`);
           }
         }
-        if (!baselineRecords.length && !sourceMeter)
-          issues.push(
-            `Baseline ${selectedYear - 1} has no uploaded consumption for this ${meter.fuel.replaceAll('_', ' ')} meter and no unique matching heating or cooling series. Supply prior-year consumption or resolve ambiguous end-use readings.`,
-          );
         if (!drivers.length) issues.push('Choose at least one calculation driver.');
         else if (weatherRequired && !configuration)
           issues.push(
-            `HDD and CDD weather inputs are required for this site. Configure its coordinates, timezone and base temperatures in HDD & CDD, then fetch baseline ${selectedYear - 1} and reporting ${selectedYear} weather.`,
+            `HDD and CDD weather inputs are required for this site. Configure its coordinates, timezone and base temperatures in HDD & CDD, then fetch ${selectedYear} weather.`,
           );
-        else if (selectedYear === 1900) issues.push('A preceding baseline year is required.');
         else if (method.unsupportedNra.length)
           issues.push(
             `Non-routine ${method.unsupportedNra.join(', ')} needs a reviewed adjustment in Advanced Analysis.`,
           );
         else {
           const definition = baselineDefinition.parse({
-            meterId: baselineMeter.id,
+            meterId: meter.id,
             energyUseId: null,
-            period: { firstMonth: `${selectedYear - 1}-01`, lastMonth: `${selectedYear - 1}-12` },
+            period: { firstMonth: `${selectedYear}-01`, lastMonth: `${selectedYear}-12` },
             drivers,
             weather: weatherRequired ? { configurationId: configuration.id, methodology: weatherMethod } : null,
             fitPolicy: { version: 'automatic-waste-preview-v1', relativeRankTolerance: 1e-10 },
@@ -622,21 +569,34 @@ export class AnalysisService extends FoundationService {
             supersedesId: null,
           });
           const baseline = await assemble(tx, org, siteId, definition, { uploadedPopulation: true });
-          if (sourceMeter) {
-            baseline.evidence = json({
-              ...(baseline.evidence as Record<string, unknown>),
-              comparison: {
-                basis: 'same uploaded thermal end use in normalized kWh',
-                endUse,
-                baselineMeter: sourceMeter,
-                reportingMeter: meter,
-              },
-            });
-          }
           snapshot = { definition, assembly: baseline };
-          if (baseline.issues.length)
-            issues.push(...baseline.issues.map((issue) => `${issue.month ?? 'Baseline'}: ${issue.message}`));
+          const completeRows = baseline.rows.filter(
+            (row) =>
+              row.consumption.kwh !== null &&
+              row.drivers.every((driver) => driver.value !== null) &&
+              !baseline.issues.some((issue) => issue.month === null || issue.month === row.consumption.month),
+          );
+          if (!completeRows.length)
+            issues.push('No complete monthly consumption and driver inputs are available to fit expected consumption.');
           else {
+            const varying = definition.drivers.filter(
+              (code) =>
+                new Set(completeRows.map((row) => row.drivers.find((driver) => driver.code === code)!.value)).size > 1,
+            );
+            const constant = definition.drivers.filter((code) => !varying.includes(code));
+            if (varying.length && constant.length) {
+              definition.drivers = varying;
+              baseline.rows = baseline.rows.map((row) => ({
+                ...row,
+                drivers: row.drivers.filter((driver) => varying.includes(driver.code)),
+              }));
+              for (const row of completeRows)
+                row.drivers = row.drivers.filter((driver) => varying.includes(driver.code));
+              issues.push(
+                `${constant.join(', ')} has no variation in the available selected-year months and is excluded from the fit.`,
+              );
+            }
+            baseline.rows = completeRows;
             fit = this.fit(definition, baseline);
             const model = projectReportingModel(fit);
             if (!model) issues.push(fit.status === 'BLOCKED' ? fit.message : 'Baseline model is unavailable.');
@@ -681,8 +641,7 @@ export class AnalysisService extends FoundationService {
                       ? null
                       : row.consumption.kwh,
                   },
-                  nraReferenceMonth:
-                    method.nra === 'NONE' ? null : `${selectedYear - 1}${row.consumption.month.slice(4)}`,
+                  nraReferenceMonth: method.nra === 'NONE' ? null : row.consumption.month,
                   nraObservations:
                     method.nra === 'NONE'
                       ? []
@@ -731,11 +690,6 @@ export class AnalysisService extends FoundationService {
           ...meter,
           issues: [...new Set(issues)],
           downloadable,
-          ...(sourceMeter
-            ? {
-                baselineSource: { id: sourceMeter.id, name: sourceMeter.name, fuel: sourceMeter.fuel, endUse: endUse! },
-              }
-            : {}),
           rows: monthlyCarbonRows(selectedYear, records, []).map((actual) => {
             const result = output?.rows.find((row) => row.month === actual.month);
             const calculated = result?.status === 'CALCULATED' ? result : null;

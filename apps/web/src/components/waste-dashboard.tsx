@@ -177,11 +177,7 @@ export function WasteDashboard({
             ))}
           <Button onClick={() => setOther(!other)}>{other ? 'Hide other drivers' : 'Add other drivers'}</Button>
         </div>
-        <p role="status">
-          {pending
-            ? 'Updating calculations…'
-            : `${preview.method} · Baseline ${preview.year - 1} · Reporting ${preview.year}`}
-        </p>
+        <p role="status">{pending ? 'Updating calculations…' : `${preview.method} · Selected year ${preview.year}`}</p>
         <p className="muted">
           Positive values show savings; negative values show waste. Calculations are experimental. Missing inputs remain
           unavailable.
@@ -217,21 +213,15 @@ export function WasteDashboard({
                 ? `${meter.rows.filter((row) => row.variance !== null).length} of ${meter.rows.length} months calculated.`
                 : 'Calculation unavailable: the required inputs or model checks need attention.'}
             </p>
-            {meter.baselineSource && (
-              <p>
-                Baseline {preview.year - 1}: {meter.baselineSource.name} (
-                {meter.baselineSource.fuel.replaceAll('_', ' ')}). Comparing the same uploaded{' '}
-                {meter.baselineSource.endUse} consumption in normalized kWh across the fuel change. Source readings are
-                retained in the calculation sheet.
-              </p>
-            )}
             <p>
-              Expected consumption is fitted from {preview.year - 1} consumption and selected drivers. Avoided / wasted
-              energy = adjusted expected consumption − actual consumption. The gauge divides the latest three months’
-              total avoided / wasted energy by their total adjusted expected consumption.
+              Expected consumption is fitted from available {preview.year} consumption and selected drivers. No
+              previous-year data is required. These values show variation from the selected-year fitted model. Avoided /
+              wasted energy = adjusted expected consumption − actual consumption. The gauge divides the latest three
+              months’ total avoided / wasted energy by their total adjusted expected consumption.
             </p>
             {meter.downloadable && (
               <a
+                className="button button-primary"
                 href={`/api/v1/organisations/${orgId}/sites/${siteId}/analysis/waste-preview.xlsx?${new URLSearchParams({ year: String(preview.year), meter: meter.id, drivers: preview.drivers.join(',') })}`}
               >
                 Download site calculation sheet
