@@ -441,11 +441,24 @@ export class AnalysisService extends FoundationService {
       return review;
     });
   }
-  async wasteRuns(actor: Actor, org: string, siteId: string, input: unknown = {}) {
+  async wasteRuns(actor: Actor, org: string, siteId: string, input: unknown = {}, climateOnly = false) {
     const page = historyPageInput.parse(input);
     return this.transaction(async (tx) => {
       await this.access(tx, actor, org, siteId, 'history');
-      const scope = { organisationId: org, siteId };
+      const scope: Prisma.AnalysisRunWhereInput = {
+        organisationId: org,
+        siteId,
+        ...(climateOnly
+          ? {
+              baseline: {
+                OR: [
+                  { snapshot: { path: ['definition', 'drivers'], array_contains: ['HDD'] } },
+                  { snapshot: { path: ['definition', 'drivers'], array_contains: ['CDD'] } },
+                ],
+              },
+            }
+          : {}),
+      };
       const anchor = page.cursor ? await tx.analysisRun.findFirst({ where: { ...scope, id: page.cursor } }) : null;
       if (page.cursor && !anchor) throw new DomainError('NOT_FOUND', 'This cursor is not available.', 404);
       const rows = await tx.analysisRun.findMany({

@@ -368,7 +368,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     basis: 'LOCATION_BASED',
     requestKey: randomUUID(),
   });
-  await page.goto(`/org/${org}/waste-savings?site=${site.id}&carbon=${investigationCarbon.id}`);
+  await page.goto(`/org/${org}/waste-savings?site=${site.id}&other=1&carbon=${investigationCarbon.id}`);
 
   await page.getByRole('link', { name: 'Create an investigation from this evidence' }).click();
   await expect(page.getByRole('heading', { name: 'Opportunities', exact: true })).toBeVisible();
@@ -821,7 +821,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     ).status(),
   ).toBe(404);
 
-  await page.goto(`/org/${org}/waste-savings?site=${site.id}`);
+  await page.goto(`/org/${org}/waste-savings?site=${site.id}&other=1`);
   await expect(page.getByRole('heading', { name: 'Waste & Savings', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Monthly waste & savings', exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('waste-savings-graphs.png'), fullPage: true });

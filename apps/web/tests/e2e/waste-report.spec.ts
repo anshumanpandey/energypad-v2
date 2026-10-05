@@ -116,11 +116,12 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(results.getByRole('row')).toHaveCount(13);
   await expect(results.getByRole('rowheader', { name: '2021-01', exact: true })).toBeVisible();
   await expect(results.getByRole('rowheader', { name: '2021-12', exact: true })).toBeVisible();
-  const savedGraph = await report
-    .getByRole('link', { name: 'View Waste & Savings graph', exact: true })
-    .getAttribute('href');
   const graphPage = await page.context().newPage();
-  await graphPage.goto(savedGraph!);
+  await graphPage.goto(`/org/${org}/waste-savings?site=${site.id}`);
+  await expect(graphPage.getByText('No saved heating or cooling calculations.', { exact: false })).toBeVisible();
+  await expect(graphPage.getByRole('heading', { name: 'Monthly waste & savings', exact: true })).toHaveCount(0);
+  await graphPage.getByLabel('Include other drivers', { exact: true }).check();
+  await graphPage.getByRole('button', { name: 'Choose site', exact: true }).click();
   await expect(graphPage.getByRole('heading', { name: 'Monthly waste & savings', exact: true })).toBeVisible();
   await graphPage.screenshot({ path: testInfo.outputPath('waste-savings-graphs.png'), fullPage: true });
   await graphPage.getByRole('button', { name: 'Table view', exact: true }).click();

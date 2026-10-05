@@ -26,12 +26,14 @@ export async function WasteSavings({
 }) {
   const base = `/org/${organisationId}`;
   const text = (key: string) => (typeof query[key] === 'string' ? (query[key] as string) : undefined);
+  const includeOthers = text('other') === '1';
+  const otherQuery = includeOthers ? '&other=1' : '';
   const sites = await accessible(() => analysisService.historySites(actor, organisationId));
   const siteId = text('site') ?? sites[0]?.id;
   if (siteId && !sites.some((s) => s.id === siteId)) notFound();
   const page = siteId
     ? await accessible(() =>
-        analysisService.wasteRuns(actor, organisationId, siteId, { cursor: text('cursor'), limit: 20 }),
+        analysisService.wasteRuns(actor, organisationId, siteId, { cursor: text('cursor'), limit: 20 }, !includeOthers),
       )
     : null;
   const runId = text('run') ?? page?.items[0]?.id;
@@ -97,10 +99,18 @@ export async function WasteSavings({
                 ))}
               </select>
             </label>
+            <label>
+              <input type="checkbox" name="other" value="1" defaultChecked={includeOthers} /> Include other drivers
+            </label>
+            <p className="muted">
+              Heating and cooling calculations are shown by default. Include other drivers to see population, operating
+              hours and daylight calculations.
+            </p>
             <Button type="submit">Choose site</Button>
           </form>
           <form className="panel stack-form" method="get" aria-label="Saved impact evidence">
             <input type="hidden" name="site" value={siteId} />
+            {includeOthers && <input type="hidden" name="other" value="1" />}
             {text('cursor') && <input type="hidden" name="cursor" value={text('cursor')} />}
             <label>
               Saved analysis run
@@ -145,11 +155,17 @@ export async function WasteSavings({
           </form>
           <section className="panel stack-form">
             <h2>Saved runs</h2>
-            {!page?.items.length && <p>No saved analysis runs for this site.</p>}
+            {!page?.items.length && (
+              <p>
+                {includeOthers
+                  ? 'No saved analysis runs for this site.'
+                  : 'No saved heating or cooling calculations. Include other drivers or create a site calculation.'}
+              </p>
+            )}
             <ul>
               {page?.items.map((r) => (
                 <li key={r.id}>
-                  <Link href={`${base}/waste-savings?site=${siteId}&run=${r.id}`}>
+                  <Link href={`${base}/waste-savings?site=${siteId}&run=${r.id}${otherQuery}`}>
                     {r.createdAt.toISOString()} · {r.id}
                   </Link>
                   <small>
@@ -160,9 +176,13 @@ export async function WasteSavings({
               ))}
             </ul>
             {page?.nextCursor && (
-              <Link href={`${base}/waste-savings?site=${siteId}&cursor=${page.nextCursor}`}>Older saved runs</Link>
+              <Link href={`${base}/waste-savings?site=${siteId}&cursor=${page.nextCursor}${otherQuery}`}>
+                Older saved runs
+              </Link>
             )}
-            {text('cursor') && <Link href={`${base}/waste-savings?site=${siteId}`}>Newest saved runs</Link>}
+            {text('cursor') && (
+              <Link href={`${base}/waste-savings?site=${siteId}${otherQuery}`}>Newest saved runs</Link>
+            )}
           </section>
           {impactError && <p role="alert">{impactError}</p>}
           {report && (
