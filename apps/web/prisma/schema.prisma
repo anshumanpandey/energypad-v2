@@ -410,7 +410,20 @@ model SiteDriverClassification {
   authorId String @db.Uuid
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   site Site @relation(fields: [siteId, organisationId], references: [id, organisationId])
+  corrections SiteDriverClassificationCorrection[]
+  @@unique([id, organisationId])
   @@unique([organisationId, siteId, year])
+}
+
+model SiteDriverClassificationCorrection {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  classificationId String @db.Uuid
+  values Json
+  authorId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  classification SiteDriverClassification @relation(fields: [classificationId, organisationId], references: [id, organisationId])
+  @@index([classificationId, createdAt])
 }
 
 model DriverObservation {

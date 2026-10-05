@@ -2,7 +2,12 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { FoundationService, type Actor } from './foundation';
 import { readWorkbook } from './workbook';
-import { classificationFields, classificationIssue, parseClassifications } from '../domain/driver-classifications';
+import {
+  classificationFields,
+  classificationIssue,
+  parseClassifications,
+  type ClassificationValues,
+} from '../domain/driver-classifications';
 import { WorkbookCellError, type WorkbookCellIssue } from '../domain/workbook-errors';
 import { DomainError } from '../domain/policy';
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -25,16 +30,17 @@ export class DriverClassificationService extends FoundationService {
       await this.membership(actor, org, 'organisation:update', tx);
       const prior = await tx.siteDriverClassification.findFirst({
         where: { id, organisationId: org },
-        include: { site: true },
+        include: { site: true, corrections: { orderBy: { createdAt: 'desc' }, take: 1 } },
       });
       if (!prior || prior.site.archivedAt)
         throw new DomainError('NOT_FOUND', 'Active driver classification not found.', 404);
-      const record = await tx.siteDriverClassification.update({
-        where: { id },
-        data: { ...data, authorId: actor.userId },
+      const record = await tx.siteDriverClassificationCorrection.create({
+        data: { classificationId: id, organisationId: org, values: data, authorId: actor.userId },
       });
       await this.audit(tx, actor, org, 'driver.classifications_updated', id, {
-        before: Object.fromEntries(classificationFields.map((field) => [field, prior[field]])),
+        before:
+          prior.corrections[0]?.values ??
+          Object.fromEntries(classificationFields.map((field) => [field, prior[field]])),
         after: data,
       });
       return record;
@@ -42,11 +48,18 @@ export class DriverClassificationService extends FoundationService {
   }
   async list(actor: Actor, org: string) {
     await this.membership(actor, org, 'organisation:update');
-    return this.db.siteDriverClassification.findMany({
+    const rows = await this.db.siteDriverClassification.findMany({
       where: { organisationId: org },
-      include: { site: { select: { code: true, name: true } } },
+      include: {
+        site: { select: { code: true, name: true } },
+        corrections: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
       orderBy: [{ year: 'desc' }, { siteId: 'asc' }],
     });
+    return rows.map(({ corrections, ...row }) => ({
+      ...row,
+      ...(corrections[0]?.values as ClassificationValues | undefined),
+    }));
   }
   async process(actor: Actor, org: string, bytes: Uint8Array, signature?: string) {
     await this.membership(actor, org, 'organisation:update');
@@ -67,7 +80,15 @@ export class DriverClassificationService extends FoundationService {
         await this.lock(tx, org);
         await this.membership(actor, org, 'organisation:update', tx);
         const sites = await tx.site.findMany({ where: { organisationId: org, archivedAt: null } });
-        const saved = await tx.siteDriverClassification.findMany({ where: { organisationId: org } });
+        const saved = (
+          await tx.siteDriverClassification.findMany({
+            where: { organisationId: org },
+            include: { corrections: { orderBy: { createdAt: 'desc' }, take: 1 } },
+          })
+        ).map(({ corrections, ...row }) => ({
+          ...row,
+          ...(corrections[0]?.values as ClassificationValues | undefined),
+        }));
         const match = (text: string) =>
           sites.filter((s) => [s.code.toLowerCase(), s.name.toLowerCase()].includes(text.trim().toLowerCase()));
         const issue = (row: number, column: number, message: string) => {
