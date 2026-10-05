@@ -268,6 +268,7 @@ export function SitesWorkspace({
               </p>
             </div>
           </header>
+          <a href={`/org/${orgId}/waste-savings?site=${selected.id}`}>View and download site calculation sheets</a>
           <dl className="site-details-grid">
             {fields
               .filter(([key]) => !['name', 'address', 'town', 'postCode', 'country'].includes(key))

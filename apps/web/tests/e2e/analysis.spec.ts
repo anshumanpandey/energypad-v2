@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile, readdir } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import ExcelJS from 'exceljs';
 test('experimental analysis readiness, immutable runs and mobile history', async ({ page, browser }, testInfo) => {
   test.setTimeout(300_000);
   page.setDefaultTimeout(20_000);
@@ -822,7 +823,19 @@ test('experimental analysis readiness, immutable runs and mobile history', async
 
   await page.goto(`/org/${org}/waste-savings?site=${site.id}`);
   await expect(page.getByRole('heading', { name: 'Waste & Savings', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Monthly waste & savings', exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('waste-savings-graphs.png'), fullPage: true });
+  const calculationDownload = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download site calculation sheet', exact: true }).click();
+  const calculationPath = await (await calculationDownload).path();
+  const calculation = new ExcelJS.Workbook();
+  await calculation.xlsx.readFile(calculationPath!);
+  expect(calculation.getWorksheet('Regression Analysis')).toBeDefined();
+  expect(calculation.getWorksheet('Saved evidence')!.getCell('A4').value).toBe('Input hash');
   await expect(page.getByRole('region', { name: 'Impact summary' })).toContainText('UNVALIDATED');
+  await page.getByRole('button', { name: 'Table view', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Table view', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('region', { name: 'Waste and savings monthly results' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Waste and savings monthly results' })).toContainText('POST_NRA');
   await expect(page.getByText('Experimental · not verified savings', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Show impacts' }).click();

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile, readdir } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import ExcelJS from 'exceljs';
 test('Energy Waste Report guides baseline and reporting steps', async ({ page }, testInfo) => {
   test.setTimeout(300_000);
   page.setDefaultTimeout(20_000);
@@ -83,6 +84,8 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(automaticPeriod).toContainText('01/01/2020 – 31/12/2020');
   await expect(report.getByLabel('Baseline first month')).toHaveCount(0);
   await expect(report.getByLabel('Baseline last month')).toHaveCount(0);
+  await expect(report.getByLabel('Population', { exact: true })).toBeHidden();
+  await report.getByRole('button', { name: 'Add other drivers', exact: true }).click();
   await report.getByLabel('Population', { exact: true }).check();
   await report.getByRole('button', { name: 'Save experimental baseline' }).click();
   await expect(report.getByRole('button', { name: '2 Reporting period' })).toHaveAttribute('aria-current', 'step');
@@ -113,6 +116,30 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(results.getByRole('row')).toHaveCount(13);
   await expect(results.getByRole('rowheader', { name: '2021-01', exact: true })).toBeVisible();
   await expect(results.getByRole('rowheader', { name: '2021-12', exact: true })).toBeVisible();
+  const savedGraph = await report
+    .getByRole('link', { name: 'View Waste & Savings graph', exact: true })
+    .getAttribute('href');
+  const graphPage = await page.context().newPage();
+  await graphPage.goto(savedGraph!);
+  await expect(graphPage.getByRole('heading', { name: 'Monthly waste & savings', exact: true })).toBeVisible();
+  await graphPage.screenshot({ path: testInfo.outputPath('waste-savings-graphs.png'), fullPage: true });
+  await graphPage.getByRole('button', { name: 'Table view', exact: true }).click();
+  await expect(graphPage.getByRole('button', { name: 'Table view', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  const monthly = graphPage.getByRole('region', { name: 'Waste and savings monthly results', exact: true });
+  await expect(monthly).toBeVisible();
+  await expect(monthly.getByRole('row')).toHaveCount(13);
+  await graphPage.getByLabel('Waste result month', { exact: true }).selectOption('03');
+  await expect(monthly.getByRole('row')).toHaveCount(2);
+  await expect(monthly.getByRole('row').nth(1)).toContainText('2021-03');
+  const download = graphPage.waitForEvent('download');
+  await graphPage.getByRole('link', { name: 'Download site calculation sheet', exact: true }).click();
+  const book = new ExcelJS.Workbook();
+  await book.xlsx.readFile((await (await download).path())!);
+  expect(book.getWorksheet('Regression Analysis')!.getCell('A1').value).toContain('Single Routine Adjustment');
+  await graphPage.close();
   await page.screenshot({ path: testInfo.outputPath('waste-report-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(report.getByRole('button', { name: '3 Results' })).toHaveAttribute('aria-current', 'step');
@@ -128,6 +155,7 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(automaticPeriod).toContainText('01/01/2022 – 31/12/2022');
   await expect(report.getByRole('button', { name: '2 Reporting period' })).toBeDisabled();
   await expect(report.getByRole('button', { name: '3 Results' })).toBeDisabled();
+  await report.getByRole('button', { name: 'Add other drivers', exact: true }).click();
   await report.getByLabel('Population', { exact: true }).check();
   await report.getByRole('button', { name: 'Check readiness' }).click();
   await expect(report.getByText('Baseline needs attention', { exact: true })).toBeVisible();

@@ -6,6 +6,7 @@ const ExcelJS = createRequire(import.meta.url)('exceljs') as typeof import('exce
 test('Data Drivers tab validates cell addresses, saves classifications and persists after reload', async ({
   page,
 }, testInfo) => {
+  test.setTimeout(240_000);
   const fixture = JSON.parse(await readFile('.local/e2e-report-schedules.json', 'utf8'));
   await page.context().addCookies([
     {
@@ -22,7 +23,13 @@ test('Data Drivers tab validates cell addresses, saves classifications and persi
     return response.json();
   }
   const org = await post('organisations', { name: 'Drivers import test', currency: 'GBP', timezone: 'UTC' });
-  await post(`organisations/${org.id}/sites`, { code: 'LON', name: 'London' });
+  const site = await post(`organisations/${org.id}/sites`, { code: 'LON', name: 'London' });
+  await post(`organisations/${org.id}/sites/${site.id}/meters`, {
+    code: 'HEAT',
+    name: 'Heating',
+    fuel: 'GAS',
+    unit: 'kWh',
+  });
   await page.goto(`/org/${org.id}/energy`);
   await page.getByRole('tab', { name: 'Consumption', exact: true }).focus();
   await page.keyboard.press('End');
@@ -73,4 +80,42 @@ test('Data Drivers tab validates cell addresses, saves classifications and persi
   await upload();
   await expect(page.getByRole('region', { name: 'Driver classification preview' })).toContainText('1 already saved');
   await expect(saved.getByRole('row')).toHaveCount(2);
+  const records = await (
+    await page.request.get(`/api/v1/organisations/${org.id}/driver-classification-imports`)
+  ).json();
+  const record = records[0];
+  const routine = {
+    heating: 'R',
+    cooling: 'N/A',
+    population: 'N/A',
+    operatingHours: 'N/A',
+    daylighting: 'N/A',
+    buildingSize: 'N/A',
+  };
+  for (const [values, method] of [
+    [routine, 'Single routine adjustment'],
+    [{ ...routine, cooling: 'R' }, 'Multiple routine adjustment'],
+    [{ ...routine, cooling: 'R', population: 'NR' }, 'Multiple routine adjustment + NRA'],
+  ] as const) {
+    const response = await page.request.patch(
+      `/api/v1/organisations/${org.id}/driver-classification-imports/${record.id}`,
+      {
+        data: values,
+        headers: { origin: 'http://localhost:3101' },
+      },
+    );
+    expect(response.ok(), await response.text()).toBe(true);
+    await page.goto(`/org/${org.id}/waste-savings`);
+    await page.getByText('Create a site calculation', { exact: true }).click();
+    await page.getByLabel('Waste reporting year', { exact: true }).fill('2025');
+    await expect(page.getByRole('status').filter({ hasText: `${method} ·` })).toBeVisible();
+    await expect(page.getByLabel('Heating degree days', { exact: true })).toBeChecked();
+    await expect(page.getByLabel('Cooling degree days', { exact: true })).toHaveJSProperty(
+      'checked',
+      values.cooling === 'R',
+    );
+    await expect(page.getByLabel('Population', { exact: true })).toBeHidden();
+    await page.getByRole('button', { name: 'Add other drivers', exact: true }).click();
+    await expect(page.getByLabel('Population', { exact: true })).toBeVisible();
+  }
 });

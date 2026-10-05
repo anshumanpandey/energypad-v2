@@ -8,15 +8,21 @@ import { analysisService, carbonService } from '@/server/services';
 import type { Actor } from '@/server/foundation';
 import { accessible } from '@/server/page-auth';
 import { Button } from './ui/button';
+import { WasteSavingsViews } from './waste-savings-views';
+import { WasteCalculationBuilder } from './waste-calculation-builder';
 
 export async function WasteSavings({
   actor,
   organisationId,
   query,
+  canWrite = false,
+  canApprove = false,
 }: {
   actor: Actor;
   organisationId: string;
   query: Record<string, string | string[] | undefined>;
+  canWrite?: boolean;
+  canApprove?: boolean;
 }) {
   const base = `/org/${organisationId}`;
   const text = (key: string) => (typeof query[key] === 'string' ? (query[key] as string) : undefined);
@@ -54,6 +60,15 @@ export async function WasteSavings({
           <p>Inspect one saved reporting run and the evidence behind its impacts.</p>
         </div>
       </div>
+      <WasteCalculationBuilder
+        key={siteId}
+        initialSiteId={siteId}
+        orgId={organisationId}
+        sites={sites}
+        manage={canWrite}
+        approve={canApprove}
+        actorId={actor.userId}
+      />
       <section className="panel stack-form">
         <strong>Experimental · not verified savings</strong>
         <p>
@@ -152,6 +167,13 @@ export async function WasteSavings({
           {impactError && <p role="alert">{impactError}</p>}
           {report && (
             <>
+              <Button asChild variant="secondary">
+                <a
+                  href={`/api/v1/organisations/${organisationId}/sites/${siteId}/analysis/runs/${report.runId}/calculation.xlsx`}
+                >
+                  Download site calculation sheet
+                </a>
+              </Button>
               <section className="panel stack-form" aria-label="Impact summary">
                 <h2>Saved period summary</h2>
                 <Link
@@ -207,73 +229,76 @@ export async function WasteSavings({
                   </p>
                 )}
               </section>
-              <section className="panel stack-form">
-                <h2>Monthly waste and saving</h2>
-                <div
-                  className="analysis-table"
-                  tabIndex={0}
-                  role="region"
-                  aria-label="Waste and savings monthly results"
-                >
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Month</th>
-                        <th>Actual kWh</th>
-                        <th>Expected kWh</th>
-                        <th>Adjusted expected kWh</th>
-                        <th>Pre-NRA variance kWh</th>
-                        <th>Post-NRA variance kWh</th>
-                        <th>Direction</th>
-                        <th>Significance</th>
-                        <th>Financial impact pre / post</th>
-                        <th>Carbon impact pre / post</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {report.impact.rows.map((r) =>
-                        r.status === 'BLOCKED' ? (
-                          <tr key={r.month}>
-                            <th>{r.month}</th>
-                            <td colSpan={9}>Blocked: {r.issues.map((i) => i.message).join('; ')}</td>
-                          </tr>
-                        ) : (
-                          <tr key={r.month}>
-                            <th>{r.month}</th>
-                            <td>{formatEnergyValue(r.actualKwh)}</td>
-                            <td>{formatEnergyValue(r.expectedKwh)}</td>
-                            <td>{formatEnergyValue(r.adjustedExpectedKwh)}</td>
-                            <td>{formatEnergyValue(r.preNraVarianceKwh)}</td>
-                            <td>{formatEnergyValue(r.postNraVarianceKwh)}</td>
-                            <td>
-                              <WasteDirection direction={r.direction} />
-                            </td>
-                            <td>
-                              {r.significance.significant === null
-                                ? 'Undefined'
-                                : r.significance.significant
-                                  ? 'Significant'
-                                  : 'Not significant'}{' '}
-                              · {r.significance.basis} · threshold {formatEnergyValue(r.significance.thresholdKwh)} kWh
-                            </td>
-                            <td>
-                              {value(r.preCost, r.currency ?? '')} / {value(r.postCost, r.currency ?? '')}
-                            </td>
-                            <td>
-                              {value(r.preCarbon, 'kgCO2e')} / {value(r.postCarbon, 'kgCO2e')}
-                            </td>
-                          </tr>
-                        ),
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-                {report.output.issues.map((i, n) => (
-                  <p key={n}>
-                    {i.month}: {i.message}
-                  </p>
-                ))}
-              </section>
+              <WasteSavingsViews rows={report.output.rows}>
+                <section className="panel stack-form">
+                  <h2>Monthly waste and saving</h2>
+                  <div
+                    className="analysis-table"
+                    tabIndex={0}
+                    role="region"
+                    aria-label="Waste and savings monthly results"
+                  >
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Month</th>
+                          <th>Actual kWh</th>
+                          <th>Expected kWh</th>
+                          <th>Adjusted expected kWh</th>
+                          <th>Pre-NRA variance kWh</th>
+                          <th>Post-NRA variance kWh</th>
+                          <th>Direction</th>
+                          <th>Significance</th>
+                          <th>Financial impact pre / post</th>
+                          <th>Carbon impact pre / post</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {report.impact.rows.map((r) =>
+                          r.status === 'BLOCKED' ? (
+                            <tr key={r.month} data-month={r.month}>
+                              <th>{r.month}</th>
+                              <td colSpan={9}>Blocked: {r.issues.map((i) => i.message).join('; ')}</td>
+                            </tr>
+                          ) : (
+                            <tr key={r.month} data-month={r.month}>
+                              <th>{r.month}</th>
+                              <td>{formatEnergyValue(r.actualKwh)}</td>
+                              <td>{formatEnergyValue(r.expectedKwh)}</td>
+                              <td>{formatEnergyValue(r.adjustedExpectedKwh)}</td>
+                              <td>{formatEnergyValue(r.preNraVarianceKwh)}</td>
+                              <td>{formatEnergyValue(r.postNraVarianceKwh)}</td>
+                              <td>
+                                <WasteDirection direction={r.direction} />
+                              </td>
+                              <td>
+                                {r.significance.significant === null
+                                  ? 'Undefined'
+                                  : r.significance.significant
+                                    ? 'Significant'
+                                    : 'Not significant'}{' '}
+                                · {r.significance.basis} · threshold {formatEnergyValue(r.significance.thresholdKwh)}{' '}
+                                kWh
+                              </td>
+                              <td>
+                                {value(r.preCost, r.currency ?? '')} / {value(r.postCost, r.currency ?? '')}
+                              </td>
+                              <td>
+                                {value(r.preCarbon, 'kgCO2e')} / {value(r.postCarbon, 'kgCO2e')}
+                              </td>
+                            </tr>
+                          ),
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {report.output.issues.map((i, n) => (
+                    <p key={n}>
+                      {i.month}: {i.message}
+                    </p>
+                  ))}
+                </section>
+              </WasteSavingsViews>
               <section className="panel stack-form">
                 <h2>Immutable evidence and assumptions</h2>
                 <p>

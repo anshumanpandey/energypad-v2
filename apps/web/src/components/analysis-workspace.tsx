@@ -15,6 +15,7 @@ import type { BaselineDefinition, ReadinessIssue } from '@/server/analysis/contr
 import type { RegressionInterpretation } from '@/domain/analysis/interpretation';
 import type { RegressionResult } from '@/domain/analysis/regression';
 import type { ReportingResult } from '@/domain/analysis/reporting';
+import { classificationMethod } from '@/domain/analysis/classification-method';
 type Options = Awaited<ReturnType<AnalysisService['options']>>;
 type HistoryPage = Awaited<ReturnType<AnalysisService['history']>>;
 type History = HistoryPage['items'];
@@ -76,15 +77,17 @@ export function AnalysisWorkspace({
   approve,
   actorId,
   wizard = false,
+  initialSiteId,
 }: {
   wizard?: boolean;
+  initialSiteId?: string;
   orgId: string;
   approve: boolean;
   actorId: string;
   sites: { id: string; name: string; archived: boolean }[];
   manage: boolean;
 }) {
-  const [siteId, setSiteId] = useState(sites[0]?.id ?? '');
+  const [siteId, setSiteId] = useState(initialSiteId ?? sites[0]?.id ?? '');
   const selection = useEnergyYear();
   const reportingYear = wizard ? (selection?.year ?? new Date().getUTCFullYear()) : undefined;
   const archived = sites.find((s) => s.id === siteId)?.archived ?? false;
@@ -148,6 +151,8 @@ function SiteAnalysis({
 }) {
   const m = useMutation();
   const [step, setStep] = useState(0);
+  const [extraDrivers, setExtraDrivers] = useState(false);
+  const [otherUses, setOtherUses] = useState(false);
   const [options, setOptions] = useState<Options | null>(null),
     [history, setHistory] = useState<History>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -190,7 +195,9 @@ function SiteAnalysis({
   useEffect(() => {
     let active = true;
     Promise.all([
-      archived ? Promise.resolve({ meters: [], uses: [], weather: [] }) : request(`${base}/options`, 'GET'),
+      archived
+        ? Promise.resolve({ meters: [], uses: [], weather: [], classifications: [] })
+        : request(`${base}/options`, 'GET'),
       request(`${base}/history`, 'GET'),
     ])
       .then(([o, h]) => {
@@ -221,6 +228,16 @@ function SiteAnalysis({
       </div>
     );
   if (!options) return <p role="status">Loading analysis inputs…</p>;
+  const baselineYear = reportingYear ? reportingYear - 1 : new Date().getUTCFullYear();
+  const classification =
+    options.classifications?.find((item) => item.year === baselineYear) ??
+    options.classifications?.find((item) => item.year === reportingYear) ??
+    options.classifications?.find((item) => item.year <= baselineYear);
+  const method = classificationMethod(classification);
+  const climateMeters = options.meters.filter((meter) => /heating|cooling/i.test(meter.name));
+  const climateUses = options.uses.filter((use) => /heating|cooling/i.test(use.name));
+  const shownMeters = wizard && !otherUses && climateMeters.length ? climateMeters : options.meters;
+  const shownUses = wizard && !otherUses && climateUses.length ? climateUses : options.uses;
   async function selectBaseline(id: string) {
     await m.run(async () => {
       setBaseline(await request(`${base}/baselines/${id}`, 'GET'));
@@ -318,18 +335,28 @@ function SiteAnalysis({
                   <label>
                     Meter
                     <select name="meterId" required>
-                      {options.meters.map((x) => (
+                      {shownMeters.map((x) => (
                         <option key={x.id} value={x.id}>
                           {x.code} · {x.name}
                         </option>
                       ))}
                     </select>
                   </label>
+                  {wizard && (climateMeters.length > 0 || climateUses.length > 0) && (
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={otherUses}
+                        onChange={(event) => setOtherUses(event.target.checked)}
+                      />
+                      Include other energy uses
+                    </label>
+                  )}
                   <label>
                     Consumption end use
                     <select name="energyUseId">
                       <option value="">Unassigned readings</option>
-                      {options.uses.map((x) => (
+                      {shownUses.map((x) => (
                         <option key={x.id} value={x.id}>
                           {x.code} · {x.name}
                         </option>
@@ -400,12 +427,32 @@ function SiteAnalysis({
                 </fieldset>
                 <fieldset className="analysis-drivers" disabled={m.disabled}>
                   <legend>Baseline drivers · select 1–3</legend>
+                  {wizard && classification && (
+                    <p role="status">
+                      {method.name} · {method.routine.length} routine driver(s) · classifications for{' '}
+                      {classification.year}.
+                      {method.nra !== 'NONE' &&
+                        ' Non-routine adjustments use the classified operating hours and population ratios.'}
+                      {method.unsupportedNra.length > 0 &&
+                        ` Additional NR drivers (${method.unsupportedNra.join(', ')}) require a separately justified adjustment; no hours or population ratio is substituted for them.`}
+                    </p>
+                  )}
                   {Object.entries(labels).map(([code, label]) => (
-                    <label key={code}>
-                      <input type="checkbox" name="drivers" value={code} />
+                    <label key={code} hidden={wizard && !extraDrivers && !['HDD', 'CDD'].includes(code)}>
+                      <input
+                        type="checkbox"
+                        name="drivers"
+                        value={code}
+                        defaultChecked={wizard && method.defaultDrivers.includes(code as 'HDD' | 'CDD')}
+                      />
                       {label}
                     </label>
                   ))}
+                  {wizard && (
+                    <Button type="button" variant="secondary" onClick={() => setExtraDrivers(!extraDrivers)}>
+                      {extraDrivers ? 'Hide optional drivers' : 'Add other drivers'}
+                    </Button>
+                  )}
                 </fieldset>
                 {!reportingYear && (
                   <p id="baseline-date-help" className="muted">
@@ -590,6 +637,7 @@ function SiteAnalysis({
               <RunForm
                 key={baseline.id}
                 reportingYear={reportingYear}
+                defaultNra={wizard && classification ? method.nra : 'NONE'}
                 baseline={baseline}
                 issues={issues}
                 disabled={m.disabled}
@@ -617,15 +665,20 @@ function SiteAnalysis({
         )}
       </div>
       <div hidden={wizard && step !== 2} className="stack-form">
-        {run && <RunResults run={run} />}
+        {run && (
+          <>
+            <RunResults run={run} />
+            <a className="button button-secondary" href={`/api/v1/${base}/runs/${run.id}/calculation.xlsx`}>
+              Download site calculation (.xlsx)
+            </a>
+          </>
+        )}
         {wizard && run && (
           <div className="analysis-actions">
             <Button variant="secondary" disabled={m.disabled} onClick={() => setStep(1)}>
               Back to reporting period
             </Button>
-            <Link
-              href={`/org/${base.split('/')[1]}/graphs?site=${base.split('/')[3]}&run=${run.id}&year=${run.result.output.rows[0]?.month.slice(0, 4) ?? new Date().getFullYear()}`}
-            >
+            <Link href={`/org/${base.split('/')[1]}/waste-savings?site=${base.split('/')[3]}&run=${run.id}`}>
               View Waste &amp; Savings graph
             </Link>
           </div>
@@ -653,18 +706,20 @@ function SiteAnalysis({
 }
 function RunForm({
   reportingYear,
+  defaultNra = 'NONE',
   baseline,
   disabled,
   issues,
   submit,
 }: {
   reportingYear?: number;
+  defaultNra?: string;
   baseline: Baseline;
   disabled: boolean;
   issues: ReadinessIssue[];
   submit: (input: unknown) => Promise<void>;
 }) {
-  const [nra, setNra] = useState('NONE');
+  const [nra, setNra] = useState(defaultNra);
   const [firstDate, setFirstDate] = useState(reportingYear ? `${reportingYear}-01-01` : ''),
     [lastDate, setLastDate] = useState(reportingYear ? `${reportingYear}-12-31` : '');
   const first = reportingYear ? `${reportingYear}-01` : firstDate.slice(0, 7),

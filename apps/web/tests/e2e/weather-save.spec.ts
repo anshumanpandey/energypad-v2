@@ -63,6 +63,7 @@ test('saving weather fetches status and updates baseline configurations without 
   await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await expect(page.getByRole('note', { name: 'Automatic baseline period' })).toContainText('01/01/2019 – 31/12/2019');
   const population = page.getByLabel('Population', { exact: true });
+  await page.getByRole('button', { name: 'Add other drivers', exact: true }).click();
   await population.check();
   await expect(page.getByLabel('Estimated consumption', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Load energy records', exact: true }).click();
@@ -110,4 +111,9 @@ test('saving weather fetches status and updates baseline configurations without 
   await expect(weather.getByRole('alert')).toContainText('Select a completed year');
   await expect(configuration.locator('option')).toHaveCount(4);
   expect(queueCount).toBe(2);
+  await page.getByRole('link', { name: 'HDD & CDD', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'HDD & CDD', exact: true })).toBeVisible();
+  await page.getByLabel('Degree days year', { exact: true }).fill('2020');
+  await expect(page.getByLabel('Weather settings version')).toBeVisible();
+  await expect(page.getByLabel('Weather settings version').locator('option')).toHaveCount(3);
 });

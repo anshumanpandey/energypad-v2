@@ -41,6 +41,7 @@ import {
   energyCatalogService,
 } from '@/server/services';
 import { DomainError } from '@/domain/policy';
+import { calculationWorkbook } from '@/server/analysis/calculation-workbook';
 
 type Context = { params: Promise<{ segments: string[] }> };
 async function handle(request: Request, context: Context) {
@@ -405,6 +406,17 @@ async function handle(request: Request, context: Context) {
           return emissionFactorService.correct(actor, org, s[3], await readBody(request));
       }
       if (s[2] === 'sites' && s[3] && s[4] === 'analysis') {
+        if (s.length === 8 && s[5] === 'runs' && s[7] === 'calculation.xlsx' && method === 'GET') {
+          const run = await analysisService.readRun(actor, org, s[3], s[6]);
+          const site = (await analysisService.historySites(actor, org)).find((item) => item.id === s[3]);
+          const bytes = await calculationWorkbook(run, site?.name ?? 'Site');
+          return new Response(new Uint8Array(bytes), {
+            headers: {
+              'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              'Content-Disposition': `attachment; filename="site-calculation-${run.id}.xlsx"`,
+            },
+          });
+        }
         const query = new URL(request.url).searchParams;
         const historyPage = {
           cursor: query.get('cursor') ?? undefined,

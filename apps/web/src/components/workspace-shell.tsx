@@ -19,6 +19,7 @@ import {
   LogOut,
   ArrowUpRight,
   ChevronRight,
+  CloudSun,
 } from 'lucide-react';
 import { Brand } from './brand';
 import { can, roleLabels, type Role } from '@/domain/policy';
@@ -50,6 +51,7 @@ export function WorkspaceShell({
     { key: 'targets', name: 'Targets & Monitoring', icon: Layers3 },
     { key: 'site-performance', name: 'Site Performance', icon: Layers3 },
     { key: 'waste-savings', name: 'Waste & Savings', icon: Zap },
+    { key: 'degree-days', name: 'HDD & CDD', icon: CloudSun },
     { key: 'carbon', name: 'Carbon', icon: Leaf },
     { key: 'opportunities', name: 'Opportunities', icon: Lightbulb },
     { key: 'ai-analyst', name: 'AI Analyst', icon: Sparkles },

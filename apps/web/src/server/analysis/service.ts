@@ -8,6 +8,7 @@ import { fitRegression, type RegressionResult } from '../../domain/analysis/regr
 import { calculateReporting, projectReportingModel, type ReportingInput } from '../../domain/analysis/reporting';
 import { interpretRegression, type RegressionInterpretation } from '../../domain/analysis/interpretation';
 import { assemble } from './assembler';
+import type { ClassificationValues } from '../../domain/driver-classifications';
 import {
   nraReviewInput,
   historyPageInput,
@@ -270,7 +271,7 @@ export class AnalysisService extends FoundationService {
       await this.access(tx, actor, org, siteId, 'active');
       const meters = await tx.meter.findMany({
         where: { organisationId: org, siteId, archivedAt: null },
-        select: { id: true, code: true, name: true },
+        select: { id: true, code: true, name: true, fuel: true },
         orderBy: { code: 'asc' },
       });
       const uses = await tx.siteEnergyUse.findMany({
@@ -283,7 +284,14 @@ export class AnalysisService extends FoundationService {
         select: { id: true, version: true, source: true },
         orderBy: { version: 'desc' },
       });
-      return { meters, uses, weather };
+      const classifications = (
+        await tx.siteDriverClassification.findMany({
+          where: { organisationId: org, siteId },
+          include: { corrections: { orderBy: { createdAt: 'desc' }, take: 1 } },
+          orderBy: { year: 'desc' },
+        })
+      ).map(({ corrections, ...row }) => ({ ...row, ...(corrections[0]?.values as ClassificationValues | undefined) }));
+      return { meters, uses, weather, classifications };
     });
   }
   async readBaseline(actor: Actor, org: string, siteId: string, baselineId: string) {

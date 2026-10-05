@@ -13,6 +13,7 @@ import { CarbonTrends } from '@/components/carbon-trends';
 import { MonthlyPlans } from '@/components/monthly-plans';
 import { SitePerformance } from '@/components/site-performance';
 import { WasteSavings } from '@/components/waste-savings';
+import { DegreeDaysWorkspace } from '@/components/degree-days-workspace';
 import { Overview } from '@/components/overview';
 import Link from 'next/link';
 import { PortfolioCarbon } from '@/components/portfolio-carbon';
@@ -108,7 +109,17 @@ export default async function WorkspacePage({
   if (section === 'site-performance')
     return <SitePerformance actor={actor} organisationId={org.id} currency={org.currency} query={await searchParams} />;
   if (section === 'waste-savings')
-    return <WasteSavings actor={actor} organisationId={org.id} query={await searchParams} />;
+    return (
+      <WasteSavings
+        actor={actor}
+        organisationId={org.id}
+        query={await searchParams}
+        canWrite={can(membership.role, 'analysis:write')}
+        canApprove={can(membership.role, 'analysis:approve')}
+      />
+    );
+  if (section === 'degree-days')
+    return <DegreeDaysWorkspace orgId={org.id} sites={sites} manage={can(membership.role, 'organisation:update')} />;
   if (section === 'reports')
     return (
       <>
