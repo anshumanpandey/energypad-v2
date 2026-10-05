@@ -191,11 +191,16 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await graphPage.getByRole('button', { name: 'Add other drivers', exact: true }).click();
   await graphPage.getByLabel('Population', { exact: true }).check();
   await expect(graphPage.getByRole('status').filter({ hasText: 'Single routine adjustment' })).toBeVisible();
-  await expect(graphPage.getByRole('status').filter({ hasText: 'Calculation unavailable:' })).toBeVisible();
+  await expect(graphPage.getByRole('status').filter({ hasText: '12 of 12 months calculated.' })).toBeVisible();
+  await expect(
+    graphPage.getByText('2021-01: POPULATION is outside the baseline observed range; estimate uses extrapolation.', {
+      exact: true,
+    }),
+  ).toBeVisible();
   await expect(graphPage.getByText('Calculation inputs need attention').locator('..')).toHaveAttribute('open', '');
   await expect(
     graphPage.getByRole('img', { name: 'Avoided Energy (+) and Wasted Energy (-) (kWh) chart in kWh', exact: true }),
-  ).toHaveCount(0);
+  ).toBeVisible();
   // Correct the reporting driver into the fitted baseline range and verify the actual page calculates values.
   const driverResponse = await page.request.get(`${base}/sites/${site.id}/energy/drivers?year=2021`);
   expect(driverResponse.ok()).toBe(true);

@@ -703,7 +703,7 @@ export class AnalysisService extends FoundationService {
                         .filter((warning) => warning.startsWith('EXTRAPOLATION:'))
                         .map(
                           (warning) =>
-                            `${row.month}: ${warning.slice(14)} is outside the baseline weather range; estimate uses extrapolation.`,
+                            `${row.month}: ${warning.slice(14)} is outside the baseline observed range; estimate uses extrapolation.`,
                         )
                     : [],
                 ),

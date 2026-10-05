@@ -352,7 +352,7 @@ try {
   const extreme = await service.wastePreview(f.owner, f.orgId, apiSite.id, reportingYear, ['HDD', 'CDD']);
   const extremeMeter = extreme.preview.meters.find((meter) => meter.id === biodiesel.id)!;
   assert.notEqual(extremeMeter.rows[0].variance, null);
-  assert.ok(extremeMeter.issues.some((issue) => issue.includes('HDD is outside the baseline weather range')));
+  assert.ok(extremeMeter.issues.some((issue) => issue.includes('HDD is outside the baseline observed range')));
   console.log(
     '✓ automatic NRA uses uploaded population evidence and flags weather extrapolation without blanking charts',
   );
