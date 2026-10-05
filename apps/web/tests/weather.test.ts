@@ -19,7 +19,7 @@ const settings = {
 };
 const request = { ...settings, ...weatherDates(2020) };
 it('fetches only complete published current-year months with immutable range identities', () => {
-  const august = weatherPeriod(2026, undefined, new Date('2026-10-05T12:00:00Z'));
+  const august = weatherPeriod(2026, undefined, new Date('2026-10-04T12:00:00Z'));
   expect(august.end).toBe('2026-08-31');
   expect(august.methodology).toBe(`${weatherMethod}:through:2026-08-31`);
   expect(
@@ -28,7 +28,7 @@ it('fetches only complete published current-year months with immutable range ide
       settings,
     ),
   ).toHaveLength(8);
-  const september = weatherPeriod(2026, undefined, new Date('2026-10-08T12:00:00Z'));
+  const september = weatherPeriod(2026, undefined, new Date('2026-10-05T12:00:00Z'));
   expect(september.end).toBe('2026-09-30');
   expect(september.methodology).not.toBe(august.methodology);
   expect(weatherPeriod(2026, august.methodology, new Date('2026-11-08')).end).toBe('2026-08-31');

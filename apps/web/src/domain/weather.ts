@@ -61,8 +61,13 @@ export function weatherPeriod(year: number, methodology?: string, now = new Date
   }
   if (!Number.isInteger(year) || year < 1940 || year > 2199)
     throw new DomainError('WEATHER_YEAR', 'Weather coverage starts in 1940.');
-  const published = new Date(+now - 7 * 86400000);
-  const latest = new Date(Date.UTC(published.getUTCFullYear(), published.getUTCMonth(), 0));
+  // ERA5 is published with a five-day delay. Include a month when its last day is eligible.
+  const published = new Date(+now - 5 * 86400000);
+  const monthEnd = new Date(Date.UTC(published.getUTCFullYear(), published.getUTCMonth() + 1, 0));
+  const latest =
+    monthEnd.toISOString().slice(0, 10) <= published.toISOString().slice(0, 10)
+      ? monthEnd
+      : new Date(Date.UTC(published.getUTCFullYear(), published.getUTCMonth(), 0));
   const end =
     methodology?.match(/^daily-mean-degree-days-v1:through:(\d{4}-\d{2}-\d{2})$/)?.[1] ??
     latest.toISOString().slice(0, 10);

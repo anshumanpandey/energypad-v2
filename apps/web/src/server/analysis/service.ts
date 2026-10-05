@@ -654,8 +654,40 @@ export class AnalysisService extends FoundationService {
                 })),
               });
               issues.push(
-                ...reporting.issues.map((issue) => `${issue.month ?? 'Reporting'}: ${issue.message}`),
-                ...output.issues.map((issue) => `${issue.month ?? 'Reporting'}: ${issue.message}`),
+                ...reporting.issues
+                  .filter((issue) => issue.code !== 'MISSING_WEATHER')
+                  .map((issue) => `${issue.month ?? 'Reporting'}: ${issue.message}`),
+                ...[
+                  ...new Set(
+                    reporting.issues.filter((issue) => issue.code === 'MISSING_WEATHER').map((issue) => issue.month),
+                  ),
+                ].map((month) => {
+                  const parts = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: configuration?.timezone ?? 'UTC',
+                    year: 'numeric',
+                    month: '2-digit',
+                  }).formatToParts(new Date());
+                  const currentMonth = `${parts.find((part) => part.type === 'year')!.value}-${parts.find((part) => part.type === 'month')!.value}`;
+                  if (month && month > currentMonth)
+                    return `${month}: Future month; actual weather is not available yet.`;
+                  if (month === currentMonth)
+                    return `${month}: Month in progress; calculations require a complete month of weather.`;
+                  if (month && preview.weather?.throughMonth && month > preview.weather.throughMonth)
+                    return `${month}: Completed month; waiting for the weather API's five-day publication delay.`;
+                  return `${month}: Complete weather inputs are not available from the API yet. Refresh or retry the weather fetch.`;
+                }),
+                ...output.issues
+                  .filter(
+                    (issue) =>
+                      !(
+                        issue.code === 'MISSING_DRIVER' &&
+                        /Missing (HDD|CDD|DAYLIGHT) observation/.test(issue.message) &&
+                        reporting.issues.some(
+                          (input) => input.code === 'MISSING_WEATHER' && input.month === issue.month,
+                        )
+                      ),
+                  )
+                  .map((issue) => `${issue.month ?? 'Reporting'}: ${issue.message}`),
                 ...output.rows.flatMap((row) =>
                   row.status === 'CALCULATED'
                     ? row.warnings

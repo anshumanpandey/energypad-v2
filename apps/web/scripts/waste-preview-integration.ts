@@ -238,6 +238,8 @@ try {
   }
   const calculated = await service.wastePreview(f.owner, f.orgId, apiSite.id, reportingYear);
   assert.equal(calculated.preview.weather!.ready, true);
+  assert.ok(!calculated.preview.meters[0].issues.some((issue) => /Missing (HDD|CDD) observation/.test(issue)));
+  assert.ok(!calculated.preview.meters[0].issues.some((issue) => issue.includes('Missing, duplicate or incomplete')));
   const rows = calculated.preview.meters[0].rows.filter((row) => row.variance !== null);
   assert.equal(
     rows.length,
