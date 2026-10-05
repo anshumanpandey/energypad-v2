@@ -16,6 +16,9 @@ export function UtilityBars({
   summaryPoints = sourcePoints,
   targetNote,
   sortBy = 'month',
+  actualLabel = 'Actual',
+  targetLabel = 'Target',
+  showSummary = true,
 }: {
   points: UtilityBarPoint[];
   title: string;
@@ -27,6 +30,9 @@ export function UtilityBars({
   summaryPoints?: MonthlyAmount[];
   targetNote?: string;
   sortBy?: UtilityChartSort;
+  actualLabel?: string;
+  targetLabel?: string;
+  showSummary?: boolean;
 }) {
   const points = sortChartValues(sourcePoints, sortBy, (r) => r.actual);
   const maximum = Math.max(1, ...points.flatMap((p) => [Number(p.actual ?? 0), Number(p.target ?? 0)]));
@@ -40,11 +46,11 @@ export function UtilityBars({
       <h2>
         {title} ({unit})
       </h2>
-      <MonthlyChartSummary points={summaryPoints} period={period} unit={unit} />
+      {showSummary && <MonthlyChartSummary points={summaryPoints} period={period} unit={unit} />}
       {targetNote && <p>{targetNote}</p>}
       <p>
         {diverging
-          ? 'Actual extends left and target extends right from zero, using the same scale.'
+          ? `${actualLabel} extends left and ${targetLabel.toLowerCase()} extends right from zero, using the same scale.`
           : actualOnly
             ? 'Monthly recorded cost.'
             : 'Actual and target use the same scale.'}{' '}
@@ -60,10 +66,10 @@ export function UtilityBars({
           {diverging ? (
             <>
               <text x="310" y="22" textAnchor="middle">
-                Actual
+                {actualLabel}
               </text>
               <text x="630" y="22" textAnchor="middle">
-                Target
+                {targetLabel}
               </text>
               {[0, 0.5, 1].map((fraction) => (
                 <g key={fraction}>
@@ -108,7 +114,7 @@ export function UtilityBars({
             const x = 80 + step * index + step / 2;
             const label = actualOnly
               ? `${point.month}: cost ${formatEnergyValue(point.actual, 'Unavailable')} ${unit}`
-              : `${point.month}: actual ${formatEnergyValue(point.actual, 'Unavailable')}, target ${formatEnergyValue(point.target, 'Unavailable')} ${unit}`;
+              : `${point.month}: ${actualLabel.toLowerCase()} ${formatEnergyValue(point.actual, 'Unavailable')}, ${targetLabel.toLowerCase()} ${formatEnergyValue(point.target, 'Unavailable')} ${unit}`;
             return (
               <g
                 key={point.month}
@@ -200,12 +206,12 @@ export function UtilityBars({
       <ul className="utility-chart-legend">
         <li>
           <span style={{ background: '#168578' }} />
-          Actual
+          {actualLabel}
         </li>
         {!actualOnly && (
           <li>
             <span style={{ background: '#4989c6' }} />
-            Target
+            {targetLabel}
           </li>
         )}
       </ul>

@@ -15,6 +15,7 @@ export type WastePreview = {
       expected: number | null;
       adjusted: number | null;
       variance: number | null;
+      cost: number | null;
       note: string;
     }[];
   }[];

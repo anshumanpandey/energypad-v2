@@ -262,7 +262,16 @@ export async function WasteSavings({
                   </p>
                 )}
               </section>
-              <WasteSavingsViews rows={report.output.rows}>
+              <WasteSavingsViews
+                rows={report.output.rows}
+                costs={report.impact.rows.map((row) => ({
+                  month: row.month,
+                  cost:
+                    row.status === 'CALCULATED' && row.currency === 'GBP' && row.postCost !== null
+                      ? Number(row.postCost)
+                      : null,
+                }))}
+              >
                 <section className="panel stack-form">
                   <h2>Monthly waste and saving</h2>
                   <div

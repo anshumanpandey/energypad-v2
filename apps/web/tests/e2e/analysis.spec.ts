@@ -823,7 +823,9 @@ test('experimental analysis readiness, immutable runs and mobile history', async
 
   await page.goto(`/org/${org}/waste-savings?site=${site.id}&other=1&evidence=1`);
   await expect(page.getByRole('heading', { name: 'Waste & Savings', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Monthly waste & savings', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Avoided Energy (+) and Wasted Energy (-) (kWh)', exact: true }),
+  ).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('waste-savings-graphs.png'), fullPage: true });
   const calculationDownload = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download site calculation sheet', exact: true }).click();

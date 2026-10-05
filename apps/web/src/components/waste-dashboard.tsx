@@ -4,8 +4,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { WastePreview } from '@/domain/analysis/waste-preview';
 import { Button } from './ui/button';
-import { MetricChart } from './metric-chart';
-import { GraphMonthProvider } from './graph-month';
+import { WasteCharts } from './waste-charts';
+import { aggregateWasteRows } from '@/domain/analysis/waste-gauge';
+import type { UtilityChartSort } from '@/domain/utility-chart-sort';
 import { formatEnergyValue } from './format-energy-value';
 
 const driverLabels = {
@@ -32,7 +33,7 @@ export function WasteDashboard({
   const [view, setView] = useState('graph');
   const [month, setMonth] = useState('');
   const [fuel, setFuel] = useState('');
-  const [sort, setSort] = useState('month');
+  const [sort, setSort] = useState<UtilityChartSort>('month');
   const [other, setOther] = useState(preview.drivers.some((driver) => !['HDD', 'CDD'].includes(driver)));
   const update = (site: string, year: number | undefined, drivers?: string[]) => {
     const query = new URLSearchParams({ site });
@@ -45,22 +46,6 @@ export function WasteDashboard({
   };
   const meters = preview.meters.filter((meter) => !fuel || meter.fuel === fuel);
   const value = (number: number | null) => formatEnergyValue(number, 'Unavailable');
-  const points = (rows: WastePreview['meters'][number]['rows'], key: 'actual' | 'expected' | 'adjusted' | 'variance') =>
-    [...rows]
-      .sort((a, b) =>
-        sort === 'month'
-          ? a.month.localeCompare(b.month)
-          : a[key] === null
-            ? b[key] === null
-              ? 0
-              : 1
-            : b[key] === null
-              ? -1
-              : sort === 'high-to-low'
-                ? b[key]! - a[key]!
-                : a[key]! - b[key]!,
-      )
-      .map((row) => ({ month: row.month, value: row[key], note: row.note }));
   return (
     <div className="utility-graphs-page waste-savings">
       <div className="page-heading">
@@ -154,7 +139,11 @@ export function WasteDashboard({
           </label>
           <label>
             Sort by
-            <select aria-label="Waste sort by" value={sort} onChange={(event) => setSort(event.target.value)}>
+            <select
+              aria-label="Waste sort by"
+              value={sort}
+              onChange={(event) => setSort(event.target.value as UtilityChartSort)}
+            >
               <option value="month">Month</option>
               <option value="high-to-low">High to low</option>
               <option value="low-to-high">Low to high</option>
@@ -229,40 +218,7 @@ export function WasteDashboard({
               </details>
             )}
           </section>
-          {view === 'graph' ? (
-            <GraphMonthProvider key={month} initialMonth={month}>
-              <div className="graphs-grid">
-                <MetricChart
-                  title="Actual consumption"
-                  unit="kWh"
-                  points={points(meter.rows, 'actual')}
-                  tone="energy"
-                  description="Uploaded monthly consumption."
-                />
-                <MetricChart
-                  title="Expected consumption"
-                  unit="kWh"
-                  points={points(meter.rows, 'expected')}
-                  tone="energy"
-                  description="Consumption predicted from the preceding year’s baseline."
-                />
-                <MetricChart
-                  title="Adjusted expected consumption"
-                  unit="kWh"
-                  points={points(meter.rows, 'adjusted')}
-                  tone="energy"
-                  description="Expected consumption after applicable non-routine adjustments."
-                />
-                <MetricChart
-                  title="Monthly waste & savings"
-                  unit="kWh"
-                  points={points(meter.rows, 'variance')}
-                  tone="waste"
-                  description="Adjusted expected consumption minus actual consumption."
-                />
-              </div>
-            </GraphMonthProvider>
-          ) : (
+          {view === 'table' && (
             <section className="panel table-scroll" aria-label="Waste and savings monthly results">
               <table>
                 <thead>
@@ -272,6 +228,7 @@ export function WasteDashboard({
                     <th>Expected (kWh)</th>
                     <th>Adjusted expected (kWh)</th>
                     <th>Waste / savings (kWh)</th>
+                    <th>Cost (£)</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -290,6 +247,7 @@ export function WasteDashboard({
                         <td>{value(row.expected)}</td>
                         <td>{value(row.adjusted)}</td>
                         <td>{value(row.variance)}</td>
+                        <td>{value(row.cost)}</td>
                         <td>{row.note}</td>
                       </tr>
                     ))}
@@ -299,6 +257,9 @@ export function WasteDashboard({
           )}
         </div>
       ))}
+      {view === 'graph' && meters.length > 0 && (
+        <WasteCharts rows={aggregateWasteRows(meters.map((meter) => meter.rows))} month={month} sort={sort} />
+      )}
     </div>
   );
 }

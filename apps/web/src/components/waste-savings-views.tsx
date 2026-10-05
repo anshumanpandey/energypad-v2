@@ -1,12 +1,19 @@
 'use client';
 import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Button } from './ui/button';
-import { MetricChart } from './metric-chart';
+import { WasteCharts } from './waste-charts';
 import type { ReportingResult } from '@/domain/analysis/reporting';
-import { GraphMonthProvider, GraphMonthSelect } from './graph-month';
 
 const subscribe = () => () => {};
-export function WasteSavingsViews({ rows, children }: { rows: ReportingResult['rows']; children: ReactNode }) {
+export function WasteSavingsViews({
+  rows,
+  children,
+  costs = [],
+}: {
+  rows: ReportingResult['rows'];
+  children: ReactNode;
+  costs?: { month: string; cost: number | null }[];
+}) {
   const hydrated = useSyncExternalStore(
     subscribe,
     () => true,
@@ -14,15 +21,8 @@ export function WasteSavingsViews({ rows, children }: { rows: ReportingResult['r
   );
   const [view, setView] = useState('graph');
   const [month, setMonth] = useState('');
-  const visible = rows.filter((row) => !month || row.month.endsWith(`-${month}`));
-  const points = (key: 'actualKwh' | 'expectedKwh' | 'adjustedExpectedKwh' | 'postNraVarianceKwh') =>
-    visible.map((row) => ({
-      month: row.month,
-      value: row.status === 'CALCULATED' ? row[key] : null,
-      note: row.status === 'BLOCKED' ? row.issues.map((issue) => issue.message).join('; ') : row.direction,
-    }));
   return (
-    <GraphMonthProvider>
+    <>
       <div className="panel stack-form">
         <div role="group" aria-label="Waste & Savings view">
           <Button disabled={!hydrated} aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
@@ -45,36 +45,17 @@ export function WasteSavingsViews({ rows, children }: { rows: ReportingResult['r
             ))}
           </select>
         </label>
-        {view === 'graph' && <GraphMonthSelect />}
       </div>
-      <div hidden={view !== 'graph'} style={view !== 'graph' ? { display: 'none' } : undefined} className="graphs-grid">
-        <MetricChart
-          title="Actual consumption"
-          unit="kWh"
-          points={points('actualKwh')}
-          tone="energy"
-          description="Saved actual monthly consumption."
-        />
-        <MetricChart
-          title="Expected consumption"
-          unit="kWh"
-          points={points('expectedKwh')}
-          tone="energy"
-          description="Consumption predicted by the baseline model."
-        />
-        <MetricChart
-          title="Adjusted expected consumption"
-          unit="kWh"
-          points={points('adjustedExpectedKwh')}
-          tone="energy"
-          description="Expected consumption after the saved non-routine adjustment."
-        />
-        <MetricChart
-          title="Monthly waste & savings"
-          unit="kWh"
-          points={points('postNraVarianceKwh')}
-          tone="waste"
-          description="Positive values show savings; negative values show waste. Missing results remain unavailable."
+      <div hidden={view !== 'graph'} style={view !== 'graph' ? { display: 'none' } : undefined}>
+        <WasteCharts
+          month={month}
+          rows={rows.map((row) => ({
+            month: row.month,
+            actual: row.status === 'CALCULATED' ? row.actualKwh : null,
+            adjusted: row.status === 'CALCULATED' ? row.adjustedExpectedKwh : null,
+            variance: row.status === 'CALCULATED' ? row.postNraVarianceKwh : null,
+            cost: costs.find((cost) => cost.month === row.month)?.cost ?? null,
+          }))}
         />
       </div>
       <div className="waste-savings-view" hidden={view !== 'table'}>
@@ -83,6 +64,6 @@ export function WasteSavingsViews({ rows, children }: { rows: ReportingResult['r
         )}
         {children}
       </div>
-    </GraphMonthProvider>
+    </>
   );
 }

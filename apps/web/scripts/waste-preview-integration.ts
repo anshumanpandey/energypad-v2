@@ -31,6 +31,8 @@ try {
         meterId: f.twoId,
         month,
         quantity: String(expected - (year === 2022 ? 10 : 0)),
+        netCost: ((expected - (year === 2022 ? 10 : 0)) * 0.2).toFixed(3),
+        currency: 'GBP',
         estimated: false,
       });
       await drivers.add(f.owner, f.orgId, f.siteId, {
@@ -69,7 +71,10 @@ try {
   const meter = multi.preview.meters.find((meter) => meter.id === f.twoId)!;
   assert.equal(meter.rows.length, 12);
   assert.equal(meter.issues.length, 0);
-  meter.rows.forEach((row) => assert.ok(Math.abs(row.variance! - 10) < 1e-8));
+  meter.rows.forEach((row) => {
+    assert.ok(Math.abs(row.variance! - 10) < 1e-8);
+    assert.ok(Math.abs(row.cost! - 2) < 1e-8);
+  });
   assert.equal(meter.downloadable, true);
   const source = multi.sources.find((source) => source.meterId === f.twoId)!;
   const book = new ExcelJS.Workbook();

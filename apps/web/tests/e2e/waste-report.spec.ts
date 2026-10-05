@@ -116,10 +116,29 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(results.getByRole('row')).toHaveCount(13);
   await expect(results.getByRole('rowheader', { name: '2021-01', exact: true })).toBeVisible();
   await expect(results.getByRole('rowheader', { name: '2021-12', exact: true })).toBeVisible();
+  const gas = await post(`/sites/${site.id}/meters`, { code: 'G', name: 'Gas', fuel: 'GAS', unit: 'kWh' });
+  await post(`/sites/${site.id}/energy`, { meterId: gas.id, month: '2021-01', quantity: '5', estimated: false });
   const graphPage = await page.context().newPage();
   await graphPage.goto(`/org/${org}/waste-savings?site=${site.id}`);
-  await expect(graphPage.getByRole('heading', { name: 'Monthly waste & savings', exact: true })).toBeVisible();
+  await expect(
+    graphPage.getByRole('heading', { name: 'Avoided Energy (+) and Wasted Energy (-) (kWh)', exact: true }),
+  ).toBeVisible();
   await expect(graphPage.getByLabel('Waste year')).toHaveValue('2021');
+  await expect(
+    graphPage.getByRole('heading', { name: 'Avoided Energy (+) and Wasted Energy (-) (kWh)', exact: true }),
+  ).toHaveCount(1);
+  await expect(graphPage.getByRole('heading', { name: 'Cost (£)', exact: true })).toBeVisible();
+  await expect(
+    graphPage.getByRole('heading', {
+      name: 'Waste/Savings Gauge (Percentage change in the last 3 months)',
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    graphPage.getByRole('img', { name: 'Actual consumption vs wastage diverging bar graph', exact: true }),
+  ).toBeVisible();
+  await expect(graphPage.getByRole('heading', { name: 'Expected consumption', exact: true })).toHaveCount(0);
+  await graphPage.getByLabel('Waste fuel type').selectOption('ELECTRICITY');
   await graphPage.getByLabel('Heating', { exact: true }).uncheck();
   await expect(graphPage.getByLabel('Heating', { exact: true })).not.toBeChecked();
   await graphPage.getByLabel('Cooling', { exact: true }).uncheck();
