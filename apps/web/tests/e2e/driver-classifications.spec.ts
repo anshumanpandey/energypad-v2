@@ -105,16 +105,11 @@ test('Data Drivers tab validates cell addresses, saves classifications and persi
       },
     );
     expect(response.ok(), await response.text()).toBe(true);
-    await page.goto(`/org/${org.id}/waste-savings`);
-    await page.getByText('Create a site calculation', { exact: true }).click();
-    await page.getByLabel('Waste reporting year', { exact: true }).fill('2025');
+    await page.goto(`/org/${org.id}/waste-savings?year=2025`);
     await expect(page.getByRole('status').filter({ hasText: `${method} ·` })).toBeVisible();
-    await expect(page.getByLabel('Heating degree days', { exact: true })).toBeChecked();
-    await expect(page.getByLabel('Cooling degree days', { exact: true })).toHaveJSProperty(
-      'checked',
-      values.cooling === 'R',
-    );
-    await expect(page.getByLabel('Population', { exact: true })).toBeHidden();
+    await expect(page.getByLabel('Heating', { exact: true })).toBeChecked();
+    await expect(page.getByLabel('Cooling', { exact: true })).toHaveJSProperty('checked', values.cooling === 'R');
+    await expect(page.getByLabel('Population', { exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Add other drivers', exact: true }).click();
     await expect(page.getByLabel('Population', { exact: true })).toBeVisible();
   }

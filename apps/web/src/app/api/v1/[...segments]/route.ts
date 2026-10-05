@@ -406,6 +406,32 @@ async function handle(request: Request, context: Context) {
           return emissionFactorService.correct(actor, org, s[3], await readBody(request));
       }
       if (s[2] === 'sites' && s[3] && s[4] === 'analysis') {
+        if (s.length === 6 && s[5] === 'waste-preview.xlsx' && method === 'GET') {
+          const query = new URL(request.url).searchParams;
+          const result = await analysisService.wastePreview(
+            actor,
+            org,
+            s[3],
+            query.has('year') ? Number(query.get('year')) : undefined,
+            query.has('drivers') ? query.get('drivers')!.split(',').filter(Boolean) : undefined,
+          );
+          const source = result.sources.find((item) => item.meterId === query.get('meter'));
+          if (!source)
+            throw new DomainError(
+              'CALCULATION_UNAVAILABLE',
+              'Complete the calculation inputs before downloading this sheet.',
+              409,
+            );
+          const site = (await analysisService.historySites(actor, org)).find((item) => item.id === s[3]);
+          const bytes = await calculationWorkbook(source.source, site?.name ?? 'Site');
+          return new Response(new Uint8Array(bytes), {
+            headers: {
+              'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              'Content-Disposition': `attachment; filename="site-calculation-${result.preview.year}.xlsx"`,
+              'Cache-Control': 'private, no-store',
+            },
+          });
+        }
         if (s.length === 8 && s[5] === 'runs' && s[7] === 'calculation.xlsx' && method === 'GET') {
           const run = await analysisService.readRun(actor, org, s[3], s[6]);
           const site = (await analysisService.historySites(actor, org)).find((item) => item.id === s[3]);

@@ -1,4 +1,8 @@
 import { wasteSavings } from '../../domain/waste-savings';
+import { monthlyCarbonRows } from '../../domain/carbon-monthly';
+import { classificationMethod } from '../../domain/analysis/classification-method';
+import type { WastePreview } from '../../domain/analysis/waste-preview';
+import { weatherMethod } from '../../domain/weather';
 import type { CarbonSnapshot } from '../../domain/carbon';
 import type { ReportingResult } from '../../domain/analysis/reporting';
 import { Prisma } from '@prisma/client';
@@ -439,6 +443,197 @@ export class AnalysisService extends FoundationService {
         policyVersion: review.policyVersion,
       });
       return review;
+    });
+  }
+  async wastePreview(actor: Actor, org: string, siteId: string, year?: number, selectedDrivers?: string[]) {
+    if (year !== undefined && (!Number.isInteger(year) || year < 1900 || year > 2199))
+      throw new DomainError('YEAR', 'Choose a year from 1900 to 2199.');
+    return this.transaction(async (tx) => {
+      await this.access(tx, actor, org, siteId, 'history');
+      const meters = await tx.meter.findMany({
+        where: { organisationId: org, siteId },
+        select: { id: true, code: true, name: true, fuel: true },
+        orderBy: { code: 'asc' },
+      });
+      const readings = await tx.consumptionRecord.findMany({
+        where: { organisationId: org, siteId, energyUseId: null, replacement: { is: null } },
+        orderBy: [{ periodStart: 'desc' }, { id: 'asc' }],
+      });
+      const years = [...new Set(readings.map((reading) => reading.periodStart.getUTCFullYear()))].sort((a, b) => b - a);
+      const selectedYear = year ?? years[0] ?? new Date().getUTCFullYear();
+      const classifications = await tx.siteDriverClassification.findMany({
+        where: { organisationId: org, siteId, year: { lte: selectedYear } },
+        include: { corrections: { orderBy: { createdAt: 'desc' }, take: 1 } },
+        orderBy: { year: 'desc' },
+      });
+      const classification = classifications.find((row) => row.year === selectedYear - 1) ?? classifications[0];
+      const method = classificationMethod(
+        classification
+          ? { ...classification, ...(classification.corrections[0]?.values as ClassificationValues | undefined) }
+          : null,
+      );
+      const drivers = selectedDrivers ?? (classification ? method.defaultDrivers : ['HDD', 'CDD']);
+      // Validate selections even when no meter has uploaded data.
+      const allowed = ['HDD', 'CDD', 'DAYLIGHT', 'POPULATION', 'OPERATING_HOURS'];
+      if (
+        drivers.length > 3 ||
+        new Set(drivers).size !== drivers.length ||
+        drivers.some((code) => !allowed.includes(code))
+      )
+        throw new DomainError('DRIVERS', 'Choose up to three unique calculation drivers.');
+      const configurations = await tx.weatherConfiguration.findMany({
+        where: { organisationId: org, siteId },
+        orderBy: { version: 'desc' },
+      });
+      const weatherYears = await tx.weatherYear.findMany({
+        where: {
+          organisationId: org,
+          siteId,
+          year: { in: [selectedYear - 1, selectedYear] },
+          methodology: weatherMethod,
+        },
+        select: { configurationId: true, year: true },
+      });
+      const configuration =
+        configurations.find((c) =>
+          [selectedYear - 1, selectedYear].every((y) =>
+            weatherYears.some((w) => w.configurationId === c.id && w.year === y),
+          ),
+        ) ?? configurations[0];
+      const preview: WastePreview = {
+        year: selectedYear,
+        years,
+        drivers,
+        method: method.hasNra
+          ? method.name
+          : drivers.length === 1
+            ? 'Single routine adjustment'
+            : 'Multiple routine adjustment',
+        meters: [],
+      };
+      const sources = [];
+      for (const meter of meters) {
+        const records = readings.filter((row) => row.meterId === meter.id);
+        if (!records.some((row) => row.periodStart.getUTCFullYear() === selectedYear)) continue;
+        const issues: string[] = [];
+        let output: ReportingResult | null = null;
+        let fit: RegressionResult | null = null;
+        let snapshot: { definition: BaselineDefinition; assembly: Assembly } | null = null;
+        const weatherRequired = drivers.some((code) => ['HDD', 'CDD', 'DAYLIGHT'].includes(code));
+        if (!drivers.length) issues.push('Choose at least one calculation driver.');
+        else if (weatherRequired && !configuration)
+          issues.push('HDD and CDD weather inputs are required for this site.');
+        else if (selectedYear === 1900) issues.push('A preceding baseline year is required.');
+        else if (method.unsupportedNra.length)
+          issues.push(
+            `Non-routine ${method.unsupportedNra.join(', ')} needs a reviewed adjustment in Advanced Analysis.`,
+          );
+        else {
+          const definition = baselineDefinition.parse({
+            meterId: meter.id,
+            energyUseId: null,
+            period: { firstMonth: `${selectedYear - 1}-01`, lastMonth: `${selectedYear - 1}-12` },
+            drivers,
+            weather: weatherRequired ? { configurationId: configuration.id, methodology: weatherMethod } : null,
+            fitPolicy: { version: 'automatic-waste-preview-v1', relativeRankTolerance: 1e-10 },
+            estimatedConsumption: 'BLOCK',
+            supersedesId: null,
+          });
+          const baseline = await assemble(tx, org, siteId, definition);
+          snapshot = { definition, assembly: baseline };
+          if (baseline.issues.length)
+            issues.push(...baseline.issues.map((issue) => `${issue.month ?? 'Baseline'}: ${issue.message}`));
+          else {
+            fit = this.fit(definition, baseline);
+            const model = projectReportingModel(fit);
+            if (!model) issues.push(fit.status === 'BLOCKED' ? fit.message : 'Baseline model is unavailable.');
+            else {
+              const period = { firstMonth: `${selectedYear}-01`, lastMonth: `${selectedYear}-12` };
+              const reporting = await assemble(tx, org, siteId, { ...definition, period });
+              // Missing months stay unavailable; they do not suppress valid months or actual consumption.
+              output = calculateReporting({
+                baseline: {
+                  id: 'uploaded-input-preview',
+                  scope: baseline.scope,
+                  period: definition.period,
+                  model,
+                  referenceObservations: baseline.adjustmentObservations,
+                },
+                period,
+                policy: {
+                  version: 'automatic-waste-preview-v1',
+                  nra: method.nra,
+                  significanceBasis: 'POST_NRA',
+                  comparison: 'GREATER_THAN',
+                  sigmaMultiplier: 2,
+                  zeroThreshold: 'UNDEFINED',
+                  negativePrediction: 'BLOCK',
+                  extrapolation: 'BLOCK',
+                },
+                rows: reporting.rows.map((row) => ({
+                  ...row,
+                  consumption: {
+                    ...row.consumption,
+                    kwh: reporting.issues.some((issue) => issue.month === null || issue.month === row.consumption.month)
+                      ? null
+                      : row.consumption.kwh,
+                  },
+                  nraReferenceMonth:
+                    method.nra === 'NONE' ? null : `${selectedYear - 1}${row.consumption.month.slice(4)}`,
+                  nraObservations:
+                    method.nra === 'NONE'
+                      ? []
+                      : reporting.adjustmentObservations.filter(
+                          (o) =>
+                            o.month === row.consumption.month &&
+                            (method.nra === 'HOURS_AND_POPULATION' ||
+                              o.kind === (method.nra === 'HOURS' ? 'OPERATING_HOURS' : 'POPULATION')),
+                        ),
+                })),
+              });
+              issues.push(
+                ...reporting.issues.map((issue) => `${issue.month ?? 'Reporting'}: ${issue.message}`),
+                ...output.issues.map((issue) => `${issue.month ?? 'Reporting'}: ${issue.message}`),
+              );
+            }
+          }
+        }
+        const downloadable = !!(fit?.status === 'FITTED' && output && output.status !== 'BLOCKED');
+        preview.meters.push({
+          ...meter,
+          issues: [...new Set(issues)],
+          downloadable,
+          rows: monthlyCarbonRows(selectedYear, records, []).map((actual) => {
+            const result = output?.rows.find((row) => row.month === actual.month);
+            const calculated = result?.status === 'CALCULATED' ? result : null;
+            return {
+              month: actual.month,
+              actual: 'normalizedKwh' in actual ? Number(actual.normalizedKwh) : null,
+              expected: calculated?.expectedKwh ?? null,
+              adjusted: calculated?.adjustedExpectedKwh ?? null,
+              variance: calculated?.postNraVarianceKwh ?? null,
+              note: calculated
+                ? calculated.direction
+                : result?.status === 'BLOCKED'
+                  ? result.issues.map((issue) => issue.message).join('; ')
+                  : (issues[0] ?? 'Calculation inputs unavailable.'),
+            };
+          }),
+        });
+        if (downloadable && snapshot && fit && output)
+          sources.push({
+            meterId: meter.id,
+            source: {
+              id: 'uploaded-input-preview',
+              inputHash: snapshotHash({ snapshot, output }),
+              createdAt: new Date(),
+              generated: true,
+              baseline: { id: 'preceding-year-uploaded-inputs', fit, snapshot },
+              result: { output },
+            },
+          });
+      }
+      return { preview, sources };
     });
   }
   async wasteRuns(actor: Actor, org: string, siteId: string, input: unknown = {}, climateOnly = false) {

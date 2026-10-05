@@ -1,5 +1,4 @@
 import ExcelJS from 'exceljs';
-import type { AnalysisService } from './service';
 import type { BaselineDefinition } from './contract';
 import type { RegressionResult } from '../../domain/analysis/regression';
 import type { ReportingResult } from '../../domain/analysis/reporting';
@@ -9,7 +8,17 @@ type Snapshot = {
   definition: BaselineDefinition;
   assembly: { rows: { consumption: { month: string; kwh: number }; drivers: { code: string; value: number }[] }[] };
 };
-export async function calculationWorkbook(run: Awaited<ReturnType<AnalysisService['readRun']>>, siteName: string) {
+export async function calculationWorkbook(
+  run: {
+    id: string;
+    inputHash: string;
+    createdAt: Date;
+    generated?: boolean;
+    baseline: { id: string; fit: unknown; snapshot: unknown };
+    result: { output: unknown } | null;
+  },
+  siteName: string,
+) {
   const fit = run.baseline.fit as unknown as RegressionResult;
   const snapshot = run.baseline.snapshot as unknown as Snapshot;
   const output = run.result?.output as unknown as ReportingResult;
@@ -237,14 +246,14 @@ export async function calculationWorkbook(run: Awaited<ReturnType<AnalysisServic
   });
   sheet.views = [{ state: 'frozen', xSplit: 1, ySplit: 5 }];
   sheet.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
-  const evidence = book.addWorksheet('Saved evidence');
+  const evidence = book.addWorksheet(run.generated ? 'Generated evidence' : 'Saved evidence');
   evidence.columns = [{ width: 32 }, { width: 100 }, { width: 20 }, { width: 20 }, { width: 20 }];
   evidence.addRows([
     ['Site', siteName],
     ['Run ID', run.id],
     ['Baseline ID', run.baseline.id],
     ['Input hash', run.inputHash],
-    ['Saved at', run.createdAt.toISOString()],
+    [run.generated ? 'Generated at' : 'Saved at', run.createdAt.toISOString()],
     ['Method', method],
     ['Regression algorithm', fit.algorithm],
     ['Reporting algorithm', output.algorithm],
@@ -253,7 +262,7 @@ export async function calculationWorkbook(run: Awaited<ReturnType<AnalysisServic
     ['NRA policy', output.inputSnapshot.policy.nra],
     [
       'Formula behaviour',
-      'Saved results are cached. Excel recalculates the fitted model when baseline inputs are edited.',
+      'Calculated results are cached. Excel recalculates the fitted model when baseline inputs are edited.',
     ],
     ['Coefficient', 'Estimate', 'Standard error', 't statistic', 'p value'],
     ...fit.inference.terms.map((term) => [

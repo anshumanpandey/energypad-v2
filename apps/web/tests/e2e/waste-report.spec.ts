@@ -118,11 +118,15 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(results.getByRole('rowheader', { name: '2021-12', exact: true })).toBeVisible();
   const graphPage = await page.context().newPage();
   await graphPage.goto(`/org/${org}/waste-savings?site=${site.id}`);
-  await expect(graphPage.getByText('No saved heating or cooling calculations.', { exact: false })).toBeVisible();
-  await expect(graphPage.getByRole('heading', { name: 'Monthly waste & savings', exact: true })).toHaveCount(0);
-  await graphPage.getByLabel('Include other drivers', { exact: true }).check();
-  await graphPage.getByRole('button', { name: 'Choose site', exact: true }).click();
   await expect(graphPage.getByRole('heading', { name: 'Monthly waste & savings', exact: true })).toBeVisible();
+  await expect(graphPage.getByLabel('Waste year')).toHaveValue('2021');
+  await graphPage.getByLabel('Heating', { exact: true }).uncheck();
+  await expect(graphPage.getByLabel('Heating', { exact: true })).not.toBeChecked();
+  await graphPage.getByLabel('Cooling', { exact: true }).uncheck();
+  await expect(graphPage.getByLabel('Cooling', { exact: true })).not.toBeChecked();
+  await graphPage.getByRole('button', { name: 'Add other drivers', exact: true }).click();
+  await graphPage.getByLabel('Population', { exact: true }).check();
+  await expect(graphPage.getByRole('status').filter({ hasText: 'Single routine adjustment' })).toBeVisible();
   await graphPage.screenshot({ path: testInfo.outputPath('waste-savings-graphs.png'), fullPage: true });
   await graphPage.getByRole('button', { name: 'Table view', exact: true }).click();
   await expect(graphPage.getByRole('button', { name: 'Table view', exact: true })).toHaveAttribute(

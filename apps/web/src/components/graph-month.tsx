@@ -4,8 +4,8 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 
 const GraphMonthContext = createContext<{ month: string; setMonth: (month: string) => void } | null>(null);
 
-export function GraphMonthProvider({ children }: { children: ReactNode }) {
-  const [month, setMonth] = useState('01');
+export function GraphMonthProvider({ children, initialMonth = '01' }: { children: ReactNode; initialMonth?: string }) {
+  const [month, setMonth] = useState(initialMonth);
   return <GraphMonthContext.Provider value={{ month, setMonth }}>{children}</GraphMonthContext.Provider>;
 }
 

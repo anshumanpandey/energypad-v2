@@ -10,6 +10,7 @@ import { accessible } from '@/server/page-auth';
 import { Button } from './ui/button';
 import { WasteSavingsViews } from './waste-savings-views';
 import { WasteCalculationBuilder } from './waste-calculation-builder';
+import { WasteDashboard } from './waste-dashboard';
 
 export async function WasteSavings({
   actor,
@@ -31,6 +32,18 @@ export async function WasteSavings({
   const sites = await accessible(() => analysisService.historySites(actor, organisationId));
   const siteId = text('site') ?? sites[0]?.id;
   if (siteId && !sites.some((s) => s.id === siteId)) notFound();
+  if (siteId && !text('run') && text('evidence') !== '1') {
+    const { preview } = await accessible(() =>
+      analysisService.wastePreview(
+        actor,
+        organisationId,
+        siteId,
+        text('year') ? Number(text('year')) : undefined,
+        text('drivers') !== undefined ? text('drivers')!.split(',').filter(Boolean) : undefined,
+      ),
+    );
+    return <WasteDashboard orgId={organisationId} siteId={siteId} sites={sites} preview={preview} />;
+  }
   const page = siteId
     ? await accessible(() =>
         analysisService.wasteRuns(actor, organisationId, siteId, { cursor: text('cursor'), limit: 20 }, !includeOthers),
