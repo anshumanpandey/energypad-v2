@@ -59,7 +59,7 @@ test('graphs preserve recorded zero, missing coverage, filters and site isolatio
   });
   const path = `/org/${organisation.id}/graphs`;
   await page.goto(`${path}?site=${site.id}&year=2020`);
-  await expect(page.getByRole('link', { name: 'Graphs', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('link', { name: 'Graphs', exact: true })).toHaveCount(0);
   const consumption = page.getByRole('region', { name: 'Consumption', exact: true });
   await expect(consumption).toContainText('2/12 months available');
   const comparison = page.getByRole('region', { name: 'Consumption vs target', exact: true });

@@ -103,7 +103,10 @@ export function UtilityGraphs({
               <select
                 aria-label={`${title} ${label.toLowerCase()}`}
                 value={key === 'site' ? selectedSite : filters[key]}
-                onChange={(event) => setFilters({ ...filters, [key]: event.target.value })}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setFilters((previous) => ({ ...previous, [key]: value }));
+                }}
               >
                 {key !== 'site' && <option value="">{all}</option>}
                 {items.map((item) => (

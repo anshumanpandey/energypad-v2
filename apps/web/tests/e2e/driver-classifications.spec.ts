@@ -23,8 +23,8 @@ test('Data Drivers tab validates cell addresses, saves classifications and persi
   }
   const org = await post('organisations', { name: 'Drivers import test', currency: 'GBP', timezone: 'UTC' });
   await post(`organisations/${org.id}/sites`, { code: 'LON', name: 'London' });
-  await page.goto(`/org/${org.id}/data`);
-  await page.getByRole('tab', { name: 'Sites', exact: true }).focus();
+  await page.goto(`/org/${org.id}/energy`);
+  await page.getByRole('tab', { name: 'Consumption', exact: true }).focus();
   await page.keyboard.press('End');
   await expect(page.getByRole('tab', { name: 'Targets', exact: true })).toBeFocused();
   await page.keyboard.press('ArrowLeft');
@@ -65,6 +65,11 @@ test('Data Drivers tab validates cell addresses, saves classifications and persi
   await page.getByRole('tab', { name: 'Drivers', exact: true }).click();
   await expect(saved.getByRole('row')).toHaveCount(2);
   await expect(saved).toContainText('2024');
+  await saved.getByRole('button', { name: 'Edit London · 2024', exact: true }).click();
+  await saved.getByLabel('Heating', { exact: true }).selectOption('NR');
+  await saved.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(saved.getByRole('row').nth(1).getByRole('cell').nth(2)).toContainText('NR · Non-routine');
+  sheet.getCell('C7').value = 'NR';
   await upload();
   await expect(page.getByRole('region', { name: 'Driver classification preview' })).toContainText('1 already saved');
   await expect(saved.getByRole('row')).toHaveCount(2);

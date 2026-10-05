@@ -110,7 +110,9 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   await page.getByRole('link', { name: 'Advanced Analysis', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Advanced Analysis', exact: true })).toBeVisible();
   await expect(navigation.getByRole('link', { name: 'Upload', exact: true })).toHaveAttribute('aria-current', 'page');
-  await page.getByRole('link', { name: 'Settings', exact: true }).click();
+  for (const name of ['Graphs', 'Data', 'Settings'])
+    await expect(navigation.getByRole('link', { name, exact: true })).toHaveCount(0);
+  await page.goto(`${orgPath}/settings`);
   await page.getByLabel('Organisation name').fill('Northstar Energy');
   await page.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByRole('status')).toContainText('Changes saved');
