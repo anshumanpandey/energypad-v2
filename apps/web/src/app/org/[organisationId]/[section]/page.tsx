@@ -37,12 +37,11 @@ import { foundation, siteService, analysisService } from '@/server/services';
 import { can, canManageRole, roleLabels, hasFeature } from '@/domain/policy';
 import { InviteForm, MemberActions, OrganisationForm, RevokeInvite } from '@/components/forms';
 import { SitesWorkspace, PortfoliosWorkspace } from '@/components/sites-workspace';
-import { DataImportWorkspace, HistoricImport } from '@/components/data-import-workspace';
+import { DataImportWorkspace } from '@/components/data-import-workspace';
 import { Button } from '@/components/ui/button';
 import { AnalysisWorkspace } from '@/components/analysis-workspace';
 import { EnergyYearProvider } from '@/components/energy-year';
-import { EnergyWorkspace } from '@/components/energy-workspace';
-import { AllConsumption } from '@/components/all-consumption';
+import { UploadDataTabs } from '@/components/upload-data-tabs';
 
 export default async function WorkspacePage({
   params,
@@ -220,14 +219,29 @@ export default async function WorkspacePage({
           <div>
             <span className="eyebrow">ENERGY DATA</span>
             <h1>Upload</h1>
-            <p>Upload emissions, targets and drivers, then import your monthly consumption.</p>
+            <p>Upload or pull a workbook from an API, then review and edit all four data sheets.</p>
           </div>
         </div>
         {manage && <DataImportWorkspace orgId={org.id} batches={[]} workflow />}
-        {manage && <HistoricImport orgId={org.id} workbookLabel="Latest consumption workbook" />}
-        <AllConsumption orgId={org.id} sites={sites} />
+        <UploadDataTabs
+          orgId={org.id}
+          sites={sites}
+          manage={manage}
+          emissions={
+            <EmissionFactorWorkspace
+              orgId={org.id}
+              manage={can(membership.role, 'organisation:update')}
+              records={(await accessible(() => emissionFactorService.list(actor, org.id))).map((f) => ({
+                ...f,
+                factor: f.factor.toString(),
+                validFrom: f.validFrom.toISOString(),
+                validUntil: f.validUntil.toISOString(),
+                createdAt: f.createdAt.toISOString(),
+              }))}
+            />
+          }
+        />
         <EnergyYearProvider>
-          <EnergyWorkspace orgId={org.id} sites={sites} manage={manage} />
           <section className="waste-report stack-form" aria-labelledby="waste-report-title">
             <div className="section-heading">
               <div>

@@ -4,16 +4,13 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
   LayoutDashboard,
-  ChartColumn,
   Building2,
   Users,
-  Settings,
   ScrollText,
   Zap,
   Leaf,
   Lightbulb,
   Sparkles,
-  Database,
   CreditCard,
   FileText,
   Layers3,
@@ -46,7 +43,6 @@ export function WorkspaceShell({
   const section = pathname.split('/')[3] ?? 'overview';
   const nav = [
     { key: 'overview', name: 'Overview', icon: LayoutDashboard },
-    { key: 'graphs', name: 'Graphs', icon: ChartColumn },
     { key: 'consumption', name: 'Consumption', icon: Zap },
     { key: 'emissions', name: 'Carbon Footprint', icon: Leaf },
     { key: 'sites', name: 'Sites', icon: Building2 },
@@ -58,8 +54,6 @@ export function WorkspaceShell({
     { key: 'opportunities', name: 'Opportunities', icon: Lightbulb },
     { key: 'ai-analyst', name: 'AI Analyst', icon: Sparkles },
     { key: 'reports', name: 'Reports', icon: FileText },
-    { key: 'data', name: 'Data', icon: Database },
-    ...(can(role, 'organisation:update') ? [{ key: 'settings', name: 'Settings', icon: Settings }] : []),
     ...(can(role, 'billing:manage') ? [{ key: 'billing', name: 'Billing', icon: CreditCard }] : []),
     { key: 'portfolio', name: 'Portfolio', icon: Layers3 },
   ];

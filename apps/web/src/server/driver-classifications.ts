@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { z } from 'zod';
 import { FoundationService, type Actor } from './foundation';
 import { readWorkbook } from './workbook';
 import { classificationFields, classificationIssue, parseClassifications } from '../domain/driver-classifications';
@@ -6,6 +7,39 @@ import { WorkbookCellError, type WorkbookCellIssue } from '../domain/workbook-er
 import { DomainError } from '../domain/policy';
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export class DriverClassificationService extends FoundationService {
+  async update(actor: Actor, org: string, id: string, input: unknown) {
+    const value = z.enum(['R', 'NR', 'N/A']);
+    const data = z
+      .object({
+        heating: value,
+        cooling: value,
+        population: value,
+        operatingHours: value,
+        daylighting: value,
+        buildingSize: value,
+      })
+      .strict()
+      .parse(input);
+    return this.db.$transaction(async (tx) => {
+      await this.lock(tx, org);
+      await this.membership(actor, org, 'organisation:update', tx);
+      const prior = await tx.siteDriverClassification.findFirst({
+        where: { id, organisationId: org },
+        include: { site: true },
+      });
+      if (!prior || prior.site.archivedAt)
+        throw new DomainError('NOT_FOUND', 'Active driver classification not found.', 404);
+      const record = await tx.siteDriverClassification.update({
+        where: { id },
+        data: { ...data, authorId: actor.userId },
+      });
+      await this.audit(tx, actor, org, 'driver.classifications_updated', id, {
+        before: Object.fromEntries(classificationFields.map((field) => [field, prior[field]])),
+        after: data,
+      });
+      return record;
+    });
+  }
   async list(actor: Actor, org: string) {
     await this.membership(actor, org, 'organisation:update');
     return this.db.siteDriverClassification.findMany({

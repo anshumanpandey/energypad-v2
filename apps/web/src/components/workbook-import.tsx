@@ -26,6 +26,7 @@ type Result = {
 export function WorkbookImport({ orgId }: { orgId: string }) {
   const m = useMutation();
   const [file, setFile] = useState<File | null>(null);
+  const [apiUrl, setApiUrl] = useState('');
   const [geography, setGeography] = useState('GB');
   const [basis, setBasis] = useState('LOCATION_BASED');
   const [preview, setPreview] = useState<Result[] | null>(null);
@@ -138,6 +139,41 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
           className="stack-form"
           onSubmit={(event) => {
             event.preventDefault();
+            void m.run(async () => {
+              const url = new URL(apiUrl);
+              if (url.protocol !== 'https:') throw new Error('Enter an HTTPS API URL.');
+              const response = await fetch(url, { credentials: 'omit', signal: AbortSignal.timeout(30000) });
+              if (!response.ok) throw new Error(`API request failed (${response.status}).`);
+              const blob = await response.blob();
+              if (blob.size > 2_000_000) throw new Error('Use a workbook smaller than 2 MB.');
+              reset();
+              setFile(new File([blob], 'api-workbook.xlsx'));
+            }, 'Workbook fetched from API. Validate it before importing.');
+          }}
+        >
+          <h3>Pull data from API</h3>
+          <p>
+            Enter an HTTPS endpoint returning the four-sheet XLSX workbook. The provider must allow browser access
+            (CORS).
+          </p>
+          <label>
+            API URL
+            <input
+              type="url"
+              value={apiUrl}
+              required
+              disabled={m.disabled}
+              onChange={(event) => setApiUrl(event.target.value)}
+              placeholder="https://provider.example/export.xlsx"
+            />
+          </label>
+          <Button disabled={m.disabled}>Pull data from API</Button>
+        </form>
+        {file && <p role="status">Selected workbook: {file.name}</p>}
+        <form
+          className="stack-form"
+          onSubmit={(event) => {
+            event.preventDefault();
             void m.run(validate, 'All four sheets validated. Review before importing.');
           }}
         >
@@ -146,7 +182,6 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
             <input
               type="file"
               accept=".xlsx"
-              required
               disabled={m.disabled}
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);

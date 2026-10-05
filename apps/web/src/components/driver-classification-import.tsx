@@ -54,6 +54,7 @@ export function DriverClassificationImport({ orgId }: { orgId: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [saved, setSaved] = useState<Saved[] | null>(null);
+  const [editing, setEditing] = useState<Saved | null>(null);
   const [loadError, setLoadError] = useState('');
   useEffect(() => {
     let active = true;
@@ -173,6 +174,50 @@ export function DriverClassificationImport({ orgId }: { orgId: string }) {
       )}
       <section className="panel import-preview" aria-label="Saved driver classifications">
         <h3>Saved driver classifications</h3>
+        {editing && (
+          <form
+            className="stack-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const values = Object.fromEntries(new FormData(event.currentTarget));
+              void m.run(async () => {
+                await request(`${base}/${editing.id}`, 'PATCH', values);
+                setSaved(await request(base, 'GET'));
+                setEditing(null);
+                setPreview(null);
+              }, 'Driver classifications updated.');
+            }}
+          >
+            <h4>
+              Edit {editing.site.name} · {editing.year}
+            </h4>
+            <div className="form-grid">
+              {classificationFields.map((field) => (
+                <label key={field}>
+                  {classificationColumns[classificationFields.indexOf(field) + 2]}
+                  <select name={field} defaultValue={editing[field]} disabled={m.disabled}>
+                    {Object.entries(classificationLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+            <div className="button-row">
+              <Button disabled={m.disabled}>Save changes</Button>
+              <Button type="button" variant="secondary" disabled={m.pending} onClick={() => setEditing(null)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
+        {saved?.map((record) => (
+          <Button key={record.id} variant="secondary" disabled={m.disabled} onClick={() => setEditing(record)}>
+            Edit {record.site.name} · {record.year}
+          </Button>
+        ))}
         {loadError ? (
           <p role="alert">{loadError}</p>
         ) : saved === null ? (

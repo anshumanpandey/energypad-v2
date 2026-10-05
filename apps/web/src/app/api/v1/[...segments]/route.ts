@@ -66,6 +66,8 @@ async function handle(request: Request, context: Context) {
           request.headers.get('X-Fill-Missing-Months') === 'true',
         );
       if (s[2] === 'driver-classification-imports') {
+        if (s.length === 4 && method === 'PATCH')
+          return driverClassificationService.update(actor, org, s[3], await readBody(request));
         if (s.length === 3 && method === 'GET') return driverClassificationService.list(actor, org);
         if (s.length === 4 && method === 'POST' && ['preview', 'commit'].includes(s[3]))
           return driverClassificationService.process(
