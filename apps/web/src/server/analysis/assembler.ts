@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { monthPeriod } from '../../domain/energy';
+import { weatherMethod } from '../../domain/weather';
 import { driverDefinitions, periodMonths, dateRange, type BaselineDefinition, type ReadinessIssue } from './contract';
 const weatherMonth = z.object({
   month: z.string(),
@@ -37,7 +38,11 @@ export async function assemble(
         where: {
           organisationId: org,
           siteId,
-          ...definition.weather,
+          configurationId: definition.weather.configurationId,
+          OR: [
+            { methodology: definition.weather.methodology },
+            { methodology: { startsWith: `${weatherMethod}:through:` } },
+          ],
           year: {
             gte: Number(definition.period.firstMonth.slice(0, 4)),
             lte: Number(definition.period.lastMonth.slice(0, 4)),
@@ -98,7 +103,11 @@ export async function assemble(
           value: o?.value ?? null,
         };
       }
-      const years = weather.filter((w) => w.year === Number(month.slice(0, 4)));
+      const candidates = weather.filter((w) => w.year === Number(month.slice(0, 4)));
+      const complete = candidates.find((w) => w.methodology === weatherMethod);
+      const years = complete
+        ? [complete]
+        : candidates.sort((a, b) => b.methodology.localeCompare(a.methodology)).slice(0, 1);
       const parsed = years.length === 1 ? z.array(weatherMonth).safeParse(years[0].monthly) : null;
       const matches = parsed?.success ? parsed.data.filter((m) => m.month === month) : [];
       const expected = monthPeriod(month),

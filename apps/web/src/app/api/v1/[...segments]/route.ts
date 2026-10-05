@@ -540,6 +540,8 @@ async function handle(request: Request, context: Context) {
           return tariffService.correct(actor, org, s[3], s[6], await readBody(request));
       }
       if (s[2] === 'sites' && s[4] === 'energy' && s[5] === 'weather') {
+        if (s.length === 7 && s[6] === 'prepare-calculation' && method === 'POST')
+          return weatherService.prepareCalculation(actor, org, s[3], await readBody(request));
         if (s.length === 9 && s[6] === 'jobs' && s[8] === 'retry' && method === 'POST')
           return weatherService.retry(actor, org, s[3], s[7]).then((job) => ({ id: job.id, status: job.status }));
         if (s.length === 6 && method === 'GET')

@@ -8,6 +8,7 @@ import { WasteCharts } from './waste-charts';
 import { aggregateWasteRows } from '@/domain/analysis/waste-gauge';
 import type { UtilityChartSort } from '@/domain/utility-chart-sort';
 import { formatEnergyValue } from './format-energy-value';
+import { WasteWeather } from './waste-weather';
 
 const driverLabels = {
   HDD: 'Heating',
@@ -21,11 +22,13 @@ export function WasteDashboard({
   siteId,
   sites,
   preview,
+  manageWeather = false,
 }: {
   orgId: string;
   siteId: string;
   sites: { id: string; name: string }[];
   preview: WastePreview;
+  manageWeather?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -194,6 +197,15 @@ export function WasteDashboard({
           <p>No uploaded consumption for this selection.</p>
         </section>
       )}
+      {!!meters.length && preview.weather?.required && !preview.weather.ready && (
+        <WasteWeather
+          key={`${siteId}:${preview.year}`}
+          orgId={orgId}
+          siteId={siteId}
+          year={preview.year}
+          manage={manageWeather}
+        />
+      )}
       {meters.map((meter) => (
         <div key={meter.id}>
           <section className="panel">
@@ -268,7 +280,12 @@ export function WasteDashboard({
         </div>
       ))}
       {view === 'graph' && meters.length > 0 && (
-        <WasteCharts rows={aggregateWasteRows(meters.map((meter) => meter.rows))} month={month} sort={sort} />
+        <WasteCharts
+          rows={aggregateWasteRows(meters.map((meter) => meter.rows))}
+          month={month}
+          sort={sort}
+          throughMonth={preview.weather?.required ? preview.weather.throughMonth : undefined}
+        />
       )}
     </div>
   );

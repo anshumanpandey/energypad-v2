@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { weatherPeriod } from '../../src/domain/weather';
 
 test('saving weather fetches status and updates baseline configurations without resetting the form', async ({
   page,
@@ -108,9 +109,17 @@ test('saving weather fetches status and updates baseline configurations without 
   await weather.getByText('Add a weather settings version', { exact: true }).click();
   await weather.getByLabel('Weather settings source').fill('Current year settings');
   await weather.getByRole('button', { name: 'Save weather settings', exact: true }).click();
-  await expect(weather.getByRole('alert')).toContainText('Select a completed year');
+  let currentYearAvailable = true;
+  try {
+    weatherPeriod(new Date().getUTCFullYear());
+  } catch {
+    currentYearAvailable = false;
+  }
+  await expect(weather.getByRole('alert')).toContainText(
+    currentYearAvailable ? 'Queue unavailable' : 'No complete, published weather months',
+  );
   await expect(configuration.locator('option')).toHaveCount(4);
-  expect(queueCount).toBe(2);
+  expect(queueCount).toBe(currentYearAvailable ? 3 : 2);
   await page.getByRole('link', { name: 'HDD & CDD', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'HDD & CDD', exact: true })).toBeVisible();
   await page.getByLabel('Degree days year', { exact: true }).fill('2020');

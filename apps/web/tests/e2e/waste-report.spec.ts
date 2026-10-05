@@ -119,7 +119,51 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   const gas = await post(`/sites/${site.id}/meters`, { code: 'G', name: 'Gas', fuel: 'GAS', unit: 'kWh' });
   await post(`/sites/${site.id}/energy`, { meterId: gas.id, month: '2021-01', quantity: '5', estimated: false });
   const graphPage = await page.context().newPage();
+  await graphPage.route('**/energy/weather/prepare-calculation', (route) =>
+    route.fulfill({ status: 422, json: { title: 'Test site requires a configured city for weather.' } }),
+  );
   await graphPage.goto(`/org/${org}/waste-savings?site=${site.id}`);
+  await expect(graphPage.getByRole('region', { name: 'Calculation weather' })).toContainText(
+    'Test site requires a configured city for weather.',
+  );
+  await graphPage.unroute('**/energy/weather/prepare-calculation');
+  let prepareCount = 0;
+  await graphPage.route('**/energy/weather/prepare-calculation', (route) => {
+    prepareCount++;
+    return route.fulfill({
+      json: {
+        configurationId: 'weather-config',
+        heatingBase: '15.5',
+        coolingBase: '18',
+        jobs: [
+          { id: 'baseline-weather', year: 2020, status: 'SUCCEEDED' },
+          { id: 'reporting-weather', year: 2021, status: 'SUCCEEDED' },
+        ],
+      },
+    });
+  });
+  await graphPage.route('**/energy/weather?year=*', (route) => {
+    const year = new URL(route.request().url()).searchParams.get('year');
+    return route.fulfill({
+      json: {
+        configurations: [],
+        results: [],
+        jobs: [
+          {
+            id: year === '2020' ? 'baseline-weather' : 'reporting-weather',
+            configurationId: 'weather-config',
+            status: 'SUCCEEDED',
+            lastError: null,
+          },
+        ],
+      },
+    });
+  });
+  await graphPage.getByRole('button', { name: 'Retry weather fetch', exact: true }).click();
+  await expect(graphPage.getByRole('region', { name: 'Calculation weather' })).toContainText(
+    'Weather fetched. Recalculating Waste & Savings',
+  );
+  expect(prepareCount).toBe(1);
   await expect(
     graphPage.getByRole('heading', { name: 'Avoided Energy (+) and Wasted Energy (-) (kWh)', exact: true }),
   ).toBeVisible();

@@ -3,6 +3,7 @@ export type WastePreview = {
   years: number[];
   drivers: string[];
   method: string;
+  weather?: { required: boolean; ready: boolean; throughMonth?: string };
   meters: {
     id: string;
     name: string;

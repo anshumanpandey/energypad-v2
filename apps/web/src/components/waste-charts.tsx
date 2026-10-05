@@ -10,10 +10,12 @@ export function WasteCharts({
   rows,
   month = '',
   sort = 'month',
+  throughMonth,
 }: {
   rows: WasteChartRow[];
   month?: string;
   sort?: UtilityChartSort;
+  throughMonth?: string;
 }) {
   const anchor = month
     ? ([...rows]
@@ -21,7 +23,7 @@ export function WasteCharts({
         .sort((a, b) => a.month.localeCompare(b.month))
         .at(-1)?.month ?? '')
     : '';
-  const gauge = wasteGauge(rows, anchor);
+  const gauge = wasteGauge(!month && throughMonth ? rows.filter((row) => row.month <= throughMonth) : rows, anchor);
   const percentage = gauge.percentage;
   const angle = ((Math.max(-100, Math.min(100, percentage ?? 0)) + 100) / 200) * Math.PI;
   const x = 180 - 115 * Math.cos(angle),

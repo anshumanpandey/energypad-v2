@@ -1,11 +1,33 @@
 import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
 import type { Prisma, WeatherJob } from '@prisma/client';
 import { WeatherService } from './service';
 import type { Actor } from '../foundation';
 import { DomainError, uuid } from '../../domain/policy';
-import { enrichmentInput, weatherDates, weatherMethod } from '../../domain/weather';
+import { enrichmentInput, weatherPeriod } from '../../domain/weather';
 import { weatherFailure, weatherJobAttempts, weatherLeaseMs, weatherRetryDelay } from '../../domain/weather-jobs';
 export class WeatherJobs extends WeatherService {
+  async prepareCalculation(actor: Actor, org: string, siteId: string, input: unknown) {
+    const { year } = z
+      .object({ year: z.number().int().min(1941).max(2199) })
+      .strict()
+      .parse(input);
+    const years = [year - 1, year];
+    years.forEach((value) => weatherPeriod(value));
+    const configuration = await this.automaticConfiguration(actor, org, siteId);
+    const jobs = [];
+    for (const value of years) {
+      let job = await this.enqueue(actor, org, siteId, { configurationId: configuration.id, year: value });
+      if (job.status === 'FAILED') job = await this.retry(actor, org, siteId, job.id);
+      jobs.push({ id: job.id, year: value, status: job.status });
+    }
+    return {
+      configurationId: configuration.id,
+      heatingBase: configuration.heatingBase.toString(),
+      coolingBase: configuration.coolingBase.toString(),
+      jobs,
+    };
+  }
   private async requestLimit(tx: Prisma.TransactionClient, org: string) {
     const window = Math.floor(Date.now() / 3600000),
       key = `weather-job-request:${org}:${window}`;
@@ -18,8 +40,8 @@ export class WeatherJobs extends WeatherService {
   }
   async enqueue(actor: Actor, org: string, siteId: string, input: unknown) {
     const { configurationId, year } = enrichmentInput.parse(input);
-    weatherDates(year);
-    const identity = { configurationId, year, methodology: weatherMethod };
+    const range = weatherPeriod(year);
+    const identity = { configurationId, year, methodology: range.methodology };
     return this.db.$transaction(async (tx) => {
       await this.access(tx, actor, org, siteId);
       if (!(await tx.weatherConfiguration.findFirst({ where: { id: configurationId, organisationId: org, siteId } })))
@@ -56,7 +78,7 @@ export class WeatherJobs extends WeatherService {
       const job = await tx.weatherJob.findFirst({ where: { id, organisationId: org, siteId } });
       if (!job) throw new DomainError('NOT_FOUND', 'This weather job is not available.', 404);
       if (job.status !== 'FAILED') return job;
-      weatherDates(job.year);
+      weatherPeriod(job.year, job.methodology);
       await this.requestLimit(tx, org);
       const updated = await tx.weatherJob.update({
         where: { id },
@@ -137,14 +159,13 @@ export class WeatherJobs extends WeatherService {
     if (!claim) return true;
     const actor = { userId: claim.requestedBy, correlationId: claim.correlationId };
     try {
-      if (claim.methodology !== weatherMethod)
-        throw new DomainError('WEATHER_METHOD', 'This job requires an unavailable methodology.', 409);
+      weatherPeriod(claim.year, claim.methodology);
       await this.enrich(
         actor,
         claim.organisationId,
         claim.siteId,
         { configurationId: claim.configurationId, year: claim.year },
-        { id: claim.id, token: claim.leaseToken! },
+        { id: claim.id, token: claim.leaseToken!, methodology: claim.methodology },
       );
     } catch (error) {
       await this.failAttempt(claim, error);

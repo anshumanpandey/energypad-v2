@@ -1,5 +1,12 @@
 import { it, expect } from 'vitest';
-import { weatherConfigurationInput, weatherDates, aggregateWeather } from '../src/domain/weather';
+import {
+  weatherConfigurationInput,
+  weatherDates,
+  weatherPeriod,
+  weatherMethod,
+  aggregateWeather,
+} from '../src/domain/weather';
+import { geocodeLocation } from '../src/server/weather/geocoding';
 import { OpenMeteoProvider, validateWeatherResponse } from '../src/server/weather/provider';
 import { syntheticWeather } from './fixtures/weather';
 const settings = {
@@ -11,6 +18,56 @@ const settings = {
   source: 'Synthetic test policy',
 };
 const request = { ...settings, ...weatherDates(2020) };
+it('fetches only complete published current-year months with immutable range identities', () => {
+  const august = weatherPeriod(2026, undefined, new Date('2026-10-05T12:00:00Z'));
+  expect(august.end).toBe('2026-08-31');
+  expect(august.methodology).toBe(`${weatherMethod}:through:2026-08-31`);
+  expect(
+    aggregateWeather(
+      august.dates.map((date) => ({ date, meanTemperature: 10, daylightSeconds: 43200 })),
+      settings,
+    ),
+  ).toHaveLength(8);
+  const september = weatherPeriod(2026, undefined, new Date('2026-10-08T12:00:00Z'));
+  expect(september.end).toBe('2026-09-30');
+  expect(september.methodology).not.toBe(august.methodology);
+  expect(weatherPeriod(2026, august.methodology, new Date('2026-11-08')).end).toBe('2026-08-31');
+  expect(weatherPeriod(2025, undefined, new Date('2026-10-05')).methodology).toBe(weatherMethod);
+  expect(() => weatherPeriod(2027, undefined, new Date('2026-10-05'))).toThrow();
+  expect(() => weatherPeriod(2026, `${weatherMethod}:through:2026-08-30`, new Date('2026-10-05'))).toThrow();
+  expect(() => weatherPeriod(2026, `${weatherMethod}:through:2026-12-31`, new Date('2026-10-05'))).toThrow();
+});
+it('resolves the uploaded city using the API without exposing provider credentials', async () => {
+  const location = await geocodeLocation('Leeds', 'GB', 'test-secret', async (url) => {
+    const parsed = new URL(String(url));
+    expect(parsed.hostname).toBe('customer-geocoding-api.open-meteo.com');
+    expect(parsed.searchParams.get('name')).toBe('Leeds');
+    expect(parsed.searchParams.get('countryCode')).toBe('GB');
+    return Response.json({
+      results: [
+        {
+          name: 'Leeds',
+          latitude: 53.79648,
+          longitude: -1.54785,
+          timezone: 'Europe/London',
+          country: 'United Kingdom',
+          country_code: 'GB',
+          population: 455123,
+        },
+      ],
+    });
+  });
+  expect(location).toMatchObject({ latitude: '53.796480', longitude: '-1.547850', timezone: 'Europe/London' });
+  expect(JSON.stringify(location)).not.toContain('test-secret');
+  await expect(geocodeLocation('Leeds', 'GB', undefined, async () => Response.json({ results: [] }))).rejects.toThrow(
+    'could not be matched',
+  );
+  await expect(
+    geocodeLocation('Leeds', 'GB', 'test-secret', async () => {
+      throw Error('url test-secret');
+    }),
+  ).rejects.toThrow('location API could not resolve');
+});
 it('requires explicit coordinates, timezone, bases and a complete available year', () => {
   expect(
     weatherConfigurationInput.parse({ ...settings, latitude: '0', longitude: '0', heatingBase: '0' }).latitude,

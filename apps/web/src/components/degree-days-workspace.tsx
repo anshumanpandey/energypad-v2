@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { request } from './forms';
+import { request, useMutation } from './forms';
+import { Button } from './ui/button';
 import { WeatherWorkspace, type WeatherData } from './weather-workspace';
 
 export function DegreeDaysWorkspace({
@@ -17,6 +18,7 @@ export function DegreeDaysWorkspace({
   initialYear?: number;
 }) {
   const [site, setSite] = useState(initialSite ?? sites[0]?.id ?? '');
+  const mutation = useMutation();
   const [year, setYear] = useState(initialYear ?? new Date().getUTCFullYear() - 1);
   const [loaded, setLoaded] = useState<{ key: string; data: WeatherData } | null>(null);
   const [error, setError] = useState<{ key: string; message: string } | null>(null);
@@ -58,7 +60,12 @@ export function DegreeDaysWorkspace({
           <div className="panel form-grid">
             <label>
               Site
-              <select aria-label="Degree days site" value={site} onChange={(event) => setSite(event.target.value)}>
+              <select
+                disabled={mutation.disabled}
+                aria-label="Degree days site"
+                value={site}
+                onChange={(event) => setSite(event.target.value)}
+              >
                 {sites.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name}
@@ -70,6 +77,7 @@ export function DegreeDaysWorkspace({
               Year
               <input
                 aria-label="Degree days year"
+                disabled={mutation.disabled}
                 type="number"
                 min={1900}
                 max={2199}
@@ -81,6 +89,27 @@ export function DegreeDaysWorkspace({
               />
             </label>
           </div>
+          {manage && (
+            <div className="panel stack-form">
+              <Button
+                disabled={mutation.disabled}
+                onClick={() =>
+                  void mutation.run(async () => {
+                    await request(`${base}/prepare-calculation`, 'POST', { year });
+                    const data: WeatherData = await request(`${base}?year=${year}`, 'GET');
+                    setLoaded({ key, data });
+                  }, 'Site location resolved. Weather fetching queued; progress updates automatically.')
+                }
+              >
+                Fetch weather from site location
+              </Button>
+              {mutation.feedback}
+              <p>
+                Uses the uploaded site city and existing weather settings. New sites use editable bases of 15.5 °C for
+                heating and 18 °C for cooling.
+              </p>
+            </div>
+          )}
           {error?.key === key ? (
             <p role="alert">{error.message}</p>
           ) : loaded?.key === key ? (

@@ -2,7 +2,7 @@ import { wasteSavings } from '../../domain/waste-savings';
 import { monthlyCarbonRows } from '../../domain/carbon-monthly';
 import { classificationMethod } from '../../domain/analysis/classification-method';
 import type { WastePreview } from '../../domain/analysis/waste-preview';
-import { weatherMethod } from '../../domain/weather';
+import { weatherPeriod, weatherMethod } from '../../domain/weather';
 import type { CarbonSnapshot } from '../../domain/carbon';
 import type { ReportingResult } from '../../domain/analysis/reporting';
 import { Prisma } from '@prisma/client';
@@ -490,20 +490,39 @@ export class AnalysisService extends FoundationService {
           organisationId: org,
           siteId,
           year: { in: [selectedYear - 1, selectedYear] },
-          methodology: weatherMethod,
+          OR: [{ methodology: weatherMethod }, { methodology: { startsWith: `${weatherMethod}:through:` } }],
         },
-        select: { configurationId: true, year: true },
+        select: { configurationId: true, year: true, methodology: true },
       });
+      const hasWeather = (configurationId: string, value: number) => {
+        try {
+          const expected = weatherPeriod(value).methodology;
+          return weatherYears.some(
+            (row) => row.configurationId === configurationId && row.year === value && row.methodology === expected,
+          );
+        } catch {
+          return false;
+        }
+      };
       const configuration =
-        configurations.find((c) =>
-          [selectedYear - 1, selectedYear].every((y) =>
-            weatherYears.some((w) => w.configurationId === c.id && w.year === y),
-          ),
-        ) ?? configurations[0];
+        configurations.find((c) => [selectedYear - 1, selectedYear].every((y) => hasWeather(c.id, y))) ??
+        configurations[0];
       const preview: WastePreview = {
         year: selectedYear,
         years,
         drivers,
+        weather: {
+          required: drivers.some((code) => ['HDD', 'CDD', 'DAYLIGHT'].includes(code)),
+          ready:
+            !!configuration && [selectedYear - 1, selectedYear].every((value) => hasWeather(configuration.id, value)),
+          throughMonth: (() => {
+            try {
+              return weatherPeriod(selectedYear).end.slice(0, 7);
+            } catch {
+              return undefined;
+            }
+          })(),
+        },
         method: method.hasNra
           ? method.name
           : drivers.length === 1
@@ -520,9 +539,26 @@ export class AnalysisService extends FoundationService {
         let fit: RegressionResult | null = null;
         let snapshot: { definition: BaselineDefinition; assembly: Assembly } | null = null;
         const weatherRequired = drivers.some((code) => ['HDD', 'CDD', 'DAYLIGHT'].includes(code));
+        if (
+          weatherRequired &&
+          !weatherYears.some((row) => row.configurationId === configuration?.id && row.year === selectedYear)
+        ) {
+          try {
+            weatherPeriod(selectedYear);
+          } catch (error) {
+            if (!(error instanceof DomainError)) throw error;
+            issues.push(`Reporting ${selectedYear} weather is not available to fetch: ${error.message}`);
+          }
+        }
+        if (!records.some((row) => row.periodStart.getUTCFullYear() === selectedYear - 1))
+          issues.push(
+            `Baseline ${selectedYear - 1} has no uploaded consumption for this ${meter.fuel.replaceAll('_', ' ')} meter. Consumption on another fuel or meter is not automatically used as its baseline.`,
+          );
         if (!drivers.length) issues.push('Choose at least one calculation driver.');
         else if (weatherRequired && !configuration)
-          issues.push('HDD and CDD weather inputs are required for this site.');
+          issues.push(
+            `HDD and CDD weather inputs are required for this site. Configure its coordinates, timezone and base temperatures in HDD & CDD, then fetch baseline ${selectedYear - 1} and reporting ${selectedYear} weather.`,
+          );
         else if (selectedYear === 1900) issues.push('A preceding baseline year is required.');
         else if (method.unsupportedNra.length)
           issues.push(

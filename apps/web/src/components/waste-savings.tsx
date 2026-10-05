@@ -42,7 +42,15 @@ export async function WasteSavings({
         text('drivers') !== undefined ? text('drivers')!.split(',').filter(Boolean) : undefined,
       ),
     );
-    return <WasteDashboard orgId={organisationId} siteId={siteId} sites={sites} preview={preview} />;
+    return (
+      <WasteDashboard
+        orgId={organisationId}
+        siteId={siteId}
+        sites={sites}
+        preview={preview}
+        manageWeather={canApprove}
+      />
+    );
   }
   const page = siteId
     ? await accessible(() =>

@@ -2,13 +2,8 @@ import { createHash } from 'node:crypto';
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { FoundationService, type Actor, type Mailer } from '../foundation';
 import { DomainError, uuid } from '../../domain/policy';
-import {
-  weatherConfigurationInput,
-  weatherDates,
-  enrichmentInput,
-  aggregateWeather,
-  weatherMethod,
-} from '../../domain/weather';
+import { weatherConfigurationInput, weatherPeriod, enrichmentInput, aggregateWeather } from '../../domain/weather';
+import { geocodeLocation } from './geocoding';
 import type { WeatherProvider } from './provider';
 const json = (value: unknown) => JSON.parse(JSON.stringify(value));
 export class WeatherService extends FoundationService {
@@ -17,6 +12,7 @@ export class WeatherService extends FoundationService {
     mail: Mailer,
     appUrl: string,
     private provider: WeatherProvider,
+    private geocode: typeof geocodeLocation = geocodeLocation,
   ) {
     super(db, mail, appUrl);
   }
@@ -26,6 +22,59 @@ export class WeatherService extends FoundationService {
     await this.membership(actor, org, 'organisation:update', tx);
     if (!(await tx.site.findFirst({ where: { id: siteId, organisationId: org, archivedAt: null } })))
       throw new DomainError('NOT_FOUND', 'This active site is not available.', 404);
+  }
+  protected async automaticConfiguration(actor: Actor, org: string, siteId: string) {
+    const prepared = await this.db.$transaction(async (tx) => {
+      await this.access(tx, actor, org, siteId);
+      const existing = await tx.weatherConfiguration.findFirst({
+        where: { organisationId: org, siteId },
+        orderBy: { version: 'desc' },
+      });
+      const site = await tx.site.findUniqueOrThrow({ where: { id: siteId } });
+      const organisation = await tx.organisation.findUniqueOrThrow({ where: { id: org } });
+      if (!existing) {
+        const key = `weather-geocode:${org}:${Math.floor(Date.now() / 3600000)}`;
+        const bucket = await tx.rateLimitBucket.upsert({
+          where: { key },
+          create: { key, count: 1, expiresAt: new Date(Date.now() + 3600000) },
+          update: { count: { increment: 1 } },
+        });
+        if (bucket.count > 20)
+          throw new DomainError('RATE_LIMIT', 'Please wait before requesting more site locations.', 429);
+      }
+      return { existing, site, country: site.country || (organisation.currency === 'GBP' ? 'GB' : null) };
+    });
+    if (prepared.existing) return prepared.existing;
+    const location = await this.geocode(
+      prepared.site.town || prepared.site.name,
+      prepared.country,
+      process.env.OPEN_METEO_API_KEY,
+    );
+    const values = weatherConfigurationInput.parse({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      timezone: location.timezone,
+      heatingBase: '15.5',
+      coolingBase: '18',
+      source: `Open-Meteo city-level geocoding: ${location.label}. Application defaults: heating 15.5 C, cooling 18 C; editable in HDD & CDD.`,
+    });
+    return this.db.$transaction(async (tx) => {
+      await this.access(tx, actor, org, siteId);
+      const existing = await tx.weatherConfiguration.findFirst({
+        where: { organisationId: org, siteId },
+        orderBy: { version: 'desc' },
+      });
+      if (existing) return existing;
+      const config = await tx.weatherConfiguration.create({
+        data: { ...values, organisationId: org, siteId, version: 1, authorId: actor.userId },
+      });
+      await this.audit(tx, actor, org, 'weather.configured', config.id, {
+        siteId,
+        version: config.version,
+        automatic: true,
+      });
+      return config;
+    });
   }
   async list(actor: Actor, org: string, siteId: string, year: number) {
     if (!Number.isInteger(year) || year < 1900 || year > 2199) throw new DomainError('YEAR', 'Choose a valid year.');
@@ -113,10 +162,16 @@ export class WeatherService extends FoundationService {
     });
     await this.audit(tx, actor, org, 'weather.job_succeeded', lease.id, { resultId });
   }
-  async enrich(actor: Actor, org: string, siteId: string, input: unknown, lease?: { id: string; token: string }) {
+  async enrich(
+    actor: Actor,
+    org: string,
+    siteId: string,
+    input: unknown,
+    lease?: { id: string; token: string; methodology?: string },
+  ) {
     const { configurationId, year } = enrichmentInput.parse(input);
-    const range = weatherDates(year);
-    const identity = { configurationId, year, methodology: weatherMethod };
+    const range = weatherPeriod(year, lease?.methodology);
+    const identity = { configurationId, year, methodology: range.methodology };
     const prepared = await this.db.$transaction(async (tx) => {
       await this.access(tx, actor, org, siteId);
       await this.checkLease(tx, lease);
@@ -158,7 +213,7 @@ export class WeatherService extends FoundationService {
         JSON.stringify({
           configurationId,
           year,
-          methodology: weatherMethod,
+          methodology: identity.methodology,
           days: weather.days,
           provenance: weather.provenance,
         }),
@@ -189,7 +244,7 @@ export class WeatherService extends FoundationService {
         configurationId,
         year,
         days: weather.days.length,
-        methodology: weatherMethod,
+        methodology: identity.methodology,
       });
       await this.completeJob(tx, actor, org, result.id, lease);
       return result;

@@ -49,6 +49,38 @@ export function weatherDates(year: number, now = new Date()) {
     dates.push(new Date(day).toISOString().slice(0, 10));
   return { start, end, dates };
 }
+// Each available-month range has its own identity. Later fetches append evidence rather than overwrite it.
+export function weatherPeriod(year: number, methodology?: string, now = new Date()) {
+  if (methodology === weatherMethod) return { ...weatherDates(year, now), methodology: weatherMethod };
+  if (!methodology) {
+    try {
+      return { ...weatherDates(year, now), methodology: weatherMethod };
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+    }
+  }
+  if (!Number.isInteger(year) || year < 1940 || year > 2199)
+    throw new DomainError('WEATHER_YEAR', 'Weather coverage starts in 1940.');
+  const published = new Date(+now - 7 * 86400000);
+  const latest = new Date(Date.UTC(published.getUTCFullYear(), published.getUTCMonth(), 0));
+  const end =
+    methodology?.match(/^daily-mean-degree-days-v1:through:(\d{4}-\d{2}-\d{2})$/)?.[1] ??
+    latest.toISOString().slice(0, 10);
+  const finalDay = new Date(`${end}T00:00:00Z`);
+  if (
+    (methodology && methodology !== `${weatherMethod}:through:${end}`) ||
+    !Number.isFinite(+finalDay) ||
+    finalDay.getUTCFullYear() !== year ||
+    +finalDay > +latest ||
+    new Date(+finalDay + 86400000).getUTCDate() !== 1
+  )
+    throw new DomainError('WEATHER_YEAR', 'No complete, published weather months are available for this year.');
+  const start = `${year}-01-01`,
+    dates: string[] = [];
+  for (let day = +new Date(start); day <= +finalDay; day += 86400000)
+    dates.push(new Date(day).toISOString().slice(0, 10));
+  return { start, end, dates, methodology: `${weatherMethod}:through:${end}` };
+}
 export type WeatherDay = { date: string; meanTemperature: number; daylightSeconds: number };
 export type WeatherMonth = {
   month: string;

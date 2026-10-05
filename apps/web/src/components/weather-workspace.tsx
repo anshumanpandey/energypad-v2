@@ -5,7 +5,7 @@ import { LoaderCircle } from 'lucide-react';
 import { weatherJobLabels } from '@/domain/weather-jobs';
 import { request, useMutation } from './forms';
 import { Button } from './ui/button';
-import { weatherDates, type WeatherMonth } from '@/domain/weather';
+import { weatherPeriod, type WeatherMonth } from '@/domain/weather';
 import { weatherConfigurationSaved } from './weather-events';
 export type WeatherData = {
   jobs: {
@@ -112,8 +112,8 @@ export function WeatherWorkspace({
       <p>
         Open-Meteo ERA5 provides modeled historical weather. Monthly degree days are calculated from daily mean
         temperatures using your explicit heating and cooling bases. Missing days prevent enrichment; they are never
-        replaced with zero. Saving settings automatically fetches weather for the selected completed year using these
-        coordinates and timezone. Progress updates here automatically.
+        replaced with zero. Saving settings automatically fetches available complete months for the selected year using
+        these coordinates and timezone. Progress updates here automatically.
       </p>
       {m.feedback}
       {weatherPending && (
@@ -140,11 +140,11 @@ export function WeatherWorkspace({
                 setSaveWarning('');
                 let eligible = true;
                 try {
-                  weatherDates(year);
+                  weatherPeriod(year);
                 } catch {
                   eligible = false;
                   setSaveWarning(
-                    'Settings saved. Select a completed year with at least seven days since year end to fetch historical weather.',
+                    'Settings saved. No complete, published weather months are available for this year yet.',
                   );
                 }
                 setFetchingStatus(eligible);
@@ -318,8 +318,8 @@ export function WeatherWorkspace({
           {manage && !result && !job && (
             <>
               <p>
-                Fetch sends the selected coordinates, timezone and date range to Open-Meteo. Choose a completed year
-                from 1940 onwards, allowing seven days after year end for publication.
+                Fetch sends the selected coordinates, timezone and date range to Open-Meteo. Coverage starts in 1940.
+                Only complete months with seven days allowed for publication are requested.
               </p>
               <Button
                 disabled={m.disabled || !configId}
