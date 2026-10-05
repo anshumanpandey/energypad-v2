@@ -76,8 +76,8 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });
   for (const [name, section] of [
     ['Upload', 'energy'],
-    ['Carbon', 'carbon'],
-    ['Opportunities', 'opportunities'],
+    ['Carbon Footprint', 'emissions'],
+    ['Energy Tips', 'energy-tips'],
     ['AI Analyst', 'ai-analyst'],
     ['Billing', 'billing'],
   ]) {
@@ -93,12 +93,6 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
           .getByRole('heading', { name: 'Add a site to create a waste report', exact: true }),
       ).toBeVisible();
     }
-    if (section === 'carbon') {
-      await expect(page.getByRole('heading', { name: 'Calculate annual emissions', exact: true })).toBeVisible();
-      await expect(page.getByRole('combobox', { name: 'Carbon site', exact: true })).toHaveValue('');
-    }
-    if (section === 'opportunities')
-      await expect(page.getByText('Add a site and save an analysis run to begin.', { exact: true })).toBeVisible();
     if (section === 'ai-analyst')
       await expect(
         page.getByText('Add a site and save an analysis result to preview evidence.', { exact: true }),
@@ -106,6 +100,14 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
     if (section === 'billing')
       await expect(page.getByRole('heading', { name: 'Plan entitlements', exact: true })).toBeVisible();
   }
+  for (const name of ['Targets & Monitoring', 'Site Performance', 'Carbon', 'Opportunities'])
+    await expect(navigation.getByRole('link', { name, exact: true })).toHaveCount(0);
+  // Hidden menu entries retain their existing routes and permission checks.
+  await page.goto(`${orgPath}/carbon`);
+  await expect(page.getByRole('heading', { name: 'Calculate annual emissions', exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Carbon site', exact: true })).toHaveValue('');
+  await page.goto(`${orgPath}/opportunities`);
+  await expect(page.getByText('Add a site and save an analysis run to begin.', { exact: true })).toBeVisible();
   await navigation.getByRole('link', { name: 'Upload', exact: true }).click();
   await page.getByRole('link', { name: 'Advanced Analysis', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Advanced Analysis', exact: true })).toBeVisible();

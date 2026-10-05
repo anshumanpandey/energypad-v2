@@ -4,16 +4,12 @@ import { randomUUID } from 'node:crypto';
 
 test('legacy tips and Reports restore menu, catalogue, overview, targets and coverage', async ({ page }, testInfo) => {
   page.setDefaultTimeout(20_000);
-  const fixture = JSON.parse(await readFile('.local/e2e-report-schedules.json', 'utf8'));
-  await page.context().addCookies([
-    {
-      name: 'authjs.session-token',
-      value: fixture.sessionToken,
-      url: 'http://localhost:3101',
-      httpOnly: true,
-      sameSite: 'Lax',
-    },
-  ]);
+  await page.goto('/signup');
+  await page.getByLabel('Email address').fill(`legacy-reports-${randomUUID()}@example.test`);
+  await page.getByLabel('Password', { exact: true }).fill('Browser report password 123!');
+  await page.getByLabel('Confirm password', { exact: true }).fill('Browser report password 123!');
+  await page.getByRole('button', { name: 'Create account', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Create your organisation' })).toBeVisible();
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   async function post(path: string, data: unknown) {
