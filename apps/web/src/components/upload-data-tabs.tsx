@@ -55,7 +55,7 @@ export function UploadDataTabs({
       <div role="tabpanel" id={`uploaded-panel-${tab}`} aria-labelledby={`uploaded-tab-${tab}`}>
         {tab === 'Consumption' && (
           <>
-            {manage && <HistoricImport orgId={orgId} />}
+            {manage && <HistoricImport orgId={orgId} workbookLabel="Latest consumption workbook" />}
             <AllConsumption orgId={orgId} sites={sites} />
             <EnergyWorkspace orgId={orgId} sites={sites} manage={manage} />
           </>

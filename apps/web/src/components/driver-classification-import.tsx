@@ -195,7 +195,12 @@ export function DriverClassificationImport({ orgId }: { orgId: string }) {
               {classificationFields.map((field) => (
                 <label key={field}>
                   {classificationColumns[classificationFields.indexOf(field) + 2]}
-                  <select name={field} defaultValue={editing[field]} disabled={m.disabled}>
+                  <select
+                    name={field}
+                    aria-label={classificationColumns[classificationFields.indexOf(field) + 2]}
+                    defaultValue={editing[field]}
+                    disabled={m.disabled}
+                  >
                     {Object.entries(classificationLabels).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}

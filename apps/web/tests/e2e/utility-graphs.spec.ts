@@ -212,7 +212,12 @@ test('consumption and emissions menus filter the same data in graph and table vi
     'site-wide total',
   );
   await page.getByRole('link', { name: 'Carbon Footprint', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Carbon Footprint', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
   await page.getByRole('button', { name: 'Table view', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Table view', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Reset filters', exact: true }).click();
   await expect(page.getByLabel('Carbon Footprint sort by', { exact: true })).toHaveValue('month');
   await page.getByLabel('Carbon Footprint site', { exact: true }).selectOption(leeds.id);

@@ -223,25 +223,25 @@ export default async function WorkspacePage({
           </div>
         </div>
         {manage && <DataImportWorkspace orgId={org.id} batches={[]} workflow />}
-        <UploadDataTabs
-          orgId={org.id}
-          sites={sites}
-          manage={manage}
-          emissions={
-            <EmissionFactorWorkspace
-              orgId={org.id}
-              manage={can(membership.role, 'organisation:update')}
-              records={(await accessible(() => emissionFactorService.list(actor, org.id))).map((f) => ({
-                ...f,
-                factor: f.factor.toString(),
-                validFrom: f.validFrom.toISOString(),
-                validUntil: f.validUntil.toISOString(),
-                createdAt: f.createdAt.toISOString(),
-              }))}
-            />
-          }
-        />
         <EnergyYearProvider>
+          <UploadDataTabs
+            orgId={org.id}
+            sites={sites}
+            manage={manage}
+            emissions={
+              <EmissionFactorWorkspace
+                orgId={org.id}
+                manage={can(membership.role, 'organisation:update')}
+                records={(await accessible(() => emissionFactorService.list(actor, org.id))).map((f) => ({
+                  ...f,
+                  factor: f.factor.toString(),
+                  validFrom: f.validFrom.toISOString(),
+                  validUntil: f.validUntil.toISOString(),
+                  createdAt: f.createdAt.toISOString(),
+                }))}
+              />
+            }
+          />
           <section className="waste-report stack-form" aria-labelledby="waste-report-title">
             <div className="section-heading">
               <div>
