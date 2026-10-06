@@ -22,7 +22,7 @@ it('joins residual months by source revision and preserves small probabilities',
   expect(html).toContain('title="1e-18">1.00e-18</span>');
   const rows = html.match(/<tr>.*?<\/tr>/g) ?? [];
   for (let i = 0; i < 4; i++) {
-    expect(rows.find((row) => row.includes(`source-${i}`))).toContain(`2020-0${i + 1}</th>`);
+    expect(rows.find((row) => row.includes(`source-${i}`))).toContain(`${['Jan', 'Feb', 'Mar', 'Apr'][i]}-20</th>`);
   }
   expect(html).toContain('kWh / people');
 });

@@ -1,4 +1,4 @@
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { monthlyChartSummary, type MonthlyAmount } from '@/domain/monthly-chart-summary';
 import { formatEnergyValue } from './format-energy-value';
 export function MonthlyChartSummary({

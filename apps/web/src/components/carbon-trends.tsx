@@ -1,4 +1,4 @@
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import Link from 'next/link';
 import { carbonService, siteService, foundation } from '@/server/services';
 import type { Actor } from '@/server/foundation';

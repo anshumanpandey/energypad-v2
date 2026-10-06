@@ -1,5 +1,5 @@
 'use client';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { formatEnergyValue } from './format-energy-value';
 import { MonthlyChartSummary } from './monthly-chart-summary';
 import type { MonthlyAmount } from '@/domain/monthly-chart-summary';

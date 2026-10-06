@@ -1,4 +1,4 @@
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { WasteDirection } from './waste-direction';
 import { formatEnergyValue } from './format-energy-value';
 import type { CarbonSnapshot } from '@/domain/carbon';

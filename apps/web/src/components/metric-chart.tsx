@@ -1,6 +1,6 @@
 'use client';
 
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { useState } from 'react';
 import { formatEnergyValue } from './format-energy-value';
 import { WasteDirectionText } from './waste-direction';

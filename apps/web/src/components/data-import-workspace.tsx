@@ -1,5 +1,5 @@
 'use client';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { useState } from 'react';
 import { Building2, ChartColumn, FileSpreadsheet, Upload, CheckCircle2, ChevronDown, ArrowRight } from 'lucide-react';
 import { ImportWorkspace } from './import-workspace';

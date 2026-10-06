@@ -1,5 +1,5 @@
 'use client';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import type { UtilityGraphRow, UtilityCostTarget } from '@/domain/utility-graphs';
 import { utilityComparison } from '@/domain/utility-comparison';
 import { carbonRollingComparison, carbonRecentSummary } from '@/domain/carbon-footprint';

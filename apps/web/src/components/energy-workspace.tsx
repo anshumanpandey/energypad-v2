@@ -1,5 +1,5 @@
 'use client';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { useEnergyYear } from './energy-year';
 import { latestConsumptionQuality } from '@/domain/consumption-quality';
 import { formatEnergyValue } from './format-energy-value';

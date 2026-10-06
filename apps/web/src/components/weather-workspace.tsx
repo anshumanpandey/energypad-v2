@@ -1,5 +1,5 @@
 'use client';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { formatEnergyValue } from './format-energy-value';
 import { useCallback, useEffect, useState } from 'react';
 import { LoaderCircle } from 'lucide-react';

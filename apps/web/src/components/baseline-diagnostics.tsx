@@ -1,5 +1,5 @@
 import { formatEnergyValue } from './format-energy-value';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import type { RegressionInterpretation } from '../domain/analysis/interpretation';
 import type { RegressionResult } from '../domain/analysis/regression';
 import type { CoefficientStatistic } from '../domain/analysis/inference';

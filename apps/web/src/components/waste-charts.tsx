@@ -1,5 +1,5 @@
 'use client';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { MetricChart } from './metric-chart';
 import { UtilityBars } from './utility-bars';
 import { GraphMonthProvider } from './graph-month';

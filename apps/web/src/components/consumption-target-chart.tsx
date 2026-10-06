@@ -1,5 +1,5 @@
 'use client';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { useGraphMonth } from './graph-month';
 import { formatEnergyValue } from './format-energy-value';
 import type { consumptionTargetChart } from '@/domain/consumption-target-chart';

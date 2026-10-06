@@ -1,4 +1,4 @@
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { carbonService } from '@/server/services';

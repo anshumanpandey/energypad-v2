@@ -1,5 +1,5 @@
 'use client';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import type { MissingImportMonth } from '@/domain/import-missing-months';
 
 export function MissingMonthConfirmation({

@@ -1,5 +1,5 @@
 'use client';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { useEffect, useState } from 'react';
 import { request } from './forms';
 import { Button } from './ui/button';

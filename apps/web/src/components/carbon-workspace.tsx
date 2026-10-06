@@ -1,5 +1,5 @@
 'use client';
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { useEffect, useState, useRef } from 'react';
 import { CarbonSummaryPanel } from './carbon-summary';
 import { CarbonImports } from './carbon-imports';

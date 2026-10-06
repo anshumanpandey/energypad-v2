@@ -1,6 +1,6 @@
 'use client';
 
-import { formatMonth } from '@/domain/format-month';
+import { formatMonth } from '../domain/format-month';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { filterUtilityRows, type UtilityGraphRow, type UtilityCostTarget } from '@/domain/utility-graphs';
