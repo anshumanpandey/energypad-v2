@@ -215,10 +215,15 @@ export function WasteDashboard({
                 : 'Calculation unavailable: the required inputs or model checks need attention.'}
             </p>
             <p>
-              Expected consumption is fitted from available {preview.year} consumption and selected drivers. No
-              previous-year data is required. These values show variation from the selected-year fitted model. Avoided /
-              wasted energy = adjusted expected consumption − actual consumption. The gauge divides the latest three
-              months’ total avoided / wasted energy by their total adjusted expected consumption.
+              {meter.fittedYear !== undefined && meter.fittedYear !== preview.year
+                ? `The model is fitted from ${meter.fittedYear} consumption and selected drivers, then applied to this selection's actual consumption and driver values.`
+                : 'Only one consumption period is available. These values show variation from its fitted model.'}{' '}
+              Expected consumption = intercept + each coefficient × its reporting driver value. Avoided / wasted energy
+              = adjusted expected consumption − actual consumption. The gauge divides the latest three months’ total
+              avoided / wasted energy by their total adjusted expected consumption.
+              {meter.baselineSource &&
+                meter.baselineSource.id !== meter.id &&
+                ` Fitted consumption source: ${meter.baselineSource.name}, in normalized kWh.`}
             </p>
             {meter.downloadable && (
               <a

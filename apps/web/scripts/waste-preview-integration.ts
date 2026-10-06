@@ -72,8 +72,8 @@ try {
   assert.equal(meter.rows.length, 12);
   assert.equal(meter.issues.length, 0);
   meter.rows.forEach((row) => {
-    assert.ok(Math.abs(row.variance!) < 1e-8);
-    assert.ok(Math.abs(row.cost!) < 1e-8);
+    assert.ok(Math.abs(row.variance! - 10) < 1e-8);
+    assert.ok(Math.abs(row.cost! - 2) < 1e-8);
   });
   assert.equal(meter.downloadable, true);
   const source = multi.sources.find((source) => source.meterId === f.twoId)!;
@@ -142,7 +142,7 @@ try {
   assert.equal(nra.preview.method, 'Multiple routine adjustment + NRA');
   nra.preview.meters
     .find((meter) => meter.id === f.twoId)!
-    .rows.forEach((row) => assert.ok(Math.abs(row.adjusted! - row.expected!) < 1e-8));
+    .rows.forEach((row) => assert.ok(Math.abs(row.adjusted! - 2 * row.expected!) < 1e-8));
   assert.deepEqual(
     [await db.baselineVersion.count(), await db.analysisRun.count(), await db.auditEvent.count()],
     before,
@@ -266,8 +266,8 @@ try {
     JSON.stringify(calculated.preview.meters[0].issues),
   );
   rows.forEach((row) => {
-    assert.ok(Math.abs(row.variance!) < 1e-7);
-    assert.ok(Math.abs(row.cost!) < 1e-7);
+    assert.ok(Math.abs(row.variance! - 10) < 1e-7);
+    assert.ok(Math.abs(row.cost! - 2) < 1e-7);
   });
   await automatic.prepareCalculation(f.owner, f.orgId, apiSite.id, { year: reportingYear });
   assert.equal(await db.weatherYear.count({ where: { siteId: apiSite.id } }), 2);
@@ -300,12 +300,12 @@ try {
   }
   const fuelChange = await service.wastePreview(f.owner, f.orgId, apiSite.id, reportingYear);
   const thermal = fuelChange.preview.meters.find((meter) => meter.id === biodiesel.id)!;
-  thermal.rows.filter((row) => row.variance !== null).forEach((row) => assert.ok(Math.abs(row.variance!) < 1e-7));
+  thermal.rows.filter((row) => row.variance !== null).forEach((row) => assert.ok(Math.abs(row.variance! - 7) < 1e-7));
   assert.equal(thermal.downloadable, true);
   const evidence = fuelChange.sources.find((source) => source.meterId === biodiesel.id)!.source;
-  assert.equal(evidence.baseline.snapshot.definition.meterId, biodiesel.id);
-  assert.equal(evidence.baseline.snapshot.assembly.scope.meterId, biodiesel.id);
-  assert.equal(evidence.baseline.snapshot.definition.period.firstMonth, `${reportingYear}-01`);
+  assert.equal(evidence.baseline.snapshot.definition.meterId, solar.id);
+  assert.equal(evidence.baseline.snapshot.assembly.scope.meterId, solar.id);
+  assert.equal(evidence.baseline.snapshot.definition.period.firstMonth, `${reportingYear - 1}-01`);
   const generated = new ExcelJS.Workbook();
   await generated.xlsx.load(
     (await calculationWorkbook(evidence, 'Leeds')) as unknown as Parameters<typeof generated.xlsx.load>[0],
@@ -353,7 +353,7 @@ try {
     ),
   );
   assert.ok(JSON.stringify(uploadedNra.sources).includes('uploaded-population:'));
-  console.log('✓ selected-year NRA uses uploaded population evidence without preceding-year requirements');
+  console.log('✓ NRA uses the separate fitted and reporting population observations');
   // Additional meters do not require or share another meter's prior-year data.
   const additional = await sites.saveMeter(f.owner, f.orgId, apiSite.id, {
     code: 'SECOND-HEAT',
@@ -372,7 +372,7 @@ try {
   assert.ok(
     ambiguous.preview.meters.find((meter) => meter.id === biodiesel.id)!.rows.some((row) => row.variance !== null),
   );
-  console.log('✓ each fuel fits its own selected-year readings and exports the matching model');
+  console.log('✓ thermal fuel changes retain distinct fitted and reporting readings in the export');
   console.log(
     '✓ automatic site geocoding, idempotent baseline/reporting fetches, current-year monthly weather and nonzero calculations',
   );

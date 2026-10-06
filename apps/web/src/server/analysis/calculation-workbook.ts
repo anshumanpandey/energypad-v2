@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import { calculationMethodName } from '../../domain/analysis/calculation-download';
 import type { BaselineDefinition } from './contract';
 import type { RegressionResult } from '../../domain/analysis/regression';
 import type { ReportingResult } from '../../domain/analysis/reporting';
@@ -56,12 +57,7 @@ export async function calculationWorkbook(
     cell.value = result === null ? null : { formula: expression, result };
     cell.numFmt = typeof result === 'boolean' || typeof result === 'string' ? 'General' : '0.00';
   };
-  const method =
-    output.inputSnapshot.policy.nra !== 'NONE'
-      ? 'Multiple Routine Adjustment + NRA'
-      : k === 1
-        ? 'Single Routine Adjustment'
-        : 'Multiple Routine Adjustment';
+  const method = calculationMethodName(k, output.inputSnapshot.policy.nra);
   section(1, `${siteName} · ${method}`);
   section(
     2,
@@ -88,7 +84,48 @@ export async function calculationWorkbook(
     'Actual consumption (kWh)',
     baseline.map((row) => row.consumption.kwh),
   );
-  const coeffRow = actualRow + 4;
+  const intermediate = actualRow + 3;
+  if (k === 1) {
+    section(intermediate - 1, 'Regression intermediate values');
+    input(intermediate, 'XY = Driver × Consumption', []);
+    input(intermediate + 1, 'X² = Driver²', []);
+    baseline.forEach((row, index) => {
+      const letter = sheet.getColumn(index + 2).letter;
+      formula(intermediate, index + 2, `${letter}6*${letter}${actualRow}`, row.drivers[0].value * row.consumption.kwh);
+      formula(intermediate + 1, index + 2, `${letter}6^2`, row.drivers[0].value ** 2);
+    });
+    const last = sheet.getColumn(baseline.length + 1).letter;
+    input(intermediate + 3, 'N', [baseline.length]);
+    input(intermediate + 4, 'ΣX (driver)', []);
+    formula(
+      intermediate + 4,
+      2,
+      `SUM(B6:${last}6)`,
+      baseline.reduce((sum, row) => sum + row.drivers[0].value, 0),
+    );
+    input(intermediate + 5, 'ΣY (consumption)', []);
+    formula(
+      intermediate + 5,
+      2,
+      `SUM(B${actualRow}:${last}${actualRow})`,
+      baseline.reduce((sum, row) => sum + row.consumption.kwh, 0),
+    );
+    input(intermediate + 6, 'ΣXY', []);
+    formula(
+      intermediate + 6,
+      2,
+      `SUM(B${intermediate}:${last}${intermediate})`,
+      baseline.reduce((sum, row) => sum + row.drivers[0].value * row.consumption.kwh, 0),
+    );
+    input(intermediate + 7, 'ΣX²', []);
+    formula(
+      intermediate + 7,
+      2,
+      `SUM(B${intermediate + 1}:${last}${intermediate + 1})`,
+      baseline.reduce((sum, row) => sum + row.drivers[0].value ** 2, 0),
+    );
+  }
+  const coeffRow = actualRow + (k === 1 ? 15 : 4);
   section(coeffRow - 2, 'B · Regression coefficients and diagnostics');
   const end = sheet.getColumn(baseline.length + 1).letter;
   const responseRange = `B${actualRow}:${end}${actualRow}`;
@@ -137,7 +174,45 @@ export async function calculationWorkbook(
     formula(fittedRow + 1, column, `${letter}${actualRow}-${letter}${fittedRow}`, result.residual);
     formula(fittedRow + 2, column, `${letter}${fittedRow + 1}^2`, result.residual ** 2);
   });
-  const start = fittedRow + 5;
+  input(fittedRow + 3, '(Actual − Mean)²', []);
+  const mean = baseline.reduce((sum, row) => sum + row.consumption.kwh, 0) / baseline.length;
+  baseline.forEach((row, index) => {
+    const letter = sheet.getColumn(index + 2).letter;
+    formula(
+      fittedRow + 3,
+      index + 2,
+      `(${letter}${actualRow}-AVERAGE(${responseRange}))^2`,
+      (row.consumption.kwh - mean) ** 2,
+    );
+  });
+  const ssResidual = fit.rows.reduce((sum, row) => sum + row.residual ** 2, 0);
+  const ssTotal = baseline.reduce((sum, row) => sum + (row.consumption.kwh - mean) ** 2, 0);
+  input(fittedRow + 5, 'SS_res = Sum of residual²', []);
+  formula(fittedRow + 5, 2, `SUM(B${fittedRow + 2}:${end}${fittedRow + 2})`, ssResidual);
+  input(fittedRow + 6, 'SS_tot = Sum of (Actual − Mean)²', []);
+  formula(fittedRow + 6, 2, `SUM(B${fittedRow + 3}:${end}${fittedRow + 3})`, ssTotal);
+  formula(diagnosticRow, 2, `1-B${fittedRow + 5}/B${fittedRow + 6}`, fit.rSquared);
+  formula(diagnosticRow + 1, 2, `SQRT(B${fittedRow + 5}/B${diagnosticRow + 2})`, fit.residualStandardError);
+  let next = fittedRow + 8;
+  if (k === 1) {
+    const term = fit.inference.terms.find((term) => term.driverCode === fit.coefficients[0].code)!;
+    const driverMean = baseline.reduce((sum, row) => sum + row.drivers[0].value, 0) / baseline.length;
+    input(next, 'SS_X = Sum of (Driver − Mean)²', []);
+    formula(
+      next,
+      2,
+      `DEVSQ(${driverRange})`,
+      baseline.reduce((sum, row) => sum + (row.drivers[0].value - driverMean) ** 2, 0),
+    );
+    input(next + 1, 'SE of slope', []);
+    formula(next + 1, 2, `B${diagnosticRow + 1}/SQRT(B${next})`, term.standardError);
+    input(next + 2, 'Slope t statistic', []);
+    formula(next + 2, 2, `B${coeffRow + 1}/B${next + 1}`, term.tStatistic);
+    input(next + 3, 'Slope p value (two-tailed)', []);
+    formula(next + 3, 2, `T.DIST.2T(ABS(B${next + 2}),B${diagnosticRow + 2})`, term.probability.value);
+    next += 6;
+  }
+  const start = next;
   section(start, 'C · Reporting inputs, expected consumption and waste / savings');
   input(
     start + 1,

@@ -42,6 +42,9 @@ import {
 } from '@/server/services';
 import { DomainError } from '@/domain/policy';
 import { calculationWorkbook } from '@/server/analysis/calculation-workbook';
+import { calculationFilename, calculationMethodName } from '@/domain/analysis/calculation-download';
+import type { RegressionResult } from '@/domain/analysis/regression';
+import type { ReportingResult } from '@/domain/analysis/reporting';
 
 type Context = { params: Promise<{ segments: string[] }> };
 async function handle(request: Request, context: Context) {
@@ -424,10 +427,24 @@ async function handle(request: Request, context: Context) {
             );
           const site = (await analysisService.historySites(actor, org)).find((item) => item.id === s[3]);
           const bytes = await calculationWorkbook(source.source, site?.name ?? 'Site');
+          const membership = (await foundation.listOrganisations(actor)).find((item) => item.organisation.id === org);
+          const fit = source.source.baseline.fit as RegressionResult;
+          const output = source.source.result.output as ReportingResult;
+          if (output.status === 'BLOCKED')
+            throw new DomainError('CALCULATION_UNAVAILABLE', 'Calculation inputs are incomplete.', 409);
+          const filename = calculationFilename(
+            membership?.organisation.name ?? 'Organisation',
+            site?.name ?? 'Site',
+            result.preview.year,
+            calculationMethodName(
+              fit.status === 'FITTED' ? fit.coefficients.length : 0,
+              output.inputSnapshot.policy.nra,
+            ),
+          );
           return new Response(new Uint8Array(bytes), {
             headers: {
               'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-              'Content-Disposition': `attachment; filename="site-calculation-${result.preview.year}.xlsx"`,
+              'Content-Disposition': `attachment; filename="${filename}"`,
               'Cache-Control': 'private, no-store',
             },
           });
@@ -436,10 +453,24 @@ async function handle(request: Request, context: Context) {
           const run = await analysisService.readRun(actor, org, s[3], s[6]);
           const site = (await analysisService.historySites(actor, org)).find((item) => item.id === s[3]);
           const bytes = await calculationWorkbook(run, site?.name ?? 'Site');
+          const membership = (await foundation.listOrganisations(actor)).find((item) => item.organisation.id === org);
+          const fit = run.baseline.fit as unknown as RegressionResult;
+          const output = run.result?.output as unknown as ReportingResult;
+          if (output.status === 'BLOCKED')
+            throw new DomainError('CALCULATION_UNAVAILABLE', 'Calculation inputs are incomplete.', 409);
+          const filename = calculationFilename(
+            membership?.organisation.name ?? 'Organisation',
+            site?.name ?? 'Site',
+            Number(output.inputSnapshot.period.firstMonth.slice(0, 4)),
+            calculationMethodName(
+              fit.status === 'FITTED' ? fit.coefficients.length : 0,
+              output.inputSnapshot.policy.nra,
+            ),
+          );
           return new Response(new Uint8Array(bytes), {
             headers: {
               'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-              'Content-Disposition': `attachment; filename="site-calculation-${run.id}.xlsx"`,
+              'Content-Disposition': `attachment; filename="${filename}"`,
             },
           });
         }

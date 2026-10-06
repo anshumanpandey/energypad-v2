@@ -494,7 +494,7 @@ export class AnalysisService extends FoundationService {
         where: {
           organisationId: org,
           siteId,
-          year: selectedYear,
+          year: { in: years.filter((value) => value <= selectedYear).concat(selectedYear) },
           OR: [{ methodology: weatherMethod }, { methodology: { startsWith: `${weatherMethod}:through:` } }],
         },
         select: { configurationId: true, year: true, methodology: true },
@@ -538,6 +538,43 @@ export class AnalysisService extends FoundationService {
       for (const meter of meters) {
         const records = readings.filter((row) => row.meterId === meter.id);
         if (!records.some((row) => row.periodStart.getUTCFullYear() === selectedYear)) continue;
+        // Fit the reference consumption separately from the consumption being evaluated.
+        // A first uploaded period can still show fitted-model residuals without requiring older data.
+        const priorYear = years.find(
+          (value) => value < selectedYear && records.some((row) => row.periodStart.getUTCFullYear() === value),
+        );
+        let fittedYear = priorYear ?? selectedYear;
+        let fittedMeter = meter;
+        if (priorYear === undefined) {
+          const uploadedUses = [
+            ...new Set(
+              records
+                .filter((row) => row.periodStart.getUTCFullYear() === selectedYear && row.endUse)
+                .map((row) => row.endUse.toLowerCase()),
+            ),
+          ];
+          const endUse =
+            uploadedUses.length === 1 ? uploadedUses[0] : /\b(heating|cooling)\b/i.exec(meter.name)?.[1].toLowerCase();
+          if (endUse && ['heating', 'cooling'].includes(endUse)) {
+            for (const value of years.filter((value) => value < selectedYear)) {
+              const matches = meters.filter((candidate) =>
+                readings.some(
+                  (row) =>
+                    row.meterId === candidate.id &&
+                    row.periodStart.getUTCFullYear() === value &&
+                    (uploadedUses.length === 1
+                      ? row.endUse.toLowerCase() === endUse
+                      : new RegExp(`\\b${endUse}\\b`, 'i').test(candidate.name)),
+                ),
+              );
+              if (matches.length === 1) {
+                fittedYear = value;
+                fittedMeter = matches[0];
+                break;
+              }
+            }
+          }
+        }
         const issues: string[] = [];
         let output: ReportingResult | null = null;
         let fit: RegressionResult | null = null;
@@ -563,9 +600,9 @@ export class AnalysisService extends FoundationService {
           issues.push(`Non-routine ${unsupportedNra.join(', ')} needs a reviewed adjustment in Advanced Analysis.`);
         else {
           const definition = baselineDefinition.parse({
-            meterId: meter.id,
+            meterId: fittedMeter.id,
             energyUseId: null,
-            period: { firstMonth: `${selectedYear}-01`, lastMonth: `${selectedYear}-12` },
+            period: { firstMonth: `${fittedYear}-01`, lastMonth: `${fittedYear}-12` },
             drivers,
             weather: weatherRequired ? { configurationId: configuration.id, methodology: weatherMethod } : null,
             fitPolicy: { version: 'automatic-waste-preview-v1', relativeRankTolerance: 1e-10 },
@@ -627,7 +664,7 @@ export class AnalysisService extends FoundationService {
                   version: 'automatic-waste-preview-v1',
                   nra: method.nra,
                   significanceBasis: 'POST_NRA',
-                  comparison: 'GREATER_THAN',
+                  comparison: 'AT_LEAST',
                   sigmaMultiplier: 2,
                   zeroThreshold: 'UNDEFINED',
                   negativePrediction: 'BLOCK',
@@ -645,7 +682,7 @@ export class AnalysisService extends FoundationService {
                       ? null
                       : row.consumption.kwh,
                   },
-                  nraReferenceMonth: method.nra === 'NONE' ? null : row.consumption.month,
+                  nraReferenceMonth: method.nra === 'NONE' ? null : `${fittedYear}-${row.consumption.month.slice(5)}`,
                   nraObservations:
                     method.nra === 'NONE'
                       ? []
@@ -724,6 +761,8 @@ export class AnalysisService extends FoundationService {
           : [];
         preview.meters.push({
           ...meter,
+          fittedYear,
+          baselineSource: { id: fittedMeter.id, name: fittedMeter.name, fuel: fittedMeter.fuel, endUse: '' },
           issues: [...new Set(issues)],
           downloadable,
           rows: monthlyCarbonRows(selectedYear, records, []).map((actual) => {
@@ -756,11 +795,17 @@ export class AnalysisService extends FoundationService {
               inputHash: snapshotHash({ snapshot, output }),
               createdAt: new Date(),
               generated: true,
-              baseline: { id: 'preceding-year-uploaded-inputs', fit, snapshot },
+              baseline: { id: `uploaded-model-inputs-${fittedYear}`, fit, snapshot },
               result: { output },
             },
           });
       }
+      if (preview.weather?.required)
+        preview.weather.ready =
+          !!configuration &&
+          [selectedYear, ...preview.meters.map((meter) => meter.fittedYear!)].every((value) =>
+            hasWeather(configuration.id, value),
+          );
       return { preview, sources };
     });
   }

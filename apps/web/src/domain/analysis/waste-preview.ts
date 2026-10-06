@@ -10,6 +10,7 @@ export type WastePreview = {
     fuel: string;
     issues: string[];
     downloadable: boolean;
+    fittedYear?: number;
     baselineSource?: { id: string; name: string; fuel: string; endUse: string };
     rows: {
       month: string;

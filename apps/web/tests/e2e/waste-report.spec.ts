@@ -193,7 +193,7 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await graphPage.getByLabel('Population', { exact: true }).check();
   await expect(graphPage.getByRole('status').filter({ hasText: 'Single routine adjustment' })).toBeVisible();
   await expect(graphPage.getByRole('status').filter({ hasText: '12 of 12 months calculated.' })).toBeVisible();
-  await expect(graphPage.getByText('No previous-year data is required.', { exact: false })).toBeVisible();
+  await expect(graphPage.getByText('Only one consumption period is available.', { exact: false })).toBeVisible();
   const wasteGaugePanel = graphPage.getByRole('region', { name: 'Waste/Savings Gauge', exact: true });
   await expect(wasteGaugePanel.locator('g[data-month]')).toHaveCount(3);
   await expect(wasteGaugePanel.locator('path')).toHaveCount(0);
@@ -217,8 +217,10 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(monthly.getByRole('row').nth(1)).toContainText('Mar-20');
   const download = graphPage.waitForEvent('download');
   await graphPage.getByRole('link', { name: 'Download site calculation sheet', exact: true }).click();
+  const downloaded = await download;
+  expect(downloaded.suggestedFilename()).toMatch(/^[a-z0-9-]+-2020-single-routine-adjustment\.xlsx$/);
   const book = new ExcelJS.Workbook();
-  await book.xlsx.readFile((await (await download).path())!);
+  await book.xlsx.readFile((await downloaded.path())!);
   expect(book.getWorksheet('Regression Analysis')!.getCell('A1').value).toContain('Single Routine Adjustment');
   let exportedExpected: number | undefined;
   book.getWorksheet('Regression Analysis')!.eachRow((row) => {
@@ -243,7 +245,7 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
     });
   await graphPage.getByRole('button', { name: 'Refresh data', exact: true }).click();
   await graphPage.getByLabel('Waste fuel type').selectOption('BIODIESEL');
-  await expect(graphPage.getByText('No previous-year data is required.', { exact: false })).toBeVisible();
+  await expect(graphPage.getByText('Only one consumption period is available.', { exact: false })).toBeVisible();
   await expect(graphPage.getByRole('status').filter({ hasText: '12 of 12 months calculated.' })).toBeVisible();
   await graphPage.getByLabel('Waste result month', { exact: true }).selectOption('01');
   const changedJanuary = graphPage
