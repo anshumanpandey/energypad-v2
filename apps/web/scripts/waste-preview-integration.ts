@@ -94,7 +94,7 @@ try {
       cooling: 'N/A',
       population: 'N/A',
       operatingHours: 'N/A',
-      daylighting: 'N/A',
+      daylighting: 'NR',
       buildingSize: 'N/A',
       source: 'Preview fixture',
       sourceRow: 1,
@@ -104,6 +104,25 @@ try {
   const single = await service.wastePreview(f.owner, f.orgId, f.siteId);
   assert.deepEqual(single.preview.drivers, ['HDD']);
   assert.equal(single.preview.method, 'Single routine adjustment');
+  const climateMeter = single.preview.meters.find((meter) => meter.id === f.twoId)!;
+  assert.ok(
+    climateMeter.rows.every((row) => row.variance !== null),
+    'Unselected NR daylighting cannot block heating',
+  );
+  assert.ok(climateMeter.downloadable);
+  assert.ok(!climateMeter.issues.some((issue) => issue.includes('Non-routine daylighting')));
+  const daylight = await service.wastePreview(f.owner, f.orgId, f.siteId, 2022, ['HDD', 'DAYLIGHT']);
+  const daylightMeter = daylight.preview.meters.find((meter) => meter.id === f.twoId)!;
+  assert.ok(daylightMeter.issues.some((issue) => issue.includes('Non-routine daylighting')));
+  assert.ok(daylightMeter.rows.every((row) => row.variance === null));
+  assert.equal(daylightMeter.downloadable, false);
+  const climateOnly = await service.wastePreview(f.owner, f.orgId, f.siteId, 2022, ['HDD', 'CDD']);
+  assert.equal(climateOnly.preview.method, 'Multiple routine adjustment');
+  const climateSource = climateOnly.sources.find((source) => source.meterId === f.twoId)!;
+  assert.ok(climateSource);
+  const climateBook = new ExcelJS.Workbook();
+  await climateBook.xlsx.load((await calculationWorkbook(climateSource.source, 'Glasgow climate selection')) as never);
+  assert.ok(climateBook.getWorksheet('Generated evidence'));
   await db.siteDriverClassificationCorrection.create({
     data: {
       organisationId: f.orgId,

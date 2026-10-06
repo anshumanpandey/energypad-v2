@@ -1,6 +1,6 @@
 import { wasteSavings } from '../../domain/waste-savings';
 import { monthlyCarbonRows } from '../../domain/carbon-monthly';
-import { classificationMethod } from '../../domain/analysis/classification-method';
+import { classificationDrivers, classificationMethod } from '../../domain/analysis/classification-method';
 import type { WastePreview } from '../../domain/analysis/waste-preview';
 import { weatherPeriod, weatherMethod } from '../../domain/weather';
 import type { CarbonSnapshot } from '../../domain/carbon';
@@ -473,6 +473,11 @@ export class AnalysisService extends FoundationService {
           : null,
       );
       const drivers = selectedDrivers ?? (classification ? method.defaultDrivers : ['HDD', 'CDD']);
+      // Optional non-routine drivers only gate calculations that actually include them.
+      const unsupportedNra = method.unsupportedNra.filter((field) => {
+        const code = classificationDrivers[field as keyof typeof classificationDrivers];
+        return code ? drivers.includes(code) : true;
+      });
       // Validate selections even when no meter has uploaded data.
       const allowed = ['HDD', 'CDD', 'DAYLIGHT', 'POPULATION', 'OPERATING_HOURS'];
       if (
@@ -521,11 +526,12 @@ export class AnalysisService extends FoundationService {
             }
           })(),
         },
-        method: method.hasNra
-          ? method.name
-          : drivers.length === 1
-            ? 'Single routine adjustment'
-            : 'Multiple routine adjustment',
+        method:
+          method.nra !== 'NONE' || unsupportedNra.length > 0
+            ? method.name
+            : drivers.length === 1
+              ? 'Single routine adjustment'
+              : 'Multiple routine adjustment',
         meters: [],
       };
       const sources = [];
@@ -553,10 +559,8 @@ export class AnalysisService extends FoundationService {
           issues.push(
             `HDD and CDD weather inputs are required for this site. Configure its coordinates, timezone and base temperatures in HDD & CDD, then fetch ${selectedYear} weather.`,
           );
-        else if (method.unsupportedNra.length)
-          issues.push(
-            `Non-routine ${method.unsupportedNra.join(', ')} needs a reviewed adjustment in Advanced Analysis.`,
-          );
+        else if (unsupportedNra.length)
+          issues.push(`Non-routine ${unsupportedNra.join(', ')} needs a reviewed adjustment in Advanced Analysis.`);
         else {
           const definition = baselineDefinition.parse({
             meterId: meter.id,
