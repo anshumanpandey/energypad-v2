@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { MetricChart } from './metric-chart';
 import { UtilityBars } from './utility-bars';
 import { GraphMonthProvider } from './graph-month';
@@ -50,7 +51,11 @@ export function WasteCharts({
         />
         <section className="panel metric-chart" aria-label="Waste/Savings Gauge">
           <h2>Waste/Savings Gauge (Percentage change in the last 3 months)</h2>
-          <p>{gauge.months.length ? `${gauge.months[0]} to ${gauge.months[2]}` : 'No reporting period available.'}</p>
+          <p>
+            {gauge.months.length
+              ? `${formatMonth(gauge.months[0])} to ${formatMonth(gauge.months[2])}`
+              : 'No reporting period available.'}
+          </p>
           <div className="utility-chart-scroll">
             <svg
               viewBox="0 0 620 320"
@@ -61,12 +66,12 @@ export function WasteCharts({
               {monthlyGauge.map((point, index) => {
                 const x = 110 + index * 200;
                 const size = (Math.abs(point.value ?? 0) / gaugeMaximum) * 90;
-                const label = `${point.month}: ${point.value === null ? 'Unavailable' : `${formatEnergyValue(point.value)}%`}`;
+                const label = `${formatMonth(point.month)}: ${point.value === null ? 'Unavailable' : `${formatEnergyValue(point.value)}%`}`;
                 return (
                   <g key={point.month} role="img" aria-label={label} tabIndex={0} data-month={point.month}>
                     <title>{label}</title>
                     <text x={x} y="35" textAnchor="middle" fontSize="14">
-                      {point.month}
+                      {formatMonth(point.month)}
                     </text>
                     <rect x={x - 22} y="55" width="44" height="190" rx="22" fill="#edf1ef" />
                     {point.value !== null && (

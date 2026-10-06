@@ -1,5 +1,6 @@
 'use client';
 
+import { formatMonth } from '@/domain/format-month';
 import { useState } from 'react';
 import { formatEnergyValue } from './format-energy-value';
 import { WasteDirectionText } from './waste-direction';
@@ -82,7 +83,7 @@ export function MetricChart({
                 <g
                   tabIndex={0}
                   role="img"
-                  aria-label={`${point.month}: ${display(point)}${point.note ? `. ${point.note}` : ''}`}
+                  aria-label={`${formatMonth(point.month)}: ${display(point)}${point.note ? `. ${point.note}` : ''}`}
                   onFocus={() => setSelected(point.month)}
                   onMouseEnter={() => setSelected(point.month)}
                   onBlur={() => setSelected(null)}
@@ -90,7 +91,7 @@ export function MetricChart({
                   className={`metric-chart-point ${value < 0 ? 'is-negative' : ''} ${highlighted ? 'is-selected' : ''}`}
                   aria-current={highlighted ? 'true' : undefined}
                 >
-                  <title>{`${point.month}: ${display(point)}${point.note ? ` · ${point.note}` : ''}`}</title>
+                  <title>{`${formatMonth(point.month)}: ${display(point)}${point.note ? ` · ${point.note}` : ''}`}</title>
                   <rect x={x - step * 0.3} y="30" width={step * 0.6} height="200" fill="transparent" />
                   {valid ? (
                     <circle className="metric-chart-dot" cx={x} cy={y(value)} r={highlighted ? 7 : 5} />
@@ -101,11 +102,7 @@ export function MetricChart({
                   )}
                 </g>
                 <text x={x} y="250" textAnchor="middle" className="metric-chart-month">
-                  {
-                    ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][
-                      Number(point.month.slice(5, 7)) - 1
-                    ]
-                  }
+                  {formatMonth(point.month)}
                 </text>
               </g>
             );
@@ -114,7 +111,9 @@ export function MetricChart({
       )}
       <p className="metric-chart-detail" aria-live="polite">
         {active ? (
-          <WasteDirectionText text={`${active.month}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`} />
+          <WasteDirectionText
+            text={`${formatMonth(active.month)}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`}
+          />
         ) : values.length ? (
           'Hover or focus a month to inspect its value. A dash marks unavailable data; lines break across missing months.'
         ) : (
@@ -135,7 +134,7 @@ export function MetricChart({
             <tbody>
               {points.map((p) => (
                 <tr key={p.month}>
-                  <th>{p.month}</th>
+                  <th>{formatMonth(p.month)}</th>
                   <td>{finite(p) ? displayValue(p) : 'Unavailable'}</td>
                   <td>
                     <WasteDirectionText text={p.note || '—'} />

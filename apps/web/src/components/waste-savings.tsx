@@ -1,3 +1,4 @@
+import { formatMonth } from '@/domain/format-month';
 import { WasteDirection } from './waste-direction';
 import { formatEnergyValue } from './format-energy-value';
 import type { CarbonSnapshot } from '@/domain/carbon';
@@ -307,12 +308,12 @@ export async function WasteSavings({
                         {report.impact.rows.map((r) =>
                           r.status === 'BLOCKED' ? (
                             <tr key={r.month} data-month={r.month}>
-                              <th>{r.month}</th>
+                              <th>{formatMonth(r.month)}</th>
                               <td colSpan={9}>Blocked: {r.issues.map((i) => i.message).join('; ')}</td>
                             </tr>
                           ) : (
                             <tr key={r.month} data-month={r.month}>
-                              <th>{r.month}</th>
+                              <th>{formatMonth(r.month)}</th>
                               <td>{formatEnergyValue(r.actualKwh)}</td>
                               <td>{formatEnergyValue(r.expectedKwh)}</td>
                               <td>{formatEnergyValue(r.adjustedExpectedKwh)}</td>
@@ -344,7 +345,7 @@ export async function WasteSavings({
                   </div>
                   {report.output.issues.map((i, n) => (
                     <p key={n}>
-                      {i.month}: {i.message}
+                      {i.month ? formatMonth(i.month) : '—'}: {i.message}
                     </p>
                   ))}
                 </section>
@@ -363,7 +364,7 @@ export async function WasteSavings({
                   (r) =>
                     r.status === 'CALCULATED' && (
                       <details key={r.month}>
-                        <summary>{r.month} source evidence</summary>
+                        <summary>{formatMonth(r.month)} source evidence</summary>
                         <p>
                           Reading {r.consumptionId} · revision {r.reading?.revision ?? 'Unavailable'} · conversion{' '}
                           {r.reading?.conversionVersion ?? 'Unavailable'}

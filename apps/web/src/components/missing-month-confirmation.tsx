@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import type { MissingImportMonth } from '@/domain/import-missing-months';
 
 export function MissingMonthConfirmation({
@@ -24,7 +25,7 @@ export function MissingMonthConfirmation({
         <ul>
           {missing.map((item, i) => (
             <li key={i}>
-              {item.site} · {item.month} · {item.scope}
+              {item.site} · {formatMonth(item.month)} · {item.scope}
             </li>
           ))}
         </ul>

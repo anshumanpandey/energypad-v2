@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useState, useTransition, useOptimistic } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -262,7 +263,7 @@ export function WasteDashboard({
                     )
                     .map((row) => (
                       <tr key={row.month}>
-                        <th scope="row">{row.month}</th>
+                        <th scope="row">{formatMonth(row.month)}</th>
                         <td>{value(row.actual)}</td>
                         <td>{value(row.expected)}</td>
                         <td>{value(row.adjusted)}</td>

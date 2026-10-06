@@ -1,4 +1,5 @@
 import { formatEnergyValue } from './format-energy-value';
+import { formatMonth } from '@/domain/format-month';
 import type { RegressionInterpretation } from '../domain/analysis/interpretation';
 import type { RegressionResult } from '../domain/analysis/regression';
 import type { CoefficientStatistic } from '../domain/analysis/inference';
@@ -163,7 +164,7 @@ export function BaselineDiagnostics({
           <tbody>
             {fit.rows.map((row) => (
               <tr key={row.id}>
-                <th scope="row">{months.get(row.id) ?? 'Month unavailable'}</th>
+                <th scope="row">{formatMonth(months.get(row.id) ?? 'Month unavailable')}</th>
                 <td>
                   <Value value={row.actual} />
                 </td>

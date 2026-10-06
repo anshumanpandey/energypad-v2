@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useEnergyYear } from './energy-year';
 import { latestConsumptionQuality } from '@/domain/consumption-quality';
 import { formatEnergyValue } from './format-energy-value';
@@ -277,7 +278,9 @@ export function EnergyWorkspace({
                       return (
                         <tr key={record.id}>
                           <td>
-                            <strong className="energy-record-month">{record.periodStart.slice(0, 7)}</strong>
+                            <strong className="energy-record-month">
+                              {formatMonth(record.periodStart.slice(0, 7))}
+                            </strong>
                             <span className="energy-record-meter">
                               {data.meters.find((meter) => meter.id === record.meterId)?.name}
                             </span>

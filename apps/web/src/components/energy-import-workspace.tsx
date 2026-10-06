@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { formatEnergyValue } from './format-energy-value';
 import { responseError } from './forms';
 import { applyEnergyTemplate, saveEnergyTemplate, parseTemplateText } from '@/domain/workbook-template';
@@ -329,7 +330,7 @@ export function EnergyImportWorkspace({
                         {batch.result.records?.slice(0, 50).map((row) => (
                           <tr key={row.row}>
                             <td>
-                              {row.row} · {row.data.month}
+                              {row.row} · {formatMonth(row.data.month)}
                             </td>
                             <td>
                               {formatEnergyValue(row.data.quantity)} {row.prepared.sourceUnit}

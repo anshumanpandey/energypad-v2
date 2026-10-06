@@ -1,3 +1,4 @@
+import { formatMonth } from '@/domain/format-month';
 import Link from 'next/link';
 import { carbonService, siteService, foundation } from '@/server/services';
 import type { Actor } from '@/server/foundation';
@@ -33,7 +34,10 @@ function TrendChart({ series }: { series: Result['series'] }) {
         ))}
         {monthNames.map((m, i) => (
           <text key={m} x={x(i)} y="269" textAnchor="middle" fontSize="12">
-            {m}
+            <tspan x={x(i)}>{formatMonth(`${series[0].year}-${String(i + 1).padStart(2, '0')}`)}</tspan>
+            <tspan x={x(i)} dy="14">
+              {formatMonth(`${series[1].year}-${String(i + 1).padStart(2, '0')}`)}
+            </tspan>
           </text>
         ))}
         {series.map((s, j) => (
@@ -52,7 +56,7 @@ function TrendChart({ series }: { series: Result['series'] }) {
                     />
                   )}
                   <circle cx={x(i)} cy={y(m.kgCO2e)} r={j === 0 ? 5 : 3}>
-                    <title>{`${s.year} ${monthNames[i]}: ${m.kgCO2e} kgCO2e`}</title>
+                    <title>{`${formatMonth(`${s.year}-${String(i + 1).padStart(2, '0')}`)}: ${m.kgCO2e} kgCO2e`}</title>
                   </circle>
                 </g>
               ),
@@ -219,7 +223,11 @@ export async function CarbonTrends({
                 <tbody>
                   {monthNames.map((m, i) => (
                     <tr key={m}>
-                      <th>{m}</th>
+                      <th>
+                        {result.series
+                          .map((s) => formatMonth(`${s.year}-${String(i + 1).padStart(2, '0')}`))
+                          .join(' / ')}
+                      </th>
                       {result.series.map((s) => (
                         <td key={s.year}>
                           {value(s.months[i].kgCO2e)}
@@ -291,7 +299,7 @@ export async function CarbonTrends({
                     {site.months.map((m) => (
                       <details key={m.month}>
                         <summary>
-                          {m.month} · {m.status} · {value(m.kgCO2e)}
+                          {formatMonth(m.month)} · {m.status} · {value(m.kgCO2e)}
                         </summary>
                         {!m.meters.length && <p>No active meters in this site.</p>}
                         {m.meters.map((meter) => (

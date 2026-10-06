@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { formatEnergyValue } from './format-energy-value';
 import { MonthlyChartSummary } from './monthly-chart-summary';
 import type { MonthlyAmount } from '@/domain/monthly-chart-summary';
@@ -113,8 +114,8 @@ export function UtilityBars({
             const rowY = 50 + index * 30;
             const x = 80 + step * index + step / 2;
             const label = actualOnly
-              ? `${point.month}: cost ${formatEnergyValue(point.actual, 'Unavailable')} ${unit}`
-              : `${point.month}: ${actualLabel.toLowerCase()} ${formatEnergyValue(point.actual, 'Unavailable')}, ${targetLabel.toLowerCase()} ${formatEnergyValue(point.target, 'Unavailable')} ${unit}`;
+              ? `${formatMonth(point.month)}: cost ${formatEnergyValue(point.actual, 'Unavailable')} ${unit}`
+              : `${formatMonth(point.month)}: ${actualLabel.toLowerCase()} ${formatEnergyValue(point.actual, 'Unavailable')}, ${targetLabel.toLowerCase()} ${formatEnergyValue(point.target, 'Unavailable')} ${unit}`;
             return (
               <g
                 key={point.month}
@@ -137,7 +138,7 @@ export function UtilityBars({
                 )}
                 {diverging ? (
                   <text x="85" y={rowY + 14} textAnchor="end" fontSize="12" fontWeight={selected ? 'bold' : 'normal'}>
-                    {point.month}
+                    {formatMonth(point.month)}
                   </text>
                 ) : (
                   <text
@@ -146,7 +147,7 @@ export function UtilityBars({
                     fontSize="11"
                     fontWeight={selected ? 'bold' : 'normal'}
                   >
-                    {point.month}
+                    {formatMonth(point.month)}
                   </text>
                 )}
                 {(actualOnly ? (['actual'] as const) : (['actual', 'target'] as const)).map((kind, seriesIndex) => {

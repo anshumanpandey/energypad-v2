@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { formatEnergyValue } from './format-energy-value';
 import { useCallback, useEffect, useState } from 'react';
 import { LoaderCircle } from 'lucide-react';
@@ -358,7 +359,7 @@ export function WeatherWorkspace({
                   <tbody>
                     {result.monthly.map((month) => (
                       <tr key={month.month}>
-                        <td>{month.month}</td>
+                        <td>{formatMonth(month.month)}</td>
                         <td>{month.days}</td>
                         <td>{formatEnergyValue(month.meanTemperature)}</td>
                         <td>{formatEnergyValue(month.heatingDegreeDays)}</td>

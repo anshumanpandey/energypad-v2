@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useState } from 'react';
 import { FileSpreadsheet, Upload } from 'lucide-react';
 import { Button } from './ui/button';
@@ -206,7 +207,7 @@ export function HistoricEmissionsImport({ orgId }: { orgId: string }) {
                   <tr key={r.row}>
                     <td>{r.row}</td>
                     <td>{r.site}</td>
-                    <td>{r.month}</td>
+                    <td>{formatMonth(r.month)}</td>
                     <td>{r.fuel}</td>
                     <td>{r.factor}</td>
                     <td>{r.existing ? 'Already imported' : preview.committed ? 'Imported' : 'New'}</td>

@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { request, useMutation } from './forms';
@@ -119,7 +120,7 @@ export function PortfolioEnergy({ orgId, portfolios }: { orgId: string; portfoli
               <tbody>
                 {result.months.map((m) => (
                   <tr key={m.month}>
-                    <td>{m.month}</td>
+                    <td>{formatMonth(m.month)}</td>
                     <td>
                       {m.completeSites} / {result.sites.length}
                     </td>

@@ -704,7 +704,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   };
   // Automatic polling must pick up completed work without clicking Refresh.
   await expect(weather.getByText('12/12 months enriched', { exact: true })).toBeVisible();
-  await expect(weather.getByRole('row').filter({ hasText: '2021-02' })).toContainText('140');
+  await expect(weather.getByRole('row').filter({ hasText: 'Feb-21' })).toContainText('140');
   await weather.getByText('Weather provenance and method', { exact: true }).click();
   await expect(weather.getByText(/Returned grid coordinates: 51.5/)).toBeVisible();
   await weather.getByText('Add a weather settings version', { exact: true }).click();
@@ -738,7 +738,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
     .getByRole('region', { name: 'Consumption records table', exact: true })
     .getByRole('row')
     .filter({ hasText: 'Gas meter' })
-    .filter({ hasText: '2024-01' });
+    .filter({ hasText: 'Jan-24' });
   await gasRow.getByRole('button', { name: 'Correct reading', exact: true }).click();
   const correctionForm = page.getByRole('form', { name: 'Correct monthly reading', exact: true });
   await correctionForm.getByLabel('Corrected quantity (m3)').fill('200');
@@ -766,7 +766,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   const observationRow = drivers
     .getByRole('row')
     .filter({ hasText: 'Average population (people)' })
-    .filter({ hasText: '2021-01' });
+    .filter({ hasText: 'Jan-21' });
   await observationRow.getByRole('button', { name: 'Correct observation', exact: true }).click();
   const observationForm = drivers.getByRole('form', { name: 'Correct observation', exact: true });
   await observationForm.getByLabel('Corrected observed value').fill('25');
@@ -775,7 +775,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
   await expect(observationRow.getByRole('cell', { name: '25.00', exact: true })).toBeVisible();
   await expect(drivers.getByText('Average population (people) · 1/12 months observed', { exact: true })).toBeVisible();
   await observationRow.getByRole('button', { name: 'View observation history', exact: true }).click();
-  await expect(observationRow.getByText('2021-01 · POPULATION · 0.00', { exact: true })).toBeVisible();
+  await expect(observationRow.getByText('Jan-21 · POPULATION · 0.00', { exact: true })).toBeVisible();
   await observationRow.getByRole('button', { name: 'Correct observation', exact: true }).click();
   await observationForm.getByLabel('Corrected observed value').fill('99');
   await observationForm.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -931,7 +931,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
     .getByRole('region', { name: 'Consumption records table', exact: true })
     .getByRole('row')
     .filter({ hasText: 'Main electricity' })
-    .filter({ hasText: '2021-01' });
+    .filter({ hasText: 'Jan-21' });
   await electricityRow.getByRole('button', { name: 'Correct reading', exact: true }).click();
   const linkForm = page.getByRole('form', { name: 'Correct monthly reading', exact: true });
   await linkForm.getByRole('combobox', { name: 'Corrected registered end use', exact: true }).selectOption('LIGHTING');

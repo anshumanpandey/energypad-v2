@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -204,7 +205,7 @@ export function ReportsDashboard({
             <tbody>
               {overview.map((row) => (
                 <tr key={`${row.month}-${row.meterId ?? row.fuel}`}>
-                  <th>{row.month}</th>
+                  <th>{formatMonth(row.month)}</th>
                   <td>{row.endUse}</td>
                   <td>{utilityLabel(row.fuel)}</td>
                   <td>{amount(row.consumption)}</td>
@@ -281,7 +282,7 @@ export function ReportsDashboard({
                 <tbody>
                   {points.map((point) => (
                     <tr key={point.month}>
-                      <th>{point.month}</th>
+                      <th>{formatMonth(point.month)}</th>
                       <td>{amount(point.actual)}</td>
                       <td>{amount(point.target)}</td>
                       <td>{point.scope}</td>
@@ -330,7 +331,7 @@ export function ReportsDashboard({
               <tbody>
                 {coverage.map((item) => (
                   <tr key={item.month}>
-                    <th>{item.month}</th>
+                    <th>{formatMonth(item.month)}</th>
                     <td>{item.available ? 'Available' : 'Missing / incomplete'}</td>
                   </tr>
                 ))}
@@ -383,7 +384,7 @@ function ReportLines({
             (point, index) =>
               point[key] !== null && (
                 <circle key={point.month} cx={x(index)} cy={y(point[key]!)} r="4" fill={colors[series]} tabIndex={0}>
-                  <title>{`${point.month}: ${key} ${point[key]} ${unit}`}</title>
+                  <title>{`${formatMonth(point.month)}: ${key} ${point[key]} ${unit}`}</title>
                 </circle>
               ),
           )}
@@ -394,7 +395,7 @@ function ReportLines({
       ))}
       {points.map((point, index) => (
         <text key={point.month} x={x(index)} y="246" textAnchor="middle" fontSize="11">
-          {point.month.slice(5)}
+          {formatMonth(point.month)}
         </text>
       ))}
     </svg>
@@ -437,7 +438,7 @@ function ReportPie({
                   strokeDashoffset={-start}
                   transform="rotate(-90 100 100)"
                 >
-                  <title>{`${point.label}: ${point.value} ${unit}`}</title>
+                  <title>{`${formatMonth(point.label)}: ${point.value} ${unit}`}</title>
                 </circle>
               );
             })}
@@ -445,7 +446,7 @@ function ReportPie({
           <ul>
             {points.map((point, index) => (
               <li key={point.label} style={{ color: colors[index % colors.length] }}>
-                {point.label}: {formatEnergyValue(point.value)} {unit}
+                {formatMonth(point.label)}: {formatEnergyValue(point.value)} {unit}
               </li>
             ))}
           </ul>

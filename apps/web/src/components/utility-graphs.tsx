@@ -1,5 +1,6 @@
 'use client';
 
+import { formatMonth } from '@/domain/format-month';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { filterUtilityRows, type UtilityGraphRow, type UtilityCostTarget } from '@/domain/utility-graphs';
@@ -218,7 +219,7 @@ export function UtilityGraphs({
                   >
                     <td>{row.siteName}</td>
                     <td>{row.month.slice(0, 4)}</td>
-                    <td>{months[Number(row.month.slice(5, 7)) - 1]}</td>
+                    <td>{formatMonth(row.month)}</td>
                     <td>{utilityLabel(row.fuel)}</td>
                     <td title={row[kind] ?? undefined}>{formatEnergyValue(row[kind], 'Unavailable')}</td>
                     <td>
@@ -334,7 +335,7 @@ function CostComparison({
               <tbody>
                 {comparison.map((r) => (
                   <tr key={r.month}>
-                    <th>{r.month}</th>
+                    <th>{formatMonth(r.month)}</th>
                     <td>{formatEnergyValue(r.consumption, 'Unavailable')}</td>
                     <td>{formatEnergyValue(r.targetEnergy, 'Unavailable')}</td>
                     <td>{r.targetScope}</td>
@@ -388,7 +389,7 @@ function CostComparison({
                 <tbody>
                   {costPoints.map((r) => (
                     <tr key={r.month}>
-                      <th>{r.month}</th>
+                      <th>{formatMonth(r.month)}</th>
                       <td>
                         {formatEnergyValue(r.actual, 'Unavailable')} {currency}
                       </td>
@@ -454,7 +455,7 @@ function UtilityLines({
           {dates.map((date, index) =>
             date.slice(5, 7) === selectedMonth ? (
               <rect
-                key={`selected-${date}`}
+                key={`selected-${formatMonth(date)}`}
                 data-selected-month={date}
                 x={x(index) - 13}
                 y="35"
@@ -511,10 +512,10 @@ function UtilityLines({
                       fill={color}
                       tabIndex={0}
                       role="img"
-                      aria-label={`${row.siteName}, ${utilityLabel(row.fuel)}, ${row.month}: ${row[kind]} ${unit}${row.zeroFilled ? ', confirmed zero fill' : ''}`}
+                      aria-label={`${row.siteName}, ${utilityLabel(row.fuel)}, ${formatMonth(row.month)}: ${row[kind]} ${unit}${row.zeroFilled ? ', confirmed zero fill' : ''}`}
                     >
                       <title>
-                        {row.siteName} · {utilityLabel(row.fuel)} · {row.month}: {row[kind]} {unit}
+                        {row.siteName} · {utilityLabel(row.fuel)} · {formatMonth(row.month)}: {row[kind]} {unit}
                         {row.zeroFilled ? ' · confirmed zero fill' : ''}
                       </title>
                     </circle>

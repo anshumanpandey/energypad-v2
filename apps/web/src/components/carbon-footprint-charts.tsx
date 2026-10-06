@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import type { UtilityGraphRow, UtilityCostTarget } from '@/domain/utility-graphs';
 import { utilityComparison } from '@/domain/utility-comparison';
 import { carbonRollingComparison, carbonRecentSummary } from '@/domain/carbon-footprint';
@@ -76,7 +77,7 @@ export function CarbonFootprintCharts({
               <tbody>
                 {comparison.map((r) => (
                   <tr key={r.month} className={r.month.slice(5, 7) === month ? 'utility-selected-month' : undefined}>
-                    <th>{r.month}</th>
+                    <th>{formatMonth(r.month)}</th>
                     <td>{formatEnergyValue(r.emissions, 'Unavailable')}</td>
                     <td>{formatEnergyValue(r.targetCarbon, 'Unavailable')}</td>
                     <td>{r.targetScope}</td>
@@ -110,9 +111,7 @@ export function CarbonFootprintCharts({
               Actual emissions as a percentage of the carbon target, for the selected month and preceding three months.
               100% meets the target; higher values exceed it.
             </p>
-            <p>
-              Comparison through {year}-{month}.
-            </p>
+            <p>Comparison through {formatMonth(`${year}-${month}`)}.</p>
             {view === 'graph' ? (
               <div className="utility-chart-scroll">
                 <svg
@@ -127,7 +126,7 @@ export function CarbonFootprintCharts({
                     const value = point.percent === null ? null : Number(point.percent);
                     const size = ((value ?? 0) / gaugeMaximum) * 175;
                     const targetY = 230 - (100 / gaugeMaximum) * 175;
-                    const label = `${point.month}: ${point.percent === null ? point.issue : `${point.percent}% of target`}`;
+                    const label = `${formatMonth(point.month)}: ${point.percent === null ? point.issue : `${point.percent}% of target`}`;
                     return (
                       <g
                         key={point.month}
@@ -140,7 +139,7 @@ export function CarbonFootprintCharts({
                         <title>{label}</title>
                         {selected && <rect x={x - 72} y="20" width="145" height="275" rx="12" fill="#e9f3dc" />}
                         <text x={x} y="40" textAnchor="middle" fontSize="14" fontWeight={selected ? 'bold' : 'normal'}>
-                          {point.month}
+                          {formatMonth(point.month)}
                         </text>
                         <rect x={x - 22} y="55" width="44" height="175" rx="22" fill="#edf1ef" />
                         {value !== null && (
@@ -192,7 +191,7 @@ export function CarbonFootprintCharts({
                         key={p.month}
                         className={p.month.slice(5, 7) === month ? 'utility-selected-month' : undefined}
                       >
-                        <th>{p.month}</th>
+                        <th>{formatMonth(p.month)}</th>
                         <td>{formatEnergyValue(p.actual, 'Unavailable')}</td>
                         <td>{formatEnergyValue(p.target, 'Unavailable')}</td>
                         <td>{p.percent !== null ? `${p.percent}%` : p.issue}</td>
@@ -245,7 +244,7 @@ export function CarbonFootprintCharts({
                         fontSize="13"
                         fontWeight={point.month.slice(5, 7) === month ? 'bold' : 'normal'}
                       >
-                        {point.month}
+                        {formatMonth(point.month)}
                       </text>
                       {fuels.map((fuelName, fuelIndex) => {
                         const row = history.find((r) => r.month === point.month && r.fuel === fuelName);
@@ -258,10 +257,10 @@ export function CarbonFootprintCharts({
                             key={fuelName}
                             tabIndex={0}
                             role="img"
-                            aria-label={`${point.month}, ${utilityLabel(fuelName)}: ${value ?? 'Unavailable'} kg`}
+                            aria-label={`${formatMonth(point.month)}, ${utilityLabel(fuelName)}: ${value ?? 'Unavailable'} kg`}
                           >
                             <title>
-                              {point.month} · {utilityLabel(fuelName)}: {value ?? 'Unavailable'} kg
+                              {formatMonth(point.month)} · {utilityLabel(fuelName)}: {value ?? 'Unavailable'} kg
                             </title>
                             {value === null ? (
                               <text x={x + width / 2} y="235" textAnchor="middle">
@@ -319,7 +318,7 @@ export function CarbonFootprintCharts({
                               key={`${p.month}-${f}`}
                               className={p.month.slice(5, 7) === month ? 'utility-selected-month' : undefined}
                             >
-                              <th>{p.month}</th>
+                              <th>{formatMonth(p.month)}</th>
                               <td>{utilityLabel(f)}</td>
                               <td>
                                 {formatEnergyValue(
@@ -331,7 +330,7 @@ export function CarbonFootprintCharts({
                           ))
                         : [
                             <tr key={p.month}>
-                              <th>{p.month}</th>
+                              <th>{formatMonth(p.month)}</th>
                               <td>—</td>
                               <td>Unavailable</td>
                             </tr>,

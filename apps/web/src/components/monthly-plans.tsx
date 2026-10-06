@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useEffect, useRef, useState } from 'react';
 import { request, useMutation } from './forms';
 import { Button } from './ui/button';
@@ -285,7 +286,7 @@ export function MonthlyPlans({
                   {rows.map((r) => (
                     <tr key={r.id}>
                       <th>
-                        {r.month} · {r.kind}
+                        {formatMonth(r.month)} · {r.kind}
                       </th>
                       <td>
                         {r.fuel} · {r.payload.energy} {r.unit}

@@ -1,3 +1,4 @@
+import { formatMonth } from '@/domain/format-month';
 import Link from 'next/link';
 import { benchmarkInput } from '@/domain/benchmarking';
 import { fuels } from '@/domain/tariffs';
@@ -231,7 +232,7 @@ export async function SitePerformance({
                     <tbody>
                       {r.months.map((m) => (
                         <tr key={m.month}>
-                          <th>{m.month}</th>
+                          <th>{formatMonth(m.month)}</th>
                           <td>{value(m.kwh)}</td>
                           <td>{value(m.netCost, m.currency ?? '')}</td>
                           <td>
@@ -252,8 +253,9 @@ export async function SitePerformance({
                 </p>
                 {r.energyTargets.map((t) => (
                   <p key={t.id}>
-                    Energy target {t.id} · {t.month} · revision {t.revision} · {t.payload.energy} {t.payload.unit} ={' '}
-                    {t.payload.normalizedKwh} kWh · factor {t.payload.conversionFactor} · {t.payload.source}
+                    Energy target {t.id} · {formatMonth(t.month)} · revision {t.revision} · {t.payload.energy}{' '}
+                    {t.payload.unit} = {t.payload.normalizedKwh} kWh · factor {t.payload.conversionFactor} ·{' '}
+                    {t.payload.source}
                   </p>
                 ))}
                 {r.targets.map((t) => (

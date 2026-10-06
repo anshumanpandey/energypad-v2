@@ -79,6 +79,7 @@ test('legacy tips and Reports restore menu, catalogue, overview, targets and cov
   const overview = page.getByRole('region', { name: 'Reports overview' });
   await expect(overview.getByRole('row')).toHaveCount(3);
   await expect(overview).toContainText('Heating');
+  await expect(overview).toContainText('Jan-20');
   await expect(overview).toContainText('Cooling');
   await expect(page.getByRole('heading', { name: 'Number Of Reports', exact: true })).toBeVisible();
   await expect(page.getByText('2020 · Reports this year 1/12 · Missing Report: 11', { exact: true })).toBeVisible();

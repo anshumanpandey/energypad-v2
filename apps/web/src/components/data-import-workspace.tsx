@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useState } from 'react';
 import { Building2, ChartColumn, FileSpreadsheet, Upload, CheckCircle2, ChevronDown, ArrowRight } from 'lucide-react';
 import { ImportWorkspace } from './import-workspace';
@@ -359,7 +360,7 @@ export function HistoricImport({
                         <td>{r.action}</td>
                         <td>{r.site}</td>
                         <td>{r.meter}</td>
-                        <td>{r.month}</td>
+                        <td>{formatMonth(r.month)}</td>
                         <td>{r.previousQuantity === null ? '—' : `${r.previousQuantity} ${r.unit}`}</td>
                         <td>
                           {r.quantity} {r.unit}

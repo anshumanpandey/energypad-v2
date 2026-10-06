@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useGraphMonth } from './graph-month';
 import { formatEnergyValue } from './format-energy-value';
 import type { consumptionTargetChart } from '@/domain/consumption-target-chart';
@@ -46,7 +47,7 @@ export function ConsumptionTargetChart({
             role="listitem"
             className="annual-comparison-row"
             aria-current={r.month.endsWith(`-${month}`) ? 'true' : undefined}
-            aria-label={`${r.month}: consumption ${value(r.consumption)}; target ${value(r.target)}`}
+            aria-label={`${formatMonth(r.month)}: consumption ${value(r.consumption)}; target ${value(r.target)}`}
           >
             <div className="annual-comparison-side annual-comparison-actual">
               <span>{value(r.consumption)}</span>
@@ -54,9 +55,7 @@ export function ConsumptionTargetChart({
                 {r.consumption !== null && <i style={{ width: `${(Number(r.consumption) / maximum) * 100}%` }} />}
               </div>
             </div>
-            <span className="annual-comparison-month">
-              {new Date(`${r.month}-01T00:00:00Z`).toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' })}
-            </span>
+            <span className="annual-comparison-month">{formatMonth(r.month)}</span>
             <div className="annual-comparison-side annual-comparison-target">
               <span>{value(r.target)}</span>
               <div className="annual-comparison-track" aria-hidden="true">

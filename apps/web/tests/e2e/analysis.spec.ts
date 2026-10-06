@@ -90,7 +90,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     'statistical-interpretation-v1',
   );
   await expect(
-    page.getByRole('region', { name: 'Baseline residuals', exact: true }).getByRole('rowheader', { name: '2020-01' }),
+    page.getByRole('region', { name: 'Baseline residuals', exact: true }).getByRole('rowheader', { name: 'Jan-20' }),
   ).toBeVisible();
   await page.getByText('Coefficient covariance', { exact: true }).click();
   await expect(page.getByRole('table', { name: 'Coefficient covariance matrix' })).toBeVisible();
@@ -129,14 +129,14 @@ test('experimental analysis readiness, immutable runs and mobile history', async
   const evidence = page.getByRole('region', { name: 'NRA reference inputs' });
   await expect(evidence.getByRole('row')).toHaveCount(5);
   await expect(
-    evidence.getByRole('row').filter({ hasText: '2020-05' }).filter({ hasText: 'Operating hours' }),
-  ).toContainText('2020-01');
-  await expect(
-    evidence.getByRole('row').filter({ hasText: '2020-06' }).filter({ hasText: 'Population' }),
-  ).toContainText('2020-02');
+    evidence.getByRole('row').filter({ hasText: 'May-20' }).filter({ hasText: 'Operating hours' }),
+  ).toContainText('Jan-20');
+  await expect(evidence.getByRole('row').filter({ hasText: 'Jun-20' }).filter({ hasText: 'Population' })).toContainText(
+    'Feb-20',
+  );
   const table = page.getByRole('region', { name: 'Monthly reporting results' });
-  await expect(table.getByRole('row').filter({ hasText: '2020-05' }).getByRole('cell').nth(2)).toHaveText('10.00');
-  await expect(table.getByRole('row').filter({ hasText: '2020-06' }).getByRole('cell').nth(2)).toHaveText('1.50');
+  await expect(table.getByRole('row').filter({ hasText: 'May-20' }).getByRole('cell').nth(2)).toHaveText('10.00');
+  await expect(table.getByRole('row').filter({ hasText: 'Jun-20' }).getByRole('cell').nth(2)).toHaveText('1.50');
   await expect(page.getByRole('region', { name: 'Reporting results', exact: true })).not.toContainText(
     'Consumption is estimated.',
   );

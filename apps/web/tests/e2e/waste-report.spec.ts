@@ -115,8 +115,8 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(report.getByRole('heading', { name: 'Reporting results · experimental' })).toBeVisible();
   const results = report.getByRole('region', { name: 'Monthly reporting results' });
   await expect(results.getByRole('row')).toHaveCount(13);
-  await expect(results.getByRole('rowheader', { name: '2021-01', exact: true })).toBeVisible();
-  await expect(results.getByRole('rowheader', { name: '2021-12', exact: true })).toBeVisible();
+  await expect(results.getByRole('rowheader', { name: 'Jan-21', exact: true })).toBeVisible();
+  await expect(results.getByRole('rowheader', { name: 'Dec-21', exact: true })).toBeVisible();
   const gas = await post(`/sites/${site.id}/meters`, { code: 'G', name: 'Gas', fuel: 'GAS', unit: 'kWh' });
   await post(`/sites/${site.id}/energy`, { meterId: gas.id, month: '2021-01', quantity: '5', estimated: false });
   const graphPage = await page.context().newPage();
@@ -208,13 +208,13 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(monthly.getByRole('row')).toHaveCount(13);
   const january = monthly
     .getByRole('row')
-    .filter({ has: graphPage.getByRole('rowheader', { name: '2020-01', exact: true }) });
+    .filter({ has: graphPage.getByRole('rowheader', { name: 'Jan-20', exact: true }) });
   await expect(january.getByRole('cell').nth(0)).toHaveText('103.00');
   await expect(january.getByRole('cell').nth(1)).toHaveText('102.62');
   await expect(january.getByRole('cell').nth(3)).toHaveText('-0.38');
   await graphPage.getByLabel('Waste result month', { exact: true }).selectOption('03');
   await expect(monthly.getByRole('row')).toHaveCount(2);
-  await expect(monthly.getByRole('row').nth(1)).toContainText('2020-03');
+  await expect(monthly.getByRole('row').nth(1)).toContainText('Mar-20');
   const download = graphPage.waitForEvent('download');
   await graphPage.getByRole('link', { name: 'Download site calculation sheet', exact: true }).click();
   const book = new ExcelJS.Workbook();
@@ -273,6 +273,6 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await report.getByLabel('Population', { exact: true }).check();
   await report.getByRole('button', { name: 'Check readiness' }).click();
   await expect(report.getByText('Baseline needs attention', { exact: true })).toBeVisible();
-  await expect(report.getByRole('status').filter({ hasText: 'Baseline needs attention' })).toContainText('2022-01');
+  await expect(report.getByRole('status').filter({ hasText: 'Baseline needs attention' })).toContainText('Jan-22');
   expect(errors).toEqual([]);
 });

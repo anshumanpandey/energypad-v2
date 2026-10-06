@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useEffect, useState, useRef } from 'react';
 import { CarbonSummaryPanel } from './carbon-summary';
 import { CarbonImports } from './carbon-imports';
@@ -270,7 +271,7 @@ function SiteCarbon({
               <tbody>
                 {run.snapshot.rows.map((row) => (
                   <tr key={row.month}>
-                    <td>{row.month}</td>
+                    <td>{formatMonth(row.month)}</td>
                     <td>{row.normalizedKwh ?? '—'}</td>
                     <td>{row.factor ?? '—'}</td>
                     <td>{row.kgCO2e ?? '—'}</td>

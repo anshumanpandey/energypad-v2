@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useEffect, useState } from 'react';
 import { request } from './forms';
 import { Button } from './ui/button';
@@ -127,7 +128,7 @@ export function AllConsumption({ orgId, sites }: { orgId: string; sites: { id: s
                   {visible.map((record) => (
                     <tr key={record.id}>
                       <td>{record.site.name}</td>
-                      <td>{record.periodStart.slice(0, 7)}</td>
+                      <td>{formatMonth(record.periodStart.slice(0, 7))}</td>
                       <td>{record.meter.name}</td>
                       <td>
                         {utilityLabel(importedFuel(record.fuel, record.importProvenance ?? record.sourceProvenance))}

@@ -42,7 +42,7 @@ test('monthly targets and monitoring save, correct and import all months', async
   await page.getByLabel('Monthly carbon kgCO2e').fill('0');
   await page.getByLabel('Source / conversion reference').fill('Independent monitoring plan');
   await page.getByRole('button', { name: 'Save monthly records' }).click();
-  await expect(history).toContainText('2020-01 · MONITORING');
+  await expect(history).toContainText('Jan-20 · MONITORING');
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Monitoring');
   sheet.addRow(['month', 'fuel', 'unit', 'energy', 'carbon', 'conversionFactor', 'source']);

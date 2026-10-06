@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { formatEnergyValue } from './format-energy-value';
 import { DateInput } from './ui/date-input';
 import { useState } from 'react';
@@ -64,7 +65,7 @@ export function DriverCorrections({
                 </strong>
                 <p>
                   {r.month
-                    ? `${r.month.slice(0, 7)} · ${r.driver} · ${formatEnergyValue(r.value)}`
+                    ? `${formatMonth(r.month.slice(0, 7))} · ${r.driver} · ${formatEnergyValue(r.value)}`
                     : `${r.name} · ${formatEnergyValue(r.weeklyHours)} hours/week · ${r.validFrom!.slice(0, 10)} to ${lastDay(r.validUntil!)} inclusive`}
                 </p>
                 <p>Source: {r.source}</p>

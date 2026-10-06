@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { formatEnergyValue } from './format-energy-value';
 import { DateInput } from './ui/date-input';
 import { responseError } from './forms';
@@ -141,7 +142,7 @@ export function DriverWorkspace({
             <tbody>
               {data.observations.map((o) => (
                 <tr key={o.id}>
-                  <td>{o.month.slice(0, 7)}</td>
+                  <td>{formatMonth(o.month.slice(0, 7))}</td>
                   <td>{driverLabels[o.driver]}</td>
                   <td>{formatEnergyValue(o.value)}</td>
                   <td>{o.source}</td>
@@ -319,7 +320,7 @@ export function DriverWorkspace({
                       {batch.result.records.map((r) => (
                         <tr key={r.row}>
                           <td>{r.row}</td>
-                          <td>{r.data.month}</td>
+                          <td>{formatMonth(r.data.month)}</td>
                           <td>{driverLabels[r.data.driver]}</td>
                           <td>{formatEnergyValue(r.data.value)}</td>
                           <td>{r.data.source}</td>

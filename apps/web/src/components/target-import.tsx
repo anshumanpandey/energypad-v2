@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useState } from 'react';
 import { FileSpreadsheet, Upload, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from './ui/button';
@@ -168,7 +169,7 @@ export function TargetImport({ orgId }: { orgId: string }) {
                     <td>{row.row}</td>
                     <td>{row.action}</td>
                     <td>{row.site}</td>
-                    <td>{row.month}</td>
+                    <td>{formatMonth(row.month)}</td>
                     <td>{utilityLabel(row.fuel)}</td>
                     <td>
                       {row.energy} {row.unit}

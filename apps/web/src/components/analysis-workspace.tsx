@@ -1,4 +1,5 @@
 'use client';
+import { formatMonth } from '@/domain/format-month';
 import { useEnergyYear } from './energy-year';
 import { formatEnergyValue } from './format-energy-value';
 import { WasteDirection } from './waste-direction';
@@ -54,7 +55,7 @@ function Issues({ issues }: { issues: ReadinessIssue[] }) {
     <ul className="analysis-issues">
       {issues.map((i, n) => (
         <li key={n}>
-          <strong>{i.month ?? 'Baseline'}:</strong> {i.message}
+          <strong>{i.month ? formatMonth(i.month) : 'Baseline'}:</strong> {i.message}
         </li>
       ))}
     </ul>
@@ -940,7 +941,7 @@ function RunResults({ run }: { run: SavedRun }) {
             {output.rows.map((row) =>
               row.status === 'CALCULATED' ? (
                 <tr key={row.month}>
-                  <th>{row.month}</th>
+                  <th>{formatMonth(row.month)}</th>
                   <td>{number(row.actualKwh)}</td>
                   <td>{number(row.expectedKwh)}</td>
                   <td>{number(row.nraMultiplier)}</td>
@@ -958,7 +959,7 @@ function RunResults({ run }: { run: SavedRun }) {
                 </tr>
               ) : (
                 <tr key={row.month}>
-                  <th>{row.month}</th>
+                  <th>{formatMonth(row.month)}</th>
                   <td colSpan={9}>Blocked</td>
                 </tr>
               ),
@@ -986,9 +987,9 @@ function RunResults({ run }: { run: SavedRun }) {
                   row.status === 'CALCULATED'
                     ? row.adjustments.map((a) => (
                         <tr key={`${row.month}-${a.kind}`}>
-                          <th>{row.month}</th>
+                          <th>{formatMonth(row.month)}</th>
                           <td>{a.kind === 'OPERATING_HOURS' ? 'Operating hours' : 'Population'}</td>
-                          <td>{a.referenceMonth}</td>
+                          <td>{formatMonth(a.referenceMonth)}</td>
                           <td>
                             {number(a.referenceValue)} {a.kind === 'OPERATING_HOURS' ? 'hours' : 'people'}
                           </td>

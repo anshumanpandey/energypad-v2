@@ -1,3 +1,4 @@
+import { formatMonth } from '@/domain/format-month';
 import { monthlyChartSummary, type MonthlyAmount } from '@/domain/monthly-chart-summary';
 import { formatEnergyValue } from './format-energy-value';
 export function MonthlyChartSummary({
@@ -13,8 +14,8 @@ export function MonthlyChartSummary({
   return (
     <div className="monthly-chart-summary" aria-label="Selected month statistics">
       <span>
-        <strong>{period || 'Select a month'}</strong> · Actual: {formatEnergyValue(summary.current, 'Unavailable')}{' '}
-        {unit}
+        <strong>{period ? formatMonth(period) : 'Select a month'}</strong> · Actual:{' '}
+        {formatEnergyValue(summary.current, 'Unavailable')} {unit}
       </span>
       <span>
         Average per day: {formatEnergyValue(summary.dailyAverage, 'Unavailable')} {unit}/day

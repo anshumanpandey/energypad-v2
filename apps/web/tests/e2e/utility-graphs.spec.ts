@@ -172,7 +172,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await expect(gauge.locator('[data-selected-month="2025-01"]')).toHaveCount(1);
   const recent = page.getByRole('region', { name: 'Recent carbon emissions', exact: true });
   await expect(recent).toContainText('Previous three months average: 30.00 kg');
-  await expect(recent.getByText('2024-10', { exact: true })).toBeVisible();
+  await expect(recent.getByText('Oct-24', { exact: true })).toBeVisible();
   await page.getByLabel('Carbon Footprint sort by', { exact: true }).selectOption('high-to-low');
   await expect(gauge.locator('g[data-month]').first()).toHaveAttribute('data-month', '2025-01');
   await page.getByLabel('Carbon Footprint sort by', { exact: true }).selectOption('low-to-high');
@@ -183,7 +183,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
     page
       .getByRole('region', { name: 'Carbon gauge table', exact: true })
       .getByRole('row')
-      .filter({ hasText: '2025-01' })
+      .filter({ hasText: 'Jan-25' })
       .getByText('200.00%', { exact: true }),
   ).toBeVisible();
   await expect(

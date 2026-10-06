@@ -77,6 +77,6 @@ test('Emissions tab reports every failed cell and imports valid site factors onc
   const chart = page.getByRole('region', { name: 'Emissions', exact: true });
   await expect(chart).toContainText('1/12 months available');
   await chart.locator('summary').click();
-  await expect(chart.getByRole('row').filter({ hasText: '2024-01' }).getByRole('cell').first()).toHaveText('50');
-  await expect(chart.getByRole('row').filter({ hasText: '2024-02' })).toContainText('Missing consumption');
+  await expect(chart.getByRole('row').filter({ hasText: 'Jan-24' }).getByRole('cell').first()).toHaveText('50');
+  await expect(chart.getByRole('row').filter({ hasText: 'Feb-24' })).toContainText('Missing consumption');
 });

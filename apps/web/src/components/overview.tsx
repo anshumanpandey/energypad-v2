@@ -1,3 +1,4 @@
+import { formatMonth } from '@/domain/format-month';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { carbonService } from '@/server/services';
@@ -162,7 +163,7 @@ export async function Overview({
                     <tbody>
                       {data.energy.months.map((month) => (
                         <tr key={month.month}>
-                          <td>{month.month}</td>
+                          <td>{formatMonth(month.month)}</td>
                           <td>{month.kwh ?? 'Unavailable'}</td>
                           <td>{display(month.netCost, month.currency ?? '')}</td>
                           <td>
