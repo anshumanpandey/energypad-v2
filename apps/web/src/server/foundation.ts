@@ -1,3 +1,4 @@
+import { apiImportSettings } from '../domain/api-import';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { auditFilters } from '../domain/audit-history';
@@ -77,6 +78,25 @@ export class FoundationService {
         correlationId: actor.correlationId,
         metadata,
       },
+    });
+  }
+
+  async apiImportSettings(actor: Actor, org: string, input?: unknown) {
+    if (input === undefined) {
+      await this.membership(actor, org, 'organisation:update');
+      const settings = await this.db.organisation.findUniqueOrThrow({
+        where: { id: org },
+        select: { apiImportUrl: true },
+      });
+      return { url: settings.apiImportUrl ?? '' };
+    }
+    const { url } = apiImportSettings.parse(input);
+    return this.db.$transaction(async (tx) => {
+      await this.lock(tx, org);
+      await this.membership(actor, org, 'organisation:update', tx);
+      await tx.organisation.update({ where: { id: org }, data: { apiImportUrl: url || null } });
+      await this.audit(tx, actor, org, 'api-import.settings.updated', org);
+      return { url };
     });
   }
 

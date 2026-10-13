@@ -1,3 +1,4 @@
+import { apiImportWorkbook } from '@/server/api-import-workbook';
 import {
   historicConsumptionService,
   historicEmissionsService,
@@ -59,6 +60,18 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      if (s[2] === 'api-import' && s.length === 3) {
+        if (method === 'GET') return foundation.apiImportSettings(actor, org);
+        if (method === 'PUT') return foundation.apiImportSettings(actor, org, await readBody(request));
+      }
+      if (s[2] === 'api-import' && s[3] === 'workbook' && s.length === 4 && method === 'POST') {
+        await foundation.apiImportSettings(actor, org);
+        const bytes = await apiImportWorkbook(await readBody(request, 2_000_000));
+        return new Response(bytes, {
+          headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+        });
+      }
+
       if (s[2] === 'consumption-records' && s.length === 3 && method === 'GET')
         return energyService.allRecords(actor, org);
       if (s[2] === 'target-imports' && s.length === 4 && method === 'POST' && ['preview', 'commit'].includes(s[3]))

@@ -90,6 +90,7 @@ model Plan {
 }
 
 model Organisation {
+  apiImportUrl String?
   billingCustomers BillingCustomer[]
   legacyEnergyBatches LegacyEnergyBatch[]
   legacyEnergyRows LegacyEnergyRow[]

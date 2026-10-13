@@ -3172,3 +3172,30 @@ select[aria-invalid='true'] {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.api-import-source {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.api-import-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.api-import-example {
+  width: min(760px, calc(100vw - 2rem));
+}
+.api-import-example pre {
+  overflow: auto;
+  padding: 1rem;
+  background: #f1f5f9;
+  color: #0f172a;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+}
+.api-import-example li {
+  margin-block: 0.5rem;
+}
