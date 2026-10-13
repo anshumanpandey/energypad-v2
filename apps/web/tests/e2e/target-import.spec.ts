@@ -15,7 +15,7 @@ test('Data Targets validates every cell, saves monthly targets and updates exist
   sheet.addRow(targetColumns);
   sheet.addRow(['site_mit', 2023, 'Jan', 'Petrol', 'kWh', -1, { error: '#VALUE!' }]);
   await page.goto(`/org/${org.id}/data`);
-  await page.getByRole('tab', { name: 'Targets', exact: true }).click();
+  await page.getByRole('tablist', { name: 'Data imports' }).getByRole('tab', { name: 'Targets', exact: true }).click();
   async function upload() {
     await page.getByLabel('Targets workbook', { exact: true }).setInputFiles({
       name: 'targets.xlsx',

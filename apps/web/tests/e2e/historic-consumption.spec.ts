@@ -16,7 +16,10 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   const base = `organisations/${org.id}`;
   const london = await post(`${base}/sites`, { code: 'London', name: 'London' });
   await page.goto(`/org/${org.id}/data`);
-  await page.getByRole('tab', { name: 'Consumption', exact: true }).click();
+  await page
+    .getByRole('tablist', { name: 'Data imports' })
+    .getByRole('tab', { name: 'Consumption', exact: true })
+    .click();
   const book = new ExcelJS.Workbook();
   const sheet = book.addWorksheet(historicSheet);
   sheet.addRow(historicColumns);

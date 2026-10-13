@@ -20,11 +20,18 @@ test('Data Drivers tab validates cell addresses, saves classifications and persi
     unit: 'kWh',
   });
   await page.goto(`/org/${org.id}/energy`);
-  await page.getByRole('tab', { name: 'Consumption', exact: true }).focus();
+  await page
+    .getByRole('tablist', { name: 'Uploaded data sheets' })
+    .getByRole('tab', { name: 'Consumption', exact: true })
+    .focus();
   await page.keyboard.press('End');
-  await expect(page.getByRole('tab', { name: 'Targets', exact: true })).toBeFocused();
+  await expect(
+    page.getByRole('tablist', { name: 'Uploaded data sheets' }).getByRole('tab', { name: 'Targets', exact: true }),
+  ).toBeFocused();
   await page.keyboard.press('ArrowLeft');
-  await expect(page.getByRole('tab', { name: 'Drivers', exact: true })).toBeFocused();
+  await expect(
+    page.getByRole('tablist', { name: 'Uploaded data sheets' }).getByRole('tab', { name: 'Drivers', exact: true }),
+  ).toBeFocused();
   const book = new ExcelJS.Workbook(),
     sheet = book.addWorksheet('Drivers');
   sheet.getRow(6).values = classificationColumns;
@@ -58,7 +65,10 @@ test('Data Drivers tab validates cell addresses, saves classifications and persi
   await expect(saved).not.toContainText('(LON)');
   await expect(saved).toContainText('NR · Non-routine');
   await page.reload();
-  await page.getByRole('tab', { name: 'Drivers', exact: true }).click();
+  await page
+    .getByRole('tablist', { name: 'Uploaded data sheets' })
+    .getByRole('tab', { name: 'Drivers', exact: true })
+    .click();
   await expect(saved.getByRole('row')).toHaveCount(2);
   await expect(saved).toContainText('2024');
   await saved.getByRole('button', { name: 'Edit London · 2024', exact: true }).click();
