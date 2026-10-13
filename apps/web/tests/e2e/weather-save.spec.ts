@@ -1,20 +1,9 @@
-import { test, expect } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
+import { test, expect } from './fixtures/isolated-user';
 import { weatherPeriod } from '../../src/domain/weather';
 
 test('saving weather fetches status and updates baseline configurations without resetting the form', async ({
   page,
 }) => {
-  const fixture = JSON.parse(await readFile('.local/e2e-report-schedules.json', 'utf8'));
-  await page.context().addCookies([
-    {
-      name: 'authjs.session-token',
-      value: fixture.sessionToken,
-      url: 'http://localhost:3101',
-      httpOnly: true,
-      sameSite: 'Lax',
-    },
-  ]);
   async function post(path: string, data: unknown) {
     const res = await page.request.post(`/api/v1/${path}`, { data, headers: { origin: 'http://localhost:3101' } });
     expect(res.ok(), await res.text()).toBe(true);

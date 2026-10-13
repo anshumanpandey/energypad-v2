@@ -1,20 +1,9 @@
-import { test, expect } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
+import { test, expect } from './fixtures/isolated-user';
 import { randomUUID } from 'node:crypto';
 
 test('graphs preserve recorded zero, missing coverage, filters and site isolation', async ({ page }, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  const f = JSON.parse(await readFile('.local/e2e-report-schedules.json', 'utf8'));
-  await page.context().addCookies([
-    {
-      name: 'authjs.session-token',
-      value: f.sessionToken,
-      url: 'http://localhost:3101',
-      httpOnly: true,
-      sameSite: 'Lax',
-    },
-  ]);
   // Keep chart data out of the shared report workspace used by later specs.
   const created = await page.request.post('/api/v1/organisations', {
     headers: { origin: 'http://localhost:3101' },

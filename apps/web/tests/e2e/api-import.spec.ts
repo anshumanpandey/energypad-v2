@@ -1,18 +1,7 @@
-import { test, expect } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
+import { test, expect } from './fixtures/isolated-user';
 import { apiImportExample } from '../../src/domain/api-import';
 
 test('saved JSON endpoint, example modal, validation and reviewed database import', async ({ page }) => {
-  const fixture = JSON.parse(await readFile('.local/e2e-report-schedules.json', 'utf8'));
-  await page.context().addCookies([
-    {
-      name: 'authjs.session-token',
-      value: fixture.sessionToken,
-      url: 'http://localhost:3101',
-      httpOnly: true,
-      sameSite: 'Lax',
-    },
-  ]);
   const headers = { origin: 'http://localhost:3101' };
   const orgResponse = await page.request.post('/api/v1/organisations', {
     headers,

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/isolated-user';
 import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import { emissionsColumns } from '../../src/domain/historic-emissions';
@@ -6,16 +6,6 @@ import { targetColumns } from '../../src/domain/target-import';
 const ExcelJS = createRequire(import.meta.url)('exceljs') as typeof import('exceljs');
 
 test('one workbook validates and imports all four sheets with site names', async ({ page }, testInfo) => {
-  const fixture = JSON.parse(await readFile('.local/e2e-report-schedules.json', 'utf8'));
-  await page.context().addCookies([
-    {
-      name: 'authjs.session-token',
-      value: fixture.sessionToken,
-      url: 'http://localhost:3101',
-      httpOnly: true,
-      sameSite: 'Lax',
-    },
-  ]);
   async function post(path: string, data: unknown) {
     const response = await page.request.post(`/api/v1/${path}`, { data, headers: { origin: 'http://localhost:3101' } });
     expect(response.ok(), await response.text()).toBe(true);

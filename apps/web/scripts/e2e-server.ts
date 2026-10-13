@@ -7,10 +7,12 @@ import { testDatabase } from './test-database';
 const { db, databaseUrl, cleanup } = await testDatabase();
 const manifestPath = '.local/e2e-multidriver.json';
 const scheduleManifestPath = '.local/e2e-report-schedules.json';
+const databaseManifestPath = '.local/e2e-database.json';
 try {
   const fixture = await seedMultidriver(db);
   const schedules = await seedReportSchedules(db);
   await mkdir('.local', { recursive: true });
+  await writeFile(databaseManifestPath, JSON.stringify({ databaseUrl }), { mode: 0o600 });
   await writeFile(manifestPath, JSON.stringify(fixture), { mode: 0o600 });
   await writeFile(scheduleManifestPath, JSON.stringify(schedules), { mode: 0o600 });
 } catch (error) {
@@ -44,6 +46,7 @@ async function stop() {
     else child.once('exit', () => resolve());
   });
   await cleanup();
+  await rm(databaseManifestPath, { force: true });
   await rm(manifestPath, { force: true });
   await rm(scheduleManifestPath, { force: true });
   process.exit(0);
