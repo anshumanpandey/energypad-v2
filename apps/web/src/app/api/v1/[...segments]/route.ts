@@ -1,3 +1,4 @@
+import { apiDataset } from '@/domain/api-import';
 import { apiImportWorkbook } from '@/server/api-import-workbook';
 import {
   historicConsumptionService,
@@ -60,13 +61,17 @@ async function handle(request: Request, context: Context) {
       return foundation.acceptInvitation(actor, await readBody(request));
     if (s[0] === 'organisations' && s[1]) {
       const org = s[1];
+      const dataset =
+        s[2] === 'api-import' && new URL(request.url).searchParams.has('dataset')
+          ? apiDataset.parse(new URL(request.url).searchParams.get('dataset'))
+          : undefined;
       if (s[2] === 'api-import' && s.length === 3) {
-        if (method === 'GET') return foundation.apiImportSettings(actor, org);
-        if (method === 'PUT') return foundation.apiImportSettings(actor, org, await readBody(request));
+        if (method === 'GET') return foundation.apiImportSettings(actor, org, undefined, dataset);
+        if (method === 'PUT') return foundation.apiImportSettings(actor, org, await readBody(request), dataset);
       }
       if (s[2] === 'api-import' && s[3] === 'workbook' && s.length === 4 && method === 'POST') {
-        await foundation.apiImportSettings(actor, org);
-        const bytes = await apiImportWorkbook(await readBody(request, 2_000_000));
+        await foundation.apiImportSettings(actor, org, undefined, dataset);
+        const bytes = await apiImportWorkbook(await readBody(request, 2_000_000), dataset);
         return new Response(bytes, {
           headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
         });

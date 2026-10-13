@@ -104,3 +104,21 @@ export const apiImportExample = {
     },
   ],
 };
+
+export const apiDatasets = ['consumption', 'emissions', 'targets', 'drivers'] as const;
+export const apiDataset = z.enum(apiDatasets);
+export type ApiDataset = z.infer<typeof apiDataset>;
+export const apiDatasetLabels: Record<ApiDataset, string> = {
+  consumption: 'Consumption',
+  emissions: 'Emissions',
+  targets: 'Targets',
+  drivers: 'Drivers',
+};
+// Accept a combined response for existing providers, but require and import only the selected dataset.
+export function datasetPayload(dataset: ApiDataset) {
+  return apiImportPayload
+    .partial({ consumption: true, emissions: true, targets: true, drivers: true })
+    .superRefine((data, ctx) => {
+      if (!data[dataset]) ctx.addIssue({ code: 'custom', path: [dataset], message: `Include the ${dataset} records.` });
+    });
+}

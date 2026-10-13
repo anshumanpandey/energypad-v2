@@ -1,4 +1,4 @@
-import { apiImportSettings } from '../domain/api-import';
+import { apiImportSettings, apiDataset, type ApiDataset } from '../domain/api-import';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { auditFilters } from '../domain/audit-history';
@@ -81,20 +81,34 @@ export class FoundationService {
     });
   }
 
-  async apiImportSettings(actor: Actor, org: string, input?: unknown) {
+  async apiImportSettings(actor: Actor, org: string, input?: unknown, dataset?: ApiDataset) {
+    if (dataset) apiDataset.parse(dataset);
     if (input === undefined) {
       await this.membership(actor, org, 'organisation:update');
       const settings = await this.db.organisation.findUniqueOrThrow({
         where: { id: org },
-        select: { apiImportUrl: true },
+        select: { apiImportUrl: true, apiImportUrls: true },
       });
-      return { url: settings.apiImportUrl ?? '' };
+      return {
+        url: dataset
+          ? ((settings.apiImportUrls as Record<string, string>)[dataset] ?? '')
+          : (settings.apiImportUrl ?? ''),
+      };
     }
     const { url } = apiImportSettings.parse(input);
     return this.db.$transaction(async (tx) => {
       await this.lock(tx, org);
       await this.membership(actor, org, 'organisation:update', tx);
-      await tx.organisation.update({ where: { id: org }, data: { apiImportUrl: url || null } });
+      if (dataset) {
+        const current = await tx.organisation.findUniqueOrThrow({
+          where: { id: org },
+          select: { apiImportUrls: true },
+        });
+        await tx.organisation.update({
+          where: { id: org },
+          data: { apiImportUrls: { ...(current.apiImportUrls as Record<string, string>), [dataset]: url } },
+        });
+      } else await tx.organisation.update({ where: { id: org }, data: { apiImportUrl: url || null } });
       await this.audit(tx, actor, org, 'api-import.settings.updated', org);
       return { url };
     });

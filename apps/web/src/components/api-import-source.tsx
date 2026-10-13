@@ -1,27 +1,102 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { apiImportExample, apiImportPayload, apiImportSettings } from '@/domain/api-import';
+import {
+  apiImportExample,
+  datasetPayload,
+  apiImportSettings,
+  apiDatasets,
+  apiDatasetLabels,
+  type ApiDataset,
+} from '@/domain/api-import';
 import { Button } from './ui/button';
 import { request, responseError, useMutation } from './forms';
 
-export function ApiImportSource({
+export function ApiImportSource(props: {
+  orgId: string;
+  disabled: boolean;
+  onLoaded: (file: File, dataset: ApiDataset) => void;
+}) {
+  const [dataset, setDataset] = useState<ApiDataset>('consumption');
+  const [busy, setBusy] = useState(false);
+  return (
+    <div>
+      <div className="data-import-tabs" role="tablist" aria-label="API datasets">
+        {apiDatasets.map((key, index) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            id={`api-tab-${key}`}
+            aria-controls={`api-panel-${key}`}
+            aria-selected={dataset === key}
+            tabIndex={dataset === key ? 0 : -1}
+            disabled={props.disabled || busy}
+            onClick={() => setDataset(key)}
+            onKeyDown={(event) => {
+              const next =
+                event.key === 'ArrowRight'
+                  ? (index + 1) % 4
+                  : event.key === 'ArrowLeft'
+                    ? (index + 3) % 4
+                    : event.key === 'Home'
+                      ? 0
+                      : event.key === 'End'
+                        ? 3
+                        : null;
+              if (next !== null) {
+                event.preventDefault();
+                setDataset(apiDatasets[next]);
+                document.getElementById(`api-tab-${apiDatasets[next]}`)?.focus();
+              }
+            }}
+          >
+            {apiDatasetLabels[key]}
+          </button>
+        ))}
+      </div>
+      {apiDatasets.map((key) => (
+        <div
+          key={key}
+          role="tabpanel"
+          id={`api-panel-${key}`}
+          aria-labelledby={`api-tab-${key}`}
+          hidden={dataset !== key}
+        >
+          <DatasetSource {...props} disabled={props.disabled || busy} dataset={key} onBusy={setBusy} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DatasetSource({
+  dataset,
+  onBusy,
   orgId,
   disabled,
   onLoaded,
 }: {
+  dataset: ApiDataset;
+  onBusy: (busy: boolean) => void;
   orgId: string;
   disabled: boolean;
-  onLoaded: (file: File) => void;
+  onLoaded: (file: File, dataset: ApiDataset) => void;
 }) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [showExample, setShowExample] = useState(false);
   const m = useMutation();
+  useEffect(() => {
+    if (m.pending) {
+      onBusy(true);
+      return () => onBusy(false);
+    }
+  }, [m.pending, onBusy]);
   const path = `organisations/${orgId}/api-import`;
   useEffect(() => {
     let active = true;
-    void request(path, 'GET')
+    void request(`${path}?dataset=${dataset}`, 'GET')
       .then((data) => {
         if (active) setUrl(data.url);
       })
@@ -34,12 +109,12 @@ export function ApiImportSource({
     return () => {
       active = false;
     };
-  }, [path]);
+  }, [path, dataset]);
   async function save() {
     const parsed = apiImportSettings.safeParse({ url });
     if (!parsed.success) throw new Error(parsed.error.issues.map((issue) => issue.message).join(' '));
     const settings = parsed.data;
-    await request(path, 'PUT', settings);
+    await request(`${path}?dataset=${dataset}`, 'PUT', settings);
     setUrl(settings.url);
     return settings.url;
   }
@@ -87,12 +162,12 @@ export function ApiImportSource({
     } catch {
       throw new Error('The API must return valid JSON. See the JSON example.');
     }
-    const parsed = apiImportPayload.safeParse(data);
+    const parsed = datasetPayload(dataset).safeParse(data);
     if (!parsed.success)
       throw new Error(
         parsed.error.issues.map((issue) => `${issue.path.join('.') || 'Response'}: ${issue.message}`).join('\n'),
       );
-    const converted = await fetch(`/api/v1/${path}/workbook`, {
+    const converted = await fetch(`/api/v1/${path}/workbook?dataset=${dataset}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(parsed.data),
@@ -101,11 +176,11 @@ export function ApiImportSource({
     const blob = await converted.blob();
     if (blob.size > 2_000_000)
       throw new Error('The converted data exceeds the 2 MB import limit. Request fewer records.');
-    onLoaded(new File([blob], 'api-data.xlsx'));
+    onLoaded(new File([blob], `api-${dataset}.xlsx`), dataset);
   }
   return (
     <section className="api-import-source" aria-label="API data source">
-      <h3>Pull data from API</h3>
+      <h3>{apiDatasetLabels[dataset]} API</h3>
       <p>
         Save an HTTPS endpoint returning JSON. The provider must allow this app through CORS. Requests use GET without
         credentials; redirects are not followed.
@@ -150,11 +225,11 @@ export function ApiImportSource({
         </div>
         {m.feedback}
       </form>
-      {showExample && <JsonExample onClose={() => setShowExample(false)} />}
+      {showExample && <JsonExample dataset={dataset} onClose={() => setShowExample(false)} />}
     </section>
   );
 }
-function JsonExample({ onClose }: { onClose: () => void }) {
+function JsonExample({ onClose, dataset }: { onClose: () => void; dataset: ApiDataset }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const trigger = document.activeElement;
@@ -182,8 +257,8 @@ function JsonExample({ onClose }: { onClose: () => void }) {
         </Button>
       </div>
       <p>
-        Return version 1 and all four arrays, each with at least one record. Use exactly these field names. Numbers must
-        be JSON numbers, not formatted strings. Use an existing site name or code in this workspace.
+        Return version 1 and a {dataset} array with at least one record. Use exactly these field names. Numbers must be
+        JSON numbers, not formatted strings. Use an existing site name or code in this workspace.
       </p>
       <ul>
         <li>Months: 1–12; years: 1900–2199. Include every month you intend to import.</li>
@@ -200,7 +275,7 @@ function JsonExample({ onClose }: { onClose: () => void }) {
         </li>
       </ul>
       <pre>
-        <code>{JSON.stringify(apiImportExample, null, 2)}</code>
+        <code>{JSON.stringify({ version: 1, [dataset]: apiImportExample[dataset] }, null, 2)}</code>
       </pre>
     </dialog>
   );

@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures/isolated-user';
-import { apiImportExample } from '../../src/domain/api-import';
+import { apiImportExample, apiDatasets, apiDatasetLabels } from '../../src/domain/api-import';
 
 test('saved JSON endpoint, example modal, validation and reviewed database import', async ({ page }) => {
   const headers = { origin: 'http://localhost:3101' };
@@ -20,36 +20,50 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
     (await page.request.get('/api/v1/organisations/00000000-0000-4000-8000-000000000001/api-import')).status(),
   ).toBe(404);
   await page.goto(`/org/${org.id}/energy`);
-  await page.getByRole('button', { name: 'View JSON example' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Expected API JSON response' });
-  await expect(dialog).toContainText('"version": 1');
-  await page.keyboard.press('Escape');
-  await expect(dialog).toHaveCount(0);
-  await page.getByLabel('API URL', { exact: true }).fill('https://provider.example/energy-data');
-  await page.getByRole('button', { name: 'Save API URL', exact: true }).click();
-  await expect(page.getByText('API URL saved.', { exact: true })).toBeVisible();
+  const source = page.getByRole('region', { name: 'API data source' });
+  const tabs = page.getByRole('tablist', { name: 'API datasets' });
+  for (const dataset of apiDatasets) {
+    await tabs.getByRole('tab', { name: apiDatasetLabels[dataset], exact: true }).click();
+    await source.getByLabel('API URL', { exact: true }).fill(`https://provider.example/${dataset}`);
+    await source.getByRole('button', { name: 'Save API URL', exact: true }).click();
+    await expect(source.getByText('API URL saved.', { exact: true })).toBeVisible();
+  }
   await page.reload();
-  await expect(page.getByLabel('API URL', { exact: true })).toHaveValue('https://provider.example/energy-data');
-  await page.route('https://provider.example/energy-data', (route) =>
-    route.fulfill({ headers: { 'Access-Control-Allow-Origin': '*' }, json: { ...apiImportExample, version: 2 } }),
-  );
-  await page.getByRole('button', { name: 'Save & fetch data' }).click();
-  await expect(page.getByRole('region', { name: 'API data source' }).getByRole('alert')).toContainText('version');
-  await page.unroute('https://provider.example/energy-data');
-  await page.route('https://provider.example/energy-data', (route) =>
-    route.fulfill({ headers: { 'Access-Control-Allow-Origin': '*' }, json: apiImportExample }),
-  );
-  await page.getByRole('button', { name: 'Save & fetch data' }).click();
-  await expect(page.getByText('Selected workbook: api-data.xlsx')).toBeVisible();
-  await page.getByRole('button', { name: 'Validate workbook', exact: true }).click();
-  const preview = page.getByRole('region', { name: 'Workbook import preview' });
-  await expect(preview.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(4);
-  await page.getByRole('button', { name: 'Import all four sheets', exact: true }).click();
-  await expect(preview.getByRole('cell', { name: 'Imported', exact: true })).toHaveCount(4);
+  for (const dataset of apiDatasets) {
+    await tabs.getByRole('tab', { name: apiDatasetLabels[dataset], exact: true }).click();
+    await expect(source.getByLabel('API URL', { exact: true })).toHaveValue(`https://provider.example/${dataset}`);
+    await source.getByRole('button', { name: 'View JSON example' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Expected API JSON response' });
+    await expect(dialog.locator('code')).toContainText(`"${dataset}"`);
+    await expect(dialog.locator('code')).toContainText('"version": 1');
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await page.route(`https://provider.example/${dataset}`, (route) =>
+      route.fulfill({
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        json: { version: 1, [dataset]: apiImportExample[dataset] },
+      }),
+    );
+    await source.getByRole('button', { name: 'Save & fetch data' }).click();
+    await expect(page.getByText(`Selected workbook: api-${dataset}.xlsx`)).toBeVisible();
+    await page.getByRole('button', { name: 'Validate workbook', exact: true }).click();
+    const preview = page.getByRole('region', { name: 'Workbook import preview' });
+    await expect(preview.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(1);
+    await page.getByRole('button', { name: `Import ${dataset} records`, exact: true }).click();
+    await expect(preview.getByRole('cell', { name: 'Imported', exact: true })).toHaveCount(1);
+  }
   const records = await page.request.get(`/api/v1/organisations/${org.id}/consumption-records`);
   expect(records.ok()).toBe(true);
   expect(await records.text()).toContain('1250');
+  await tabs.getByRole('tab', { name: 'Consumption', exact: true }).click();
+  await source.getByLabel('API URL', { exact: true }).fill('');
+  await source.getByRole('button', { name: 'Save API URL', exact: true }).click();
+  await expect(source.getByText('API URL saved.', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(source.getByLabel('API URL', { exact: true })).toHaveValue('');
+  await tabs.getByRole('tab', { name: 'Emissions', exact: true }).click();
+  await expect(source.getByLabel('API URL', { exact: true })).toHaveValue('https://provider.example/emissions');
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'View JSON example' }).click();
-  expect(await dialog.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
+  await source.getByRole('button', { name: 'View JSON example' }).click();
+  expect(await page.getByRole('dialog').evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
 });

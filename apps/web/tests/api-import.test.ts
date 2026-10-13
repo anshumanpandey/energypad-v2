@@ -1,5 +1,11 @@
 import { expect, it } from 'vitest';
-import { apiImportExample, apiImportPayload, apiImportSettings } from '../src/domain/api-import';
+import {
+  apiImportExample,
+  apiImportPayload,
+  apiImportSettings,
+  apiDatasets,
+  datasetPayload,
+} from '../src/domain/api-import';
 import { apiImportWorkbook } from '../src/server/api-import-workbook';
 import { readWorkbook } from '../src/server/workbook';
 import { parseHistoric } from '../src/domain/historic-consumption';
@@ -50,4 +56,12 @@ it('permits clearing saved URL but rejects unsafe schemes and embedded credentia
     'https://example.test/#secret',
   ])
     expect(apiImportSettings.safeParse({ url }).success).toBe(false);
+});
+
+it.each(apiDatasets)('accepts %s alone and requires its records', async (dataset) => {
+  const input = { version: 1, [dataset]: apiImportExample[dataset] };
+  expect(datasetPayload(dataset).safeParse(input).success).toBe(true);
+  expect(datasetPayload(dataset).safeParse({ version: 1 }).success).toBe(false);
+  const bytes = await apiImportWorkbook(input, dataset);
+  expect(bytes.length).toBeGreaterThan(0);
 });

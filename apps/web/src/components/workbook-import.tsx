@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import type { ApiDataset } from '@/domain/api-import';
 import { ApiImportSource } from './api-import-source';
 import { Button } from './ui/button';
 import { ImportRequestError, responseError, useMutation } from './forms';
@@ -7,11 +8,11 @@ import { factorBases } from '@/domain/emission-factors';
 import { MissingMonthConfirmation } from './missing-month-confirmation';
 import type { MissingImportMonth } from '@/domain/import-missing-months';
 
-const sheets = [
-  { name: 'Emissions', path: 'emissions-imports' },
-  { name: 'Targets', path: 'target-imports' },
-  { name: 'Drivers', path: 'driver-classification-imports' },
-  { name: 'Historic Consumption', path: 'consumption-imports' },
+const allSheets = [
+  { dataset: 'emissions', name: 'Emissions', path: 'emissions-imports' },
+  { dataset: 'targets', name: 'Targets', path: 'target-imports' },
+  { dataset: 'drivers', name: 'Drivers', path: 'driver-classification-imports' },
+  { dataset: 'consumption', name: 'Historic Consumption', path: 'consumption-imports' },
 ] as const;
 type Result = {
   signature: string;
@@ -26,6 +27,8 @@ type Result = {
 
 export function WorkbookImport({ orgId }: { orgId: string }) {
   const m = useMutation();
+  const [dataset, setDataset] = useState<ApiDataset | null>(null);
+  const sheets = dataset ? allSheets.filter((sheet) => sheet.dataset === dataset) : allSheets;
   const [file, setFile] = useState<File | null>(null);
   const [geography, setGeography] = useState('GB');
   const [basis, setBasis] = useState('LOCATION_BASED');
@@ -44,7 +47,7 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
   }
   async function send(index: number, signature?: string): Promise<Result> {
     const sheet = sheets[index];
-    const query = index === 0 ? `?${new URLSearchParams({ geography, basis })}` : '';
+    const query = sheet.dataset === 'emissions' ? `?${new URLSearchParams({ geography, basis })}` : '';
     const response = await fetch(
       `/api/v1/organisations/${orgId}/${sheet.path}/${signature === undefined ? 'preview' : 'commit'}${query}`,
       {
@@ -65,7 +68,7 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
     if (!file) throw new Error('Choose an XLSX workbook.');
     setPreview(null);
     setDone(false);
-    setProgress('Checking all four sheets…');
+    setProgress(dataset ? `Checking ${dataset}…` : 'Checking all four sheets…');
     try {
       const results = await Promise.allSettled(sheets.map((_, index) => send(index)));
       const failed = results.flatMap((result, index) =>
@@ -139,7 +142,8 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
           key={orgId}
           orgId={orgId}
           disabled={m.disabled}
-          onLoaded={(loaded) => {
+          onLoaded={(loaded, selected) => {
+            setDataset(selected);
             reset();
             setFile(loaded);
           }}
@@ -149,7 +153,7 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
           className="stack-form"
           onSubmit={(event) => {
             event.preventDefault();
-            void m.run(validate, 'All four sheets validated. Review before importing.');
+            void m.run(validate, 'Data validated. Review before importing.');
           }}
         >
           <label>
@@ -159,6 +163,7 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
               accept=".xlsx"
               disabled={m.disabled}
               onChange={(event) => {
+                setDataset(null);
                 setFile(event.target.files?.[0] ?? null);
                 reset();
               }}
@@ -212,7 +217,7 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
       )}
       {(preview || saved.length > 0) && (
         <section className="panel" aria-label="Workbook import preview">
-          <h3>{done ? 'Workbook imported' : 'Review all four sheets'}</h3>
+          <h3>{done ? 'Workbook imported' : dataset ? `Review ${dataset}` : 'Review all four sheets'}</h3>
           <div style={{ overflowX: 'auto' }}>
             <table className="import-preview-table">
               <thead>
@@ -243,8 +248,8 @@ export function WorkbookImport({ orgId }: { orgId: string }) {
             </table>
           </div>
           {preview && !done && (
-            <Button disabled={m.disabled} onClick={() => void m.run(commit, 'All four sheets imported successfully.')}>
-              Import all four sheets
+            <Button disabled={m.disabled} onClick={() => void m.run(commit, 'Data imported successfully.')}>
+              {dataset ? `Import ${dataset} records` : 'Import all four sheets'}
             </Button>
           )}
         </section>

@@ -90,6 +90,7 @@ model Plan {
 }
 
 model Organisation {
+  apiImportUrls Json @default("{}")
   apiImportUrl String?
   billingCustomers BillingCustomer[]
   legacyEnergyBatches LegacyEnergyBatch[]
