@@ -10,11 +10,11 @@ export const apiImportSettings = z
         if (!value) return true;
         try {
           const url = new URL(value);
-          return url.protocol === 'https:' && !url.username && !url.password && !url.hash;
+          return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password && !url.hash;
         } catch {
           return false;
         }
-      }, 'Use an HTTPS URL without embedded credentials or a fragment.'),
+      }, 'Use an HTTP or HTTPS URL without embedded credentials or a fragment.'),
   })
   .strict();
 const amount = z.number().finite().nonnegative();

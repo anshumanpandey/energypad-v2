@@ -1,0 +1,183 @@
+{
+  "posts": [
+    { "id": "1", "title": "a title", "views": 100 },
+    { "id": "2", "title": "another title", "views": 200 }
+  ],
+  "comments": [
+    { "id": "1", "text": "a comment about post 1", "postId": "1" },
+    { "id": "2", "text": "another comment about post 1", "postId": "1" }
+  ],
+  "consumptions": {
+    "version": 1,
+    "consumption": [
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 1,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 1506,
+        "unit": "kWh",
+        "totalCost": 80,
+        "vatCost": 20,
+        "conversionFactor": 1,
+        "population": 111,
+        "operatingHours": 9
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 2,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 1123,
+        "unit": "kWh",
+        "totalCost": 126,
+        "vatCost": 22,
+        "conversionFactor": 1,
+        "population": 49,
+        "operatingHours": 6
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 3,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 199,
+        "unit": "kWh",
+        "totalCost": 123,
+        "vatCost": 12,
+        "conversionFactor": 1,
+        "population": 31,
+        "operatingHours": 9
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 4,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 1429,
+        "unit": "kWh",
+        "totalCost": 190,
+        "vatCost": 2,
+        "conversionFactor": 1,
+        "population": 52,
+        "operatingHours": 7
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 5,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 984,
+        "unit": "kWh",
+        "totalCost": 20,
+        "vatCost": 10,
+        "conversionFactor": 1,
+        "population": 123,
+        "operatingHours": 8
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 6,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 1083,
+        "unit": "kWh",
+        "totalCost": 246,
+        "vatCost": 9,
+        "conversionFactor": 1,
+        "population": 207,
+        "operatingHours": 11
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 7,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 1550,
+        "unit": "kWh",
+        "totalCost": 308,
+        "vatCost": 9,
+        "conversionFactor": 1,
+        "population": 57,
+        "operatingHours": 10
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 8,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 540,
+        "unit": "kWh",
+        "totalCost": 46,
+        "vatCost": 8,
+        "conversionFactor": 1,
+        "population": 175,
+        "operatingHours": 6
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 9,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 373,
+        "unit": "kWh",
+        "totalCost": 121,
+        "vatCost": 23,
+        "conversionFactor": 1,
+        "population": 206,
+        "operatingHours": 2
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 10,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 911,
+        "unit": "kWh",
+        "totalCost": 228,
+        "vatCost": 9,
+        "conversionFactor": 1,
+        "population": 221,
+        "operatingHours": 9
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 11,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 1533,
+        "unit": "kWh",
+        "totalCost": 389,
+        "vatCost": 2,
+        "conversionFactor": 1,
+        "population": 91,
+        "operatingHours": 7
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 12,
+        "energyUse": "Heating",
+        "utility": "Gas",
+        "consumption": 921,
+        "unit": "kWh",
+        "totalCost": 86,
+        "vatCost": 3,
+        "conversionFactor": 1,
+        "population": 217,
+        "operatingHours": 11
+      }
+    ]
+  }
+}

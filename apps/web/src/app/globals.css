@@ -3173,11 +3173,104 @@ select[aria-invalid='true'] {
   }
 }
 
-.api-import-source {
-  margin-top: 1.5rem;
-  padding: 1.25rem;
+.api-connections {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.api-connections-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 24px 18px;
+}
+.api-connections-heading p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.api-connections-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #edf5ee;
+  color: var(--green);
+}
+.api-dataset-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  margin: 0 24px;
   border: 1px solid var(--line);
   border-radius: 12px;
+  background: #f2f5f1;
+}
+.api-dataset-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 46px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+}
+.api-dataset-tabs button svg {
+  flex-shrink: 0;
+}
+.api-dataset-tabs button:hover:not(:disabled) {
+  background: #e5ede4;
+  color: var(--green);
+}
+.api-dataset-tabs button[aria-selected='true'],
+.api-dataset-tabs button[aria-selected='true']:hover:not(:disabled) {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+  box-shadow: 0 2px 5px #153d2c24;
+}
+.api-dataset-tabs button:focus-visible {
+  outline: 3px solid #96bda1;
+  outline-offset: 2px;
+}
+.api-import-source {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+}
+.api-import-source > p {
+  color: var(--muted);
+  max-width: 75ch;
+  font-size: 13px;
+}
+@media (max-width: 700px) {
+  .api-connections-heading {
+    padding: 18px 16px 14px;
+  }
+  .api-dataset-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-inline: 16px;
+  }
+  .api-dataset-tabs button {
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    padding-inline: 6px;
+    font-size: 13px;
+  }
+  .api-import-source {
+    padding: 20px 16px;
+  }
 }
 .api-import-actions {
   display: flex;

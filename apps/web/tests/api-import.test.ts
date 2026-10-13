@@ -47,10 +47,16 @@ it('reports every malformed JSON field and rejects extra fields and formatted nu
     );
 });
 it('permits clearing saved URL but rejects unsafe schemes and embedded credentials', () => {
-  for (const url of ['', 'https://provider.example/data?site=abc'])
+  for (const url of [
+    '',
+    'https://provider.example/data?site=abc',
+    'http://provider.example/data',
+    'http://localhost:3002/data',
+  ])
     expect(apiImportSettings.safeParse({ url }).success).toBe(true);
   for (const url of [
-    'http://provider.example',
+    'ftp://provider.example/data',
+    'http://user:pass@example.test/data',
     'javascript:alert(1)',
     'https://user:pass@example.test/data',
     'https://example.test/#secret',

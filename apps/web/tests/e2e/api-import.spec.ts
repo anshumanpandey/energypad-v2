@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures/isolated-user';
 import { apiImportExample, apiDatasets, apiDatasetLabels } from '../../src/domain/api-import';
 
-test('saved JSON endpoint, example modal, validation and reviewed database import', async ({ page }) => {
+test('saved JSON endpoint, example modal, validation and reviewed database import', async ({ page }, testInfo) => {
   const headers = { origin: 'http://localhost:3101' };
   const orgResponse = await page.request.post('/api/v1/organisations', {
     headers,
@@ -15,30 +15,32 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
   });
   expect(siteResponse.ok()).toBe(true);
   const path = `/api/v1/organisations/${org.id}/api-import`;
-  expect((await page.request.put(path, { headers, data: { url: 'http://unsafe.example' } })).status()).toBe(400);
+  expect((await page.request.put(path, { headers, data: { url: 'ftp://unsafe.example' } })).status()).toBe(400);
   expect(
     (await page.request.get('/api/v1/organisations/00000000-0000-4000-8000-000000000001/api-import')).status(),
   ).toBe(404);
   await page.goto(`/org/${org.id}/energy`);
+  const endpoint = (dataset: string) => `${dataset === 'consumption' ? 'http' : 'https'}://provider.example/${dataset}`;
   const source = page.getByRole('region', { name: 'API data source' });
   const tabs = page.getByRole('tablist', { name: 'API datasets' });
   for (const dataset of apiDatasets) {
     await tabs.getByRole('tab', { name: apiDatasetLabels[dataset], exact: true }).click();
-    await source.getByLabel('API URL', { exact: true }).fill(`https://provider.example/${dataset}`);
+    await source.getByLabel('API URL', { exact: true }).fill(endpoint(dataset));
     await source.getByRole('button', { name: 'Save API URL', exact: true }).click();
     await expect(source.getByText('API URL saved.', { exact: true })).toBeVisible();
   }
+  await page.locator('.api-connections').screenshot({ path: testInfo.outputPath('api-tabs-desktop.png') });
   await page.reload();
   for (const dataset of apiDatasets) {
     await tabs.getByRole('tab', { name: apiDatasetLabels[dataset], exact: true }).click();
-    await expect(source.getByLabel('API URL', { exact: true })).toHaveValue(`https://provider.example/${dataset}`);
+    await expect(source.getByLabel('API URL', { exact: true })).toHaveValue(endpoint(dataset));
     await source.getByRole('button', { name: 'View JSON example' }).click();
     const dialog = page.getByRole('dialog', { name: 'Expected API JSON response' });
     await expect(dialog.locator('code')).toContainText(`"${dataset}"`);
     await expect(dialog.locator('code')).toContainText('"version": 1');
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
-    await page.route(`https://provider.example/${dataset}`, (route) =>
+    await page.route(endpoint(dataset), (route) =>
       route.fulfill({
         headers: { 'Access-Control-Allow-Origin': '*' },
         json: { version: 1, [dataset]: apiImportExample[dataset] },
@@ -64,6 +66,8 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
   await tabs.getByRole('tab', { name: 'Emissions', exact: true }).click();
   await expect(source.getByLabel('API URL', { exact: true })).toHaveValue('https://provider.example/emissions');
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.api-connections').screenshot({ path: testInfo.outputPath('api-tabs-mobile.png') });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await source.getByRole('button', { name: 'View JSON example' }).click();
   expect(await page.getByRole('dialog').evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
 });

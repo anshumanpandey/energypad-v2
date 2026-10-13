@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { Zap, Leaf, Target, SlidersHorizontal, Cable } from 'lucide-react';
 import {
   apiImportExample,
   datasetPayload,
@@ -11,6 +12,8 @@ import {
 import { Button } from './ui/button';
 import { request, responseError, useMutation } from './forms';
 
+const datasetIcons = { consumption: Zap, emissions: Leaf, targets: Target, drivers: SlidersHorizontal };
+
 export function ApiImportSource(props: {
   orgId: string;
   disabled: boolean;
@@ -19,40 +22,53 @@ export function ApiImportSource(props: {
   const [dataset, setDataset] = useState<ApiDataset>('consumption');
   const [busy, setBusy] = useState(false);
   return (
-    <div>
-      <div className="data-import-tabs" role="tablist" aria-label="API datasets">
-        {apiDatasets.map((key, index) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            id={`api-tab-${key}`}
-            aria-controls={`api-panel-${key}`}
-            aria-selected={dataset === key}
-            tabIndex={dataset === key ? 0 : -1}
-            disabled={props.disabled || busy}
-            onClick={() => setDataset(key)}
-            onKeyDown={(event) => {
-              const next =
-                event.key === 'ArrowRight'
-                  ? (index + 1) % 4
-                  : event.key === 'ArrowLeft'
-                    ? (index + 3) % 4
-                    : event.key === 'Home'
-                      ? 0
-                      : event.key === 'End'
-                        ? 3
-                        : null;
-              if (next !== null) {
-                event.preventDefault();
-                setDataset(apiDatasets[next]);
-                document.getElementById(`api-tab-${apiDatasets[next]}`)?.focus();
-              }
-            }}
-          >
-            {apiDatasetLabels[key]}
-          </button>
-        ))}
+    <div className="api-connections">
+      <div className="api-connections-heading">
+        <span className="api-connections-icon">
+          <Cable size={22} aria-hidden="true" />
+        </span>
+        <div>
+          <h3>API connections</h3>
+          <p>Manage a separate endpoint for each dataset.</p>
+        </div>
+      </div>
+      <div className="api-dataset-tabs" role="tablist" aria-label="API datasets">
+        {apiDatasets.map((key, index) => {
+          const Icon = datasetIcons[key];
+          return (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              id={`api-tab-${key}`}
+              aria-controls={`api-panel-${key}`}
+              aria-selected={dataset === key}
+              tabIndex={dataset === key ? 0 : -1}
+              disabled={props.disabled || busy}
+              onClick={() => setDataset(key)}
+              onKeyDown={(event) => {
+                const next =
+                  event.key === 'ArrowRight'
+                    ? (index + 1) % 4
+                    : event.key === 'ArrowLeft'
+                      ? (index + 3) % 4
+                      : event.key === 'Home'
+                        ? 0
+                        : event.key === 'End'
+                          ? 3
+                          : null;
+                if (next !== null) {
+                  event.preventDefault();
+                  setDataset(apiDatasets[next]);
+                  document.getElementById(`api-tab-${apiDatasets[next]}`)?.focus();
+                }
+              }}
+            >
+              <Icon size={18} aria-hidden="true" />
+              <span>{apiDatasetLabels[key]}</span>
+            </button>
+          );
+        })}
       </div>
       {apiDatasets.map((key) => (
         <div
@@ -128,7 +144,7 @@ function DatasetSource({
       signal: AbortSignal.timeout(30000),
     }).catch(() => {
       throw new Error(
-        'Could not fetch API data. Check that the endpoint is reachable, permits this app through CORS, and responds within 30 seconds without redirecting.',
+        'Could not fetch API data. Check that the endpoint is reachable, permits this app through CORS, and responds within 30 seconds without redirecting. Browsers may block HTTP endpoints when this app is opened over HTTPS.',
       );
     });
     if (!response.ok) throw new Error(`API request failed (${response.status}).`);
@@ -182,8 +198,9 @@ function DatasetSource({
     <section className="api-import-source" aria-label="API data source">
       <h3>{apiDatasetLabels[dataset]} API</h3>
       <p>
-        Save an HTTPS endpoint returning JSON. The provider must allow this app through CORS. Requests use GET without
-        credentials; redirects are not followed.
+        Save an HTTP or HTTPS endpoint returning JSON. The provider must allow this app through CORS. Requests use GET
+        without credentials; redirects are not followed. When this app is opened over HTTPS, your browser may block HTTP
+        endpoints.
       </p>
       {loadError && <p role="alert">{loadError} Refresh to try again.</p>}
       <form
