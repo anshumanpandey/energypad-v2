@@ -59,238 +59,251 @@ export function WasteDashboard({
           <p>Monthly consumption, expected consumption and waste or savings calculated from uploaded site inputs.</p>
         </div>
       </div>
-      <section className="panel stack-form" aria-label="Waste & Savings filters" aria-busy={pending}>
-        <div className="utility-graph-actions">
-          <Button aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
-            Graph view
-          </Button>
-          <Button aria-pressed={view === 'table'} onClick={() => setView('table')}>
-            Table view
-          </Button>
-          <Button
-            onClick={() => {
-              setMonth('');
-              setFuel('');
-              setSort('month');
-              setOther(false);
-              update(siteId, undefined);
-            }}
-          >
-            Reset filters
-          </Button>
-          <Button onClick={() => startTransition(() => router.refresh())}>Refresh data</Button>
-        </div>
-        <div className="form-grid">
-          <label>
-            Site
-            <select
-              aria-label="Waste site"
-              disabled={pending}
-              value={siteId}
-              onChange={(event) => {
+      <div className="waste-dashboard-layout">
+        <aside
+          className="panel stack-form waste-dashboard-filters"
+          aria-label="Waste & Savings filters"
+          aria-busy={pending}
+        >
+          <h2>Filters</h2>
+          <div className="utility-graph-actions">
+            <Button aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
+              Graph view
+            </Button>
+            <Button aria-pressed={view === 'table'} onClick={() => setView('table')}>
+              Table view
+            </Button>
+            <Button
+              onClick={() => {
+                setMonth('');
                 setFuel('');
-                update(event.target.value, undefined);
+                setSort('month');
+                setOther(false);
+                update(siteId, undefined);
               }}
             >
-              {sites.map((site) => (
-                <option key={site.id} value={site.id}>
-                  {site.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Year
-            <select
-              aria-label="Waste year"
-              disabled={pending}
-              value={preview.year}
-              onChange={(event) => update(siteId, Number(event.target.value))}
-            >
-              {[...new Set([preview.year, ...preview.years])].map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Month
-            <select aria-label="Waste result month" value={month} onChange={(event) => setMonth(event.target.value)}>
-              <option value="">All months</option>
-              {Array.from({ length: 12 }, (_, index) => {
-                const code = String(index + 1).padStart(2, '0');
-                return (
-                  <option key={code} value={code}>
-                    {new Intl.DateTimeFormat('en', { month: 'long', timeZone: 'UTC' }).format(
-                      new Date(Date.UTC(2000, index, 1)),
-                    )}
-                  </option>
-                );
-              })}
-            </select>
-          </label>
-          <label>
-            Fuel type
-            <select aria-label="Waste fuel type" value={fuel} onChange={(event) => setFuel(event.target.value)}>
-              <option value="">All fuels</option>
-              {[...new Set(preview.meters.map((meter) => meter.fuel))].map((type) => (
-                <option key={type} value={type}>
-                  {type.replaceAll('_', ' ')}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Sort by
-            <select
-              aria-label="Waste sort by"
-              value={sort}
-              onChange={(event) => setSort(event.target.value as UtilityChartSort)}
-            >
-              <option value="month">Month</option>
-              <option value="high-to-low">High to low</option>
-              <option value="low-to-high">Low to high</option>
-            </select>
-          </label>
-        </div>
-        <div className="utility-graph-actions" role="group" aria-label="Calculation drivers">
-          {Object.entries(driverLabels)
-            .filter(([code]) => other || ['HDD', 'CDD'].includes(code))
-            .map(([code, label]) => (
-              <label className="checkbox-label" key={code}>
-                <input
-                  type="checkbox"
-                  disabled={pending || (!drivers.includes(code) && drivers.length >= 3)}
-                  checked={drivers.includes(code)}
-                  onChange={(event) =>
-                    update(
-                      siteId,
-                      preview.year,
-                      event.target.checked
-                        ? [...preview.drivers, code]
-                        : preview.drivers.filter((driver) => driver !== code),
-                    )
-                  }
-                />
-                {label}
-              </label>
-            ))}
-          <Button onClick={() => setOther(!other)}>{other ? 'Hide other drivers' : 'Add other drivers'}</Button>
-        </div>
-        <p role="status">{pending ? 'Updating calculations…' : `${preview.method} · Selected year ${preview.year}`}</p>
-        <p className="muted">
-          Positive values show savings; negative values show waste. Calculations are experimental. Missing inputs remain
-          unavailable.
-        </p>
-        <div className="utility-graph-actions">
-          <Link href={`/org/${orgId}/degree-days?site=${siteId}&year=${preview.year}`}>View HDD &amp; CDD inputs</Link>
-          <Link href={`/org/${orgId}/waste-savings?site=${siteId}&evidence=1`}>Saved calculation evidence</Link>
-          <Link href={`/org/${orgId}/analysis`}>Advanced Analysis</Link>
-        </div>
-      </section>
-      {!meters.length && (
-        <section className="panel">
-          <p>No uploaded consumption for this selection.</p>
-        </section>
-      )}
-      {!!meters.length && preview.weather?.required && !preview.weather.ready && (
-        <WasteWeather
-          key={`${siteId}:${preview.year}`}
-          orgId={orgId}
-          siteId={siteId}
-          year={preview.year}
-          manage={manageWeather}
-        />
-      )}
-      {meters.map((meter) => (
-        <div key={meter.id}>
-          <section className="panel">
-            <h2>
-              {meter.name} · {meter.fuel.replaceAll('_', ' ')}
-            </h2>
-            <p role="status">
-              {meter.rows.filter((row) => row.variance !== null).length
-                ? `${meter.rows.filter((row) => row.variance !== null).length} of ${meter.rows.length} months calculated.`
-                : 'Calculation unavailable: the required inputs or model checks need attention.'}
-            </p>
-            <p>
-              {meter.fittedYear !== undefined && meter.fittedYear !== preview.year
-                ? `The model is fitted from ${meter.fittedYear} consumption and selected drivers, then applied to this selection's actual consumption and driver values.`
-                : 'Only one consumption period is available. These values show variation from its fitted model.'}{' '}
-              Expected consumption = intercept + each coefficient × its reporting driver value. Avoided / wasted energy
-              = adjusted expected consumption − actual consumption. The gauge divides the latest three months’ total
-              avoided / wasted energy by their total adjusted expected consumption.
-              {meter.baselineSource &&
-                meter.baselineSource.id !== meter.id &&
-                ` Fitted consumption source: ${meter.baselineSource.name}, in normalized kWh.`}
-            </p>
-            {meter.downloadable && (
-              <a
-                className="button button-primary"
-                href={`/api/v1/organisations/${orgId}/sites/${siteId}/analysis/waste-preview.xlsx?${new URLSearchParams({ year: String(preview.year), meter: meter.id, drivers: preview.drivers.join(',') })}`}
+              Reset filters
+            </Button>
+            <Button onClick={() => startTransition(() => router.refresh())}>Refresh data</Button>
+          </div>
+          <div className="form-grid">
+            <label>
+              Site
+              <select
+                aria-label="Waste site"
+                disabled={pending}
+                value={siteId}
+                onChange={(event) => {
+                  setFuel('');
+                  update(event.target.value, undefined);
+                }}
               >
-                Download site calculation sheet
-              </a>
-            )}
-            {!!meter.issues.length && (
-              <details open>
-                <summary>Calculation inputs need attention ({meter.issues.length})</summary>
-                <ul>
-                  {meter.issues.map((issue) => (
-                    <li key={issue}>{issue}</li>
-                  ))}
-                </ul>
-              </details>
-            )}
-          </section>
-          {view === 'table' && (
-            <section className="panel table-scroll" aria-label="Waste and savings monthly results">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th>Actual (kWh)</th>
-                    <th>Expected (kWh)</th>
-                    <th>Adjusted expected (kWh)</th>
-                    <th>Waste / savings (kWh)</th>
-                    <th>Cost (£)</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {meter.rows
-                    .filter((row) => !month || row.month.endsWith(`-${month}`))
-                    .sort((a, b) =>
-                      sort === 'month'
-                        ? a.month.localeCompare(b.month)
-                        : (sort === 'high-to-low' ? -1 : 1) * ((a.variance ?? 0) - (b.variance ?? 0)),
-                    )
-                    .map((row) => (
-                      <tr key={row.month}>
-                        <th scope="row">{formatMonth(row.month)}</th>
-                        <td>{value(row.actual)}</td>
-                        <td>{value(row.expected)}</td>
-                        <td>{value(row.adjusted)}</td>
-                        <td>{value(row.variance)}</td>
-                        <td>{value(row.cost)}</td>
-                        <td>{row.note}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+                {sites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Year
+              <select
+                aria-label="Waste year"
+                disabled={pending}
+                value={preview.year}
+                onChange={(event) => update(siteId, Number(event.target.value))}
+              >
+                {[...new Set([preview.year, ...preview.years])].map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Month
+              <select aria-label="Waste result month" value={month} onChange={(event) => setMonth(event.target.value)}>
+                <option value="">All months</option>
+                {Array.from({ length: 12 }, (_, index) => {
+                  const code = String(index + 1).padStart(2, '0');
+                  return (
+                    <option key={code} value={code}>
+                      {new Intl.DateTimeFormat('en', { month: 'long', timeZone: 'UTC' }).format(
+                        new Date(Date.UTC(2000, index, 1)),
+                      )}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+            <label>
+              Fuel type
+              <select aria-label="Waste fuel type" value={fuel} onChange={(event) => setFuel(event.target.value)}>
+                <option value="">All fuels</option>
+                {[...new Set(preview.meters.map((meter) => meter.fuel))].map((type) => (
+                  <option key={type} value={type}>
+                    {type.replaceAll('_', ' ')}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Sort by
+              <select
+                aria-label="Waste sort by"
+                value={sort}
+                onChange={(event) => setSort(event.target.value as UtilityChartSort)}
+              >
+                <option value="month">Month</option>
+                <option value="high-to-low">High to low</option>
+                <option value="low-to-high">Low to high</option>
+              </select>
+            </label>
+          </div>
+          <div className="utility-graph-actions" role="group" aria-label="Calculation drivers">
+            {Object.entries(driverLabels)
+              .filter(([code]) => other || ['HDD', 'CDD'].includes(code))
+              .map(([code, label]) => (
+                <label className="checkbox-label" key={code}>
+                  <input
+                    type="checkbox"
+                    disabled={pending || (!drivers.includes(code) && drivers.length >= 3)}
+                    checked={drivers.includes(code)}
+                    onChange={(event) =>
+                      update(
+                        siteId,
+                        preview.year,
+                        event.target.checked
+                          ? [...preview.drivers, code]
+                          : preview.drivers.filter((driver) => driver !== code),
+                      )
+                    }
+                  />
+                  {label}
+                </label>
+              ))}
+            <Button onClick={() => setOther(!other)}>{other ? 'Hide other drivers' : 'Add other drivers'}</Button>
+          </div>
+          <p role="status">
+            {pending ? 'Updating calculations…' : `${preview.method} · Selected year ${preview.year}`}
+          </p>
+          <p className="muted">
+            Positive values show savings; negative values show waste. Calculations are experimental. Missing inputs
+            remain unavailable.
+          </p>
+          <div className="utility-graph-actions">
+            <Link href={`/org/${orgId}/degree-days?site=${siteId}&year=${preview.year}`}>
+              View HDD &amp; CDD inputs
+            </Link>
+            <Link href={`/org/${orgId}/waste-savings?site=${siteId}&evidence=1`}>Saved calculation evidence</Link>
+            <Link href={`/org/${orgId}/analysis`}>Advanced Analysis</Link>
+          </div>
+        </aside>
+        <div className="waste-dashboard-results">
+          {!meters.length && (
+            <section className="panel">
+              <p>No uploaded consumption for this selection.</p>
             </section>
           )}
+          {!!meters.length && preview.weather?.required && !preview.weather.ready && (
+            <WasteWeather
+              key={`${siteId}:${preview.year}`}
+              orgId={orgId}
+              siteId={siteId}
+              year={preview.year}
+              manage={manageWeather}
+            />
+          )}
+          {meters.map((meter) => (
+            <div key={meter.id}>
+              <section className="panel">
+                <h2>
+                  {meter.name} · {meter.fuel.replaceAll('_', ' ')}
+                </h2>
+                <p role="status">
+                  {meter.rows.filter((row) => row.variance !== null).length
+                    ? `${meter.rows.filter((row) => row.variance !== null).length} of ${meter.rows.length} months calculated.`
+                    : 'Calculation unavailable: the required inputs or model checks need attention.'}
+                </p>
+                <p>
+                  {meter.fittedYear !== undefined && meter.fittedYear !== preview.year
+                    ? `The model is fitted from ${meter.fittedYear} consumption and selected drivers, then applied to this selection's actual consumption and driver values.`
+                    : 'Only one consumption period is available. These values show variation from its fitted model.'}{' '}
+                  Expected consumption = intercept + each coefficient × its reporting driver value. Avoided / wasted
+                  energy = adjusted expected consumption − actual consumption. The gauge divides the latest three
+                  months’ total avoided / wasted energy by their total adjusted expected consumption.
+                  {meter.baselineSource &&
+                    meter.baselineSource.id !== meter.id &&
+                    ` Fitted consumption source: ${meter.baselineSource.name}, in normalized kWh.`}
+                </p>
+                {meter.downloadable && (
+                  <a
+                    className="button button-primary"
+                    href={`/api/v1/organisations/${orgId}/sites/${siteId}/analysis/waste-preview.xlsx?${new URLSearchParams({ year: String(preview.year), meter: meter.id, drivers: preview.drivers.join(',') })}`}
+                  >
+                    Download site calculation sheet
+                  </a>
+                )}
+                {!!meter.issues.length && (
+                  <details open>
+                    <summary>Calculation inputs need attention ({meter.issues.length})</summary>
+                    <ul>
+                      {meter.issues.map((issue) => (
+                        <li key={issue}>{issue}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </section>
+              {view === 'table' && (
+                <section className="panel table-scroll" aria-label="Waste and savings monthly results">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Month</th>
+                        <th>Actual (kWh)</th>
+                        <th>Expected (kWh)</th>
+                        <th>Adjusted expected (kWh)</th>
+                        <th>Waste / savings (kWh)</th>
+                        <th>Cost (£)</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {meter.rows
+                        .filter((row) => !month || row.month.endsWith(`-${month}`))
+                        .sort((a, b) =>
+                          sort === 'month'
+                            ? a.month.localeCompare(b.month)
+                            : (sort === 'high-to-low' ? -1 : 1) * ((a.variance ?? 0) - (b.variance ?? 0)),
+                        )
+                        .map((row) => (
+                          <tr key={row.month}>
+                            <th scope="row">{formatMonth(row.month)}</th>
+                            <td>{value(row.actual)}</td>
+                            <td>{value(row.expected)}</td>
+                            <td>{value(row.adjusted)}</td>
+                            <td>{value(row.variance)}</td>
+                            <td>{value(row.cost)}</td>
+                            <td>{row.note}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </section>
+              )}
+            </div>
+          ))}
+          {view === 'graph' && meters.length > 0 && (
+            <WasteCharts
+              rows={aggregateWasteRows(meters.map((meter) => meter.rows))}
+              month={month}
+              sort={sort}
+              throughMonth={preview.weather?.required ? preview.weather.throughMonth : undefined}
+            />
+          )}
         </div>
-      ))}
-      {view === 'graph' && meters.length > 0 && (
-        <WasteCharts
-          rows={aggregateWasteRows(meters.map((meter) => meter.rows))}
-          month={month}
-          sort={sort}
-          throughMonth={preview.weather?.required ? preview.weather.throughMonth : undefined}
-        />
-      )}
+      </div>
     </div>
   );
 }

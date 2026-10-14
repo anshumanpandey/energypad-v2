@@ -64,6 +64,7 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
     const dialog = page.getByRole('dialog', { name: 'Expected API JSON response' });
     await expect(dialog.locator('code')).toContainText(`"${dataset}"`);
     await expect(dialog.locator('code')).toContainText('"version": 1');
+    if (dataset === 'consumption') await dialog.screenshot({ path: testInfo.outputPath('json-modal-desktop.png') });
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
     await page.route(endpoint(dataset), (route) =>
@@ -114,4 +115,7 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await source.getByRole('button', { name: 'View JSON example' }).click();
   expect(await page.getByRole('dialog').evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
+  await page.getByRole('dialog').screenshot({ path: testInfo.outputPath('json-modal-mobile.png') });
+  await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });

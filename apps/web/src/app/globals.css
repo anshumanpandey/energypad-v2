@@ -2108,6 +2108,51 @@ small {
 .waste-savings {
   overflow-wrap: anywhere;
 }
+.waste-dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-areas: 'results filters';
+  align-items: start;
+  gap: 20px;
+}
+.waste-dashboard-results {
+  grid-area: results;
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.waste-dashboard-results .graphs-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+}
+.waste-dashboard-filters {
+  grid-area: filters;
+  min-width: 0;
+  padding: 20px;
+}
+.waste-dashboard-filters h2,
+.waste-dashboard-filters p {
+  margin: 0;
+}
+.waste-dashboard-filters .form-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.waste-dashboard-filters select {
+  width: 100%;
+  min-width: 0;
+}
+.waste-dashboard-filters .utility-graph-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+.waste-dashboard-filters .checkbox-label {
+  justify-content: flex-start;
+}
+@media (max-width: 1100px) {
+  .waste-dashboard-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'filters' 'results';
+  }
+}
 .waste-savings .stat-card > strong {
   font-size: 1.4rem;
 }
@@ -3280,6 +3325,23 @@ select[aria-invalid='true'] {
 }
 .api-import-example {
   width: min(760px, calc(100vw - 2rem));
+}
+.api-import-example-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.api-import-example-header h2 {
+  margin: 0;
+  align-self: center;
+}
+.api-import-example-header button {
+  justify-self: end;
+  white-space: nowrap;
 }
 .api-import-example pre {
   overflow: auto;

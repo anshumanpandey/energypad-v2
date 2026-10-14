@@ -297,7 +297,7 @@ function JsonExample({ onClose, dataset }: { onClose: () => void; dataset: ApiDa
         onClose();
       }}
     >
-      <div className="api-import-actions">
+      <div className="api-import-example-header">
         <h2 id="api-json-title">Expected API JSON response</h2>
         <Button type="button" variant="secondary" onClick={onClose}>
           Close
