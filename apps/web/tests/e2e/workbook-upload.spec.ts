@@ -57,6 +57,20 @@ test('one workbook validates and imports all four sheets with site names', async
   book.getWorksheet('Targets')!.getCell('F2').value = 150;
   await validate();
   const preview = page.getByRole('region', { name: 'Workbook import preview' });
+  await expect(preview.getByRole('region', { name: 'Consumption records to import', exact: true })).toContainText(
+    'Main Building',
+  );
+  await expect(
+    preview
+      .getByRole('region', { name: 'Consumption records to import', exact: true })
+      .getByRole('cell', { name: '45', exact: true }),
+  ).toBeVisible();
+  for (const name of ['Emissions', 'Targets', 'Drivers'])
+    await expect(preview.getByRole('region', { name: `${name} records to import`, exact: true })).toContainText(
+      'Main Building',
+    );
+  const before = await page.request.get(`/api/v1/organisations/${org.id}/consumption-records`);
+  expect(await before.text()).not.toContain('Main Building');
   await expect(preview.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(4);
   const missing = page
     .getByRole('region', { name: 'Workbook upload' })
@@ -80,7 +94,8 @@ test('one workbook validates and imports all four sheets with site names', async
   await expect(preview.getByRole('cell', { name: 'Imported', exact: true })).toHaveCount(4);
   await validate();
   await expect(preview.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(4);
-  for (const row of await preview.locator('tbody tr').all()) await expect(row.getByRole('cell').nth(1)).toHaveText('0');
+  for (const row of await preview.getByRole('table').first().locator('tbody tr').all())
+    await expect(row.getByRole('cell').nth(1)).toHaveText('0');
   await page.getByRole('button', { name: 'Import all four sheets', exact: true }).click();
   await expect(preview.getByRole('cell', { name: 'Imported', exact: true })).toHaveCount(4);
 });

@@ -21,6 +21,15 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
   ).toBe(404);
   await page.goto(`/org/${org.id}/energy`);
   const endpoint = (dataset: string) => `${dataset === 'consumption' ? 'http' : 'https'}://provider.example/${dataset}`;
+  const excel = page.getByRole('region', { name: 'Workbook upload', exact: true });
+  await excel.getByLabel('Workbook', { exact: true }).setInputFiles({
+    name: 'pending-excel.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer: Buffer.from('Independent pending workbook'),
+  });
+  await expect(
+    page.getByRole('region', { name: 'API Connections', exact: true }).getByLabel('Workbook', { exact: true }),
+  ).toHaveCount(0);
   const source = page.getByRole('region', { name: 'API data source' });
   const tabs = page.getByRole('tablist', { name: 'API datasets' });
   for (const dataset of apiDatasets) {
@@ -31,6 +40,11 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
   }
   await page.locator('.api-connections').screenshot({ path: testInfo.outputPath('api-tabs-desktop.png') });
   await page.reload();
+  await excel.getByLabel('Workbook', { exact: true }).setInputFiles({
+    name: 'pending-excel.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer: Buffer.from('Independent pending workbook'),
+  });
   for (const dataset of apiDatasets) {
     await tabs.getByRole('tab', { name: apiDatasetLabels[dataset], exact: true }).click();
     await expect(source.getByLabel('API URL', { exact: true })).toHaveValue(endpoint(dataset));
@@ -47,10 +61,19 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
       }),
     );
     await source.getByRole('button', { name: 'Save & fetch data' }).click();
-    await expect(page.getByText(`Selected workbook: api-${dataset}.xlsx`)).toBeVisible();
-    await page.getByRole('button', { name: 'Validate workbook', exact: true }).click();
-    const preview = page.getByRole('region', { name: 'Workbook import preview' });
+    await expect(page.getByText(`Fetched data: api-${dataset}.xlsx`)).toBeVisible();
+    await page.getByRole('button', { name: `Validate ${dataset} data`, exact: true }).click();
+    const preview = page.getByRole('region', { name: `${dataset} API preview` });
     await expect(preview.getByRole('cell', { name: 'Ready', exact: true })).toHaveCount(1);
+    await expect(
+      preview.getByRole('region', { name: `${apiDatasetLabels[dataset]} records to import`, exact: true }),
+    ).toContainText('Example site');
+    await expect(excel.getByText('Selected workbook: pending-excel.xlsx')).toBeVisible();
+    if (dataset === 'consumption') {
+      await expect(preview.getByRole('cell', { name: '1250', exact: true })).toBeVisible();
+      const before = await page.request.get(`/api/v1/organisations/${org.id}/consumption-records`);
+      expect(await before.text()).not.toContain('1250');
+    }
     await page.getByRole('button', { name: `Import ${dataset} records`, exact: true }).click();
     await expect(preview.getByRole('cell', { name: 'Imported', exact: true })).toHaveCount(1);
   }

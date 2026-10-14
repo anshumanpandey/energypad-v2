@@ -3292,3 +3292,28 @@ select[aria-invalid='true'] {
 .api-import-example li {
   margin-block: 0.5rem;
 }
+
+.import-sources {
+  display: grid;
+  gap: 32px;
+  min-width: 0;
+}
+.import-records {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+  min-width: 0;
+}
+.import-records h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.import-records-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.api-import-source .consumption-import > .panel {
+  padding: 16px;
+}

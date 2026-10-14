@@ -9,26 +9,23 @@ import {
   apiDatasetLabels,
   type ApiDataset,
 } from '@/domain/api-import';
+import { ImportReview } from './import-review';
 import { Button } from './ui/button';
 import { request, responseError, useMutation } from './forms';
 
 const datasetIcons = { consumption: Zap, emissions: Leaf, targets: Target, drivers: SlidersHorizontal };
 
-export function ApiImportSource(props: {
-  orgId: string;
-  disabled: boolean;
-  onLoaded: (file: File, dataset: ApiDataset) => void;
-}) {
+export function ApiImportSource(props: { orgId: string; disabled: boolean }) {
   const [dataset, setDataset] = useState<ApiDataset>('consumption');
   const [busy, setBusy] = useState(false);
   return (
-    <div className="api-connections">
+    <section className="api-connections" aria-label="API Connections">
       <div className="api-connections-heading">
         <span className="api-connections-icon">
           <Cable size={22} aria-hidden="true" />
         </span>
         <div>
-          <h3>API connections</h3>
+          <h2>API connections</h2>
           <p>Manage a separate endpoint for each dataset.</p>
         </div>
       </div>
@@ -81,7 +78,7 @@ export function ApiImportSource(props: {
           <DatasetSource {...props} disabled={props.disabled || busy} dataset={key} onBusy={setBusy} />
         </div>
       ))}
-    </div>
+    </section>
   );
 }
 
@@ -90,25 +87,25 @@ function DatasetSource({
   onBusy,
   orgId,
   disabled,
-  onLoaded,
 }: {
   dataset: ApiDataset;
   onBusy: (busy: boolean) => void;
   orgId: string;
   disabled: boolean;
-  onLoaded: (file: File, dataset: ApiDataset) => void;
 }) {
+  const [loaded, setLoaded] = useState<{ file: File; revision: number } | null>(null);
+  const [reviewBusy, setReviewBusy] = useState(false);
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [showExample, setShowExample] = useState(false);
   const m = useMutation();
   useEffect(() => {
-    if (m.pending) {
+    if (m.pending || reviewBusy) {
       onBusy(true);
       return () => onBusy(false);
     }
-  }, [m.pending, onBusy]);
+  }, [m.pending, reviewBusy, onBusy]);
   const path = `organisations/${orgId}/api-import`;
   useEffect(() => {
     let active = true;
@@ -192,7 +189,7 @@ function DatasetSource({
     const blob = await converted.blob();
     if (blob.size > 2_000_000)
       throw new Error('The converted data exceeds the 2 MB import limit. Request fewer records.');
-    onLoaded(new File([blob], `api-${dataset}.xlsx`), dataset);
+    setLoaded((current) => ({ file: new File([blob], `api-${dataset}.xlsx`), revision: (current?.revision ?? 0) + 1 }));
   }
   return (
     <section className="api-import-source" aria-label="API data source">
@@ -242,6 +239,15 @@ function DatasetSource({
         </div>
         {m.feedback}
       </form>
+      {loaded && (
+        <ImportReview
+          key={loaded.revision}
+          orgId={orgId}
+          dataset={dataset}
+          initialFile={loaded.file}
+          onBusy={setReviewBusy}
+        />
+      )}
       {showExample && <JsonExample dataset={dataset} onClose={() => setShowExample(false)} />}
     </section>
   );
