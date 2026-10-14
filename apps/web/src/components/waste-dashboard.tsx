@@ -66,13 +66,15 @@ export function WasteDashboard({
           aria-busy={pending}
         >
           <h2>Filters</h2>
-          <div className="utility-graph-actions">
+          <div className="waste-view-toggle" role="group" aria-label="Results view">
             <Button aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
               Graph view
             </Button>
             <Button aria-pressed={view === 'table'} onClick={() => setView('table')}>
               Table view
             </Button>
+          </div>
+          <div className="utility-graph-actions">
             <Button
               onClick={() => {
                 setMonth('');

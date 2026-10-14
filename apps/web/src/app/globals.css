@@ -2144,6 +2144,35 @@ small {
   flex-direction: column;
   align-items: stretch;
 }
+.waste-view-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #edf3f2;
+}
+.waste-view-toggle .button {
+  min-width: 0;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: 8px;
+}
+.waste-view-toggle .button[aria-pressed='false'] {
+  background: transparent;
+  color: #29443e;
+  box-shadow: none;
+}
+.waste-view-toggle .button[aria-pressed='true'] {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 1px 3px #163c2e26;
+}
+.waste-view-toggle .button:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
 .waste-dashboard-filters .checkbox-label {
   justify-content: flex-start;
 }
@@ -3414,4 +3443,23 @@ select[aria-invalid='true'] {
 }
 .api-mapping td {
   min-width: 180px;
+}
+
+.metric-chart-change {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.metric-chart-change.is-down {
+  color: #23745d;
+}
+.metric-chart-change.is-up {
+  color: #b42318;
+}
+.metric-chart-change-arrow {
+  font-size: 28px;
+  line-height: 1;
 }

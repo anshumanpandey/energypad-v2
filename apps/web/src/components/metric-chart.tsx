@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { formatEnergyValue } from './format-energy-value';
 import { WasteDirectionText } from './waste-direction';
 import { useGraphMonth } from './graph-month';
+import { monthlyChartChange } from '@/domain/monthly-chart-change';
 
 export type ChartPoint = { month: string; value: string | number | null; note?: string };
 
@@ -14,12 +15,14 @@ export function MetricChart({
   points,
   tone,
   description,
+  comparePreviousMonth = false,
 }: {
   title: string;
   unit: string;
   points: ChartPoint[];
   tone: 'energy' | 'carbon' | 'waste';
   description: string;
+  comparePreviousMonth?: boolean;
 }) {
   const month = useGraphMonth();
   const [selected, setSelected] = useState<string | null>(null);
@@ -38,6 +41,7 @@ export function MetricChart({
     })
     .join(' ');
   const active = points.find((p) => (selected ? p.month === selected : p.month.slice(5, 7) === month));
+  const change = comparePreviousMonth && active ? monthlyChartChange(points, active) : null;
   const displayValue = (p: ChartPoint) => (tone === 'waste' ? formatEnergyValue(p.value, 'Unavailable') : p.value);
   const display = (p: ChartPoint) => (finite(p) ? `${displayValue(p)} ${unit}` : 'Unavailable');
   return (
@@ -111,9 +115,38 @@ export function MetricChart({
       )}
       <p className="metric-chart-detail" aria-live="polite">
         {active ? (
-          <WasteDirectionText
-            text={`${formatMonth(active.month)}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`}
-          />
+          <>
+            <WasteDirectionText
+              text={`${formatMonth(active.month)}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`}
+            />
+            {comparePreviousMonth && (
+              <span className={`metric-chart-change ${change ? `is-${change.direction}` : ''}`}>
+                {change ? (
+                  <>
+                    {change.direction !== 'equal' && (
+                      <span className="metric-chart-change-arrow" aria-hidden="true">
+                        {change.direction === 'down' ? '↓' : '↑'}
+                      </span>
+                    )}
+                    <span>
+                      <strong>
+                        {change.percentage === null
+                          ? 'Percentage unavailable (previous month was zero)'
+                          : `${change.percentage > 0 ? '+' : ''}${formatEnergyValue(change.percentage)}%`}
+                      </strong>
+                      {' · '}
+                      {change.direction === 'equal'
+                        ? 'No change'
+                        : `${formatEnergyValue(Math.abs(change.difference))} ${unit} ${change.direction === 'down' ? 'lower' : 'higher'}`}
+                      {` than ${formatMonth(change.previousMonth)}`}
+                    </span>
+                  </>
+                ) : (
+                  'Previous-month comparison unavailable.'
+                )}
+              </span>
+            )}
+          </>
         ) : values.length ? (
           'Hover or focus a month to inspect its value. A dash marks unavailable data; lines break across missing months.'
         ) : (
