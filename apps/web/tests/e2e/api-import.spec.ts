@@ -38,6 +38,13 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
     await source.getByRole('button', { name: 'Save API URL', exact: true }).click();
     await expect(source.getByText('API URL saved.', { exact: true })).toBeVisible();
   }
+  await tabs.getByRole('tab', { name: 'Targets', exact: true }).click();
+  await source.getByLabel('Use custom response fields').check();
+  await source.getByLabel('Records path', { exact: true }).fill('data.rows');
+  await source.getByLabel('Source field for site', { exact: true }).fill('building.name');
+  await source.getByLabel('Source field for energy', { exact: true }).fill('energy_goal');
+  await source.getByRole('button', { name: 'Save field mapping', exact: true }).click();
+  await expect(source.getByText('API URL saved.', { exact: true })).toBeVisible();
   await page.locator('.api-connections').screenshot({ path: testInfo.outputPath('api-tabs-desktop.png') });
   await page.reload();
   await excel.getByLabel('Workbook', { exact: true }).setInputFiles({
@@ -48,6 +55,11 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
   for (const dataset of apiDatasets) {
     await tabs.getByRole('tab', { name: apiDatasetLabels[dataset], exact: true }).click();
     await expect(source.getByLabel('API URL', { exact: true })).toHaveValue(endpoint(dataset));
+    await expect(source.getByLabel('Use custom response fields')).toBeChecked({ checked: dataset === 'targets' });
+    if (dataset === 'targets') {
+      await expect(source.getByLabel('Records path', { exact: true })).toHaveValue('data.rows');
+      await expect(source.getByLabel('Source field for site', { exact: true })).toHaveValue('building.name');
+    }
     await source.getByRole('button', { name: 'View JSON example' }).click();
     const dialog = page.getByRole('dialog', { name: 'Expected API JSON response' });
     await expect(dialog.locator('code')).toContainText(`"${dataset}"`);
@@ -57,7 +69,16 @@ test('saved JSON endpoint, example modal, validation and reviewed database impor
     await page.route(endpoint(dataset), (route) =>
       route.fulfill({
         headers: { 'Access-Control-Allow-Origin': '*' },
-        json: { version: 1, [dataset]: apiImportExample[dataset] },
+        json:
+          dataset === 'targets'
+            ? {
+                data: {
+                  rows: [
+                    { building: { name: 'Example site' }, year: '2025', month: 1, energy_goal: '1200', carbon: 220 },
+                  ],
+                },
+              }
+            : { version: 1, [dataset]: apiImportExample[dataset] },
       }),
     );
     await source.getByRole('button', { name: 'Save & fetch data' }).click();

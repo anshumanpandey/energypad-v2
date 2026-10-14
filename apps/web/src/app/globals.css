@@ -3317,3 +3317,39 @@ select[aria-invalid='true'] {
 .api-import-source .consumption-import > .panel {
   padding: 16px;
 }
+
+.api-mapping {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.api-mapping legend {
+  padding-inline: 6px;
+  font-weight: 600;
+}
+.api-mapping p,
+.api-mapping small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.api-mapping small {
+  display: block;
+  font-weight: 400;
+}
+.api-mapping-toggle {
+  display: flex !important;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+.api-mapping-toggle input {
+  width: 18px;
+  height: 18px;
+}
+.api-mapping td {
+  min-width: 180px;
+}

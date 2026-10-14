@@ -1,3 +1,5 @@
+import { defaultFieldMapping, validateFieldMapping, type ApiFieldMapping } from '../domain/api-field-mapping';
+import { z } from 'zod';
 import { apiImportSettings, apiDataset, type ApiDataset } from '../domain/api-import';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Prisma, PrismaClient } from '@prisma/client';
@@ -87,26 +89,45 @@ export class FoundationService {
       await this.membership(actor, org, 'organisation:update');
       const settings = await this.db.organisation.findUniqueOrThrow({
         where: { id: org },
-        select: { apiImportUrl: true, apiImportUrls: true },
+        select: { apiImportUrl: true, apiImportUrls: true, apiImportMappings: true },
       });
       return {
+        ...(dataset
+          ? {
+              mapping:
+                (settings.apiImportMappings as Record<string, ApiFieldMapping>)[dataset] ??
+                defaultFieldMapping(dataset),
+            }
+          : {}),
         url: dataset
           ? ((settings.apiImportUrls as Record<string, string>)[dataset] ?? '')
           : (settings.apiImportUrl ?? ''),
       };
     }
-    const { url } = apiImportSettings.parse(input);
+    const parsed = apiImportSettings.extend({ mapping: z.unknown().optional() }).parse(input);
+    const { url } = parsed;
+    const mapping = dataset && parsed.mapping !== undefined ? validateFieldMapping(dataset, parsed.mapping) : undefined;
     return this.db.$transaction(async (tx) => {
       await this.lock(tx, org);
       await this.membership(actor, org, 'organisation:update', tx);
       if (dataset) {
         const current = await tx.organisation.findUniqueOrThrow({
           where: { id: org },
-          select: { apiImportUrls: true },
+          select: { apiImportUrls: true, apiImportMappings: true },
         });
         await tx.organisation.update({
           where: { id: org },
-          data: { apiImportUrls: { ...(current.apiImportUrls as Record<string, string>), [dataset]: url } },
+          data: {
+            apiImportUrls: { ...(current.apiImportUrls as Record<string, string>), [dataset]: url },
+            ...(mapping
+              ? {
+                  apiImportMappings: {
+                    ...(current.apiImportMappings as Record<string, Prisma.InputJsonValue>),
+                    [dataset]: mapping,
+                  },
+                }
+              : {}),
+          },
         });
       } else await tx.organisation.update({ where: { id: org }, data: { apiImportUrl: url || null } });
       await this.audit(tx, actor, org, 'api-import.settings.updated', org);

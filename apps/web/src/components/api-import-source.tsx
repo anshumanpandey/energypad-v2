@@ -3,13 +3,19 @@ import { useEffect, useRef, useState } from 'react';
 import { Zap, Leaf, Target, SlidersHorizontal, Cable } from 'lucide-react';
 import {
   apiImportExample,
-  datasetPayload,
   apiImportSettings,
   apiDatasets,
   apiDatasetLabels,
   type ApiDataset,
 } from '@/domain/api-import';
 import { ImportReview } from './import-review';
+import { ApiMappingForm } from './api-mapping-form';
+import {
+  defaultFieldMapping,
+  mapApiResponse,
+  validateFieldMapping,
+  type ApiFieldMapping,
+} from '@/domain/api-field-mapping';
 import { Button } from './ui/button';
 import { request, responseError, useMutation } from './forms';
 
@@ -95,6 +101,7 @@ function DatasetSource({
 }) {
   const [loaded, setLoaded] = useState<{ file: File; revision: number } | null>(null);
   const [reviewBusy, setReviewBusy] = useState(false);
+  const [mapping, setMapping] = useState<ApiFieldMapping>(() => defaultFieldMapping(dataset));
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -111,7 +118,10 @@ function DatasetSource({
     let active = true;
     void request(`${path}?dataset=${dataset}`, 'GET')
       .then((data) => {
-        if (active) setUrl(data.url);
+        if (active) {
+          setUrl(data.url);
+          setMapping(data.mapping ?? defaultFieldMapping(dataset));
+        }
       })
       .catch((error) => {
         if (active) setLoadError(error instanceof Error ? error.message : 'Could not load the saved API URL.');
@@ -127,7 +137,10 @@ function DatasetSource({
     const parsed = apiImportSettings.safeParse({ url });
     if (!parsed.success) throw new Error(parsed.error.issues.map((issue) => issue.message).join(' '));
     const settings = parsed.data;
-    await request(`${path}?dataset=${dataset}`, 'PUT', settings);
+    await request(`${path}?dataset=${dataset}`, 'PUT', {
+      ...settings,
+      mapping: validateFieldMapping(dataset, mapping),
+    });
     setUrl(settings.url);
     return settings.url;
   }
@@ -175,15 +188,11 @@ function DatasetSource({
     } catch {
       throw new Error('The API must return valid JSON. See the JSON example.');
     }
-    const parsed = datasetPayload(dataset).safeParse(data);
-    if (!parsed.success)
-      throw new Error(
-        parsed.error.issues.map((issue) => `${issue.path.join('.') || 'Response'}: ${issue.message}`).join('\n'),
-      );
+    const mapped = mapApiResponse(dataset, data, mapping);
     const converted = await fetch(`/api/v1/${path}/workbook?dataset=${dataset}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(parsed.data),
+      body: JSON.stringify(mapped),
     });
     if (!converted.ok) throw responseError(await converted.json());
     const blob = await converted.blob();
@@ -215,13 +224,28 @@ function DatasetSource({
             type="url"
             value={url}
             disabled={disabled || m.disabled || loading || !!loadError}
-            onChange={(event) => setUrl(event.target.value)}
+            onChange={(event) => {
+              setUrl(event.target.value);
+              setLoaded(null);
+            }}
             placeholder="https://provider.example/energy-data"
           />
         </label>
+        <ApiMappingForm
+          dataset={dataset}
+          mapping={mapping}
+          disabled={disabled || m.disabled || loading || !!loadError}
+          onChange={(next) => {
+            setMapping(next);
+            setLoaded(null);
+          }}
+        />
         <div className="api-import-actions">
           <Button disabled={disabled || m.disabled || loading || !!loadError}>
             {loading ? 'Loading API URL…' : 'Save API URL'}
+          </Button>
+          <Button type="submit" variant="secondary" disabled={disabled || m.disabled || loading || !!loadError}>
+            Save field mapping
           </Button>
           <Button
             type="button"

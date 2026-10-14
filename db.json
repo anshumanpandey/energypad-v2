@@ -3,10 +3,83 @@
     { "id": "1", "title": "a title", "views": 100 },
     { "id": "2", "title": "another title", "views": 200 }
   ],
-  "comments": [
-    { "id": "1", "text": "a comment about post 1", "postId": "1" },
-    { "id": "2", "text": "another comment about post 1", "postId": "1" }
-  ],
+  "emissions": {
+    "version": 1,
+    "emissions": [
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 1,
+        "emissionFactor": 0.53
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 2,
+        "emissionFactor": 0.35
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 3,
+        "emissionFactor": 0.7
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 4,
+        "emissionFactor": 0.68
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 5,
+        "emissionFactor": 0.54
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 6,
+        "emissionFactor": 0.35
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 7,
+        "emissionFactor": 0.56
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 8,
+        "emissionFactor": 0.35
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 9,
+        "emissionFactor": 0.75
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 10,
+        "emissionFactor": 0.33
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 11,
+        "emissionFactor": 0.01
+      },
+      {
+        "site": "site_mit",
+        "year": 2025,
+        "month": 12,
+        "emissionFactor": 0.2
+      }
+    ]
+  },
   "consumptions": {
     "version": 1,
     "consumption": [
