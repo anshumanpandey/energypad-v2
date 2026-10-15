@@ -44,6 +44,48 @@ export function MetricChart({
   const change = comparePreviousMonth && active ? monthlyChartChange(points, active) : null;
   const displayValue = (p: ChartPoint) => (tone === 'waste' ? formatEnergyValue(p.value, 'Unavailable') : p.value);
   const display = (p: ChartPoint) => (finite(p) ? `${displayValue(p)} ${unit}` : 'Unavailable');
+  const selectedMonthDetail = (
+    <p className="metric-chart-detail" aria-live="polite">
+      {active ? (
+        <>
+          <WasteDirectionText
+            text={`${formatMonth(active.month)}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`}
+          />
+          {comparePreviousMonth && (
+            <span className={`metric-chart-change ${change ? `is-${change.direction}` : ''}`}>
+              {change ? (
+                <>
+                  {change.direction !== 'equal' && (
+                    <span className="metric-chart-change-arrow" aria-hidden="true">
+                      {change.direction === 'down' ? '↓' : '↑'}
+                    </span>
+                  )}
+                  <span>
+                    <strong>
+                      {change.percentage === null
+                        ? 'Percentage unavailable (previous month was zero)'
+                        : `${change.percentage > 0 ? '+' : ''}${formatEnergyValue(change.percentage)}%`}
+                    </strong>
+                    {' · '}
+                    {change.direction === 'equal'
+                      ? 'No change'
+                      : `${formatEnergyValue(Math.abs(change.difference))} ${unit} ${change.direction === 'down' ? 'lower' : 'higher'}`}
+                    {` than ${formatMonth(change.previousMonth)}`}
+                  </span>
+                </>
+              ) : (
+                'Previous-month comparison unavailable.'
+              )}
+            </span>
+          )}
+        </>
+      ) : values.length ? (
+        'Hover or focus a month to inspect its value. A dash marks unavailable data; lines break across missing months.'
+      ) : (
+        'See the calculation status above for the inputs that need attention.'
+      )}
+    </p>
+  );
   return (
     <section className={`panel metric-chart metric-chart-${tone}`} aria-label={title}>
       <div className="metric-chart-heading">
@@ -55,7 +97,8 @@ export function MetricChart({
           {values.length}/{points.length} months available
         </span>
       </div>
-      <p>{description}</p>
+      {comparePreviousMonth && selectedMonthDetail}
+      <p className="chart-help">{description}</p>
       {!values.length && <p className="notice">No calculated values for this selection. Missing data is not zero.</p>}
       {values.length > 0 && (
         <svg viewBox="0 0 720 270" role="img" aria-label={`${title} chart in ${unit}`}>
@@ -113,46 +156,7 @@ export function MetricChart({
           })}
         </svg>
       )}
-      <p className="metric-chart-detail" aria-live="polite">
-        {active ? (
-          <>
-            <WasteDirectionText
-              text={`${formatMonth(active.month)}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`}
-            />
-            {comparePreviousMonth && (
-              <span className={`metric-chart-change ${change ? `is-${change.direction}` : ''}`}>
-                {change ? (
-                  <>
-                    {change.direction !== 'equal' && (
-                      <span className="metric-chart-change-arrow" aria-hidden="true">
-                        {change.direction === 'down' ? '↓' : '↑'}
-                      </span>
-                    )}
-                    <span>
-                      <strong>
-                        {change.percentage === null
-                          ? 'Percentage unavailable (previous month was zero)'
-                          : `${change.percentage > 0 ? '+' : ''}${formatEnergyValue(change.percentage)}%`}
-                      </strong>
-                      {' · '}
-                      {change.direction === 'equal'
-                        ? 'No change'
-                        : `${formatEnergyValue(Math.abs(change.difference))} ${unit} ${change.direction === 'down' ? 'lower' : 'higher'}`}
-                      {` than ${formatMonth(change.previousMonth)}`}
-                    </span>
-                  </>
-                ) : (
-                  'Previous-month comparison unavailable.'
-                )}
-              </span>
-            )}
-          </>
-        ) : values.length ? (
-          'Hover or focus a month to inspect its value. A dash marks unavailable data; lines break across missing months.'
-        ) : (
-          'See the calculation status above for the inputs that need attention.'
-        )}
-      </p>
+      {!comparePreviousMonth && selectedMonthDetail}
       <details>
         <summary>View {title.toLowerCase()} data</summary>
         <div className="analysis-table" role="region" aria-label={`${title} data`} tabIndex={0}>

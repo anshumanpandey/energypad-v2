@@ -3463,3 +3463,13 @@ select[aria-invalid='true'] {
   font-size: 28px;
   line-height: 1;
 }
+
+.waste-charts .chart-help,
+.waste-dashboard-results .chart-help {
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #6b7873;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}

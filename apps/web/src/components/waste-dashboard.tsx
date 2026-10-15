@@ -227,7 +227,7 @@ export function WasteDashboard({
                     ? `${meter.rows.filter((row) => row.variance !== null).length} of ${meter.rows.length} months calculated.`
                     : 'Calculation unavailable: the required inputs or model checks need attention.'}
                 </p>
-                <p>
+                <p className="chart-help">
                   {meter.fittedYear !== undefined && meter.fittedYear !== preview.year
                     ? `The model is fitted from ${meter.fittedYear} consumption and selected drivers, then applied to this selection's actual consumption and driver values.`
                     : 'Only one consumption period is available. These values show variation from its fitted model.'}{' '}

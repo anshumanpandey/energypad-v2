@@ -48,7 +48,7 @@ export function UtilityBars({
         {title} ({unit})
       </h2>
       {showSummary && <MonthlyChartSummary points={summaryPoints} period={period} unit={unit} />}
-      {targetNote && <p>{targetNote}</p>}
+      {targetNote && <p className="chart-help">{targetNote}</p>}
       <p>
         {diverging
           ? `${actualLabel} extends left and ${targetLabel.toLowerCase()} extends right from zero, using the same scale.`

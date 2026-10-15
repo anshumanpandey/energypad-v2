@@ -41,7 +41,7 @@ export function WasteCharts({
     }));
   return (
     <GraphMonthProvider key={month} initialMonth={month}>
-      <div className="graphs-grid">
+      <div className="graphs-grid waste-charts">
         <MetricChart
           title="Avoided Energy (+) and Wasted Energy (-) (kWh)"
           unit="kWh"
@@ -108,7 +108,7 @@ export function WasteCharts({
               {percentage === null ? 'Unavailable' : `${percentage > 0 ? '+' : ''}${formatEnergyValue(percentage)}%`}
             </strong>
           </p>
-          <p>
+          <p className="chart-help">
             Three-month total avoided/wasted energy ÷ adjusted expected consumption × 100. Positive is saving; negative
             is waste.
           </p>
