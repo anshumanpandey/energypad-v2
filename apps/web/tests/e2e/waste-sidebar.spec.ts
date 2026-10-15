@@ -33,7 +33,14 @@ test('wide waste tables do not cover sidebar controls', async ({ page }) => {
   }
   await page.getByRole('button', { name: 'Refresh data', exact: true }).click({ timeout: 10000 });
   await page.getByLabel('Waste result month', { exact: true }).selectOption('01');
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await expect.poll(async () => Math.round((await sidebar.boundingBox())!.y)).toBe(20);
+  expect((await sidebar.boundingBox())!.x).toBe(box!.x);
+  expect(await sidebar.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+  await sidebar.getByRole('link', { name: 'Advanced Analysis', exact: true }).scrollIntoViewIfNeeded();
+  expect(await sidebar.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
   await page.setViewportSize({ width: 390, height: 844 });
+  await expect(sidebar).toHaveCSS('position', 'static');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const table = page.getByRole('region', { name: 'Electricity monthly data', exact: true });
   expect(await table.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);

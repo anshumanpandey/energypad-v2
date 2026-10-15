@@ -16,6 +16,7 @@ export function UtilityBars({
   period = '',
   summaryPoints = sourcePoints,
   targetNote,
+  showHelp = true,
   sortBy = 'month',
   actualLabel = 'Actual',
   targetLabel = 'Target',
@@ -30,6 +31,7 @@ export function UtilityBars({
   period?: string;
   summaryPoints?: MonthlyAmount[];
   targetNote?: string;
+  showHelp?: boolean;
   sortBy?: UtilityChartSort;
   actualLabel?: string;
   targetLabel?: string;
@@ -48,15 +50,17 @@ export function UtilityBars({
         {title} ({unit})
       </h2>
       {showSummary && <MonthlyChartSummary points={summaryPoints} period={period} unit={unit} />}
-      {targetNote && <p className="chart-help">{targetNote}</p>}
-      <p>
-        {diverging
-          ? `${actualLabel} extends left and ${targetLabel.toLowerCase()} extends right from zero, using the same scale.`
-          : actualOnly
-            ? 'Monthly recorded cost.'
-            : 'Actual and target use the same scale.'}{' '}
-        The selected month is highlighted. Missing values are shown as a dash.
-      </p>
+      {showHelp && targetNote && <p className="chart-help">{targetNote}</p>}
+      {showHelp && (
+        <p>
+          {diverging
+            ? `${actualLabel} extends left and ${targetLabel.toLowerCase()} extends right from zero, using the same scale.`
+            : actualOnly
+              ? 'Monthly recorded cost.'
+              : 'Actual and target use the same scale.'}{' '}
+          The selected month is highlighted. Missing values are shown as a dash.
+        </p>
+      )}
       <div className="utility-chart-scroll">
         <svg
           viewBox={`0 0 900 ${height}`}

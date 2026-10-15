@@ -53,6 +53,7 @@ export function WasteCharts({
           title="Avoided Energy (+) and Wasted Energy (-) (kWh)"
           unit="kWh"
           points={points('variance')}
+          showHelp={false}
           comparePreviousMonth
           tone="waste"
           description="Adjusted expected minus actual consumption. Positive values are avoided energy; negative values are wasted energy."
@@ -115,10 +116,6 @@ export function WasteCharts({
               {percentage === null ? 'Unavailable' : `${percentage > 0 ? '+' : ''}${formatEnergyValue(percentage)}%`}
             </strong>
           </p>
-          <p className="chart-help">
-            Three-month total avoided/wasted energy ÷ adjusted expected consumption × 100. Positive is saving; negative
-            is waste.
-          </p>
           {percentage === null && (
             <p className="notice">
               Three consecutive months of calculated values and a positive expected total are required.
@@ -129,6 +126,7 @@ export function WasteCharts({
           title="Cost (£)"
           unit="£"
           points={points('cost')}
+          showHelp={false}
           comparePreviousMonth
           tone="waste"
           description="Estimated avoided (+) or wasted (-) energy cost, using each reading’s net GBP cost per kWh. VAT is excluded; missing rates and other currencies remain unavailable."
@@ -143,6 +141,7 @@ export function WasteCharts({
           }))}
           diverging
           showSummary={false}
+          showHelp={false}
           selectedMonth={month}
           sortBy={sort}
           actualLabel="Actual consumption"

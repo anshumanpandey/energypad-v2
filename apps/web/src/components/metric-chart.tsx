@@ -16,6 +16,7 @@ export function MetricChart({
   tone,
   description,
   comparePreviousMonth = false,
+  showHelp = true,
 }: {
   title: string;
   unit: string;
@@ -23,6 +24,7 @@ export function MetricChart({
   tone: 'energy' | 'carbon' | 'waste';
   description: string;
   comparePreviousMonth?: boolean;
+  showHelp?: boolean;
 }) {
   const month = useGraphMonth();
   const [selected, setSelected] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export function MetricChart({
   const change = comparePreviousMonth && active ? monthlyChartChange(points, active) : null;
   const displayValue = (p: ChartPoint) => (tone === 'waste' ? formatEnergyValue(p.value, 'Unavailable') : p.value);
   const display = (p: ChartPoint) => (finite(p) ? `${displayValue(p)} ${unit}` : 'Unavailable');
-  const selectedMonthDetail = (
+  const selectedMonthDetail = (active || showHelp) && (
     <p className="metric-chart-detail" aria-live="polite">
       {active ? (
         <>
@@ -98,7 +100,7 @@ export function MetricChart({
         </span>
       </div>
       {comparePreviousMonth && selectedMonthDetail}
-      <p className="chart-help">{description}</p>
+      {showHelp && <p className="chart-help">{description}</p>}
       {!values.length && <p className="notice">No calculated values for this selection. Missing data is not zero.</p>}
       {values.length > 0 && (
         <svg viewBox="0 0 720 270" role="img" aria-label={`${title} chart in ${unit}`}>

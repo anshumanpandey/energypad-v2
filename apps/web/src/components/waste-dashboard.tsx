@@ -186,6 +186,28 @@ export function WasteDashboard({
               ))}
             <Button onClick={() => setOther(!other)}>{other ? 'Hide other drivers' : 'Add other drivers'}</Button>
           </div>
+          {meters.some((meter) => meter.downloadable) && (
+            <section className="waste-sidebar-downloads" aria-label="Calculation sheet downloads">
+              <h3>Calculation sheets</h3>
+              {meters
+                .filter((meter) => meter.downloadable)
+                .map((meter) => (
+                  <div key={meter.id}>
+                    {meters.length > 1 && (
+                      <p>
+                        {meter.name} · {meter.fuel.replaceAll('_', ' ')}
+                      </p>
+                    )}
+                    <a
+                      className="button button-primary"
+                      href={`/api/v1/organisations/${orgId}/sites/${siteId}/analysis/waste-preview.xlsx?${new URLSearchParams({ year: String(preview.year), meter: meter.id, drivers: preview.drivers.join(',') })}`}
+                    >
+                      Download site calculation sheet
+                    </a>
+                  </div>
+                ))}
+            </section>
+          )}
           <p role="status">
             {pending ? 'Updating calculations…' : `${preview.method} · Selected year ${preview.year}`}
           </p>
@@ -238,14 +260,6 @@ export function WasteDashboard({
                     meter.baselineSource.id !== meter.id &&
                     ` Fitted consumption source: ${meter.baselineSource.name}, in normalized kWh.`}
                 </p>
-                {meter.downloadable && (
-                  <a
-                    className="button button-primary"
-                    href={`/api/v1/organisations/${orgId}/sites/${siteId}/analysis/waste-preview.xlsx?${new URLSearchParams({ year: String(preview.year), meter: meter.id, drivers: preview.drivers.join(',') })}`}
-                  >
-                    Download site calculation sheet
-                  </a>
-                )}
                 {!!meter.issues.length && (
                   <details open>
                     <summary>Calculation inputs need attention ({meter.issues.length})</summary>
