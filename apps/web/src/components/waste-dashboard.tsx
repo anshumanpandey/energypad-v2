@@ -239,7 +239,7 @@ export function WasteDashboard({
             />
           )}
           {meters.map((meter) => (
-            <details key={meter.id} className="panel waste-meter-details" open>
+            <details key={meter.id} className="panel waste-meter-details">
               <summary className="waste-meter-summary">
                 <h2>
                   {meter.name} · {meter.fuel.replaceAll('_', ' ')}
