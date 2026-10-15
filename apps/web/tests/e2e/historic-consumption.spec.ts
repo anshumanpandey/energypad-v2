@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures/isolated-user';
+import { createSite } from '../helpers/create-site';
 import { createRequire } from 'node:module';
 import { historicColumns, historicSheet } from '../../src/domain/historic-consumption';
 const ExcelJS = createRequire(import.meta.url)('exceljs') as typeof import('exceljs');
@@ -14,7 +15,7 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
     timezone: 'UTC',
   });
   const base = `organisations/${org.id}`;
-  const london = await post(`${base}/sites`, { code: 'London', name: 'London' });
+  const london = await createSite(page.request, `/api/v1/${base}/sites`, { code: 'London', name: 'London' });
   await page.goto(`/org/${org.id}/data`);
   await page
     .getByRole('tablist', { name: 'Data imports' })
@@ -59,7 +60,7 @@ test('Data consumption tab validates all cells and imports a corrected workbook'
   await expect(page.getByRole('cell', { name: '75 kWh', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Import 1 readings' }).click();
   await expect(page.getByRole('status').filter({ hasText: '1 updated' })).toBeVisible();
-  await post(`${base}/sites`, { code: 'Leeds', name: 'Leeds' });
+  await createSite(page.request, `/api/v1/${base}/sites`, { code: 'Leeds', name: 'Leeds' });
   for (const [utility, quantity] of [
     ['Grid Electricity', 100],
     ['Solar PV', 200],
