@@ -3701,3 +3701,41 @@ select[aria-invalid='true'] {
   background: #f2f6fa;
   font-weight: 400;
 }
+
+.waste-meter-case {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+.waste-meter-case + .waste-meter-case {
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+.waste-meter-case > h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #29443e;
+}
+
+.chart-average-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  flex-basis: 100%;
+  min-width: 0;
+}
+.chart-average-pair .chart-month-days {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+  font-weight: 400;
+}
+.chart-average-pair strong {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.chart-month-total {
+  text-align: right;
+  background: #eef5f1;
+}

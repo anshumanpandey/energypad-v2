@@ -193,7 +193,7 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await graphPage.getByRole('button', { name: 'Add other drivers', exact: true }).click();
   await graphPage.getByLabel('Population', { exact: true }).check();
   await expect(graphPage.getByRole('status').filter({ hasText: 'Single routine adjustment' })).toBeVisible();
-  await graphPage.locator('.waste-meter-summary').filter({ hasText: 'Electricity · ELECTRICITY' }).click();
+  await graphPage.locator('.waste-meter-summary').click();
   await expect(graphPage.getByRole('status').filter({ hasText: '12 of 12 months calculated.' })).toBeVisible();
   await expect(graphPage.getByText('Only one consumption period is available.', { exact: false })).toBeVisible();
   const wasteGaugePanel = graphPage.getByRole('region', { name: 'Waste/Savings Gauge', exact: true });
@@ -256,7 +256,6 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   expect(await graphPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await graphPage.getByRole('button', { name: 'Refresh data', exact: true }).click();
   await graphPage.getByLabel('Waste fuel type').selectOption('BIODIESEL');
-  await graphPage.locator('.waste-meter-summary').filter({ hasText: 'Biodiesel heating · BIODIESEL' }).click();
   await expect(graphPage.getByText('Only one consumption period is available.', { exact: false })).toBeVisible();
   await expect(graphPage.getByRole('status').filter({ hasText: '12 of 12 months calculated.' })).toBeVisible();
   await graphPage.getByLabel('Waste result month', { exact: true }).selectOption('01');

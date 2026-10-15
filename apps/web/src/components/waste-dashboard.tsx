@@ -35,7 +35,7 @@ export function WasteDashboard({
   const [pending, startTransition] = useTransition();
   const [drivers, setDrivers] = useOptimistic(preview.drivers);
   const [view, setView] = useState<'graph' | 'table'>('graph');
-  const [month, setMonth] = useState('');
+  const [month, setMonth] = useState('01');
   const [fuel, setFuel] = useState('');
   const [sort, setSort] = useState<UtilityChartSort>('month');
   const [other, setOther] = useState(preview.drivers.some((driver) => !['HDD', 'CDD'].includes(driver)));
@@ -77,7 +77,7 @@ export function WasteDashboard({
           <div className="utility-graph-actions">
             <Button
               onClick={() => {
-                setMonth('');
+                setMonth('01');
                 setFuel('');
                 setSort('month');
                 setOther(false);
@@ -238,92 +238,6 @@ export function WasteDashboard({
               manage={manageWeather}
             />
           )}
-          {meters.map((meter) => (
-            <details key={meter.id} className="panel waste-meter-details">
-              <summary className="waste-meter-summary">
-                <h2>
-                  {meter.name} · {meter.fuel.replaceAll('_', ' ')}
-                </h2>
-              </summary>
-              <div className="waste-meter-content">
-                <div>
-                  <p role="status">
-                    {meter.rows.filter((row) => row.variance !== null).length
-                      ? `${meter.rows.filter((row) => row.variance !== null).length} of ${meter.rows.length} months calculated.`
-                      : 'Calculation unavailable: the required inputs or model checks need attention.'}
-                  </p>
-                  <p className="chart-help">
-                    {meter.fittedYear !== undefined && meter.fittedYear !== preview.year
-                      ? `The model is fitted from ${meter.fittedYear} consumption and selected drivers, then applied to this selection's actual consumption and driver values.`
-                      : 'Only one consumption period is available. These values show variation from its fitted model.'}{' '}
-                    Expected consumption = intercept + each coefficient × its reporting driver value. Avoided / wasted
-                    energy = adjusted expected consumption − actual consumption. The gauge divides the latest three
-                    months’ total avoided / wasted energy by their total adjusted expected consumption.
-                    {meter.baselineSource &&
-                      meter.baselineSource.id !== meter.id &&
-                      ` Fitted consumption source: ${meter.baselineSource.name}, in normalized kWh.`}
-                  </p>
-                  {!!meter.issues.length && (
-                    <details open>
-                      <summary>Calculation inputs need attention ({meter.issues.length})</summary>
-                      <ul>
-                        {meter.issues.map((issue) => (
-                          <li key={issue}>{issue}</li>
-                        ))}
-                      </ul>
-                    </details>
-                  )}
-                </div>
-                {view === 'table' && (
-                  <section className="waste-meter-table" aria-label="Waste and savings monthly results">
-                    <h3>Monthly results · {meter.name}</h3>
-                    <div
-                      className="waste-table-scroll"
-                      role="region"
-                      aria-label={`${meter.name} monthly data`}
-                      tabIndex={0}
-                    >
-                      <table className="waste-data-table">
-                        <thead>
-                          <tr>
-                            <th>Month</th>
-                            <th>Actual (kWh)</th>
-                            <th>Expected (kWh)</th>
-                            <th>Adjusted expected (kWh)</th>
-                            <th>Waste / savings (kWh)</th>
-                            <th>Cost (£)</th>
-                            <th className="waste-table-context">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[...meter.rows]
-                            .sort((a, b) =>
-                              sort === 'month'
-                                ? a.month.localeCompare(b.month)
-                                : (sort === 'high-to-low' ? -1 : 1) * ((a.variance ?? 0) - (b.variance ?? 0)),
-                            )
-                            .map((row) => (
-                              <tr
-                                key={row.month}
-                                aria-current={month && row.month.endsWith(`-${month}`) ? 'date' : undefined}
-                              >
-                                <th scope="row">{formatMonth(row.month)}</th>
-                                <td>{value(row.actual)}</td>
-                                <td>{value(row.expected)}</td>
-                                <td>{value(row.adjusted)}</td>
-                                <td>{value(row.variance)}</td>
-                                <td>{value(row.cost)}</td>
-                                <td className="waste-table-context">{row.note}</td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </section>
-                )}
-              </div>
-            </details>
-          ))}
           {meters.length > 0 && (
             <WasteCharts
               view={view}
@@ -332,6 +246,97 @@ export function WasteDashboard({
               sort={sort}
               throughMonth={preview.weather?.required ? preview.weather.throughMonth : undefined}
             />
+          )}
+          {meters.length > 0 && (
+            <details className="panel waste-meter-details">
+              <summary className="waste-meter-summary">
+                <h2>Calculation details &amp; warnings ({meters.length})</h2>
+              </summary>
+              <div className="waste-meter-content">
+                {meters.map((meter) => (
+                  <section key={meter.id} className="waste-meter-case" aria-label={`${meter.name} calculation details`}>
+                    <h3>
+                      {meter.name} · {meter.fuel.replaceAll('_', ' ')}
+                    </h3>
+                    <div>
+                      <p role="status">
+                        {meter.rows.filter((row) => row.variance !== null).length
+                          ? `${meter.rows.filter((row) => row.variance !== null).length} of ${meter.rows.length} months calculated.`
+                          : 'Calculation unavailable: the required inputs or model checks need attention.'}
+                      </p>
+                      <p className="chart-help">
+                        {meter.fittedYear !== undefined && meter.fittedYear !== preview.year
+                          ? `The model is fitted from ${meter.fittedYear} consumption and selected drivers, then applied to this selection's actual consumption and driver values.`
+                          : 'Only one consumption period is available. These values show variation from its fitted model.'}{' '}
+                        Expected consumption = intercept + each coefficient × its reporting driver value. Avoided /
+                        wasted energy = adjusted expected consumption − actual consumption. The gauge divides the latest
+                        three months’ total avoided / wasted energy by their total adjusted expected consumption.
+                        {meter.baselineSource &&
+                          meter.baselineSource.id !== meter.id &&
+                          ` Fitted consumption source: ${meter.baselineSource.name}, in normalized kWh.`}
+                      </p>
+                      {!!meter.issues.length && (
+                        <details open>
+                          <summary>Calculation inputs need attention ({meter.issues.length})</summary>
+                          <ul>
+                            {meter.issues.map((issue) => (
+                              <li key={issue}>{issue}</li>
+                            ))}
+                          </ul>
+                        </details>
+                      )}
+                    </div>
+                    {view === 'table' && (
+                      <section className="waste-meter-table" aria-label="Waste and savings monthly results">
+                        <h3>Monthly results · {meter.name}</h3>
+                        <div
+                          className="waste-table-scroll"
+                          role="region"
+                          aria-label={`${meter.name} monthly data`}
+                          tabIndex={0}
+                        >
+                          <table className="waste-data-table">
+                            <thead>
+                              <tr>
+                                <th>Month</th>
+                                <th>Actual (kWh)</th>
+                                <th>Expected (kWh)</th>
+                                <th>Adjusted expected (kWh)</th>
+                                <th>Waste / savings (kWh)</th>
+                                <th>Cost (£)</th>
+                                <th className="waste-table-context">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[...meter.rows]
+                                .sort((a, b) =>
+                                  sort === 'month'
+                                    ? a.month.localeCompare(b.month)
+                                    : (sort === 'high-to-low' ? -1 : 1) * ((a.variance ?? 0) - (b.variance ?? 0)),
+                                )
+                                .map((row) => (
+                                  <tr
+                                    key={row.month}
+                                    aria-current={month && row.month.endsWith(`-${month}`) ? 'date' : undefined}
+                                  >
+                                    <th scope="row">{formatMonth(row.month)}</th>
+                                    <td>{value(row.actual)}</td>
+                                    <td>{value(row.expected)}</td>
+                                    <td>{value(row.adjusted)}</td>
+                                    <td>{value(row.variance)}</td>
+                                    <td>{value(row.cost)}</td>
+                                    <td className="waste-table-context">{row.note}</td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </section>
+                    )}
+                  </section>
+                ))}
+              </div>
+            </details>
           )}
         </div>
       </div>

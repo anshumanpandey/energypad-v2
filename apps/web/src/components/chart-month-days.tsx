@@ -6,7 +6,7 @@ export function ChartMonthDays({
   averages = [],
 }: {
   month?: string;
-  averages?: { label: string; value: string | number | null | undefined; unit: string }[];
+  averages?: { label: string; totalLabel?: string; value: string | number | null | undefined; unit: string }[];
 }) {
   if (!month || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null;
   const [year, monthNumber] = month.split('-').map(Number);
@@ -16,16 +16,21 @@ export function ChartMonthDays({
       <p className="chart-month-days">
         {formatMonth(month)} · {days} days
       </p>
-      {averages.map(({ label, value, unit }) => (
-        <p className="chart-month-days chart-daily-average" key={label}>
-          {label}:{' '}
-          <strong>
-            {value === null || value === undefined || !Number.isFinite(Number(value))
-              ? 'Unavailable'
-              : `${formatEnergyValue(Number(value) / days)} ${unit}/day`}
-          </strong>
-        </p>
-      ))}
+      {averages.map(({ label, totalLabel = 'Monthly value', value, unit }) => {
+        const available = value !== null && value !== undefined && Number.isFinite(Number(value));
+        return (
+          <div className="chart-average-pair" key={label}>
+            <p className="chart-month-days chart-daily-average">
+              <span>{label}</span>
+              <strong>{available ? `${formatEnergyValue(Number(value) / days)} ${unit}/day` : 'Unavailable'}</strong>
+            </p>
+            <p className="chart-month-days chart-month-total">
+              <span>{totalLabel}</span>
+              <strong>{available ? `${formatEnergyValue(Number(value))} ${unit}` : 'Unavailable'}</strong>
+            </p>
+          </div>
+        );
+      })}
     </div>
   );
 }

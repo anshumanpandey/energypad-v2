@@ -57,6 +57,7 @@ export function UtilityBars({
         averages={[
           {
             label: `${actualLabel} daily average`,
+            totalLabel: actualLabel,
             value: sourcePoints.find((point) => point.month === calendarMonth)?.actual,
             unit,
           },
@@ -64,6 +65,7 @@ export function UtilityBars({
             ? [
                 {
                   label: `${targetLabel} daily average`,
+                  totalLabel: targetLabel,
                   value: sourcePoints.find((point) => point.month === calendarMonth)?.target,
                   unit,
                 },

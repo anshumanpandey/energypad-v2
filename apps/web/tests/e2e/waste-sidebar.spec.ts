@@ -22,9 +22,10 @@ test('wide waste tables do not cover sidebar controls', async ({ page }, testInf
     route.fulfill({ status: 422, json: { title: 'Weather unavailable for layout fixture.' } }),
   );
   await page.goto(`/org/${org.id}/waste-savings?site=${site.id}&year=2025`);
-  const meterDetails = page
-    .locator('.waste-meter-details')
-    .filter({ has: page.getByRole('heading', { name: 'Electricity · ELECTRICITY', exact: true }) });
+  await expect(page.getByLabel('Waste result month', { exact: true })).toHaveValue('01');
+  const meterDetails = page.locator('.waste-meter-details');
+  await expect(meterDetails).toHaveCount(1);
+  await expect(page.locator('.waste-dashboard-results > :last-child')).toHaveClass(/waste-meter-details/);
   await expect(meterDetails).not.toHaveAttribute('open');
   await meterDetails.locator('.waste-meter-summary').click();
   await expect(meterDetails).toHaveAttribute('open');

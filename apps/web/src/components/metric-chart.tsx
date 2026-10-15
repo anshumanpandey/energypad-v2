@@ -95,7 +95,7 @@ export function MetricChart({
     <section className={`panel metric-chart metric-chart-${tone}`} aria-label={title}>
       <div className="metric-chart-heading">
         <div>
-          <span className="eyebrow">{unit}</span>
+          {unit !== '£' && <span className="eyebrow">{unit}</span>}
           <h2>{title}</h2>
         </div>
         <span className="metric-chart-coverage">
@@ -105,7 +105,12 @@ export function MetricChart({
       <ChartMonthDays
         month={calendarMonth}
         averages={[
-          { label: 'Daily average', value: points.find((point) => point.month === calendarMonth)?.value, unit },
+          {
+            label: 'Daily average',
+            totalLabel: unit === '£' ? 'Monthly cost' : 'Avoided / wasted energy',
+            value: points.find((point) => point.month === calendarMonth)?.value,
+            unit,
+          },
         ]}
       />
       {comparePreviousMonth && selectedMonthDetail}
