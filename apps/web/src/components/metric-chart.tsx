@@ -1,5 +1,6 @@
 'use client';
 
+import { ChartMonthDays } from './chart-month-days';
 import { formatMonth } from '../domain/format-month';
 import { useState } from 'react';
 import { formatEnergyValue } from './format-energy-value';
@@ -17,6 +18,7 @@ export function MetricChart({
   description,
   comparePreviousMonth = false,
   showHelp = true,
+  calendarMonth,
 }: {
   title: string;
   unit: string;
@@ -25,6 +27,7 @@ export function MetricChart({
   description: string;
   comparePreviousMonth?: boolean;
   showHelp?: boolean;
+  calendarMonth?: string;
 }) {
   const month = useGraphMonth();
   const [selected, setSelected] = useState<string | null>(null);
@@ -99,6 +102,12 @@ export function MetricChart({
           {values.length}/{points.length} months available
         </span>
       </div>
+      <ChartMonthDays
+        month={calendarMonth}
+        averages={[
+          { label: 'Daily average', value: points.find((point) => point.month === calendarMonth)?.value, unit },
+        ]}
+      />
       {comparePreviousMonth && selectedMonthDetail}
       {showHelp && <p className="chart-help">{description}</p>}
       {!values.length && <p className="notice">No calculated values for this selection. Missing data is not zero.</p>}

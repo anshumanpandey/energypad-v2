@@ -3675,3 +3675,29 @@ select[aria-invalid='true'] {
     background: #f3f7f5;
   }
 }
+
+.chart-month-days {
+  display: inline-block;
+  margin: 10px 0;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #eef3f2;
+  color: #425c54;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chart-month-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+.chart-month-summary .chart-month-days {
+  margin: 0;
+}
+.chart-daily-average {
+  background: #f2f6fa;
+  font-weight: 400;
+}

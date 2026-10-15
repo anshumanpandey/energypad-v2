@@ -1,4 +1,5 @@
 'use client';
+import { ChartMonthDays } from './chart-month-days';
 import { formatMonth } from '../domain/format-month';
 import { formatEnergyValue } from './format-energy-value';
 import { MonthlyChartSummary } from './monthly-chart-summary';
@@ -17,6 +18,7 @@ export function UtilityBars({
   summaryPoints = sourcePoints,
   targetNote,
   showHelp = true,
+  calendarMonth,
   sortBy = 'month',
   actualLabel = 'Actual',
   targetLabel = 'Target',
@@ -32,6 +34,7 @@ export function UtilityBars({
   summaryPoints?: MonthlyAmount[];
   targetNote?: string;
   showHelp?: boolean;
+  calendarMonth?: string;
   sortBy?: UtilityChartSort;
   actualLabel?: string;
   targetLabel?: string;
@@ -49,6 +52,25 @@ export function UtilityBars({
       <h2>
         {title} ({unit})
       </h2>
+      <ChartMonthDays
+        month={calendarMonth}
+        averages={[
+          {
+            label: `${actualLabel} daily average`,
+            value: sourcePoints.find((point) => point.month === calendarMonth)?.actual,
+            unit,
+          },
+          ...(!actualOnly
+            ? [
+                {
+                  label: `${targetLabel} daily average`,
+                  value: sourcePoints.find((point) => point.month === calendarMonth)?.target,
+                  unit,
+                },
+              ]
+            : []),
+        ]}
+      />
       {showSummary && <MonthlyChartSummary points={summaryPoints} period={period} unit={unit} />}
       {showHelp && targetNote && <p className="chart-help">{targetNote}</p>}
       {showHelp && (
