@@ -34,7 +34,7 @@ export function WasteDashboard({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [drivers, setDrivers] = useOptimistic(preview.drivers);
-  const [view, setView] = useState('graph');
+  const [view, setView] = useState<'graph' | 'table'>('graph');
   const [month, setMonth] = useState('');
   const [fuel, setFuel] = useState('');
   const [sort, setSort] = useState<UtilityChartSort>('month');
@@ -296,8 +296,9 @@ export function WasteDashboard({
               )}
             </div>
           ))}
-          {view === 'graph' && meters.length > 0 && (
+          {meters.length > 0 && (
             <WasteCharts
+              view={view}
               rows={aggregateWasteRows(meters.map((meter) => meter.rows))}
               month={month}
               sort={sort}

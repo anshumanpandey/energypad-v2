@@ -1,5 +1,6 @@
 'use client';
 import { formatMonth } from '../domain/format-month';
+import { WasteChartTables } from './waste-chart-tables';
 import { MetricChart } from './metric-chart';
 import { UtilityBars } from './utility-bars';
 import { GraphMonthProvider } from './graph-month';
@@ -12,11 +13,13 @@ export function WasteCharts({
   month = '',
   sort = 'month',
   throughMonth,
+  view = 'graph',
 }: {
   rows: WasteChartRow[];
   month?: string;
   sort?: UtilityChartSort;
   throughMonth?: string;
+  view?: 'graph' | 'table';
 }) {
   const anchor = month
     ? ([...rows]
@@ -39,6 +42,10 @@ export function WasteCharts({
       value: row[key],
       note: row.note,
     }));
+  if (view === 'table')
+    return (
+      <WasteChartTables rows={rows} month={month} sort={sort} gaugeMonths={monthlyGauge} gaugePercentage={percentage} />
+    );
   return (
     <GraphMonthProvider key={month} initialMonth={month}>
       <div className="graphs-grid waste-charts">
