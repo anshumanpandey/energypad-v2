@@ -11,14 +11,14 @@ const signed = (number: number | null, suffix = '') =>
 
 function ChartTable({ title, headers, children }: { title: string; headers: string[]; children: ReactNode }) {
   return (
-    <section className="panel" aria-label={`${title} table`}>
+    <section className="panel waste-table-panel" aria-label={`${title} table`}>
       <h2>{title}</h2>
-      <div className="table-scroll" tabIndex={0} role="region" aria-label={`${title} data`}>
-        <table>
+      <div className="table-scroll waste-table-scroll" tabIndex={0} role="region" aria-label={`${title} data`}>
+        <table className="waste-data-table">
           <thead>
             <tr>
               {headers.map((header) => (
-                <th key={header} scope="col">
+                <th key={header} scope="col" className={header === 'Context' ? 'waste-table-context' : undefined}>
                   {header}
                 </th>
               ))}
@@ -44,7 +44,7 @@ export function WasteChartTables({
   gaugeMonths: { month: string; value: number | null }[];
   gaugePercentage: number | null;
 }) {
-  const selected = rows.filter((row) => !month || row.month.endsWith(`-${month}`));
+  const selectedMonth = (value: string) => !!month && value.endsWith(`-${month}`);
   return (
     <div className="utility-graphs-page" aria-label="Chart data tables">
       {(['variance', 'cost'] as const).map((key) => {
@@ -57,15 +57,15 @@ export function WasteChartTables({
             title={title}
             headers={['Month', `Value (${unit})`, `Change (${unit})`, 'Change (%)', 'Context']}
           >
-            {sortChartValues(selected, sort, (row) => (row[key] === null ? null : String(row[key]))).map((row) => {
+            {sortChartValues(rows, sort, (row) => (row[key] === null ? null : String(row[key]))).map((row) => {
               const change = monthlyChartChange(points, { month: row.month, value: row[key] });
               return (
-                <tr key={row.month}>
+                <tr key={row.month} aria-current={selectedMonth(row.month) ? 'date' : undefined}>
                   <th scope="row">{formatMonth(row.month)}</th>
                   <td>{value(row[key])}</td>
                   <td>{signed(change?.difference ?? null)}</td>
                   <td>{signed(change?.percentage ?? null, '%')}</td>
-                  <td>{row.note || '—'}</td>
+                  <td className="waste-table-context">{row.note || '—'}</td>
                 </tr>
               );
             })}
@@ -73,14 +73,30 @@ export function WasteChartTables({
         );
       })}
       <ChartTable title="Waste/Savings Gauge" headers={['Month / period', 'Avoided / wasted energy (%)']}>
-        {gaugeMonths.map((point) => (
-          <tr key={point.month}>
-            <th scope="row">{formatMonth(point.month)}</th>
-            <td>{signed(point.value, '%')}</td>
-          </tr>
-        ))}
-        <tr>
-          <th scope="row">Three-month total</th>
+        {[...rows]
+          .sort((a, b) => a.month.localeCompare(b.month))
+          .map((row) => (
+            <tr key={row.month} aria-current={selectedMonth(row.month) ? 'date' : undefined}>
+              <th scope="row">{formatMonth(row.month)}</th>
+              <td>
+                {signed(
+                  row.variance !== null && row.adjusted !== null && row.adjusted > 0
+                    ? (row.variance / row.adjusted) * 100
+                    : null,
+                  '%',
+                )}
+              </td>
+            </tr>
+          ))}
+        <tr className="waste-table-total">
+          <th scope="row">
+            Three-month total
+            {gaugeMonths.length > 0 && (
+              <small className="waste-table-period">
+                {formatMonth(gaugeMonths[0].month)} – {formatMonth(gaugeMonths[gaugeMonths.length - 1].month)}
+              </small>
+            )}
+          </th>
           <td>{signed(gaugePercentage, '%')}</td>
         </tr>
       </ChartTable>
@@ -88,8 +104,8 @@ export function WasteChartTables({
         title="Actual consumption vs wastage"
         headers={['Month', 'Actual consumption (kWh)', 'Wastage (kWh)']}
       >
-        {sortChartValues(selected, sort, (row) => (row.actual === null ? null : String(row.actual))).map((row) => (
-          <tr key={row.month}>
+        {sortChartValues(rows, sort, (row) => (row.actual === null ? null : String(row.actual))).map((row) => (
+          <tr key={row.month} aria-current={selectedMonth(row.month) ? 'date' : undefined}>
             <th scope="row">{formatMonth(row.month)}</th>
             <td>{value(row.actual)}</td>
             <td>{value(row.variance === null ? null : Math.max(0, -row.variance))}</td>

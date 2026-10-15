@@ -3473,3 +3473,96 @@ select[aria-invalid='true'] {
   margin-top: 8px;
   margin-bottom: 12px;
 }
+
+.waste-table-panel {
+  min-width: 0;
+  border-top: 3px solid #356f9a;
+}
+.waste-table-panel h2,
+.waste-table-panel h3 {
+  margin: 0 0 20px;
+  font-size: 17px;
+  line-height: 1.4;
+}
+.waste-table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.waste-table-scroll:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+.waste-data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+.waste-data-table thead th {
+  background: #eef3f2;
+  color: #425c54;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.waste-data-table th,
+.waste-data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e7edeb;
+  text-align: right;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.waste-data-table th:first-child {
+  text-align: left;
+}
+.waste-data-table tbody th {
+  color: #29443e;
+  font-weight: 600;
+}
+.waste-data-table tbody tr:nth-child(even) {
+  background: #f8faf9;
+}
+.waste-data-table tbody tr:hover {
+  background: #eef5f1;
+}
+.waste-data-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.waste-data-table .waste-table-context {
+  text-align: left;
+  white-space: normal;
+  min-width: 180px;
+  max-width: 320px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7873;
+}
+.waste-data-table .waste-table-total > * {
+  background: #eaf2ee;
+  border-top: 2px solid #cadbd3;
+  color: #244d3d;
+  font-weight: 700;
+}
+
+.waste-data-table tbody tr[aria-current='date'] > * {
+  background: #e3f0e9;
+  box-shadow:
+    inset 0 1px #aacdbc,
+    inset 0 -1px #aacdbc;
+}
+.waste-data-table tbody tr[aria-current='date'] > :first-child {
+  box-shadow:
+    inset 4px 0 var(--green),
+    inset 0 1px #aacdbc,
+    inset 0 -1px #aacdbc;
+}
+.waste-table-period {
+  display: block;
+  margin-top: 4px;
+  font-weight: 400;
+  font-size: 11px;
+}

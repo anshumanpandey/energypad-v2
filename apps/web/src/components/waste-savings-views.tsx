@@ -60,7 +60,7 @@ export function WasteSavingsViews({
       </div>
       <div className="waste-savings-view" hidden={view !== 'table'}>
         {month && (
-          <style>{`.waste-savings-view tr[data-month]:not([data-month$="-${month}"]) { display: none; }`}</style>
+          <style>{`.waste-savings-view tr[data-month][data-month$="-${month}"] > * { background: #e3f0e9; box-shadow: inset 0 1px #aacdbc, inset 0 -1px #aacdbc; }`}</style>
         )}
         {children}
       </div>

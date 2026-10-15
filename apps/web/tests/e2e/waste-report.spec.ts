@@ -213,8 +213,8 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(january.getByRole('cell').nth(1)).toHaveText('102.62');
   await expect(january.getByRole('cell').nth(3)).toHaveText('-0.38');
   await graphPage.getByLabel('Waste result month', { exact: true }).selectOption('03');
-  await expect(monthly.getByRole('row')).toHaveCount(2);
-  await expect(monthly.getByRole('row').nth(1)).toContainText('Mar-20');
+  await expect(monthly.getByRole('row')).toHaveCount(13);
+  await expect(monthly.locator('tr[aria-current="date"]')).toContainText('Mar-20');
   const download = graphPage.waitForEvent('download');
   await graphPage.getByRole('link', { name: 'Download site calculation sheet', exact: true }).click();
   const downloaded = await download;

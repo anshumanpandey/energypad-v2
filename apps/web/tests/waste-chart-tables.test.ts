@@ -18,8 +18,11 @@ it('renders all chart datasets as tables with selected-month changes and the ful
       gaugePercentage: (10 / 310) * 100,
     }),
   );
-  expect(html.match(/<table>/g)).toHaveLength(4);
+  expect(html.match(/<table\b/g)).toHaveLength(4);
   expect(html).not.toContain('<svg');
+  expect(html.match(/aria-current="date"/g)).toHaveLength(4);
+  expect(html.match(/<th scope="row">Jan-25/g)).toHaveLength(4);
+  expect(html.match(/<th scope="row">Feb-25/g)).toHaveLength(4);
   expect(html).toContain('Cost (£) table');
   expect(html).toContain('Actual consumption vs wastage table');
   expect(html).toContain('+150.00%');

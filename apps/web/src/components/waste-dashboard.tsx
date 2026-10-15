@@ -258,8 +258,12 @@ export function WasteDashboard({
                 )}
               </section>
               {view === 'table' && (
-                <section className="panel table-scroll" aria-label="Waste and savings monthly results">
-                  <table>
+                <section
+                  className="panel table-scroll waste-table-panel"
+                  aria-label="Waste and savings monthly results"
+                >
+                  <h3>Monthly results · {meter.name}</h3>
+                  <table className="waste-data-table">
                     <thead>
                       <tr>
                         <th>Month</th>
@@ -268,26 +272,28 @@ export function WasteDashboard({
                         <th>Adjusted expected (kWh)</th>
                         <th>Waste / savings (kWh)</th>
                         <th>Cost (£)</th>
-                        <th>Status</th>
+                        <th className="waste-table-context">Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {meter.rows
-                        .filter((row) => !month || row.month.endsWith(`-${month}`))
+                      {[...meter.rows]
                         .sort((a, b) =>
                           sort === 'month'
                             ? a.month.localeCompare(b.month)
                             : (sort === 'high-to-low' ? -1 : 1) * ((a.variance ?? 0) - (b.variance ?? 0)),
                         )
                         .map((row) => (
-                          <tr key={row.month}>
+                          <tr
+                            key={row.month}
+                            aria-current={month && row.month.endsWith(`-${month}`) ? 'date' : undefined}
+                          >
                             <th scope="row">{formatMonth(row.month)}</th>
                             <td>{value(row.actual)}</td>
                             <td>{value(row.expected)}</td>
                             <td>{value(row.adjusted)}</td>
                             <td>{value(row.variance)}</td>
                             <td>{value(row.cost)}</td>
-                            <td>{row.note}</td>
+                            <td className="waste-table-context">{row.note}</td>
                           </tr>
                         ))}
                     </tbody>
