@@ -5,6 +5,7 @@ import ExcelJS from 'exceljs';
 test('Energy Waste Report guides baseline and reporting steps', async ({ page }, testInfo) => {
   test.setTimeout(300_000);
   page.setDefaultTimeout(20_000);
+  page.setDefaultNavigationTimeout(60_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   const email = `analysis-${randomUUID()}@example.test`;
@@ -243,6 +244,15 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
       currency: 'GBP',
       estimated: false,
     });
+  const sidebarBox = await graphPage.getByRole('complementary', { name: 'Waste & Savings filters' }).boundingBox();
+  const resultsBox = await graphPage.locator('.waste-dashboard-results').boundingBox();
+  expect(sidebarBox).not.toBeNull();
+  expect(resultsBox).not.toBeNull();
+  for (const panel of await graphPage.locator('.waste-dashboard-results .panel').all()) {
+    const bounds = await panel.boundingBox();
+    if (bounds) expect(bounds.x + bounds.width).toBeLessThanOrEqual(sidebarBox!.x);
+  }
+  expect(await graphPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await graphPage.getByRole('button', { name: 'Refresh data', exact: true }).click();
   await graphPage.getByLabel('Waste fuel type').selectOption('BIODIESEL');
   await expect(graphPage.getByText('Only one consumption period is available.', { exact: false })).toBeVisible();
