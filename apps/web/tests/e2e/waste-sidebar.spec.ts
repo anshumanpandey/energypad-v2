@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures/isolated-user';
 
-test('wide waste tables do not cover sidebar controls', async ({ page }) => {
+test('wide waste tables do not cover sidebar controls', async ({ page }, testInfo) => {
   page.setDefaultNavigationTimeout(60_000);
   const headers = { origin: 'http://localhost:3101' };
   async function post(path: string, data: unknown) {
@@ -33,12 +33,16 @@ test('wide waste tables do not cover sidebar controls', async ({ page }) => {
   }
   await page.getByRole('button', { name: 'Refresh data', exact: true }).click({ timeout: 10000 });
   await page.getByLabel('Waste result month', { exact: true }).selectOption('01');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const headerBox = await page.locator('.topbar').boundingBox();
+  const sidebarTop = await sidebar.boundingBox();
+  expect(sidebarTop!.y).toBe(headerBox!.y + headerBox!.height);
+  expect(sidebarTop!.x + sidebarTop!.width).toBe(page.viewportSize()!.width);
+  await page.screenshot({ path: testInfo.outputPath('right-sidebar.png'), fullPage: true });
   await page.evaluate(() => window.scrollTo(0, 600));
-  await expect.poll(async () => Math.round((await sidebar.boundingBox())!.y)).toBe(20);
-  expect((await sidebar.boundingBox())!.x).toBe(box!.x);
-  expect(await sidebar.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
-  await sidebar.getByRole('link', { name: 'Advanced Analysis', exact: true }).scrollIntoViewIfNeeded();
-  expect(await sidebar.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await expect.poll(async () => Math.round((await sidebar.boundingBox())!.y)).toBe(Math.round(sidebarTop!.y - 600));
+  expect((await sidebar.boundingBox())!.x).toBe(sidebarTop!.x);
+  expect(await sidebar.evaluate((element) => element.scrollTop)).toBe(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(sidebar).toHaveCSS('position', 'static');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
