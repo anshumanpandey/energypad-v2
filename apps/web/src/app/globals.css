@@ -3680,10 +3680,10 @@ select[aria-invalid='true'] {
   display: inline-block;
   margin: 10px 0;
   padding: 5px 10px;
-  border-radius: 6px;
+  border-radius: 999px;
   background: #eef3f2;
   color: #425c54;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -3718,24 +3718,70 @@ select[aria-invalid='true'] {
 }
 
 .chart-average-pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
   flex-basis: 100%;
   min-width: 0;
 }
 .chart-average-pair .chart-month-days {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 12px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
+  padding: 5px 10px;
+  border: 1px solid #dfe8e3;
+  font-size: 11px;
+  line-height: 1.4;
   font-weight: 400;
 }
 .chart-average-pair strong {
-  font-size: 16px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .chart-month-total {
-  text-align: right;
+  text-align: left;
   background: #eef5f1;
+}
+
+.waste-expandable-chart {
+  position: relative;
+  min-width: 0;
+}
+.waste-expandable-chart[hidden] {
+  display: none;
+}
+.waste-expandable-chart.is-expanded {
+  grid-column: 1 / -1;
+}
+.waste-expandable-chart > .panel {
+  height: 100%;
+}
+.waste-expandable-chart .metric-chart-heading,
+.waste-expandable-chart > .panel > h2 {
+  padding-right: 40px;
+}
+.waste-chart-expand {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f3f7f5;
+  color: #29443e;
+  cursor: pointer;
+}
+.waste-chart-expand:hover {
+  background: #e3f0e9;
+}
+.waste-chart-expand:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
 }

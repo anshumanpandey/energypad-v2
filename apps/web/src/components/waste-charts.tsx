@@ -1,4 +1,6 @@
 'use client';
+import { useState, type ReactNode } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { formatMonth } from '../domain/format-month';
 import { WasteChartTables } from './waste-chart-tables';
 import { MetricChart } from './metric-chart';
@@ -7,6 +9,36 @@ import { GraphMonthProvider } from './graph-month';
 import { formatEnergyValue } from './format-energy-value';
 import { wasteGauge, type WasteChartRow } from '@/domain/analysis/waste-gauge';
 import { sortChartValues, type UtilityChartSort } from '@/domain/utility-chart-sort';
+
+function ExpandableChart({
+  title,
+  expanded,
+  hidden,
+  onToggle,
+  children,
+}: {
+  title: string;
+  expanded: boolean;
+  hidden: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`waste-expandable-chart${expanded ? ' is-expanded' : ''}`} hidden={hidden}>
+      <button
+        type="button"
+        className="waste-chart-expand"
+        aria-label={`${expanded ? 'Collapse' : 'Expand'} ${title} chart`}
+        aria-expanded={expanded}
+        title={expanded ? 'Restore all charts' : 'Expand chart'}
+        onClick={onToggle}
+      >
+        {expanded ? <Minimize2 size={18} aria-hidden="true" /> : <Maximize2 size={18} aria-hidden="true" />}
+      </button>
+      {children}
+    </div>
+  );
+}
 
 export function WasteCharts({
   rows,
@@ -21,6 +53,13 @@ export function WasteCharts({
   throughMonth?: string;
   view?: 'graph' | 'table';
 }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const expansion = (title: string) => ({
+    title,
+    expanded: expanded === title,
+    hidden: expanded !== null && expanded !== title,
+    onToggle: () => setExpanded(expanded === title ? null : title),
+  });
   const anchor = month
     ? ([...rows]
         .filter((row) => row.month.endsWith(`-${month}`))
@@ -49,108 +88,116 @@ export function WasteCharts({
   return (
     <GraphMonthProvider key={month} initialMonth={month}>
       <div className="graphs-grid waste-charts">
-        <MetricChart
-          title="Avoided Energy (+) and Wasted Energy (-) (kWh)"
-          unit="kWh"
-          points={points('variance')}
-          showHelp={false}
-          calendarMonth={anchor || undefined}
-          comparePreviousMonth
-          tone="waste"
-          description="Adjusted expected minus actual consumption. Positive values are avoided energy; negative values are wasted energy."
-        />
-        <section className="panel metric-chart" aria-label="Waste/Savings Gauge">
-          <h2>Waste/Savings Gauge (Percentage change in the last 3 months)</h2>
-          <p>
-            {gauge.months.length
-              ? `${formatMonth(gauge.months[0])} to ${formatMonth(gauge.months[2])}`
-              : 'No reporting period available.'}
-          </p>
-          <div className="utility-chart-scroll">
-            <svg
-              viewBox="0 0 620 320"
-              role="img"
-              aria-label={`Waste/Savings Gauge: ${percentage === null ? 'Unavailable' : `${formatEnergyValue(percentage)}%`}`}
-            >
-              <title>Three-month waste and savings percentages in the Carbon gauge style</title>
-              {monthlyGauge.map((point, index) => {
-                const x = 110 + index * 200;
-                const size = (Math.abs(point.value ?? 0) / gaugeMaximum) * 90;
-                const label = `${formatMonth(point.month)}: ${point.value === null ? 'Unavailable' : `${formatEnergyValue(point.value)}%`}`;
-                return (
-                  <g key={point.month} role="img" aria-label={label} tabIndex={0} data-month={point.month}>
-                    <title>{label}</title>
-                    <text x={x} y="35" textAnchor="middle" fontSize="14">
-                      {formatMonth(point.month)}
-                    </text>
-                    <rect x={x - 22} y="55" width="44" height="190" rx="22" fill="#edf1ef" />
-                    {point.value !== null && (
-                      <rect
-                        x={x - 22}
-                        y={point.value >= 0 ? 150 - Math.max(3, size) : 150}
-                        width="44"
-                        height={Math.max(3, size)}
-                        rx="8"
-                        fill={point.value >= 0 ? '#168578' : '#b74655'}
-                      />
-                    )}
-                    <line x1={x - 32} x2={x + 32} y1="150" y2="150" stroke="#4b635c" strokeDasharray="4 3" />
-                    <text x={x + 36} y="154" fontSize="11">
-                      0%
-                    </text>
-                    <text x={x} y="275" textAnchor="middle" fontSize="17" fontWeight="bold">
-                      {point.value === null
-                        ? 'Unavailable'
-                        : `${point.value > 0 ? '+' : ''}${formatEnergyValue(point.value)}%`}
-                    </text>
-                    <text x={x} y="297" textAnchor="middle" fontSize="12">
-                      {point.value === null ? 'Missing inputs' : point.value < 0 ? 'Wasted energy' : 'Avoided energy'}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-          <p>
-            <strong>
-              Three-month total:{' '}
-              {percentage === null ? 'Unavailable' : `${percentage > 0 ? '+' : ''}${formatEnergyValue(percentage)}%`}
-            </strong>
-          </p>
-          {percentage === null && (
-            <p className="notice">
-              Three consecutive months of calculated values and a positive expected total are required.
+        <ExpandableChart {...expansion('Avoided Energy and Wasted Energy')}>
+          <MetricChart
+            title="Avoided Energy (+) and Wasted Energy (-) (kWh)"
+            unit="kWh"
+            points={points('variance')}
+            showHelp={false}
+            calendarMonth={anchor || undefined}
+            comparePreviousMonth
+            tone="waste"
+            description="Adjusted expected minus actual consumption. Positive values are avoided energy; negative values are wasted energy."
+          />
+        </ExpandableChart>
+        <ExpandableChart {...expansion('Waste/Savings Gauge')}>
+          <section className="panel metric-chart" aria-label="Waste/Savings Gauge">
+            <h2>Waste/Savings Gauge (Percentage change in the last 3 months)</h2>
+            <p>
+              {gauge.months.length
+                ? `${formatMonth(gauge.months[0])} to ${formatMonth(gauge.months[2])}`
+                : 'No reporting period available.'}
             </p>
-          )}
-        </section>
-        <MetricChart
-          title="Cost (£)"
-          unit="£"
-          points={points('cost')}
-          showHelp={false}
-          calendarMonth={anchor || undefined}
-          comparePreviousMonth
-          tone="waste"
-          description="Estimated avoided (+) or wasted (-) energy cost, using each reading’s net GBP cost per kWh. VAT is excluded; missing rates and other currencies remain unavailable."
-        />
-        <UtilityBars
-          title="Actual consumption vs wastage"
-          unit="kWh"
-          points={rows.map((row) => ({
-            month: row.month,
-            actual: row.actual === null ? null : String(row.actual),
-            target: row.variance === null ? null : String(Math.max(0, -row.variance)),
-          }))}
-          diverging
-          showSummary={false}
-          showHelp={false}
-          calendarMonth={anchor || undefined}
-          selectedMonth={month}
-          sortBy={sort}
-          actualLabel="Actual consumption"
-          targetLabel="Wastage"
-          targetNote="Wastage is the magnitude of negative avoided/wasted energy. Months with avoided energy have zero wastage."
-        />
+            <div className="utility-chart-scroll">
+              <svg
+                viewBox="0 0 620 320"
+                role="img"
+                aria-label={`Waste/Savings Gauge: ${percentage === null ? 'Unavailable' : `${formatEnergyValue(percentage)}%`}`}
+              >
+                <title>Three-month waste and savings percentages in the Carbon gauge style</title>
+                {monthlyGauge.map((point, index) => {
+                  const x = 110 + index * 200;
+                  const size = (Math.abs(point.value ?? 0) / gaugeMaximum) * 90;
+                  const label = `${formatMonth(point.month)}: ${point.value === null ? 'Unavailable' : `${formatEnergyValue(point.value)}%`}`;
+                  return (
+                    <g key={point.month} role="img" aria-label={label} tabIndex={0} data-month={point.month}>
+                      <title>{label}</title>
+                      <text x={x} y="35" textAnchor="middle" fontSize="14">
+                        {formatMonth(point.month)}
+                      </text>
+                      <rect x={x - 22} y="55" width="44" height="190" rx="22" fill="#edf1ef" />
+                      {point.value !== null && (
+                        <rect
+                          x={x - 22}
+                          y={point.value >= 0 ? 150 - Math.max(3, size) : 150}
+                          width="44"
+                          height={Math.max(3, size)}
+                          rx="8"
+                          fill={point.value >= 0 ? '#168578' : '#b74655'}
+                        />
+                      )}
+                      <line x1={x - 32} x2={x + 32} y1="150" y2="150" stroke="#4b635c" strokeDasharray="4 3" />
+                      <text x={x + 36} y="154" fontSize="11">
+                        0%
+                      </text>
+                      <text x={x} y="275" textAnchor="middle" fontSize="17" fontWeight="bold">
+                        {point.value === null
+                          ? 'Unavailable'
+                          : `${point.value > 0 ? '+' : ''}${formatEnergyValue(point.value)}%`}
+                      </text>
+                      <text x={x} y="297" textAnchor="middle" fontSize="12">
+                        {point.value === null ? 'Missing inputs' : point.value < 0 ? 'Wasted energy' : 'Avoided energy'}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+            <p>
+              <strong>
+                Three-month total:{' '}
+                {percentage === null ? 'Unavailable' : `${percentage > 0 ? '+' : ''}${formatEnergyValue(percentage)}%`}
+              </strong>
+            </p>
+            {percentage === null && (
+              <p className="notice">
+                Three consecutive months of calculated values and a positive expected total are required.
+              </p>
+            )}
+          </section>
+        </ExpandableChart>
+        <ExpandableChart {...expansion('Cost')}>
+          <MetricChart
+            title="Cost (£)"
+            unit="£"
+            points={points('cost')}
+            showHelp={false}
+            calendarMonth={anchor || undefined}
+            comparePreviousMonth
+            tone="waste"
+            description="Estimated avoided (+) or wasted (-) energy cost, using each reading’s net GBP cost per kWh. VAT is excluded; missing rates and other currencies remain unavailable."
+          />
+        </ExpandableChart>
+        <ExpandableChart {...expansion('Actual consumption vs wastage')}>
+          <UtilityBars
+            title="Actual consumption vs wastage"
+            unit="kWh"
+            points={rows.map((row) => ({
+              month: row.month,
+              actual: row.actual === null ? null : String(row.actual),
+              target: row.variance === null ? null : String(Math.max(0, -row.variance)),
+            }))}
+            diverging
+            showSummary={false}
+            showHelp={false}
+            calendarMonth={anchor || undefined}
+            selectedMonth={month}
+            sortBy={sort}
+            actualLabel="Actual consumption"
+            targetLabel="Wastage"
+            targetNote="Wastage is the magnitude of negative avoided/wasted energy. Months with avoided energy have zero wastage."
+          />
+        </ExpandableChart>
       </div>
     </GraphMonthProvider>
   );

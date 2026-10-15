@@ -23,6 +23,14 @@ test('wide waste tables do not cover sidebar controls', async ({ page }, testInf
   );
   await page.goto(`/org/${org.id}/waste-savings?site=${site.id}&year=2025`);
   await expect(page.getByLabel('Waste result month', { exact: true })).toHaveValue('01');
+  await page.getByRole('button', { name: 'Expand Cost chart', exact: true }).click();
+  await expect(page.locator('.waste-expandable-chart:visible')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Collapse Cost chart', exact: true })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+  await page.getByRole('button', { name: 'Collapse Cost chart', exact: true }).click();
+  await expect(page.locator('.waste-expandable-chart:visible')).toHaveCount(4);
   const meterDetails = page.locator('.waste-meter-details');
   await expect(meterDetails).toHaveCount(1);
   await expect(page.locator('.waste-dashboard-results > :last-child')).toHaveClass(/waste-meter-details/);

@@ -42,7 +42,7 @@ export function aggregateWasteRows(groups: WasteChartRow[][]): WasteChartRow[] {
       observed: rows.some((row) => row?.actual !== null && row?.actual !== undefined),
       note: rows.some((row) => !row || row.variance === null)
         ? 'Calculation inputs are incomplete for one or more selected meters.'
-        : 'Combined selected meter values.',
+        : undefined,
     };
   });
 }
