@@ -3642,19 +3642,19 @@ select[aria-invalid='true'] {
 }
 
 @media (min-width: 1101px) {
-  .workspace-main:has(> .waste-savings > .waste-dashboard-layout) {
+  .workspace-main:has(> :is(.waste-savings, .carbon-footprint-page) > .waste-dashboard-layout) {
     max-width: none;
     padding: 0;
     margin: 0;
   }
-  .waste-savings:has(> .waste-dashboard-layout) {
+  :is(.waste-savings, .carbon-footprint-page):has(> .waste-dashboard-layout) {
     grid-template-columns: minmax(0, 1fr) 300px;
     grid-template-rows: auto 1fr;
     grid-template-areas: 'heading filters' 'results filters';
     gap: 0;
     min-height: calc(100dvh - 76px);
   }
-  .waste-savings > .page-heading {
+  :is(.waste-savings, .carbon-footprint-page) > .page-heading {
     grid-area: heading;
     margin: 0;
     padding: 39px 32px 28px;
@@ -3791,4 +3791,42 @@ select[aria-invalid='true'] {
 .waste-chart-expand:focus-visible {
   outline: 2px solid var(--green);
   outline-offset: 2px;
+}
+
+.carbon-footprint-page .waste-view-toggle {
+  display: grid;
+  gap: 4px;
+}
+.carbon-footprint-page {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.carbon-footprint-page .carbon-chart-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+.carbon-chart-grid > [aria-label='Carbon Footprint summary'],
+.carbon-chart-grid > .page-note {
+  grid-column: 1 / -1;
+}
+.carbon-chart-grid > .graphs-grid {
+  display: contents;
+}
+.carbon-chart-grid .utility-lines {
+  min-width: 0;
+  padding: 18px;
+}
+.carbon-chart-grid .utility-lines h2 {
+  font-size: 17px;
+  line-height: 1.4;
+}
+.carbon-chart-grid .utility-lines svg {
+  min-width: 0;
+  width: 100%;
+}
+@media (max-width: 800px), (min-width: 1101px) and (max-width: 1250px) {
+  .carbon-footprint-page .carbon-chart-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

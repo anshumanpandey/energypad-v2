@@ -146,11 +146,26 @@ test('consumption and emissions menus filter the same data in graph and table vi
   ).toHaveCount(0);
   await page.getByRole('link', { name: 'Carbon Footprint', exact: true }).click();
   await expect(page.getByLabel('Carbon Footprint site', { exact: true })).toHaveValue(leeds.id);
+  const filters = page.getByRole('complementary', { name: 'Carbon Footprint filters' });
+  const filterBox = await filters.boundingBox();
+  const headerBox = await page.locator('.topbar').boundingBox();
+  expect(filterBox!.x + filterBox!.width).toBe(page.viewportSize()!.width);
+  expect(filterBox!.y).toBe(headerBox!.y + headerBox!.height);
+  await expect(filters.getByRole('heading', { name: 'Filters', exact: true })).toBeVisible();
+
   await page.getByLabel('Carbon Footprint site', { exact: true }).selectOption(london.id);
   await page.getByLabel('Carbon Footprint year', { exact: true }).selectOption('2025');
   await page.getByLabel('Carbon Footprint month', { exact: true }).selectOption('01');
   await page.getByLabel('Carbon Footprint fuel type', { exact: true }).selectOption('GAS');
   const carbonBars = page.getByRole('img', { name: 'Actual vs target emissions diverging bar graph', exact: true });
+  const monthlyChart = await page.getByRole('region', { name: 'Carbon Footprint graph', exact: true }).boundingBox();
+  const targetChart = await page
+    .getByRole('region', { name: 'Actual vs target emissions graph', exact: true })
+    .boundingBox();
+  expect(Math.round(monthlyChart!.y)).toBe(Math.round(targetChart!.y));
+  expect(targetChart!.x).toBeGreaterThan(monthlyChart!.x);
+  await page.screenshot({ path: testInfo.outputPath('carbon-two-column.png'), fullPage: true });
+
   await expect(carbonBars.locator('[data-series="actual"][data-value="50"]')).toHaveCount(1);
   await expect(carbonBars.locator('[data-series="target"][data-value="25"]')).toHaveCount(1);
   const gauge = page.getByRole('img', {
