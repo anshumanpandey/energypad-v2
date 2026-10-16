@@ -1,6 +1,6 @@
 'use client';
-import { useState, type ReactNode } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { useState } from 'react';
+import { ExpandableChart } from './expandable-chart';
 import { formatMonth } from '../domain/format-month';
 import { WasteChartTables } from './waste-chart-tables';
 import { MetricChart } from './metric-chart';
@@ -9,36 +9,6 @@ import { GraphMonthProvider } from './graph-month';
 import { formatEnergyValue } from './format-energy-value';
 import { wasteGauge, type WasteChartRow } from '@/domain/analysis/waste-gauge';
 import { sortChartValues, type UtilityChartSort } from '@/domain/utility-chart-sort';
-
-function ExpandableChart({
-  title,
-  expanded,
-  hidden,
-  onToggle,
-  children,
-}: {
-  title: string;
-  expanded: boolean;
-  hidden: boolean;
-  onToggle: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <div className={`waste-expandable-chart${expanded ? ' is-expanded' : ''}`} hidden={hidden}>
-      <button
-        type="button"
-        className="waste-chart-expand"
-        aria-label={`${expanded ? 'Collapse' : 'Expand'} ${title} chart`}
-        aria-expanded={expanded}
-        title={expanded ? 'Restore all charts' : 'Expand chart'}
-        onClick={onToggle}
-      >
-        {expanded ? <Minimize2 size={18} aria-hidden="true" /> : <Maximize2 size={18} aria-hidden="true" />}
-      </button>
-      {children}
-    </div>
-  );
-}
 
 export function WasteCharts({
   rows,

@@ -2,6 +2,7 @@
 
 import { formatMonth } from '../domain/format-month';
 import { useState } from 'react';
+import { ChartExpansionGroup, GroupedExpandableChart } from './expandable-chart';
 import { useRouter } from 'next/navigation';
 import { filterUtilityRows, type UtilityGraphRow, type UtilityCostTarget } from '@/domain/utility-graphs';
 import { utilityComparison } from '@/domain/utility-comparison';
@@ -85,6 +86,17 @@ export function UtilityGraphs({
       items: fuels.map((f) => ({ value: f, label: utilityLabel(f) })),
     },
   ];
+  const summary = (
+    <section className="panel" aria-label={`${title} summary`}>
+      <h2>
+        {title} · {formatEnergyValue(total, 'Unavailable')} {unit}
+      </h2>
+      <p>
+        {available.length} of {visible.length} site/fuel months available.
+        {kind === 'consumption' && ' Missing data remains unavailable; confirmed zero fills are included.'}
+      </p>
+    </section>
+  );
   return (
     <div className={`utility-graphs-page${sidebar ? ' carbon-footprint-page' : ''}`}>
       <div className="page-heading">
@@ -172,116 +184,108 @@ export function UtilityGraphs({
             <Button onClick={() => router.refresh()}>Refresh data</Button>
           </div>
         </FilterContainer>
-        <div
-          className={
-            sidebar ? `waste-dashboard-results${view === 'graph' ? ' carbon-chart-grid' : ''}` : 'utility-graphs-page'
-          }
-        >
-          <section className="panel" aria-label={`${title} summary`}>
-            <h2>
-              {title} · {formatEnergyValue(total, 'Unavailable')} {unit}
-            </h2>
-            <p>
-              {available.length} of {visible.length} site/fuel months available. Missing data remains unavailable;
-              confirmed zero fills are included.
-            </p>
-            {kind === 'emissions' && (
-              <p>
-                Carbon emissions in kg · GB · Location based. A utility factor takes priority over a site-wide factor.
-              </p>
-            )}
-          </section>
-          {!visible.length ? (
-            <section className="panel">
-              <p>No data for this selection. Upload consumption data or choose different filters.</p>
-            </section>
-          ) : view === 'graph' ? (
-            <UtilityLines
-              rows={chartRows}
-              kind={kind}
-              title={title}
-              unit={unit}
-              selectedMonth={filters.month}
-              history={history}
-              period={period}
-              sortBy={sortBy}
-            />
-          ) : (
-            <section className="panel">
-              <MonthlyChartSummary points={monthlyActuals(history, kind)} period={period} unit={unit} />
-              <div className="analysis-table" role="region" aria-label={`${title} table`} tabIndex={0}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Site</th>
-                      <th>Year</th>
-                      <th>Month</th>
-                      <th>Fuel type</th>
-                      <th>
-                        {title} ({unit})
-                      </th>
-                      <th>{costBasis === 'gross' ? 'Gross cost' : 'Net cost'}</th>
-                      <th>Data status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visible.map((row) => (
-                      <tr
-                        key={`${row.siteId}-${row.fuel}-${row.month}`}
-                        className={row.month.slice(5, 7) === filters.month ? 'utility-selected-month' : undefined}
-                        aria-current={row.month.slice(5, 7) === filters.month ? 'true' : undefined}
-                      >
-                        <td>{row.siteName}</td>
-                        <td>{row.month.slice(0, 4)}</td>
-                        <td>{formatMonth(row.month)}</td>
-                        <td>{utilityLabel(row.fuel)}</td>
-                        <td title={row[kind] ?? undefined}>{formatEnergyValue(row[kind], 'Unavailable')}</td>
-                        <td>
-                          {formatEnergyValue(costBasis === 'gross' ? row.grossCost : row.cost, 'Unavailable')}
-                          {(costBasis === 'gross' ? row.grossCost : row.cost) != null && row.currency
-                            ? ` ${row.currency}`
-                            : ''}
-                        </td>
-                        <td>
-                          {row[kind] === null
-                            ? row.notes.join(' ') || 'Missing consumption.'
-                            : row.zeroFilled
-                              ? 'Missing month filled with 0 after confirmation'
-                              : 'Available'}
-                        </td>
+        <ChartExpansionGroup enabled={sidebar && view === 'graph'} key={`${kind}-${view}`}>
+          <div
+            className={
+              sidebar ? `waste-dashboard-results${view === 'graph' ? ' carbon-chart-grid' : ''}` : 'utility-graphs-page'
+            }
+          >
+            {!sidebar && summary}
+            {!visible.length ? (
+              <section className="panel">
+                <p>No data for this selection. Upload consumption data or choose different filters.</p>
+              </section>
+            ) : view === 'graph' ? (
+              <GroupedExpandableChart title="Monthly carbon footprint">
+                <UtilityLines
+                  rows={chartRows}
+                  kind={kind}
+                  title={title}
+                  unit={unit}
+                  selectedMonth={filters.month}
+                  history={history}
+                  period={period}
+                  sortBy={sortBy}
+                />
+              </GroupedExpandableChart>
+            ) : (
+              <section className="panel">
+                <MonthlyChartSummary points={monthlyActuals(history, kind)} period={period} unit={unit} />
+                <div className="analysis-table" role="region" aria-label={`${title} table`} tabIndex={0}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Site</th>
+                        <th>Year</th>
+                        <th>Month</th>
+                        <th>Fuel type</th>
+                        <th>
+                          {title} ({unit})
+                        </th>
+                        <th>{costBasis === 'gross' ? 'Gross cost' : 'Net cost'}</th>
+                        <th>Data status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
-          {kind === 'consumption' && visible.length > 0 && (
-            <CostComparison
-              rows={view === 'graph' ? chartRows : visible}
-              history={history}
-              period={period}
-              targets={targets}
-              fuel={filters.fuel}
-              view={view}
-              selectedMonth={filters.month}
-              costBasis={costBasis}
-              sortBy={sortBy}
-            />
-          )}
-          {kind === 'emissions' && chartRows.length > 0 && (
-            <CarbonFootprintCharts
-              rows={view === 'graph' ? chartRows : visible}
-              history={history}
-              targets={targets.filter((t) => t.siteId === selectedSite)}
-              year={reportingYear}
-              month={filters.month}
-              fuel={filters.fuel}
-              view={view}
-              sortBy={sortBy}
-            />
-          )}
-        </div>
+                    </thead>
+                    <tbody>
+                      {visible.map((row) => (
+                        <tr
+                          key={`${row.siteId}-${row.fuel}-${row.month}`}
+                          className={row.month.slice(5, 7) === filters.month ? 'utility-selected-month' : undefined}
+                          aria-current={row.month.slice(5, 7) === filters.month ? 'true' : undefined}
+                        >
+                          <td>{row.siteName}</td>
+                          <td>{row.month.slice(0, 4)}</td>
+                          <td>{formatMonth(row.month)}</td>
+                          <td>{utilityLabel(row.fuel)}</td>
+                          <td title={row[kind] ?? undefined}>{formatEnergyValue(row[kind], 'Unavailable')}</td>
+                          <td>
+                            {formatEnergyValue(costBasis === 'gross' ? row.grossCost : row.cost, 'Unavailable')}
+                            {(costBasis === 'gross' ? row.grossCost : row.cost) != null && row.currency
+                              ? ` ${row.currency}`
+                              : ''}
+                          </td>
+                          <td>
+                            {row[kind] === null
+                              ? row.notes.join(' ') || 'Missing consumption.'
+                              : row.zeroFilled
+                                ? 'Missing month filled with 0 after confirmation'
+                                : 'Available'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
+            {kind === 'consumption' && visible.length > 0 && (
+              <CostComparison
+                rows={view === 'graph' ? chartRows : visible}
+                history={history}
+                period={period}
+                targets={targets}
+                fuel={filters.fuel}
+                view={view}
+                selectedMonth={filters.month}
+                costBasis={costBasis}
+                sortBy={sortBy}
+              />
+            )}
+            {kind === 'emissions' && chartRows.length > 0 && (
+              <CarbonFootprintCharts
+                rows={view === 'graph' ? chartRows : visible}
+                history={history}
+                targets={targets.filter((t) => t.siteId === selectedSite)}
+                year={reportingYear}
+                month={filters.month}
+                fuel={filters.fuel}
+                view={view}
+                sortBy={sortBy}
+              />
+            )}
+            {sidebar && summary}
+          </div>
+        </ChartExpansionGroup>
       </div>
     </div>
   );
@@ -459,10 +463,12 @@ function UtilityLines({
         Monthly {title.toLowerCase()} ({unit})
       </h2>
       <MonthlyChartSummary points={monthlyActuals(history, kind)} period={period} unit={unit} />
-      <p>
-        Each line represents one site and fuel. Hover or focus a point for its exact value. Lines break where data is
-        unavailable.
-      </p>
+      {kind === 'consumption' && (
+        <p>
+          Each line represents one site and fuel. Hover or focus a point for its exact value. Lines break where data is
+          unavailable.
+        </p>
+      )}
       <div className="utility-chart-scroll">
         <svg viewBox="0 0 800 305" role="img" aria-label={`${title} monthly line graph`}>
           <title>

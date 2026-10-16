@@ -164,7 +164,25 @@ test('consumption and emissions menus filter the same data in graph and table vi
     .boundingBox();
   expect(Math.round(monthlyChart!.y)).toBe(Math.round(targetChart!.y));
   expect(targetChart!.x).toBeGreaterThan(monthlyChart!.x);
+  expect(Math.round(monthlyChart!.height)).toBe(Math.round(targetChart!.height));
+  await expect(page.locator('.carbon-chart-grid > :last-child')).toHaveAttribute(
+    'aria-label',
+    'Carbon Footprint summary',
+  );
   await page.screenshot({ path: testInfo.outputPath('carbon-two-column.png'), fullPage: true });
+  for (const title of [
+    'Monthly carbon footprint',
+    'Actual vs target emissions',
+    'Carbon gauge',
+    'Recent carbon emissions',
+  ]) {
+    await page.getByRole('button', { name: `Expand ${title} chart`, exact: true }).click();
+    await expect(page.locator('.carbon-chart-grid .waste-expandable-chart:visible')).toHaveCount(1);
+    const expandedBox = await page.locator('.carbon-chart-grid .is-expanded').boundingBox();
+    expect(expandedBox!.width).toBeGreaterThan(monthlyChart!.width);
+    await page.getByRole('button', { name: `Collapse ${title} chart`, exact: true }).click();
+    await expect(page.locator('.carbon-chart-grid .waste-expandable-chart:visible')).toHaveCount(4);
+  }
 
   await expect(carbonBars.locator('[data-series="actual"][data-value="50"]')).toHaveCount(1);
   await expect(carbonBars.locator('[data-series="target"][data-value="25"]')).toHaveCount(1);

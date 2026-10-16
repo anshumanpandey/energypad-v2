@@ -14,12 +14,22 @@ export function MonthlyChartSummary({
   return (
     <div className="monthly-chart-summary" aria-label="Selected month statistics">
       <span>
-        <strong>{period ? formatMonth(period) : 'Select a month'}</strong> · Actual:{' '}
-        {formatEnergyValue(summary.current, 'Unavailable')} {unit}
+        <strong>{period ? formatMonth(period) : 'Select a month'}</strong>
       </span>
-      <span>
-        Average per day: {formatEnergyValue(summary.dailyAverage, 'Unavailable')} {unit}/day
-      </span>
+      <div className="monthly-chart-values">
+        <span className="monthly-chart-actual">
+          <span>Actual:</span>{' '}
+          <strong>
+            {formatEnergyValue(summary.current, 'Unavailable')} {unit}
+          </strong>
+        </span>
+        <span className="monthly-chart-average">
+          <span>Average per day:</span>{' '}
+          <strong>
+            {formatEnergyValue(summary.dailyAverage, 'Unavailable')} {unit}/day
+          </strong>
+        </span>
+      </div>
       <span
         style={{
           color:

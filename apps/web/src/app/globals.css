@@ -3718,7 +3718,8 @@ select[aria-invalid='true'] {
   color: #29443e;
 }
 
-.chart-average-pair {
+.chart-average-pair,
+.carbon-footprint-page .monthly-chart-values {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -3728,7 +3729,8 @@ select[aria-invalid='true'] {
   min-width: 0;
   max-width: 100%;
 }
-.chart-average-pair .chart-month-days {
+.chart-average-pair .chart-month-days,
+.carbon-footprint-page .monthly-chart-values > span {
   min-width: 0;
   max-width: 100%;
   display: inline-flex;
@@ -3742,7 +3744,8 @@ select[aria-invalid='true'] {
   font-weight: 400;
   overflow-wrap: anywhere;
 }
-.chart-average-pair strong {
+.chart-average-pair strong,
+.carbon-footprint-page .monthly-chart-values strong {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
@@ -3804,7 +3807,7 @@ select[aria-invalid='true'] {
 
 .carbon-footprint-page .carbon-chart-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
+  align-items: stretch;
 }
 .carbon-chart-grid > [aria-label='Carbon Footprint summary'],
 .carbon-chart-grid > .page-note {
@@ -3829,4 +3832,23 @@ select[aria-invalid='true'] {
   .carbon-footprint-page .carbon-chart-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+.monthly-chart-values {
+  display: contents;
+}
+.carbon-footprint-page .monthly-chart-summary {
+  align-items: center;
+  gap: 8px;
+}
+.carbon-footprint-page .monthly-chart-values > span {
+  border-radius: 999px;
+  color: #fff;
+}
+.carbon-footprint-page .monthly-chart-average {
+  order: -1;
+  background: #4989c6;
+}
+.carbon-footprint-page .monthly-chart-actual {
+  background: #4d505c;
 }
