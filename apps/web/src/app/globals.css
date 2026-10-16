@@ -3720,18 +3720,17 @@ select[aria-invalid='true'] {
 
 .chart-average-pair {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  align-items: flex-start;
-  gap: 0;
-  flex-basis: 100%;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
   min-width: 0;
-  padding-bottom: 6px;
-  isolation: isolate;
+  max-width: 100%;
 }
 .chart-average-pair .chart-month-days {
-  position: relative;
   min-width: 0;
-  max-width: 55%;
+  max-width: 100%;
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -3741,15 +3740,7 @@ select[aria-invalid='true'] {
   font-size: 11px;
   line-height: 1.4;
   font-weight: 400;
-}
-.chart-average-pair .chart-daily-average {
-  padding-right: 24px;
-}
-.chart-average-pair .chart-month-total {
-  margin-left: -12px;
-  margin-top: 8px;
-  z-index: 1;
-  box-shadow: 0 2px 5px #18242c20;
+  overflow-wrap: anywhere;
 }
 .chart-average-pair strong {
   font-size: 12px;
