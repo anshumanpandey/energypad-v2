@@ -53,9 +53,11 @@ export function MetricChart({
     <p className="metric-chart-detail" aria-live="polite">
       {active ? (
         <>
-          <WasteDirectionText
-            text={`${formatMonth(active.month)}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`}
-          />
+          {!comparePreviousMonth && (
+            <WasteDirectionText
+              text={`${formatMonth(active.month)}: ${display(active)}${active.note ? ` · ${active.note}` : ''}`}
+            />
+          )}
           {comparePreviousMonth && (
             <span className={`metric-chart-change ${change ? `is-${change.direction}` : ''}`}>
               {change ? (

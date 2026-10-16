@@ -3698,7 +3698,8 @@ select[aria-invalid='true'] {
   margin: 0;
 }
 .chart-daily-average {
-  background: #f2f6fa;
+  background: #4989c6;
+  color: #fff;
   font-weight: 400;
 }
 
@@ -3719,13 +3720,18 @@ select[aria-invalid='true'] {
 
 .chart-average-pair {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 0;
   flex-basis: 100%;
   min-width: 0;
+  padding-bottom: 6px;
+  isolation: isolate;
 }
 .chart-average-pair .chart-month-days {
+  position: relative;
+  min-width: 0;
+  max-width: 55%;
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -3736,13 +3742,23 @@ select[aria-invalid='true'] {
   line-height: 1.4;
   font-weight: 400;
 }
+.chart-average-pair .chart-daily-average {
+  padding-right: 24px;
+}
+.chart-average-pair .chart-month-total {
+  margin-left: -12px;
+  margin-top: 8px;
+  z-index: 1;
+  box-shadow: 0 2px 5px #18242c20;
+}
 .chart-average-pair strong {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .chart-month-total {
   text-align: left;
-  background: #eef5f1;
+  background: #4d505c;
+  color: #fff;
 }
 
 .waste-expandable-chart {
