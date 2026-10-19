@@ -25,6 +25,7 @@ export function UtilityBars({
   actualColor = '#168578',
   targetColor = '#4989c6',
   showSummary = true,
+  showActualChips = true,
 }: {
   points: UtilityBarPoint[];
   title: string;
@@ -43,6 +44,7 @@ export function UtilityBars({
   actualColor?: string;
   targetColor?: string;
   showSummary?: boolean;
+  showActualChips?: boolean;
 }) {
   const points = sortChartValues(sourcePoints, sortBy, (r) => r.actual);
   const maximum = Math.max(1, ...points.flatMap((p) => [Number(p.actual ?? 0), Number(p.target ?? 0)]));
@@ -59,12 +61,16 @@ export function UtilityBars({
       <ChartMonthDays
         month={calendarMonth}
         averages={[
-          {
-            label: `${actualLabel} daily average`,
-            totalLabel: actualLabel,
-            value: sourcePoints.find((point) => point.month === calendarMonth)?.actual,
-            unit,
-          },
+          ...(showActualChips
+            ? [
+                {
+                  label: `${actualLabel} daily average`,
+                  totalLabel: actualLabel,
+                  value: sourcePoints.find((point) => point.month === calendarMonth)?.actual,
+                  unit,
+                },
+              ]
+            : []),
           ...(!actualOnly
             ? [
                 {

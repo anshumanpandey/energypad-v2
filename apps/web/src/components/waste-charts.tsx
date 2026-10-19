@@ -167,6 +167,7 @@ export function WasteCharts({
             sortBy={sort}
             actualColor="#94c11f"
             targetColor="#4989c6"
+            showActualChips={false}
             actualLabel="Actual consumption"
             targetLabel="Wastage"
             targetNote="Wastage is the magnitude of negative avoided/wasted energy. Months with avoided energy have zero wastage."
