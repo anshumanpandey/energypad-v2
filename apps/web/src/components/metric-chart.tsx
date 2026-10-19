@@ -76,8 +76,7 @@ export function MetricChart({
                     {' · '}
                     {change.direction === 'equal'
                       ? 'No change'
-                      : `${formatEnergyValue(Math.abs(change.difference))} ${unit} ${change.direction === 'down' ? 'lower' : 'higher'}`}
-                    {` than ${formatMonth(change.previousMonth)}`}
+                      : `${formatEnergyValue(Math.abs(change.difference))} ${unit}`}
                   </span>
                 </>
               ) : (

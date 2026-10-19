@@ -3755,6 +3755,39 @@ select[aria-invalid='true'] {
   color: #fff;
 }
 
+.waste-savings .chart-average-pair {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 220px;
+  padding: 4px;
+  border: 1px solid #dfe8e3;
+  border-radius: 22px;
+  background: #eef3f2;
+}
+.waste-savings .chart-average-pair .chart-month-days {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 17px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.waste-savings .chart-average-pair .chart-daily-average {
+  padding-bottom: 14px;
+}
+.waste-savings .chart-average-pair .chart-month-total {
+  position: relative;
+  margin-top: -6px;
+}
+.waste-savings .chart-average-pair :is(span, strong) {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .waste-expandable-chart {
   position: relative;
   min-width: 0;
