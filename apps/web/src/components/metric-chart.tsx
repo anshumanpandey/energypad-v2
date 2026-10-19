@@ -19,6 +19,8 @@ export function MetricChart({
   comparePreviousMonth = false,
   showHelp = true,
   calendarMonth,
+  curved = false,
+  chartType = 'line',
 }: {
   title: string;
   unit: string;
@@ -28,6 +30,8 @@ export function MetricChart({
   comparePreviousMonth?: boolean;
   showHelp?: boolean;
   calendarMonth?: string;
+  curved?: boolean;
+  chartType?: 'line' | 'bar';
 }) {
   const month = useGraphMonth();
   const [selected, setSelected] = useState<string | null>(null);
@@ -41,8 +45,14 @@ export function MetricChart({
   const linePath = points
     .map((point, index) => {
       if (!finite(point)) return '';
-      const command = index > 0 && finite(points[index - 1]) ? 'L' : 'M';
-      return `${command} ${80 + step * index + step / 2} ${y(Number(point.value))}`;
+      const x = 80 + step * index + step / 2;
+      const pointY = y(Number(point.value));
+      const previous = index > 0 ? points[index - 1] : null;
+      if (!previous || !finite(previous)) return `M ${x} ${pointY}`;
+      if (!curved) return `L ${x} ${pointY}`;
+      // Midpoint controls keep the curve within the two measured values.
+      const midpoint = x - step / 2;
+      return `C ${midpoint} ${y(Number(previous.value))} ${midpoint} ${pointY} ${x} ${pointY}`;
     })
     .join(' ');
   const active = points.find((p) => (selected ? p.month === selected : p.month.slice(5, 7) === month));
@@ -136,7 +146,7 @@ export function MetricChart({
             );
           })}
           <line x1="75" x2="680" y1={y(0)} y2={y(0)} className="metric-chart-zero" />
-          <path d={linePath} className="metric-chart-line" aria-hidden="true" />
+          {chartType === 'line' && <path d={linePath} className="metric-chart-line" aria-hidden="true" />}
           {points.map((point, index) => {
             const x = 80 + step * index + step / 2;
             const highlighted = point.month.slice(5, 7) === month;
@@ -158,7 +168,18 @@ export function MetricChart({
                   <title>{`${formatMonth(point.month)}: ${display(point)}${point.note ? ` · ${point.note}` : ''}`}</title>
                   <rect x={x - step * 0.3} y="30" width={step * 0.6} height="200" fill="transparent" />
                   {valid ? (
-                    <circle className="metric-chart-dot" cx={x} cy={y(value)} r={highlighted ? 7 : 5} />
+                    chartType === 'bar' ? (
+                      <rect
+                        className="metric-chart-dot metric-chart-bar"
+                        x={x - Math.min(step * 0.6, 42) / 2}
+                        y={value === 0 ? y(0) - 1 : Math.min(y(value), y(0))}
+                        width={Math.min(step * 0.6, 42)}
+                        height={Math.max(2, Math.abs(y(value) - y(0)))}
+                        rx={2}
+                      />
+                    ) : (
+                      <circle className="metric-chart-dot" cx={x} cy={y(value)} r={highlighted ? 7 : 5} />
+                    )
                   ) : (
                     <text x={x} y={y(0) - 8} textAnchor="middle" className="metric-chart-missing">
                       –

@@ -22,6 +22,8 @@ export function UtilityBars({
   sortBy = 'month',
   actualLabel = 'Actual',
   targetLabel = 'Target',
+  actualColor = '#168578',
+  targetColor = '#4989c6',
   showSummary = true,
 }: {
   points: UtilityBarPoint[];
@@ -38,6 +40,8 @@ export function UtilityBars({
   sortBy?: UtilityChartSort;
   actualLabel?: string;
   targetLabel?: string;
+  actualColor?: string;
+  targetColor?: string;
   showSummary?: boolean;
 }) {
   const points = sortChartValues(sourcePoints, sortBy, (r) => r.actual);
@@ -181,7 +185,7 @@ export function UtilityBars({
                 {(actualOnly ? (['actual'] as const) : (['actual', 'target'] as const)).map((kind, seriesIndex) => {
                   const value = point[kind];
                   const size = scale(value);
-                  const color = seriesIndex ? '#4989c6' : '#168578';
+                  const color = seriesIndex ? targetColor : actualColor;
                   const barX = diverging
                     ? seriesIndex
                       ? baseline
@@ -234,12 +238,12 @@ export function UtilityBars({
       </div>
       <ul className="utility-chart-legend">
         <li>
-          <span style={{ background: '#168578' }} />
+          <span style={{ background: actualColor }} />
           {actualLabel}
         </li>
         {!actualOnly && (
           <li>
-            <span style={{ background: '#4989c6' }} />
+            <span style={{ background: targetColor }} />
             {targetLabel}
           </li>
         )}

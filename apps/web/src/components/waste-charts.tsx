@@ -66,6 +66,7 @@ export function WasteCharts({
             showHelp={false}
             calendarMonth={anchor || undefined}
             comparePreviousMonth
+            curved
             tone="waste"
             description="Adjusted expected minus actual consumption. Positive values are avoided energy; negative values are wasted energy."
           />
@@ -144,6 +145,7 @@ export function WasteCharts({
             showHelp={false}
             calendarMonth={anchor || undefined}
             comparePreviousMonth
+            chartType="bar"
             tone="waste"
             description="Estimated avoided (+) or wasted (-) energy cost, using each reading’s net GBP cost per kWh. VAT is excluded; missing rates and other currencies remain unavailable."
           />
@@ -163,6 +165,8 @@ export function WasteCharts({
             calendarMonth={anchor || undefined}
             selectedMonth={month}
             sortBy={sort}
+            actualColor="#94c11f"
+            targetColor="#4989c6"
             actualLabel="Actual consumption"
             targetLabel="Wastage"
             targetNote="Wastage is the magnitude of negative avoided/wasted energy. Months with avoided energy have zero wastage."
