@@ -92,7 +92,7 @@ export function MetricChart({
                   </span>
                 </>
               ) : (
-                'Previous-month comparison unavailable.'
+                'N/A'
               )}
             </span>
           )}
