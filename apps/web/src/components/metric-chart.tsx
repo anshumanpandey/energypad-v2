@@ -113,18 +113,20 @@ export function MetricChart({
           {values.length}/{points.length} months available
         </span>
       </div>
-      <ChartMonthDays
-        month={calendarMonth}
-        averages={[
-          {
-            label: 'Daily average',
-            totalLabel: unit === '£' ? 'Monthly cost' : 'Avoided / wasted energy',
-            value: points.find((point) => point.month === calendarMonth)?.value,
-            unit,
-          },
-        ]}
-      />
-      {comparePreviousMonth && selectedMonthDetail}
+      <div className="metric-chart-summary-row">
+        <ChartMonthDays
+          month={calendarMonth}
+          averages={[
+            {
+              label: 'Daily average',
+              totalLabel: unit === '£' ? 'Monthly cost' : 'Avoided / wasted energy',
+              value: points.find((point) => point.month === calendarMonth)?.value,
+              unit,
+            },
+          ]}
+        />
+        {comparePreviousMonth && selectedMonthDetail}
+      </div>
       {showHelp && <p className="chart-help">{description}</p>}
       {!values.length && <p className="notice">No calculated values for this selection. Missing data is not zero.</p>}
       {values.length > 0 && (
