@@ -19,6 +19,7 @@ export function MetricChart({
   comparePreviousMonth = false,
   showHelp = true,
   calendarMonth,
+  hideCalendarMonth = false,
   curved = false,
   chartType = 'line',
   showCoverage = true,
@@ -31,6 +32,7 @@ export function MetricChart({
   comparePreviousMonth?: boolean;
   showHelp?: boolean;
   calendarMonth?: string;
+  hideCalendarMonth?: boolean;
   curved?: boolean;
   chartType?: 'line' | 'bar';
   showCoverage?: boolean;
@@ -120,10 +122,11 @@ export function MetricChart({
       <div className="metric-chart-summary-row">
         <ChartMonthDays
           month={calendarMonth}
+          hideMonth={hideCalendarMonth}
           averages={[
             {
               label: 'Daily average',
-              totalLabel: unit === '£' ? 'Monthly cost' : 'Avoided / wasted energy',
+              totalLabel: unit === '£' ? 'Monthly cost' : 'Waste this month',
               value: points.find((point) => point.month === calendarMonth)?.value,
               unit,
             },

@@ -3,9 +3,11 @@ import { formatEnergyValue } from './format-energy-value';
 
 export function ChartMonthDays({
   month,
+  hideMonth = false,
   averages = [],
 }: {
   month?: string;
+  hideMonth?: boolean;
   averages?: { label: string; totalLabel?: string; value: string | number | null | undefined; unit: string }[];
 }) {
   if (!month || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null;
@@ -14,7 +16,8 @@ export function ChartMonthDays({
   return (
     <div className="chart-month-summary" aria-live="polite">
       <p className="chart-month-days">
-        {formatMonth(month)} · {days} days
+        {!hideMonth && `${formatMonth(month)} · `}
+        <span className="chart-days-count">{days}</span> <span className="chart-days-label">days</span>
       </p>
       {averages.map(({ label, totalLabel = 'Monthly value', value, unit }) => {
         const available = value !== null && value !== undefined && Number.isFinite(Number(value));

@@ -19,6 +19,7 @@ export function UtilityBars({
   targetNote,
   showHelp = true,
   calendarMonth,
+  hideCalendarMonth = false,
   sortBy = 'month',
   actualLabel = 'Actual',
   targetLabel = 'Target',
@@ -38,6 +39,7 @@ export function UtilityBars({
   targetNote?: string;
   showHelp?: boolean;
   calendarMonth?: string;
+  hideCalendarMonth?: boolean;
   sortBy?: UtilityChartSort;
   actualLabel?: string;
   targetLabel?: string;
@@ -60,6 +62,7 @@ export function UtilityBars({
       </h2>
       <ChartMonthDays
         month={calendarMonth}
+        hideMonth={hideCalendarMonth}
         averages={[
           ...(showActualChips
             ? [

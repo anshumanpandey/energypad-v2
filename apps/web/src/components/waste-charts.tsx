@@ -65,6 +65,7 @@ export function WasteCharts({
             points={points('variance')}
             showHelp={false}
             calendarMonth={anchor || undefined}
+            hideCalendarMonth
             showCoverage={false}
             comparePreviousMonth
             curved
@@ -134,6 +135,7 @@ export function WasteCharts({
             points={points('cost')}
             showHelp={false}
             calendarMonth={anchor || undefined}
+            hideCalendarMonth
             showCoverage={false}
             comparePreviousMonth
             chartType="bar"
@@ -154,6 +156,7 @@ export function WasteCharts({
             showSummary={false}
             showHelp={false}
             calendarMonth={anchor || undefined}
+            hideCalendarMonth
             selectedMonth={month}
             sortBy={sort}
             actualColor="#94c11f"

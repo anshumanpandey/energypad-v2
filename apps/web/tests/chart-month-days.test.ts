@@ -10,7 +10,8 @@ it.each([
   ['2025-01', 31],
   ['2100-02', 28],
 ])('shows calendar days for %s', (month, days) => {
-  expect(renderToStaticMarkup(createElement(ChartMonthDays, { month }))).toContain(`${days} days`);
+  const text = renderToStaticMarkup(createElement(ChartMonthDays, { month })).replace(/<[^>]*>/g, '');
+  expect(text).toContain(`${days} days`);
 });
 it('does not invent a month when all months are selected', () => {
   expect(renderToStaticMarkup(createElement(ChartMonthDays, {}))).toBe('');
