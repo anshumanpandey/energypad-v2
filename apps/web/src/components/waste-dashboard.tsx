@@ -24,16 +24,19 @@ export function WasteDashboard({
   sites,
   preview,
   manageWeather = false,
+  weatherSites = [],
 }: {
   orgId: string;
   siteId: string;
   sites: { id: string; name: string }[];
   preview: WastePreview;
   manageWeather?: boolean;
+  weatherSites?: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [drivers, setDrivers] = useOptimistic(preview.drivers);
+  const [selectedSite, setSelectedSite] = useOptimistic(siteId);
   const [view, setView] = useState<'graph' | 'table'>('graph');
   const [month, setMonth] = useState('01');
   const [fuel, setFuel] = useState('');
@@ -44,6 +47,7 @@ export function WasteDashboard({
     if (year !== undefined) query.set('year', String(year));
     if (drivers) query.set('drivers', drivers.join(','));
     startTransition(() => {
+      setSelectedSite(site);
       if (drivers) setDrivers(drivers);
       router.push(`/org/${orgId}/waste-savings?${query}`);
     });
@@ -67,13 +71,13 @@ export function WasteDashboard({
         >
           <fieldset className="waste-site-options" disabled={pending}>
             <legend>Sites</legend>
-            {sites.map((site) => (
+            {[{ id: 'all', name: 'All Sites' }, ...sites].map((site) => (
               <label key={site.id} className="waste-site-option">
                 <input
                   type="radio"
                   name="waste-site"
                   value={site.id}
-                  checked={siteId === site.id}
+                  checked={selectedSite === site.id}
                   onChange={() => {
                     setFuel('');
                     update(site.id, undefined);
@@ -200,7 +204,7 @@ export function WasteDashboard({
                     )}
                     <a
                       className="button button-primary"
-                      href={`/api/v1/organisations/${orgId}/sites/${siteId}/analysis/waste-preview.xlsx?${new URLSearchParams({ year: String(preview.year), meter: meter.id, drivers: preview.drivers.join(',') })}`}
+                      href={`/api/v1/organisations/${orgId}/sites/${meter.siteId ?? siteId}/analysis/waste-preview.xlsx?${new URLSearchParams({ year: String(preview.year), meter: meter.id, drivers: preview.drivers.join(',') })}`}
                     >
                       Download site calculation sheet
                     </a>
@@ -216,10 +220,16 @@ export function WasteDashboard({
             remain unavailable.
           </p>
           <div className="utility-graph-actions">
-            <Link href={`/org/${orgId}/degree-days?site=${siteId}&year=${preview.year}`}>
+            <Link
+              href={`/org/${orgId}/degree-days?${new URLSearchParams({ ...(siteId !== 'all' ? { site: siteId } : {}), year: String(preview.year) })}`}
+            >
               View HDD &amp; CDD inputs
             </Link>
-            <Link href={`/org/${orgId}/waste-savings?site=${siteId}&evidence=1`}>Saved calculation evidence</Link>
+            <Link
+              href={`/org/${orgId}/waste-savings?${new URLSearchParams({ ...(siteId !== 'all' ? { site: siteId } : {}), evidence: '1' })}`}
+            >
+              Saved calculation evidence
+            </Link>
             <Link href={`/org/${orgId}/analysis`}>Advanced Analysis</Link>
           </div>
         </aside>
@@ -229,6 +239,12 @@ export function WasteDashboard({
               <p>No uploaded consumption for this selection.</p>
             </section>
           )}
+          {weatherSites.map((site) => (
+            <section key={site.id} aria-label={`${site.name} weather`}>
+              <h2>{site.name}</h2>
+              <WasteWeather orgId={orgId} siteId={site.id} year={preview.year} manage={manageWeather} />
+            </section>
+          ))}
           {!!meters.length && preview.weather?.required && !preview.weather.ready && (
             <WasteWeather
               key={`${siteId}:${preview.year}`}

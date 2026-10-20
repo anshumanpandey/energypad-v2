@@ -6,6 +6,7 @@ export type WastePreview = {
   weather?: { required: boolean; ready: boolean; throughMonth?: string };
   meters: {
     id: string;
+    siteId?: string;
     name: string;
     fuel: string;
     issues: string[];

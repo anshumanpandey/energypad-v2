@@ -18,11 +18,33 @@ test('wide waste tables do not cover sidebar controls', async ({ page }, testInf
     unit: 'kWh',
   });
   await post(`${base}/sites/${site.id}/energy`, { meterId: meter.id, month: '2025-01', quantity: '1250' });
+  const secondSite = await post(`${base}/sites`, { code: 'SECOND', name: 'Second test site' });
+  const secondMeter = await post(`${base}/sites/${secondSite.id}/meters`, {
+    code: 'ELEC',
+    name: 'Electricity',
+    fuel: 'ELECTRICITY',
+    unit: 'kWh',
+  });
+  await post(`${base}/sites/${secondSite.id}/energy`, { meterId: secondMeter.id, month: '2025-01', quantity: '750' });
   await page.route('**/energy/weather/prepare-calculation', (route) =>
     route.fulfill({ status: 422, json: { title: 'Weather unavailable for layout fixture.' } }),
   );
   await page.goto(`/org/${org.id}/waste-savings?site=${site.id}&year=2025`);
   await expect(page.getByLabel('Waste result month', { exact: true })).toHaveValue('01');
+  await page.getByRole('radio', { name: 'All Sites', exact: true }).check();
+  await expect(page).toHaveURL(/site=all/);
+  await expect(page.getByRole('radio', { name: 'All Sites', exact: true })).toBeChecked();
+  await page.locator('.waste-meter-summary').click();
+  await expect(
+    page.getByRole('region', { name: 'Sidebar test site · Electricity calculation details', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Second test site · Electricity calculation details', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('radio', { name: 'Sidebar test site', exact: true }).check();
+  await expect(page).toHaveURL(new RegExp(`site=${site.id}`));
+  await page.locator('.waste-meter-summary').click();
+
   await page.getByRole('button', { name: 'Expand Cost chart', exact: true }).click();
   await expect(page.locator('.waste-expandable-chart:visible')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Collapse Cost chart', exact: true })).toHaveAttribute(

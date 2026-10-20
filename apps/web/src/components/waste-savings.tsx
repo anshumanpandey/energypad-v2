@@ -1,3 +1,4 @@
+import { allSitesWaste } from '@/domain/analysis/all-sites-waste';
 import { formatMonth } from '../domain/format-month';
 import { WasteDirection } from './waste-direction';
 import { formatEnergyValue } from './format-energy-value';
@@ -32,6 +33,25 @@ export async function WasteSavings({
   const otherQuery = includeOthers ? '&other=1' : '';
   const sites = await accessible(() => analysisService.historySites(actor, organisationId));
   const siteId = text('site') ?? sites[0]?.id;
+  if (siteId === 'all' && sites.length && !text('run') && text('evidence') !== '1') {
+    const result = await allSitesWaste(
+      sites,
+      text('year') ? Number(text('year')) : undefined,
+      text('drivers') !== undefined ? text('drivers')!.split(',').filter(Boolean) : ['HDD', 'CDD'],
+      async (id, year, drivers) =>
+        (await accessible(() => analysisService.wastePreview(actor, organisationId, id, year, drivers))).preview,
+    );
+    return (
+      <WasteDashboard
+        orgId={organisationId}
+        siteId="all"
+        sites={sites}
+        preview={result.preview}
+        weatherSites={result.weatherSites}
+        manageWeather={canApprove}
+      />
+    );
+  }
   if (siteId && !sites.some((s) => s.id === siteId)) notFound();
   if (siteId && !text('run') && text('evidence') !== '1') {
     const { preview } = await accessible(() =>
