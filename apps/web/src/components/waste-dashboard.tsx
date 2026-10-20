@@ -65,6 +65,24 @@ export function WasteDashboard({
           aria-label="Waste & Savings filters"
           aria-busy={pending}
         >
+          <fieldset className="waste-site-options" disabled={pending}>
+            <legend>Sites</legend>
+            {sites.map((site) => (
+              <label key={site.id} className="waste-site-option">
+                <input
+                  type="radio"
+                  name="waste-site"
+                  value={site.id}
+                  checked={siteId === site.id}
+                  onChange={() => {
+                    setFuel('');
+                    update(site.id, undefined);
+                  }}
+                />
+                <span>{site.name}</span>
+              </label>
+            ))}
+          </fieldset>
           <h2>Filters</h2>
           <div className="waste-view-toggle" role="group" aria-label="Results view">
             <Button aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
@@ -89,24 +107,6 @@ export function WasteDashboard({
             <Button onClick={() => startTransition(() => router.refresh())}>Refresh data</Button>
           </div>
           <div className="form-grid">
-            <label>
-              Site
-              <select
-                aria-label="Waste site"
-                disabled={pending}
-                value={siteId}
-                onChange={(event) => {
-                  setFuel('');
-                  update(event.target.value, undefined);
-                }}
-              >
-                {sites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.name}
-                  </option>
-                ))}
-              </select>
-            </label>
             <label>
               Year
               <select
