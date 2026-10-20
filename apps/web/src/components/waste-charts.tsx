@@ -65,6 +65,7 @@ export function WasteCharts({
             points={points('variance')}
             showHelp={false}
             calendarMonth={anchor || undefined}
+            showCoverage={false}
             comparePreviousMonth
             curved
             tone="waste"
@@ -124,17 +125,6 @@ export function WasteCharts({
                 })}
               </svg>
             </div>
-            <p>
-              <strong>
-                Three-month total:{' '}
-                {percentage === null ? 'Unavailable' : `${percentage > 0 ? '+' : ''}${formatEnergyValue(percentage)}%`}
-              </strong>
-            </p>
-            {percentage === null && (
-              <p className="notice">
-                Three consecutive months of calculated values and a positive expected total are required.
-              </p>
-            )}
           </section>
         </ExpandableChart>
         <ExpandableChart {...expansion('Cost')}>
@@ -144,6 +134,7 @@ export function WasteCharts({
             points={points('cost')}
             showHelp={false}
             calendarMonth={anchor || undefined}
+            showCoverage={false}
             comparePreviousMonth
             chartType="bar"
             tone="waste"

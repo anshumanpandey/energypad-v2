@@ -21,6 +21,7 @@ export function MetricChart({
   calendarMonth,
   curved = false,
   chartType = 'line',
+  showCoverage = true,
 }: {
   title: string;
   unit: string;
@@ -32,6 +33,7 @@ export function MetricChart({
   calendarMonth?: string;
   curved?: boolean;
   chartType?: 'line' | 'bar';
+  showCoverage?: boolean;
 }) {
   const month = useGraphMonth();
   const [selected, setSelected] = useState<string | null>(null);
@@ -109,9 +111,11 @@ export function MetricChart({
           {unit !== '£' && <span className="eyebrow">{unit}</span>}
           <h2>{title}</h2>
         </div>
-        <span className="metric-chart-coverage">
-          {values.length}/{points.length} months available
-        </span>
+        {showCoverage && (
+          <span className="metric-chart-coverage">
+            {values.length}/{points.length} months available
+          </span>
+        )}
       </div>
       <div className="metric-chart-summary-row">
         <ChartMonthDays

@@ -3761,10 +3761,10 @@ select[aria-invalid='true'] {
   align-items: stretch;
   gap: 0;
   width: 300px;
-  padding: 3px;
-  border: 1px solid #dfe8e3;
-  border-radius: 999px;
-  background: #eef3f2;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 .waste-savings .chart-average-pair .chart-month-days {
   display: flex;
@@ -3780,9 +3780,9 @@ select[aria-invalid='true'] {
   overflow-wrap: anywhere;
 }
 .waste-savings .chart-average-pair .chart-daily-average {
-  max-width: calc(100% + 12px);
-  margin-right: -12px;
-  padding-right: 22px;
+  max-width: calc(100% + 24px);
+  margin-right: -24px;
+  padding-right: 34px;
 }
 .waste-savings .chart-average-pair .chart-month-total {
   position: relative;
@@ -3805,6 +3805,9 @@ select[aria-invalid='true'] {
 }
 .waste-savings .metric-chart-summary-row .chart-month-summary {
   display: contents;
+}
+.waste-savings .metric-chart-summary-row .chart-average-pair {
+  order: 1;
 }
 .waste-savings .metric-chart-summary-row .metric-chart-detail {
   flex: 0 1 auto;
