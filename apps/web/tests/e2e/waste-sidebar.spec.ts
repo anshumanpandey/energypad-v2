@@ -47,6 +47,11 @@ test('wide waste tables do not cover sidebar controls', async ({ page }, testInf
 
   await page.getByRole('button', { name: 'Gauge', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Selected month energy gauge', exact: true })).toBeVisible();
+  await expect(page.locator('.waste-expandable-chart:visible')).toHaveCount(4);
+  await expect(page.getByRole('region', { name: 'Waste/Savings Gauge', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Cost (£)', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Actual consumption vs wastage graph', exact: true })).toBeVisible();
+
   await expect(page.getByRole('button', { name: 'Gauge', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByLabel('Waste result month', { exact: true }).selectOption('02');
   await expect(

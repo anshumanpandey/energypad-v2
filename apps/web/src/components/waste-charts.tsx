@@ -52,7 +52,6 @@ export function WasteCharts({
       value: row[key],
       note: row.note,
     }));
-  if (view === 'gauge') return <MonthlyWasteGauge rows={rows} month={month} />;
   if (view === 'table')
     return (
       <WasteChartTables rows={rows} month={month} sort={sort} gaugeMonths={monthlyGauge} gaugePercentage={percentage} />
@@ -61,19 +60,23 @@ export function WasteCharts({
     <GraphMonthProvider key={month} initialMonth={month}>
       <div className="graphs-grid waste-charts">
         <ExpandableChart {...expansion('Avoided Energy and Wasted Energy')}>
-          <MetricChart
-            title="Avoided Energy (+) and Wasted Energy (-) (kWh)"
-            unit="kWh"
-            points={points('variance')}
-            showHelp={false}
-            calendarMonth={anchor || undefined}
-            hideCalendarMonth
-            showCoverage={false}
-            comparePreviousMonth
-            curved
-            tone="waste"
-            description="Adjusted expected minus actual consumption. Positive values are avoided energy; negative values are wasted energy."
-          />
+          {view === 'gauge' ? (
+            <MonthlyWasteGauge rows={rows} month={month} />
+          ) : (
+            <MetricChart
+              title="Avoided Energy (+) and Wasted Energy (-) (kWh)"
+              unit="kWh"
+              points={points('variance')}
+              showHelp={false}
+              calendarMonth={anchor || undefined}
+              hideCalendarMonth
+              showCoverage={false}
+              comparePreviousMonth
+              curved
+              tone="waste"
+              description="Adjusted expected minus actual consumption. Positive values are avoided energy; negative values are wasted energy."
+            />
+          )}
         </ExpandableChart>
         <ExpandableChart {...expansion('Waste/Savings Gauge')}>
           <section className="panel metric-chart" aria-label="Waste/Savings Gauge">
