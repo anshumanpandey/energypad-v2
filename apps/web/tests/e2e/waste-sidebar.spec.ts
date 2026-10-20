@@ -45,6 +45,14 @@ test('wide waste tables do not cover sidebar controls', async ({ page }, testInf
   await expect(page).toHaveURL(new RegExp(`site=${site.id}`));
   await page.locator('.waste-meter-summary').click();
 
+  await page.getByRole('button', { name: 'Gauge', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Selected month energy gauge', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Gauge', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('Waste result month', { exact: true }).selectOption('02');
+  await expect(
+    page.getByRole('img', { name: 'Selected month energy gauge: N/A, Unavailable', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Graph view', exact: true }).click();
   await page.getByRole('button', { name: 'Expand Cost chart', exact: true }).click();
   await expect(page.locator('.waste-expandable-chart:visible')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Collapse Cost chart', exact: true })).toHaveAttribute(

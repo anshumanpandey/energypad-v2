@@ -37,7 +37,7 @@ export function WasteDashboard({
   const [pending, startTransition] = useTransition();
   const [drivers, setDrivers] = useOptimistic(preview.drivers);
   const [selectedSite, setSelectedSite] = useOptimistic(siteId);
-  const [view, setView] = useState<'graph' | 'table'>('graph');
+  const [view, setView] = useState<'graph' | 'table' | 'gauge'>('graph');
   const [month, setMonth] = useState('01');
   const [fuel, setFuel] = useState('');
   const [sort, setSort] = useState<UtilityChartSort>('month');
@@ -94,6 +94,15 @@ export function WasteDashboard({
             </Button>
             <Button aria-pressed={view === 'table'} onClick={() => setView('table')}>
               Table view
+            </Button>
+            <Button
+              aria-pressed={view === 'gauge'}
+              onClick={() => {
+                setView('gauge');
+                if (!month) setMonth('01');
+              }}
+            >
+              Gauge
             </Button>
           </div>
           <div className="utility-graph-actions">

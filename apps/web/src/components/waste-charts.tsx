@@ -1,4 +1,5 @@
 'use client';
+import { MonthlyWasteGauge } from './monthly-waste-gauge';
 import { useState } from 'react';
 import { ExpandableChart } from './expandable-chart';
 import { formatMonth } from '../domain/format-month';
@@ -21,7 +22,7 @@ export function WasteCharts({
   month?: string;
   sort?: UtilityChartSort;
   throughMonth?: string;
-  view?: 'graph' | 'table';
+  view?: 'graph' | 'table' | 'gauge';
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const expansion = (title: string) => ({
@@ -51,6 +52,7 @@ export function WasteCharts({
       value: row[key],
       note: row.note,
     }));
+  if (view === 'gauge') return <MonthlyWasteGauge rows={rows} month={month} />;
   if (view === 'table')
     return (
       <WasteChartTables rows={rows} month={month} sort={sort} gaugeMonths={monthlyGauge} gaugePercentage={percentage} />
