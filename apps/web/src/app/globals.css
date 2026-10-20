@@ -696,12 +696,28 @@ small {
 }
 .topbar {
   height: 76px;
-  border-bottom: 1px solid var(--line);
-  background: #ffffffb0;
+  border-bottom: 1px solid #42454f;
+  background: #4d505c;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 42px;
+}
+.topbar .breadcrumb,
+.topbar .workspace-status {
+  color: #e0e4e8;
+}
+.topbar .breadcrumb strong,
+.topbar .icon-button {
+  color: #fff;
+}
+.topbar .workspace-status > span {
+  background: #94c11f;
+}
+.topbar .icon-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
 }
 .breadcrumb {
   display: flex;
