@@ -88,6 +88,39 @@ export function UtilityGraphs({
       items: fuels.map((f) => ({ value: f, label: utilityLabel(f) })),
     },
   ];
+  const filterActions = (
+    <div className="utility-graph-actions">
+      <div className={sidebar ? 'waste-view-toggle' : undefined} role="group" aria-label={`${title} view`}>
+        <Button aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
+          Graph view
+        </Button>
+        {sidebar && (
+          <Button
+            aria-pressed={view === 'gauge'}
+            onClick={() => {
+              setView('gauge');
+              setFilters((previous) => ({ ...previous, month: previous.month || '01' }));
+            }}
+          >
+            Gauge view
+          </Button>
+        )}
+        <Button aria-pressed={view === 'table'} onClick={() => setView('table')}>
+          Table view
+        </Button>
+      </div>
+      <Button
+        onClick={() => {
+          setFilters({ site: firstSite, year: '', month: '01', fuel: '' });
+          setCostBasis('net');
+          setSortBy('month');
+        }}
+      >
+        Reset filters
+      </Button>
+      <Button onClick={() => router.refresh()}>Refresh data</Button>
+    </div>
+  );
   const summary = (
     <section className="panel" aria-label={`${title} summary`}>
       <h2>
@@ -134,6 +167,7 @@ export function UtilityGraphs({
               ))}
             </fieldset>
           )}
+          {sidebar && filterActions}
           <div className="form-grid">
             {options
               .filter((option) => !sidebar || option.key !== 'site')
@@ -183,37 +217,7 @@ export function UtilityGraphs({
               </select>
             </label>
           </div>
-          <div className="utility-graph-actions">
-            <div className={sidebar ? 'waste-view-toggle' : undefined} role="group" aria-label={`${title} view`}>
-              <Button aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
-                Graph view
-              </Button>
-              {sidebar && (
-                <Button
-                  aria-pressed={view === 'gauge'}
-                  onClick={() => {
-                    setView('gauge');
-                    setFilters((previous) => ({ ...previous, month: previous.month || '01' }));
-                  }}
-                >
-                  Gauge view
-                </Button>
-              )}
-              <Button aria-pressed={view === 'table'} onClick={() => setView('table')}>
-                Table view
-              </Button>
-            </div>
-            <Button
-              onClick={() => {
-                setFilters({ site: firstSite, year: '', month: '01', fuel: '' });
-                setCostBasis('net');
-                setSortBy('month');
-              }}
-            >
-              Reset filters
-            </Button>
-            <Button onClick={() => router.refresh()}>Refresh data</Button>
-          </div>
+          {!sidebar && filterActions}
         </FilterContainer>
         <ChartExpansionGroup enabled={sidebar && view !== 'table'} key={`${kind}-${view}`}>
           <div

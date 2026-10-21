@@ -236,9 +236,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await page.getByRole('button', { name: 'Graph view', exact: true }).click();
   await page.getByLabel('Carbon Footprint year', { exact: true }).selectOption('2026');
   await expect(gauge.locator('[data-selected-month="2026-01"]').getByText('200.00%', { exact: true })).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Carbon gauge', exact: true })).toContainText(
-    '25.00% increase vs previous month',
-  );
+  await expect(page.getByRole('region', { name: 'Carbon gauge', exact: true })).toContainText('+25.00%');
   await expect(carbonBars.locator('[data-series="target"][data-value="25"]')).toHaveCount(1);
   await page.getByRole('link', { name: 'Consumption', exact: true }).click();
   await page.getByLabel('Consumption site', { exact: true }).selectOption(london.id);

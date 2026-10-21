@@ -3919,6 +3919,10 @@ select[aria-invalid='true'] {
   font-size: 12px;
   font-weight: 700;
 }
+.carbon-footprint-page .chart-average-pair {
+  width: 300px;
+  grid-template-columns: minmax(0, 170fr) minmax(0, 130fr);
+}
 .waste-savings [aria-label='Actual consumption vs wastage graph'] .chart-daily-average {
   background: #94c11f;
   color: #203008;

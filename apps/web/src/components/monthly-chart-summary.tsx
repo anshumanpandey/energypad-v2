@@ -35,8 +35,7 @@ export function MonthlyChartSummary({
                 </span>
                 <strong>
                   {summary.percent > 0 ? '+' : ''}
-                  {summary.percent.toFixed(2)}%{' '}
-                  {summary.percent > 0 ? 'increase' : summary.percent < 0 ? 'decrease' : 'No change'} vs previous month
+                  {summary.percent.toFixed(2)}%
                 </strong>
               </>
             )}
