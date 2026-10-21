@@ -1,16 +1,49 @@
+import { ChartMonthDays } from './chart-month-days';
 import { formatMonth } from '../domain/format-month';
-import { monthlyChartSummary, type MonthlyAmount } from '@/domain/monthly-chart-summary';
+import { monthlyChartSummary, type MonthlyAmount } from '../domain/monthly-chart-summary';
 import { formatEnergyValue } from './format-energy-value';
 export function MonthlyChartSummary({
   points,
   period,
   unit,
+  compact = false,
 }: {
   points: MonthlyAmount[];
   period: string;
   unit: string;
+  compact?: boolean;
 }) {
   const summary = monthlyChartSummary(points, period);
+  if (compact)
+    return (
+      <div className="metric-chart-summary-row" aria-label="Selected month statistics">
+        <ChartMonthDays
+          month={period}
+          hideMonth
+          averages={[{ label: 'Daily average', totalLabel: 'Emissions this month', value: summary.current, unit }]}
+        />
+        <p className="metric-chart-detail" aria-live="polite">
+          <span
+            className={`metric-chart-change ${summary.percent === null ? '' : summary.percent > 0 ? 'is-up' : summary.percent < 0 ? 'is-down' : 'is-equal'}`}
+          >
+            {summary.percent === null ? (
+              'N/A'
+            ) : (
+              <>
+                <span className="metric-chart-change-arrow" aria-hidden="true">
+                  {summary.percent > 0 ? '↑' : summary.percent < 0 ? '↓' : '→'}
+                </span>
+                <strong>
+                  {summary.percent > 0 ? '+' : ''}
+                  {summary.percent.toFixed(2)}%{' '}
+                  {summary.percent > 0 ? 'increase' : summary.percent < 0 ? 'decrease' : 'No change'} vs previous month
+                </strong>
+              </>
+            )}
+          </span>
+        </p>
+      </div>
+    );
   return (
     <div className="monthly-chart-summary" aria-label="Selected month statistics">
       <span>

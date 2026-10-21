@@ -26,6 +26,7 @@ export function UtilityBars({
   actualColor = '#168578',
   targetColor = '#4989c6',
   showSummary = true,
+  compactSummary = false,
   showActualChips = true,
 }: {
   points: UtilityBarPoint[];
@@ -46,6 +47,7 @@ export function UtilityBars({
   actualColor?: string;
   targetColor?: string;
   showSummary?: boolean;
+  compactSummary?: boolean;
   showActualChips?: boolean;
 }) {
   const points = sortChartValues(sourcePoints, sortBy, (r) => r.actual);
@@ -86,7 +88,9 @@ export function UtilityBars({
             : []),
         ]}
       />
-      {showSummary && <MonthlyChartSummary points={summaryPoints} period={period} unit={unit} />}
+      {showSummary && (
+        <MonthlyChartSummary compact={compactSummary} points={summaryPoints} period={period} unit={unit} />
+      )}
       {showHelp && targetNote && <p className="chart-help">{targetNote}</p>}
       {showHelp && (
         <p>

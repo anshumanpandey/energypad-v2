@@ -2266,20 +2266,20 @@ small {
   opacity: 0.65;
   cursor: wait;
 }
-.waste-savings .waste-dashboard-filters .button {
+:is(.waste-savings, .carbon-footprint-page) .waste-dashboard-filters .button {
   background: #e97871;
   border-color: #e97871;
   color: #292f2c;
 }
-.waste-savings .waste-dashboard-filters .button:hover:not(:disabled) {
+:is(.waste-savings, .carbon-footprint-page) .waste-dashboard-filters .button:hover:not(:disabled) {
   background: #df6861;
   border-color: #df6861;
 }
-.waste-savings .waste-dashboard-filters .button:focus-visible {
+:is(.waste-savings, .carbon-footprint-page) .waste-dashboard-filters .button:focus-visible {
   outline: 2px solid #29443e;
   outline-offset: 3px;
 }
-.waste-savings .waste-view-toggle {
+:is(.waste-savings, .carbon-footprint-page) .waste-view-toggle {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   background: #f9eeeb;
   border-color: #ead5cf;
@@ -2300,12 +2300,12 @@ small {
   margin: 20px auto 0;
   overflow: visible;
 }
-.waste-savings .waste-view-toggle .button[aria-pressed='false'] {
+:is(.waste-savings, .carbon-footprint-page) .waste-view-toggle .button[aria-pressed='false'] {
   background: transparent;
   border-color: transparent;
   color: #29443e;
 }
-.waste-savings .waste-view-toggle .button[aria-pressed='false']:hover {
+:is(.waste-savings, .carbon-footprint-page) .waste-view-toggle .button[aria-pressed='false']:hover {
   background: #f4dcd7;
 }
 @media (max-width: 1100px) {
@@ -3880,7 +3880,7 @@ select[aria-invalid='true'] {
   color: #fff;
 }
 
-.waste-savings .chart-average-pair {
+:is(.waste-savings, .carbon-footprint-page) .chart-average-pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
@@ -3891,7 +3891,7 @@ select[aria-invalid='true'] {
   border: 0;
   background: transparent;
 }
-.waste-savings .chart-average-pair .chart-month-days {
+:is(.waste-savings, .carbon-footprint-page) .chart-average-pair .chart-month-days {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3906,16 +3906,16 @@ select[aria-invalid='true'] {
   white-space: normal;
   overflow-wrap: anywhere;
 }
-.waste-savings .chart-average-pair .chart-daily-average {
+:is(.waste-savings, .carbon-footprint-page) .chart-average-pair .chart-daily-average {
   max-width: calc(100% + 40px);
   margin-right: -40px;
   padding-right: 50px;
 }
-.waste-savings .chart-average-pair .chart-month-total {
+:is(.waste-savings, .carbon-footprint-page) .chart-average-pair .chart-month-total {
   position: relative;
   z-index: 1;
 }
-.waste-savings .chart-average-pair strong {
+:is(.waste-savings, .carbon-footprint-page) .chart-average-pair strong {
   font-size: 12px;
   font-weight: 700;
 }
@@ -3943,12 +3943,12 @@ select[aria-invalid='true'] {
 .waste-savings [aria-label='Actual consumption vs wastage graph'] .chart-average-pair strong {
   font-size: 11px;
 }
-.waste-savings .chart-average-pair :is(span, strong) {
+:is(.waste-savings, .carbon-footprint-page) .chart-average-pair :is(span, strong) {
   min-width: 0;
   max-width: 100%;
 }
 
-.waste-savings .metric-chart-summary-row {
+:is(.waste-savings, .carbon-footprint-page) .metric-chart-summary-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -3956,10 +3956,10 @@ select[aria-invalid='true'] {
   gap: 8px 12px;
   margin: 10px 0;
 }
-.waste-savings .chart-month-summary {
+:is(.waste-savings, .carbon-footprint-page) .chart-month-summary {
   justify-content: flex-end;
 }
-.waste-savings .chart-month-summary > .chart-month-days {
+:is(.waste-savings, .carbon-footprint-page) .chart-month-summary > .chart-month-days {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3971,22 +3971,22 @@ select[aria-invalid='true'] {
   border-radius: 50%;
   text-align: center;
 }
-.waste-savings .chart-days-count {
+:is(.waste-savings, .carbon-footprint-page) .chart-days-count {
   font-size: 20px;
   font-weight: 700;
   line-height: 1.2;
 }
-.waste-savings .chart-days-label {
+:is(.waste-savings, .carbon-footprint-page) .chart-days-label {
   font-size: 10px;
   font-weight: 500;
 }
-.waste-savings .metric-chart-summary-row .chart-month-summary {
+:is(.waste-savings, .carbon-footprint-page) .metric-chart-summary-row .chart-month-summary {
   display: contents;
 }
-.waste-savings .metric-chart-summary-row .chart-average-pair {
+:is(.waste-savings, .carbon-footprint-page) .metric-chart-summary-row .chart-average-pair {
   order: 1;
 }
-.waste-savings .metric-chart-summary-row .metric-chart-detail {
+:is(.waste-savings, .carbon-footprint-page) .metric-chart-summary-row .metric-chart-detail {
   flex: 0 1 auto;
   min-width: 0;
   min-height: 0;
@@ -4116,4 +4116,24 @@ select[aria-invalid='true'] {
 }
 .carbon-footprint-page .monthly-chart-actual {
   background: #4d505c;
+}
+
+.carbon-footprint-page .analysis-table {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.carbon-footprint-page .analysis-table th {
+  background: #f3f5f5;
+  color: #4d505c;
+  font-size: 12px;
+}
+.carbon-footprint-page .analysis-table td {
+  font-variant-numeric: tabular-nums;
+}
+.carbon-footprint-page .analysis-table tbody tr:nth-child(even):not(.utility-selected-month) {
+  background: #fafbfb;
+}
+.carbon-footprint-page .analysis-table .utility-selected-month > * {
+  background: #edf5d7;
+  font-weight: 600;
 }

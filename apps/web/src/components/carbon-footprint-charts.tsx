@@ -2,8 +2,8 @@
 import { GroupedExpandableChart } from './expandable-chart';
 import { formatMonth } from '../domain/format-month';
 import type { UtilityGraphRow, UtilityCostTarget } from '@/domain/utility-graphs';
-import { utilityComparison } from '@/domain/utility-comparison';
-import { carbonRollingComparison, carbonRecentSummary } from '@/domain/carbon-footprint';
+import { sumUtilityAmounts } from '@/domain/utility-comparison';
+import { carbonRollingComparison, carbonRecentSummary, carbonMonthlyComparison } from '@/domain/carbon-footprint';
 import { utilityLabel } from '@/domain/consumption-sort';
 import { formatEnergyValue } from './format-energy-value';
 import { UtilityBars } from './utility-bars';
@@ -11,7 +11,7 @@ import { MonthlyChartSummary } from './monthly-chart-summary';
 import { monthlyActuals } from '@/domain/monthly-chart-summary';
 import { sortChartValues, type UtilityChartSort } from '@/domain/utility-chart-sort';
 
-const colors = ['#168578', '#4989c6', '#cd7334', '#9b4c9e', '#578138', '#b74655'];
+const colors = ['#94c11f', '#4989c6', '#cd7334', '#9b4c9e', '#578138', '#b74655'];
 export function CarbonFootprintCharts({
   rows,
   history,
@@ -28,10 +28,10 @@ export function CarbonFootprintCharts({
   year: string;
   month: string;
   fuel: string;
-  view: 'graph' | 'table';
+  view: 'graph' | 'table' | 'gauge';
   sortBy: UtilityChartSort;
 }) {
-  const comparison = sortChartValues(utilityComparison(rows, targets, fuel), sortBy, (r) => r.emissions);
+  const comparison = sortChartValues(carbonMonthlyComparison(rows, targets, fuel), sortBy, (r) => r.emissions);
   const period = month ? `${year}-${month}` : '';
   const summaryPoints = monthlyActuals(history, 'emissions');
   const chronologicalRecent = carbonRollingComparison(history, targets, year, month, fuel);
@@ -40,12 +40,18 @@ export function CarbonFootprintCharts({
   const fuels = [...new Set(history.filter((r) => recent.some((p) => p.month === r.month)).map((r) => r.fuel))].sort();
   const maximum = Math.max(
     1,
-    ...history.filter((r) => recent.some((p) => p.month === r.month)).map((r) => Number(r.emissions ?? 0)),
+    ...recent.flatMap((p) =>
+      fuels.map((f) =>
+        Number(
+          sumUtilityAmounts(history.filter((r) => r.month === p.month && r.fuel === f).map((r) => r.emissions)) ?? 0,
+        ),
+      ),
+    ),
   );
   const gaugeMaximum = Math.max(100, ...recent.map((p) => Number(p.percent ?? 0)));
   return (
     <>
-      {view === 'graph' ? (
+      {view !== 'table' ? (
         <GroupedExpandableChart title="Actual vs target emissions">
           <UtilityBars
             points={comparison.map((r) => ({ month: r.month, actual: r.emissions, target: r.targetCarbon }))}
@@ -57,12 +63,15 @@ export function CarbonFootprintCharts({
             period={period}
             summaryPoints={summaryPoints}
             showHelp={false}
+            compactSummary
+            actualColor="#94c11f"
+            targetColor="#4989c6"
           />
         </GroupedExpandableChart>
       ) : (
         <section className="panel">
           <h2>Actual vs target emissions</h2>
-          <MonthlyChartSummary points={summaryPoints} period={period} unit="kg" />
+          <MonthlyChartSummary compact points={summaryPoints} period={period} unit="kg" />
           <div className="analysis-table" role="region" aria-label="Actual vs target emissions table" tabIndex={0}>
             <table>
               <thead>
@@ -96,8 +105,8 @@ export function CarbonFootprintCharts({
           <GroupedExpandableChart title="Carbon gauge">
             <section className="panel utility-lines" aria-label="Carbon gauge">
               <h2>Carbon gauge</h2>
-              <MonthlyChartSummary points={summaryPoints} period={period} unit="kg" />
-              {view === 'graph' ? (
+              <MonthlyChartSummary compact points={summaryPoints} period={period} unit="kg" />
+              {view !== 'table' ? (
                 <div className="utility-chart-scroll">
                   <svg
                     viewBox="0 0 760 310"
@@ -197,12 +206,12 @@ export function CarbonFootprintCharts({
           <GroupedExpandableChart title="Recent carbon emissions">
             <section className="panel utility-lines" aria-label="Recent carbon emissions">
               <h2>Carbon emissions · selected month vs previous three months</h2>
-              <MonthlyChartSummary points={summaryPoints} period={period} unit="kg" />
+              <MonthlyChartSummary compact points={summaryPoints} period={period} unit="kg" />
               <p>
                 Selected month: {formatEnergyValue(summary.current, 'Unavailable')} kg. Previous three months average:{' '}
                 {formatEnergyValue(summary.previousAverage, 'Unavailable')} kg.
               </p>
-              {view === 'graph' ? (
+              {view !== 'table' ? (
                 <div className="utility-chart-scroll">
                   <svg
                     viewBox="0 0 760 310"
@@ -237,8 +246,11 @@ export function CarbonFootprintCharts({
                           {formatMonth(point.month)}
                         </text>
                         {fuels.map((fuelName, fuelIndex) => {
-                          const row = history.find((r) => r.month === point.month && r.fuel === fuelName);
-                          const value = row?.emissions ?? null;
+                          const value = sumUtilityAmounts(
+                            history
+                              .filter((r) => r.month === point.month && r.fuel === fuelName)
+                              .map((r) => r.emissions),
+                          );
                           const width = 110 / Math.max(1, fuels.length);
                           const x = 100 + index * 160 + fuelIndex * width;
                           const size = (Number(value ?? 0) / maximum) * 180;
@@ -312,7 +324,11 @@ export function CarbonFootprintCharts({
                                 <td>{utilityLabel(f)}</td>
                                 <td>
                                   {formatEnergyValue(
-                                    history.find((r) => r.month === p.month && r.fuel === f)?.emissions,
+                                    sumUtilityAmounts(
+                                      history
+                                        .filter((r) => r.month === p.month && r.fuel === f)
+                                        .map((r) => r.emissions),
+                                    ),
                                     'Unavailable',
                                   )}
                                 </td>

@@ -1,5 +1,10 @@
 import { it, expect } from 'vitest';
-import { carbonRollingMonths, carbonRollingComparison, carbonRecentSummary } from '../src/domain/carbon-footprint';
+import {
+  carbonRollingMonths,
+  carbonRollingComparison,
+  carbonRecentSummary,
+  carbonMonthlyComparison,
+} from '../src/domain/carbon-footprint';
 import type { UtilityGraphRow } from '../src/domain/utility-graphs';
 const row: UtilityGraphRow = {
   siteId: 'a',
@@ -51,4 +56,25 @@ it('computes the prior-three-month average only with complete coverage', () => {
   }));
   const result = carbonRollingComparison(rows, [], '2025', '01', '');
   expect(carbonRecentSummary(result)).toEqual({ current: '40', previousAverage: '20' });
+});
+
+it('combines all sites once per month and preserves unavailable targets and emissions', () => {
+  const rows = [row, { ...row, siteId: 'b', emissions: '30' }];
+  const targets = ['a', 'b'].map((siteId) => ({
+    siteId,
+    month: row.month,
+    fuel: 'ALL',
+    energy: '100',
+    carbon: '20',
+    cost: null,
+    currency: null,
+  }));
+  expect(carbonMonthlyComparison(rows, targets, '')[0]).toMatchObject({ emissions: '80', targetCarbon: '40' });
+  expect(carbonRollingComparison(rows, targets, '2025', '01', '')[3]).toMatchObject({
+    actual: '80',
+    target: '40',
+    percent: '200.00',
+  });
+  expect(carbonMonthlyComparison(rows, targets.slice(0, 1), '')[0].targetCarbon).toBeNull();
+  expect(carbonMonthlyComparison([row, { ...rows[1], emissions: null }], targets, '')[0].emissions).toBeNull();
 });

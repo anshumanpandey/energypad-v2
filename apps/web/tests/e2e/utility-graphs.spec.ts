@@ -145,7 +145,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
     page.getByRole('img', { name: 'Cost · GBP monthly bar graph', exact: true }).locator('[data-series="target"]'),
   ).toHaveCount(0);
   await page.getByRole('link', { name: 'Carbon Footprint', exact: true }).click();
-  await expect(page.getByLabel('Carbon Footprint site', { exact: true })).toHaveValue(leeds.id);
+  await expect(page.getByRole('radio', { name: 'Leeds', exact: true })).toBeChecked();
   const filters = page.getByRole('complementary', { name: 'Carbon Footprint filters' });
   const filterBox = await filters.boundingBox();
   const headerBox = await page.locator('.topbar').boundingBox();
@@ -153,7 +153,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
   expect(filterBox!.y).toBe(headerBox!.y + headerBox!.height);
   await expect(filters.getByRole('heading', { name: 'Filters', exact: true })).toBeVisible();
 
-  await page.getByLabel('Carbon Footprint site', { exact: true }).selectOption(london.id);
+  await page.getByRole('radio', { name: 'London', exact: true }).check();
   await page.getByLabel('Carbon Footprint year', { exact: true }).selectOption('2025');
   await page.getByLabel('Carbon Footprint month', { exact: true }).selectOption('01');
   await page.getByLabel('Carbon Footprint fuel type', { exact: true }).selectOption('GAS');
@@ -184,6 +184,17 @@ test('consumption and emissions menus filter the same data in graph and table vi
     await expect(page.locator('.carbon-chart-grid .waste-expandable-chart:visible')).toHaveCount(4);
   }
 
+  await page.getByRole('button', { name: 'Gauge view', exact: true }).click();
+  await expect(page.getByRole('img', { name: 'Selected month carbon gauge: 50.00 kg', exact: true })).toBeVisible();
+  await expect(carbonBars).toBeVisible();
+  await expect(page.locator('.carbon-chart-grid .waste-expandable-chart:visible')).toHaveCount(4);
+  await page.getByRole('button', { name: 'Graph view', exact: true }).click();
+  await expect(
+    page.getByRole('region', { name: 'Carbon Footprint graph', exact: true }).locator('path[d*="C "]'),
+  ).not.toHaveCount(0);
+  await page.getByRole('radio', { name: 'All Sites', exact: true }).check();
+  await expect(page.getByRole('radio', { name: 'All Sites', exact: true })).toBeChecked();
+  await page.getByRole('radio', { name: 'London', exact: true }).check();
   await expect(carbonBars.locator('[data-series="actual"][data-value="50"]')).toHaveCount(1);
   await expect(carbonBars.locator('[data-series="target"][data-value="25"]')).toHaveCount(1);
   const gauge = page.getByRole('img', {
@@ -216,6 +227,12 @@ test('consumption and emissions menus filter the same data in graph and table vi
       .getByRole('region', { name: 'Carbon Footprint table', exact: true })
       .getByRole('cell', { name: '50.00', exact: true }),
   ).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Carbon Footprint table', exact: true }).getByRole('row')).toHaveCount(
+    13,
+  );
+  await expect(
+    page.getByRole('region', { name: 'Carbon Footprint table', exact: true }).locator('tr.utility-selected-month'),
+  ).toHaveCount(1);
   await page.getByRole('button', { name: 'Graph view', exact: true }).click();
   await page.getByLabel('Carbon Footprint year', { exact: true }).selectOption('2026');
   await expect(gauge.locator('[data-selected-month="2026-01"]').getByText('200.00%', { exact: true })).toBeVisible();
@@ -242,11 +259,14 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await expect(page.getByRole('button', { name: 'Table view', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Reset filters', exact: true }).click();
   await expect(page.getByLabel('Carbon Footprint sort by', { exact: true })).toHaveValue('month');
-  await page.getByLabel('Carbon Footprint site', { exact: true }).selectOption(leeds.id);
+  await page.getByRole('radio', { name: 'Leeds', exact: true }).check();
   await page.getByLabel('Carbon Footprint month', { exact: true }).selectOption('02');
   await expect(
-    page.getByRole('region', { name: 'Carbon Footprint table', exact: true }).getByText('Unavailable', { exact: true }),
-  ).toHaveCount(1);
+    page
+      .getByRole('region', { name: 'Carbon Footprint table', exact: true })
+      .locator('tr.utility-selected-month td')
+      .nth(4),
+  ).toHaveText('Unavailable');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: testInfo.outputPath('emissions-table-mobile.png'), fullPage: true });
 });

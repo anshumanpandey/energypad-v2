@@ -11,6 +11,7 @@ import { formatEnergyValue } from './format-energy-value';
 import { Button } from './ui/button';
 import { UtilityBars } from './utility-bars';
 import { CarbonFootprintCharts } from './carbon-footprint-charts';
+import { MonthlyCarbonGauge } from './monthly-carbon-gauge';
 import { MonthlyChartSummary } from './monthly-chart-summary';
 import { monthlyActuals } from '@/domain/monthly-chart-summary';
 import { sortChartValues, type UtilityChartSort } from '@/domain/utility-chart-sort';
@@ -48,13 +49,14 @@ export function UtilityGraphs({
   const firstSite = sites[0]?.id ?? '';
   const [filters, setFilters] = useState({ site: firstSite, year: '', month: '01', fuel: '' });
   const [costBasis, setCostBasis] = useState<'net' | 'gross'>('net');
-  const [view, setView] = useState<'graph' | 'table'>('graph');
+  const [view, setView] = useState<'graph' | 'table' | 'gauge'>('graph');
   const [sortBy, setSortBy] = useState<UtilityChartSort>('month');
   const title = kind === 'consumption' ? 'Consumption' : 'Carbon Footprint';
   const unit = kind === 'consumption' ? 'kWh' : 'kg';
   const years = [...new Set(rows.map((r) => r.month.slice(0, 4)))].sort().reverse();
   const fuels = [...new Set(rows.map((r) => r.fuel))].sort();
-  const selectedSite = sites.some((site) => site.id === filters.site) ? filters.site : firstSite;
+  const selectedSite =
+    sidebar && filters.site === '' ? '' : sites.some((site) => site.id === filters.site) ? filters.site : firstSite;
   const visible = sortChartValues(filterUtilityRows(rows, { ...filters, site: selectedSite }), sortBy, (r) => r[kind]);
   const chartRows = filterUtilityRows(rows, { ...filters, site: selectedSite, month: '' });
   const history = filterUtilityRows(rows, { site: selectedSite, fuel: filters.fuel, year: '', month: '' });
@@ -116,27 +118,45 @@ export function UtilityGraphs({
           aria-label={`${title} filters`}
         >
           {sidebar && <h2>Filters</h2>}
+          {sidebar && (
+            <fieldset className="waste-site-options">
+              <legend>Sites</legend>
+              {[{ id: '', name: 'All Sites' }, ...sites].map((site) => (
+                <label className="waste-site-option" key={site.id}>
+                  <input
+                    type="radio"
+                    name="carbon-site"
+                    checked={selectedSite === site.id}
+                    onChange={() => setFilters((previous) => ({ ...previous, site: site.id }))}
+                  />
+                  <span>{site.name}</span>
+                </label>
+              ))}
+            </fieldset>
+          )}
           <div className="form-grid">
-            {options.map(({ key, label, all, items }) => (
-              <label key={key}>
-                {label}
-                <select
-                  aria-label={`${title} ${label.toLowerCase()}`}
-                  value={key === 'site' ? selectedSite : filters[key]}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setFilters((previous) => ({ ...previous, [key]: value }));
-                  }}
-                >
-                  {key !== 'site' && <option value="">{all}</option>}
-                  {items.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ))}
+            {options
+              .filter((option) => !sidebar || option.key !== 'site')
+              .map(({ key, label, all, items }) => (
+                <label key={key}>
+                  {label}
+                  <select
+                    aria-label={`${title} ${label.toLowerCase()}`}
+                    value={key === 'site' ? selectedSite : filters[key]}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setFilters((previous) => ({ ...previous, [key]: value }));
+                    }}
+                  >
+                    {key !== 'site' && <option value="">{all}</option>}
+                    {items.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
             {kind === 'consumption' && (
               <label>
                 Cost basis
@@ -168,6 +188,17 @@ export function UtilityGraphs({
               <Button aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
                 Graph view
               </Button>
+              {sidebar && (
+                <Button
+                  aria-pressed={view === 'gauge'}
+                  onClick={() => {
+                    setView('gauge');
+                    setFilters((previous) => ({ ...previous, month: previous.month || '01' }));
+                  }}
+                >
+                  Gauge view
+                </Button>
+              )}
               <Button aria-pressed={view === 'table'} onClick={() => setView('table')}>
                 Table view
               </Button>
@@ -184,33 +215,46 @@ export function UtilityGraphs({
             <Button onClick={() => router.refresh()}>Refresh data</Button>
           </div>
         </FilterContainer>
-        <ChartExpansionGroup enabled={sidebar && view === 'graph'} key={`${kind}-${view}`}>
+        <ChartExpansionGroup enabled={sidebar && view !== 'table'} key={`${kind}-${view}`}>
           <div
             className={
-              sidebar ? `waste-dashboard-results${view === 'graph' ? ' carbon-chart-grid' : ''}` : 'utility-graphs-page'
+              sidebar ? `waste-dashboard-results${view !== 'table' ? ' carbon-chart-grid' : ''}` : 'utility-graphs-page'
             }
           >
             {!sidebar && summary}
-            {!visible.length ? (
+            {!(sidebar ? chartRows : visible).length ? (
               <section className="panel">
                 <p>No data for this selection. Upload consumption data or choose different filters.</p>
               </section>
-            ) : view === 'graph' ? (
+            ) : view !== 'table' ? (
               <GroupedExpandableChart title="Monthly carbon footprint">
-                <UtilityLines
-                  rows={chartRows}
-                  kind={kind}
-                  title={title}
-                  unit={unit}
-                  selectedMonth={filters.month}
-                  history={history}
-                  period={period}
-                  sortBy={sortBy}
-                />
+                {view === 'gauge' ? (
+                  <MonthlyCarbonGauge
+                    points={monthlyActuals(chartRows, kind)}
+                    history={monthlyActuals(history, kind)}
+                    period={period}
+                  />
+                ) : (
+                  <UtilityLines
+                    rows={chartRows}
+                    kind={kind}
+                    title={title}
+                    unit={unit}
+                    selectedMonth={filters.month}
+                    history={history}
+                    period={period}
+                    sortBy={sortBy}
+                  />
+                )}
               </GroupedExpandableChart>
             ) : (
               <section className="panel">
-                <MonthlyChartSummary points={monthlyActuals(history, kind)} period={period} unit={unit} />
+                <MonthlyChartSummary
+                  compact={kind === 'emissions'}
+                  points={monthlyActuals(history, kind)}
+                  period={period}
+                  unit={unit}
+                />
                 <div className="analysis-table" role="region" aria-label={`${title} table`} tabIndex={0}>
                   <table>
                     <thead>
@@ -227,7 +271,7 @@ export function UtilityGraphs({
                       </tr>
                     </thead>
                     <tbody>
-                      {visible.map((row) => (
+                      {(sidebar ? sortChartValues(chartRows, sortBy, (r) => r[kind]) : visible).map((row) => (
                         <tr
                           key={`${row.siteId}-${row.fuel}-${row.month}`}
                           className={row.month.slice(5, 7) === filters.month ? 'utility-selected-month' : undefined}
@@ -265,7 +309,7 @@ export function UtilityGraphs({
                 period={period}
                 targets={targets}
                 fuel={filters.fuel}
-                view={view}
+                view={view === 'gauge' ? 'graph' : view}
                 selectedMonth={filters.month}
                 costBasis={costBasis}
                 sortBy={sortBy}
@@ -273,9 +317,9 @@ export function UtilityGraphs({
             )}
             {kind === 'emissions' && chartRows.length > 0 && (
               <CarbonFootprintCharts
-                rows={view === 'graph' ? chartRows : visible}
+                rows={chartRows}
                 history={history}
-                targets={targets.filter((t) => t.siteId === selectedSite)}
+                targets={targets.filter((t) => !selectedSite || t.siteId === selectedSite)}
                 year={reportingYear}
                 month={filters.month}
                 fuel={filters.fuel}
@@ -462,7 +506,12 @@ function UtilityLines({
       <h2>
         Monthly {title.toLowerCase()} ({unit})
       </h2>
-      <MonthlyChartSummary points={monthlyActuals(history, kind)} period={period} unit={unit} />
+      <MonthlyChartSummary
+        compact={kind === 'emissions'}
+        points={monthlyActuals(history, kind)}
+        period={period}
+        unit={unit}
+      />
       {kind === 'consumption' && (
         <p>
           Each line represents one site and fuel. Hover or focus a point for its exact value. Lines break where data is
@@ -513,11 +562,14 @@ function UtilityLines({
             const points = dates.map((date) => group.rows.find((r) => r.month === date));
             const color = colors[seriesIndex % colors.length];
             const path = points
-              .map((row, index) =>
-                row && row[kind] !== null
-                  ? `${index && points[index - 1]?.[kind] != null ? 'L' : 'M'} ${x(index)} ${y(Number(row[kind]))}`
-                  : '',
-              )
+              .map((row, index) => {
+                if (!row || row[kind] === null) return '';
+                const previous = points[index - 1];
+                if (!previous || previous[kind] === null) return `M ${x(index)} ${y(Number(row[kind]))}`;
+                if (kind !== 'emissions') return `L ${x(index)} ${y(Number(row[kind]))}`;
+                const midpoint = (x(index - 1) + x(index)) / 2;
+                return `C ${midpoint} ${y(Number(previous[kind]))} ${midpoint} ${y(Number(row[kind]))} ${x(index)} ${y(Number(row[kind]))}`;
+              })
               .join(' ');
             return (
               <g key={group.key}>
