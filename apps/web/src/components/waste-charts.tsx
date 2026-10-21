@@ -147,22 +147,17 @@ export function WasteCharts({
           <MetricChart
             title="Cost (£)"
             controls={
-              <fieldset className="waste-cost-basis">
-                <legend>VAT</legend>
+              <div className="waste-cost-basis">
                 <label>
                   <input
-                    type="radio"
+                    type="checkbox"
                     name="waste-cost-vat"
-                    checked={!includeVat}
-                    onChange={() => setIncludeVat(false)}
+                    checked={includeVat}
+                    onChange={(event) => setIncludeVat(event.target.checked)}
                   />
-                  Exclude VAT
-                </label>
-                <label>
-                  <input type="radio" name="waste-cost-vat" checked={includeVat} onChange={() => setIncludeVat(true)} />
                   Include VAT
                 </label>
-              </fieldset>
+              </div>
             }
             unit="£"
             points={points('cost')}
