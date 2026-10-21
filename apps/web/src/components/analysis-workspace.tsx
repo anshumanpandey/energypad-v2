@@ -309,7 +309,7 @@ function SiteAnalysis({
                       ? { configurationId: f.get('weatherId'), methodology: 'daily-mean-degree-days-v1' }
                       : null,
                     supersedesId: f.get('supersedesId') || null,
-                    fitPolicy: { version: 'experimental-workflow-v1', relativeRankTolerance: 1e-10 },
+                    fitPolicy: { version: 'monthly-performance-boundary-v2', relativeRankTolerance: 1e-10 },
                   };
                   void m.run(
                     async () => {
@@ -756,10 +756,10 @@ function RunForm({
           void submit({
             period: { firstMonth: first, lastMonth: last },
             policy: {
-              version: 'experimental-workflow-v1',
+              version: 'monthly-performance-boundary-v2',
               nra,
               significanceBasis: f.get('basis'),
-              comparison: 'GREATER_THAN',
+              comparison: 'AT_LEAST',
               sigmaMultiplier: 2,
               zeroThreshold: f.get('zeroThreshold'),
               negativePrediction: f.get('negativePrediction'),

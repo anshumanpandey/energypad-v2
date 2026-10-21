@@ -269,13 +269,19 @@ describe('experimental reporting', () => {
   });
 });
 
-it.each([79, 80, 81, 119, 120, 121])('new runs always use strict significance for actual %i', (actual) => {
-  const data = input();
-  data.rows[0].consumption.kwh = actual;
-  data.baseline.model.residualStandardError = 10;
-  const request = { period: data.period, policy: data.policy, references: [] };
-  expect(runDefinition.parse(request).policy.comparison).toBe('AT_LEAST');
-  data.policy = newRunDefinition.parse(request).policy;
-  expect(data.policy.comparison).toBe('GREATER_THAN');
-  expect(calculated(data).significance.significant).toBe(Math.abs(100 - actual) > 20);
-});
+it.each([79, 80, 81, 119, 120, 121])(
+  'new runs use inclusive significance while historical inputs retain their boundary for actual %i',
+  (actual) => {
+    const data = input();
+    data.rows[0].consumption.kwh = actual;
+    data.baseline.model.residualStandardError = 10;
+    data.policy.comparison = 'GREATER_THAN';
+    const request = { period: data.period, policy: data.policy, references: [] };
+    expect(runDefinition.parse(request).policy.comparison).toBe('GREATER_THAN');
+    expect(calculated(data).significance.significant).toBe(Math.abs(100 - actual) > 20);
+    data.policy = newRunDefinition.parse(request).policy;
+    expect(data.policy.comparison).toBe('AT_LEAST');
+    expect(data.policy.version).toBe('monthly-performance-boundary-v2');
+    expect(calculated(data).significance.significant).toBe(Math.abs(100 - actual) >= 20);
+  },
+);

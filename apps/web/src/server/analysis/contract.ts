@@ -112,7 +112,7 @@ export const runDefinition = z
 // Apply the current policy only to new runs; historical snapshots retain their recorded comparison.
 export const newRunDefinition = runDefinition.transform((request) => ({
   ...request,
-  policy: { ...request.policy, comparison: 'GREATER_THAN' as const },
+  policy: { ...request.policy, version: 'monthly-performance-boundary-v2', comparison: 'AT_LEAST' as const },
 }));
 export type BaselineDefinition = z.infer<typeof baselineDefinition>;
 export type RunDefinition = z.infer<typeof runDefinition>;
