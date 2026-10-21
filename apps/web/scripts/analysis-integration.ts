@@ -125,6 +125,13 @@ try {
   if (run.status !== 'SAVED' || runRetry.status !== 'SAVED') throw Error('Run failed');
   assert.equal(run.run.id, runRetry.run.id);
   assert.ok(run.run.result);
+  const canonicalRetry = await analysis.run(owner, org.id, site.id, first.baseline.id, {
+    ...request,
+    policy: { ...policy, version: 'caller-version', comparison: 'GREATER_THAN' },
+  });
+  if (canonicalRetry.status !== 'SAVED') throw Error('Canonical retry failed');
+  assert.equal(canonicalRetry.run.id, run.run.id);
+  assert.equal(canonicalRetry.reused, true);
   assert.equal(await db.auditEvent.count({ where: { targetId: run.run.id, action: 'analysis.run_created' } }), 1);
   const saved = await analysis.readRun(owner, org.id, site.id, run.run.id);
   const impact = await analysis.wasteSummary(owner, org.id, site.id, run.run.id);
@@ -1558,16 +1565,22 @@ try {
       },
     }),
   );
+  // Caller policy versions are canonicalized. A dedicated baseline guarantees a
+  // fresh run instead of reusing a saved run before the failing audit is reached.
+  const rollbackBaseline = await analysis.createBaseline(owner, org.id, site.id, {
+    ...definition,
+    fitPolicy: { ...definition.fitPolicy, version: 'rollback-run-fixture' },
+  });
+  if (rollbackBaseline.status !== 'SAVED') throw Error('Rollback fixture baseline failed');
+  assert.equal(await db.analysisRun.count({ where: { baselineId: rollbackBaseline.baseline.id } }), 0);
   const beforeRollback = {
+    audits: await db.auditEvent.count(),
     runs: await db.analysisRun.count(),
     results: await db.analysisResult.count(),
     baselines: await db.baselineVersion.count(),
   };
   await assert.rejects(
-    analysis.run({ ...owner, correlationId: 'invalid-uuid' }, org.id, site.id, first.baseline.id, {
-      ...request,
-      policy: { ...policy, version: 'rollback' },
-    }),
+    analysis.run({ ...owner, correlationId: 'invalid-uuid' }, org.id, site.id, rollbackBaseline.baseline.id, request),
   );
   await assert.rejects(
     analysis.createBaseline({ ...owner, correlationId: 'invalid-uuid' }, org.id, site.id, {
@@ -1577,11 +1590,20 @@ try {
   );
   assert.deepEqual(
     {
+      audits: await db.auditEvent.count(),
       runs: await db.analysisRun.count(),
       results: await db.analysisResult.count(),
       baselines: await db.baselineVersion.count(),
     },
     beforeRollback,
+  );
+  const recoveredRun = await analysis.run(owner, org.id, site.id, rollbackBaseline.baseline.id, request);
+  if (recoveredRun.status !== 'SAVED') throw Error('Run did not recover after audit rollback');
+  assert.equal(recoveredRun.reused, false);
+  assert.equal(await db.analysisRun.count({ where: { baselineId: rollbackBaseline.baseline.id } }), 1);
+  assert.equal(
+    await db.auditEvent.count({ where: { targetId: recoveredRun.run.id, action: 'analysis.run_created' } }),
+    1,
   );
   console.log(
     '✓ pinned weather versions, missing weather, insufficient fit data, Actual reading normalization, duplicate prevention and audit-failure rollback',
