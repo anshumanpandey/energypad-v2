@@ -2492,6 +2492,9 @@ small {
 .metric-chart-point.is-negative .metric-chart-dot {
   fill: #ac4436;
 }
+.waste-savings [aria-label='Cost (£)'] .metric-chart-bar {
+  fill: #4989c6;
+}
 .metric-chart-point.is-selected .metric-chart-dot,
 .metric-chart-point:focus .metric-chart-dot,
 .metric-chart-point:hover .metric-chart-dot {
@@ -3921,7 +3924,12 @@ select[aria-invalid='true'] {
 }
 .carbon-footprint-page .chart-average-pair {
   width: 300px;
-  grid-template-columns: minmax(0, 170fr) minmax(0, 130fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.carbon-footprint-page .chart-average-pair .chart-daily-average {
+  max-width: calc(100% + 56px);
+  margin-right: -56px;
+  padding-right: 66px;
 }
 .waste-savings [aria-label='Actual consumption vs wastage graph'] .chart-daily-average {
   background: #94c11f;
