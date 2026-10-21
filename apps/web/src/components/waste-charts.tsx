@@ -24,6 +24,8 @@ export function WasteCharts({
   throughMonth?: string;
   view?: 'graph' | 'table' | 'gauge';
 }) {
+  const [includeVat, setIncludeVat] = useState(false);
+  const costRows = rows.map((row) => ({ ...row, cost: includeVat ? (row.grossCost ?? null) : row.cost }));
   const [expanded, setExpanded] = useState<string | null>(null);
   const expansion = (title: string) => ({
     title,
@@ -47,14 +49,22 @@ export function WasteCharts({
   });
   const gaugeMaximum = Math.max(100, ...monthlyGauge.map((point) => Math.abs(point.value ?? 0)));
   const points = (key: 'variance' | 'cost') =>
-    sortChartValues(rows, sort, (row) => (row[key] === null ? null : String(row[key]))).map((row) => ({
-      month: row.month,
-      value: row[key],
-      note: row.note,
-    }));
+    sortChartValues(key === 'cost' ? costRows : rows, sort, (row) => (row[key] === null ? null : String(row[key]))).map(
+      (row) => ({
+        month: row.month,
+        value: row[key],
+        note: row.note,
+      }),
+    );
   if (view === 'table')
     return (
-      <WasteChartTables rows={rows} month={month} sort={sort} gaugeMonths={monthlyGauge} gaugePercentage={percentage} />
+      <WasteChartTables
+        rows={costRows}
+        month={month}
+        sort={sort}
+        gaugeMonths={monthlyGauge}
+        gaugePercentage={percentage}
+      />
     );
   return (
     <GraphMonthProvider key={month} initialMonth={month}>
@@ -136,6 +146,24 @@ export function WasteCharts({
         <ExpandableChart {...expansion('Cost')}>
           <MetricChart
             title="Cost (£)"
+            controls={
+              <fieldset className="waste-cost-basis">
+                <legend>VAT</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="waste-cost-vat"
+                    checked={!includeVat}
+                    onChange={() => setIncludeVat(false)}
+                  />
+                  Exclude VAT
+                </label>
+                <label>
+                  <input type="radio" name="waste-cost-vat" checked={includeVat} onChange={() => setIncludeVat(true)} />
+                  Include VAT
+                </label>
+              </fieldset>
+            }
             unit="£"
             points={points('cost')}
             showHelp={false}

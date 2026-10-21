@@ -58,6 +58,10 @@ test('wide waste tables do not cover sidebar controls', async ({ page }, testInf
     page.getByRole('img', { name: 'Selected month energy gauge: N/A, Unavailable', exact: true }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Graph view', exact: true }).click();
+  const costPanel = page.getByRole('region', { name: 'Cost (£)', exact: true });
+  await expect(costPanel.getByRole('radio', { name: 'Exclude VAT', exact: true })).toBeChecked();
+  await costPanel.getByRole('radio', { name: 'Include VAT', exact: true }).check();
+  await expect(costPanel.getByRole('radio', { name: 'Include VAT', exact: true })).toBeChecked();
   await page.getByRole('button', { name: 'Expand Cost chart', exact: true }).click();
   await expect(page.locator('.waste-expandable-chart:visible')).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Collapse Cost chart', exact: true })).toHaveAttribute(

@@ -601,18 +601,23 @@ small {
   color: #e0e4eb;
 }
 .nav-link:hover {
-  background: #ffffff14;
+  background: #94c11f1f;
   color: #fff;
 }
 .nav-link.active {
-  background: #ffffff24;
-  color: #e1f3ac;
+  background: #94c11f;
+  color: #26320c;
+  font-weight: 600;
+}
+.nav-link.active:hover {
+  background: #a1cd2c;
+  color: #26320c;
 }
 .nav-dot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #94c11f;
+  background: currentColor;
   margin-left: auto;
 }
 .admin-caption {
@@ -2215,23 +2220,26 @@ small {
   gap: 1px;
   min-width: 0;
   margin: 0;
-  padding: 0 0 8px;
+  padding: 0 0 6px;
   border: 0;
   border-bottom: 1px solid var(--line);
 }
 .waste-site-options legend {
-  padding: 0 0 6px;
-  font-size: 13px;
+  padding: 0 0 4px;
+  font-size: 12px;
   font-weight: 600;
   color: #29443e;
 }
 .waste-site-options .waste-site-option {
   display: flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: flex-start;
   gap: 5px;
   padding: 2px 5px;
   font-size: 11px;
   line-height: 1.3;
+  text-align: left;
   border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
@@ -2245,6 +2253,8 @@ small {
   flex: 0 0 auto;
   width: 11px;
   height: 11px;
+  min-height: 0;
+  padding: 0;
   margin: 0;
   accent-color: #356647;
 }
@@ -3917,6 +3927,22 @@ select[aria-invalid='true'] {
   background: #4989c6;
   color: #fff;
 }
+.waste-savings [aria-label='Actual consumption vs wastage graph'] .chart-average-pair {
+  width: 300px;
+}
+.waste-savings [aria-label='Actual consumption vs wastage graph'] .chart-average-pair .chart-month-days {
+  padding: 4px 10px;
+  font-size: 10px;
+  line-height: 1.3;
+}
+.waste-savings [aria-label='Actual consumption vs wastage graph'] .chart-average-pair .chart-daily-average {
+  max-width: calc(100% + 48px);
+  margin-right: -48px;
+  padding-right: 58px;
+}
+.waste-savings [aria-label='Actual consumption vs wastage graph'] .chart-average-pair strong {
+  font-size: 11px;
+}
 .waste-savings .chart-average-pair :is(span, strong) {
   min-width: 0;
   max-width: 100%;
@@ -3971,6 +3997,32 @@ select[aria-invalid='true'] {
 .waste-expandable-chart {
   position: relative;
   min-width: 0;
+}
+.waste-cost-basis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  border: 0;
+  padding: 0;
+  margin: 12px 0;
+}
+.waste-cost-basis legend {
+  font-size: 11px;
+  padding-bottom: 4px;
+  color: var(--muted);
+}
+.waste-cost-basis label {
+  flex-direction: row;
+  align-items: center;
+  font-size: 12px;
+}
+.waste-cost-basis input {
+  width: 14px;
+  height: 14px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: #4d505c;
 }
 .waste-expandable-chart[hidden] {
   display: none;

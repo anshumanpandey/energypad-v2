@@ -4,6 +4,7 @@ export type WasteChartRow = {
   adjusted: number | null;
   variance: number | null;
   cost: number | null;
+  grossCost?: number | null;
   note?: string;
   observed?: boolean;
 };
@@ -31,14 +32,15 @@ export function aggregateWasteRows(groups: WasteChartRow[][]): WasteChartRow[] {
   const months = [...new Set(groups.flatMap((rows) => rows.map((row) => row.month)))].sort();
   return months.map((month) => {
     const rows = groups.map((group) => group.find((row) => row.month === month));
-    const total = (key: 'actual' | 'adjusted' | 'variance' | 'cost') =>
-      rows.every((row) => row && row[key] !== null) ? rows.reduce((sum, row) => sum + row![key]!, 0) : null;
+    const total = (key: 'actual' | 'adjusted' | 'variance' | 'cost' | 'grossCost') =>
+      rows.every((row) => row && row[key] != null) ? rows.reduce((sum, row) => sum + row![key]!, 0) : null;
     return {
       month,
       actual: total('actual'),
       adjusted: total('adjusted'),
       variance: total('variance'),
       cost: total('cost'),
+      grossCost: total('grossCost'),
       observed: rows.some((row) => row?.actual !== null && row?.actual !== undefined),
       note: rows.some((row) => !row || row.variance === null)
         ? 'Calculation inputs are incomplete for one or more selected meters.'

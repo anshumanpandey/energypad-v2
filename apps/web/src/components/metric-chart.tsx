@@ -2,7 +2,7 @@
 
 import { ChartMonthDays } from './chart-month-days';
 import { formatMonth } from '../domain/format-month';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { formatEnergyValue } from './format-energy-value';
 import { WasteDirectionText } from './waste-direction';
 import { useGraphMonth } from './graph-month';
@@ -23,6 +23,7 @@ export function MetricChart({
   curved = false,
   chartType = 'line',
   showCoverage = true,
+  controls,
 }: {
   title: string;
   unit: string;
@@ -36,6 +37,7 @@ export function MetricChart({
   curved?: boolean;
   chartType?: 'line' | 'bar';
   showCoverage?: boolean;
+  controls?: ReactNode;
 }) {
   const month = useGraphMonth();
   const [selected, setSelected] = useState<string | null>(null);
@@ -119,6 +121,7 @@ export function MetricChart({
           </span>
         )}
       </div>
+      {controls}
       <div className="metric-chart-summary-row">
         <ChartMonthDays
           month={calendarMonth}

@@ -134,3 +134,11 @@ describe('saved waste and savings impacts', () => {
     expect(result.rows[0]).toMatchObject({ reading: { estimated: true }, significance: { significant: null } });
   });
 });
+
+it('uses recorded gross cost for VAT-inclusive impacts, without assuming a tax rate', () => {
+  const source = reading('2020-01', { grossCost: '21' });
+  expect(wasteSavings(output(), [source], null).postCost).toBe('-2.4');
+  expect(wasteSavings(output(), [source], null, 'gross').postCost).toBe('-2.52');
+  expect(wasteSavings(output(), [reading()], null, 'gross').postCost).toBeNull();
+  expect(wasteSavings(output(), [reading('2020-01', { grossCost: '0' })], null, 'gross').postCost).toBe('0');
+});

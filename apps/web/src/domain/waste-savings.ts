@@ -7,20 +7,24 @@ export type ImpactReading = {
   revision: number;
   normalizedKwh: string;
   netCost: string | null;
+  grossCost?: string | null;
   currency: string | null;
   estimated: boolean;
   conversionVersion: string;
 };
-export function wasteSavings(output: ReportingResult, readings: ImpactReading[], carbon: CarbonSnapshot | null) {
+export function wasteSavings(
+  output: ReportingResult,
+  readings: ImpactReading[],
+  carbon: CarbonSnapshot | null,
+  costBasis: 'net' | 'gross' = 'net',
+) {
   const rows = output.rows.map((row) => {
     if (row.status !== 'CALCULATED') return { month: row.month, status: 'BLOCKED' as const, issues: row.issues };
     const reading = readings.find((r) => r.id === row.consumptionId);
+    const cost = costBasis === 'gross' ? reading?.grossCost : reading?.netCost;
     const rate =
-      reading?.netCost !== null &&
-      reading?.netCost !== undefined &&
-      reading.currency &&
-      new Decimal(reading.normalizedKwh).gt(0)
-        ? new Decimal(reading.netCost).div(reading.normalizedKwh)
+      cost !== null && cost !== undefined && reading?.currency && new Decimal(reading.normalizedKwh).gt(0)
+        ? new Decimal(cost).div(reading.normalizedKwh)
         : null;
     const factor = carbon?.rows.find(
       (r) =>

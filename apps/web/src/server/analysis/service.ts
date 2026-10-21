@@ -744,21 +744,18 @@ export class AnalysisService extends FoundationService {
           }
         }
         const downloadable = !!(fit?.status === 'FITTED' && output && output.status !== 'BLOCKED');
-        const costs = output
-          ? wasteSavings(
-              output,
-              records.map((record) => ({
-                id: record.id,
-                revision: record.revision,
-                normalizedKwh: record.normalizedKwh.toString(),
-                netCost: record.netCost?.toString() ?? null,
-                currency: record.currency,
-                estimated: record.estimated,
-                conversionVersion: record.conversionVersion,
-              })),
-              null,
-            ).rows
-          : [];
+        const costReadings = records.map((record) => ({
+          id: record.id,
+          revision: record.revision,
+          normalizedKwh: record.normalizedKwh.toString(),
+          netCost: record.netCost?.toString() ?? null,
+          grossCost: record.grossCost?.toString() ?? null,
+          currency: record.currency,
+          estimated: record.estimated,
+          conversionVersion: record.conversionVersion,
+        }));
+        const costs = output ? wasteSavings(output, costReadings, null).rows : [];
+        const grossCosts = output ? wasteSavings(output, costReadings, null, 'gross').rows : [];
         preview.meters.push({
           ...meter,
           fittedYear,
@@ -769,6 +766,7 @@ export class AnalysisService extends FoundationService {
             const result = output?.rows.find((row) => row.month === actual.month);
             const calculated = result?.status === 'CALCULATED' ? result : null;
             const cost = costs.find((row) => row.month === actual.month);
+            const grossCost = grossCosts.find((row) => row.month === actual.month);
             return {
               month: actual.month,
               actual: 'normalizedKwh' in actual ? Number(actual.normalizedKwh) : null,
@@ -778,6 +776,10 @@ export class AnalysisService extends FoundationService {
               cost:
                 cost?.status === 'CALCULATED' && cost.currency === 'GBP' && cost.postCost !== null
                   ? Number(cost.postCost)
+                  : null,
+              grossCost:
+                grossCost?.status === 'CALCULATED' && grossCost.currency === 'GBP' && grossCost.postCost !== null
+                  ? Number(grossCost.postCost)
                   : null,
               note: calculated
                 ? calculated.direction
