@@ -13,7 +13,8 @@ import { writesFrozen, assertWritable } from '@/server/write-freeze';
 
 function callback(form: FormData) {
   const value = String(form.get('callbackUrl') ?? '/');
-  return safeAuthCallback(value);
+  const destination = safeAuthCallback(value);
+  return destination === '/' ? '/workspace' : destination;
 }
 
 async function passwordAction(form: FormData, mode: 'login' | 'signup') {

@@ -75,7 +75,7 @@ export function WorkspaceShell({
       {open && <button className="sidebar-overlay" aria-label="Close navigation" onClick={() => setOpen(false)} />}
       <aside className={`sidebar ${open ? 'is-open' : ''}`}>
         <div className="sidebar-brand">
-          <Link href={`/org/${organisation.id}/overview`} aria-label="EnergiePad overview">
+          <Link href="/" aria-label="EnergiePad home">
             <Brand />
           </Link>
           <button className="mobile-close icon-button" aria-label="Close navigation" onClick={() => setOpen(false)}>

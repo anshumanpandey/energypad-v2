@@ -46,6 +46,7 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
     ownerEmail = `owner-${suffix}@example.test`,
     memberEmail = `member-${suffix}@example.test`;
   await page.goto('/');
+  await page.getByRole('link', { name: 'Analytics', exact: true }).click();
   await expect(page).toHaveURL(/\/login/);
   expect((await page.request.get('/api/v1/organisations')).status()).toBe(401);
   await page.screenshot({ path: testInfo.outputPath('login-desktop.png'), fullPage: true });
