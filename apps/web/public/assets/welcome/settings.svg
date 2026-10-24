@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="82" height="82" viewBox="0 0 82 82">
+  <g id="Icon_feather-settings" data-name="Icon feather-settings" transform="translate(1 1)">
+    <path id="Path_1649" data-name="Path 1649" d="M34.5,24A10.5,10.5,0,1,1,24,13.5,10.5,10.5,0,0,1,34.5,24Z" transform="translate(16 16)" fill="none" stroke="#e97871" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+    <path id="Path_1650" data-name="Path 1650" d="M65.9,50.5a5.775,5.775,0,0,0,1.155,6.37l.21.21a7,7,0,1,1-9.9,9.905l-.21-.21a5.822,5.822,0,0,0-9.87,4.13v.6a7,7,0,0,1-14,0v-.315A5.775,5.775,0,0,0,29.5,65.9a5.775,5.775,0,0,0-6.37,1.155l-.21.21a7,7,0,1,1-9.9-9.9l.21-.21A5.822,5.822,0,0,0,9.1,47.28H8.5a7,7,0,0,1,0-14h.315A5.775,5.775,0,0,0,14.1,29.5a5.775,5.775,0,0,0-1.155-6.37l-.21-.21a7,7,0,1,1,9.9-9.9l.21.21a5.775,5.775,0,0,0,6.37,1.155h.28A5.775,5.775,0,0,0,33,9.1V8.5a7,7,0,0,1,14,0v.315a5.822,5.822,0,0,0,9.87,4.13l.21-.21a7,7,0,1,1,9.905,9.9l-.21.21a5.775,5.775,0,0,0-1.155,6.37v.28A5.775,5.775,0,0,0,70.9,33h.6a7,7,0,0,1,0,14h-.315A5.775,5.775,0,0,0,65.9,50.5Z" transform="translate(0 0)" fill="none" stroke="#e97871" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  </g>
+</svg>

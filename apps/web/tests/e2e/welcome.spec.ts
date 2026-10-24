@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 test('public welcome cards all open login and fit mobile', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Welcome to EnergiePad', exact: true })).toBeVisible();
   await expect(page.locator('.welcome-info-copy p')).toHaveCount(2);
+  await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: testInfo.outputPath('welcome-desktop.png'), fullPage: true });
   for (const name of ['Settings', 'Analytics', 'User Management']) {
     const link = page.getByRole('navigation', { name: 'Main options' }).getByRole('link', { name, exact: true });
