@@ -5056,3 +5056,176 @@ select[aria-invalid='true'] {
     gap: 20px;
   }
 }
+
+.overview-hub {
+  display: grid;
+  gap: 32px;
+  min-width: 0;
+}
+.overview-hub-hero {
+  padding: 28px 24px 40px;
+  border-radius: 20px;
+  background:
+    linear-gradient(rgb(255 255 255 / 30%), rgb(255 255 255 / 12%)),
+    url('/assets/welcome/turbines.png') center 48% / cover;
+  text-align: center;
+}
+.overview-hub-hero h1 {
+  margin: 0 0 24px;
+  font-size: 28px;
+  color: var(--charcoal);
+}
+.overview-hub-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 230px));
+  justify-content: center;
+  gap: 28px;
+}
+.overview-hub-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 220px;
+  padding: 24px 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  color: var(--charcoal);
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgb(77 80 92 / 8%);
+}
+.overview-hub-option span {
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+.overview-hub-option.is-current,
+.overview-hub-option:is(a):hover {
+  background: var(--charcoal);
+  color: #fff;
+}
+.overview-hub-option small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.overview-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  scroll-margin-top: 100px;
+}
+.overview-settings-card,
+.overview-files {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgb(77 80 92 / 5%);
+}
+.overview-settings-card h2 {
+  margin: 0;
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 15px;
+  border-bottom: 1px solid var(--line);
+}
+.overview-settings-card > a {
+  display: block;
+  padding: 20px;
+  text-align: center;
+  color: #bd514a;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.overview-settings-card > a:hover {
+  background: var(--coral-soft);
+}
+.overview-files > h2 {
+  margin: 0;
+  padding: 22px;
+  font-size: 21px;
+  text-align: center;
+}
+.overview-files-scroll {
+  overflow-x: auto;
+}
+.overview-files table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.overview-files th,
+.overview-files td {
+  padding: 18px;
+  border: 1px solid var(--line);
+  text-align: center;
+}
+.overview-files th:first-child {
+  text-align: left;
+}
+.overview-files thead {
+  background: var(--charcoal);
+  color: white;
+  font-size: 12px;
+}
+.overview-files tbody tr:nth-child(even) {
+  background: var(--surface-muted);
+}
+.overview-upload-link {
+  display: inline-block;
+  padding: 8px 18px;
+  border: 1px solid var(--coral);
+  border-radius: 5px;
+  color: #bd514a;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.overview-upload-link:hover {
+  background: var(--coral-soft);
+}
+.overview-performance-heading {
+  border-top: 3px solid var(--lime);
+  padding-top: 20px;
+}
+.overview-performance-heading h2 {
+  margin: 0;
+}
+@media (max-width: 800px) {
+  .overview-hub-options {
+    gap: 12px;
+  }
+  .overview-hub-option {
+    padding: 20px 10px;
+    min-height: 180px;
+  }
+  .overview-hub-option img {
+    width: 64px;
+    height: 64px;
+  }
+  .overview-settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .overview-hub-hero {
+    padding: 24px 16px;
+  }
+  .overview-hub-options {
+    grid-template-columns: 1fr;
+  }
+  .overview-hub-option {
+    min-height: 140px;
+  }
+  .overview-settings-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .overview-files table {
+    min-width: 540px;
+  }
+}

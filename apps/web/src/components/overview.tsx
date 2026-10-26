@@ -1,3 +1,4 @@
+import { OverviewShortcuts } from './overview-shortcuts';
 import { formatMonth } from '../domain/format-month';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -12,7 +13,9 @@ export async function Overview({
   organisationId,
   sites,
   query,
+  manageMembers = false,
 }: {
+  manageMembers?: boolean;
   actor: Actor;
   organisationId: string;
   sites: { id: string; name: string }[];
@@ -34,13 +37,10 @@ export async function Overview({
       : null;
   const display = (value: string | null, unit: string) => (value === null ? 'Unavailable' : `${value} ${unit}`);
   return (
-    <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">ENERGY PERFORMANCE</span>
-          <h1>Overview</h1>
-          <p>Annual performance and monthly coverage for your selected site.</p>
-        </div>
+    <div className="overview-hub">
+      <OverviewShortcuts base={base} manageMembers={manageMembers} />
+      <div className="overview-performance-heading">
+        <h2>Site performance</h2>
       </div>
       {!active.length ? (
         <section className="panel">
@@ -213,6 +213,6 @@ export async function Overview({
           )}
         </>
       )}
-    </>
+    </div>
   );
 }

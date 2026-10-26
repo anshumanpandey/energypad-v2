@@ -331,7 +331,9 @@ export default async function WorkspacePage({
       </>
     );
   if (section === 'overview')
-    return <Overview actor={actor} organisationId={org.id} sites={sites} query={await searchParams} />;
+    return (
+      <Overview manageMembers={manage} actor={actor} organisationId={org.id} sites={sites} query={await searchParams} />
+    );
   if (section === 'members') {
     const members = await accessible(() => foundation.listMembers(actor, org.id));
     const invitations = await foundation.listInvitations(actor, org.id);
