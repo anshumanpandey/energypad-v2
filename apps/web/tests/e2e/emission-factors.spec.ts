@@ -79,8 +79,12 @@ test('carbon factors save, reset and retain corrected versions', async ({ page }
   await page.getByRole('button', { name: 'Save target', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Annual browser target · Revision 1', exact: true })).toBeVisible();
   await expect(page.getByLabel('Target name')).toHaveValue('');
-  const savedRuns = await (await page.request.get(`${base}/sites/${site.id}/carbon`)).json();
+  // Retry only transport resets on this read; HTTP errors must still fail the test.
+  const savedRunsResponse = await page.request.get(`${base}/sites/${site.id}/carbon`, { maxRetries: 2 });
+  expect(savedRunsResponse.ok(), await savedRunsResponse.text()).toBe(true);
+  const savedRuns = await savedRunsResponse.json();
   const completeRun = savedRuns.find((r: { snapshot: { status: string } }) => r.snapshot.status === 'COMPLETE');
+  expect(completeRun, 'The saved complete carbon calculation must be available for target assessment').toBeDefined();
   await page
     .getByRole('combobox', { name: 'Saved calculation for Annual browser target', exact: true })
     .selectOption(completeRun.id);
