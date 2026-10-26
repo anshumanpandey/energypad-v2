@@ -1,3 +1,4 @@
+import { UtilityRecords } from '@/components/utility-records';
 import { Graphs } from '@/components/graphs';
 import { UtilityGraphs } from '@/components/utility-graphs';
 import { utilityGraphService } from '@/server/services';
@@ -62,6 +63,8 @@ export default async function WorkspacePage({
   } = await accessible(() => foundation.getWorkspace(actor, organisationId));
   const base = `/org/${org.id}`;
   const manage = can(membership.role, 'members:manage');
+
+  if (section === 'utility-records') return <UtilityRecords orgId={org.id} sites={sites} manage={manage} />;
 
   if (section === 'consumption' || section === 'emissions')
     return (

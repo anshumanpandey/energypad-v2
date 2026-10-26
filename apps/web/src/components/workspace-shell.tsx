@@ -44,17 +44,20 @@ export function WorkspaceShell({
   const section = pathname.split('/')[3] ?? 'overview';
   const nav = [
     { key: 'overview', name: 'Overview', icon: LayoutDashboard },
-    { key: 'consumption', name: 'Consumption', icon: Zap },
-    { key: 'emissions', name: 'Carbon Footprint', icon: Leaf },
     { key: 'sites', name: 'Sites', icon: Building2 },
     { key: 'energy', name: 'Upload', icon: Zap },
-    { key: 'waste-savings', name: 'Waste & Savings', icon: Zap },
+    { key: 'utility-records', name: 'Utility & Emissions', icon: FileText },
     { key: 'degree-days', name: 'HDD & CDD', icon: CloudSun },
     { key: 'energy-tips', name: 'Energy Tips', icon: Lightbulb },
     { key: 'ai-analyst', name: 'AI Analyst', icon: Sparkles },
     { key: 'reports', name: 'Reports', icon: FileText },
     ...(can(role, 'billing:manage') ? [{ key: 'billing', name: 'Billing', icon: CreditCard }] : []),
     { key: 'portfolio', name: 'Portfolio', icon: Layers3 },
+  ];
+  const analytics = [
+    { key: 'consumption', name: 'Consumption', icon: Zap },
+    { key: 'emissions', name: 'Carbon Footprint', icon: Leaf },
+    { key: 'waste-savings', name: 'Waste & Savings', icon: Zap },
   ];
   const admin = [
     { key: 'members', name: 'Team members', icon: Users, permission: 'members:manage' as const },
@@ -66,7 +69,7 @@ export function WorkspaceShell({
       ? 'Advanced Analysis'
       : section === 'carbon-trends'
         ? 'Carbon trends'
-        : ([...nav, ...admin].find((item) => item.key === section)?.name ?? 'Workspace');
+        : ([...nav, ...analytics, ...admin].find((item) => item.key === section)?.name ?? 'Workspace');
   return (
     <div className="workspace">
       <a className="skip-link" href="#main">
@@ -101,19 +104,26 @@ export function WorkspaceShell({
           <small>{roleLabels[role]} access</small>
         </label>
         <nav aria-label="Main navigation">
-          <span className="nav-caption">WORKSPACE</span>
-          {nav.map(({ key, name, icon: Icon }) => (
-            <Link
-              key={key}
-              href={`/org/${organisation.id}/${key}`}
-              className={activeSection === key ? 'nav-link active' : 'nav-link'}
-              aria-current={activeSection === key ? 'page' : undefined}
-              onClick={() => setOpen(false)}
-            >
-              <Icon size={19} />
-              {name}
-              {activeSection === key && <span className="nav-dot" />}
-            </Link>
+          {[
+            { label: 'Workspace', items: nav },
+            { label: 'Analytics', items: analytics },
+          ].map(({ label, items }, index) => (
+            <div key={label} role="group" aria-label={label}>
+              <span className={index === 0 ? 'nav-caption' : 'nav-caption admin-caption'}>{label.toUpperCase()}</span>
+              {items.map(({ key, name, icon: Icon }) => (
+                <Link
+                  key={key}
+                  href={`/org/${organisation.id}/${key}`}
+                  className={activeSection === key ? 'nav-link active' : 'nav-link'}
+                  aria-current={activeSection === key ? 'page' : undefined}
+                  onClick={() => setOpen(false)}
+                >
+                  <Icon size={19} />
+                  {name}
+                  {activeSection === key && <span className="nav-dot" />}
+                </Link>
+              ))}
+            </div>
           ))}
           {admin.length > 0 && (
             <>

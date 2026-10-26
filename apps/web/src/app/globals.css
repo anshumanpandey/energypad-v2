@@ -4775,3 +4775,53 @@ select[aria-invalid='true'] {
     transition: none;
   }
 }
+
+.utility-record-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 18px;
+  align-items: end;
+}
+.utility-record-section {
+  padding: 0;
+  overflow: hidden;
+}
+.utility-record-section > header {
+  padding: 22px 24px;
+  border-top: 4px solid var(--lime);
+}
+.utility-record-section th,
+.utility-record-section td {
+  vertical-align: middle;
+  padding: 16px;
+}
+.utility-record-section thead {
+  background: var(--charcoal);
+  color: white;
+}
+.utility-record-section tbody tr:nth-child(even) {
+  background: var(--surface-muted);
+}
+.utility-record-section small {
+  display: block;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 4px;
+}
+.utility-record-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.utility-record-editor {
+  border-top: 4px solid var(--blue);
+}
+@media (max-width: 700px) {
+  .utility-record-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .utility-record-filters > :first-child {
+    grid-column: 1 / -1;
+  }
+}
