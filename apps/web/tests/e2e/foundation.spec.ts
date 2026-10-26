@@ -307,31 +307,26 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await expect(sitesTable.getByRole('row', { name: /Manual Site/ })).toContainText('Floor 2');
   await expect(sitesTable.getByRole('row', { name: /Manual Site/ })).toContainText('SW1A 1AA');
   await page.getByRole('button', { name: 'Add History Entry', exact: true }).click();
-  await page.getByLabel('Effective date').fill('01/01/2026');
-  await page.getByLabel('Population', { exact: true }).fill('0');
-  await page.getByLabel('Floor area (m²)').fill('1200.5');
-  await page
-    .getByRole('dialog', { name: 'New history entry' })
-    .getByRole('button', { name: 'Add history entry', exact: true })
-    .click();
+  const historyDialog = page.getByRole('dialog', { name: 'New history entry' });
+  await historyDialog.getByLabel('Effective date').fill('01/01/2026');
+  await historyDialog.getByLabel('Population', { exact: true }).fill('0');
+  await historyDialog.getByLabel('Floor area (m²)').fill('1200.5');
+  await historyDialog.getByRole('button', { name: 'Add history entry', exact: true }).click();
   const history = page.locator('.site-history-entry');
   await expect(history.getByText('2026-01-01', { exact: true })).toBeVisible();
   await expect(history.locator('dd').first()).toHaveText('0');
   await expect(page.getByRole('dialog', { name: 'New history entry' })).toHaveCount(0);
   await expect(page.getByRole('status').filter({ hasText: 'History entry saved successfully.' })).toBeVisible();
   await page.getByRole('button', { name: 'Add History Entry', exact: true }).click();
-  await expect(page.getByLabel('Effective date')).toHaveValue('');
-  await expect(page.getByLabel('Population', { exact: true })).toHaveValue('');
-  await expect(page.getByLabel('Floor area (m²)')).toHaveValue('');
-  await page.getByLabel('Effective date').fill('01/01/2026');
-  await page.getByLabel('Population', { exact: true }).fill('12');
-  await page
-    .getByRole('dialog', { name: 'New history entry' })
-    .getByRole('button', { name: 'Add history entry', exact: true })
-    .click();
+  await expect(historyDialog.getByLabel('Effective date')).toHaveValue('');
+  await expect(historyDialog.getByLabel('Population', { exact: true })).toHaveValue('');
+  await expect(historyDialog.getByLabel('Floor area (m²)')).toHaveValue('');
+  await historyDialog.getByLabel('Effective date').fill('01/01/2026');
+  await historyDialog.getByLabel('Population', { exact: true }).fill('12');
+  await historyDialog.getByRole('button', { name: 'Add history entry', exact: true }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'This record already exists.' })).toBeVisible();
-  await expect(page.getByLabel('Effective date')).toHaveValue('01/01/2026');
-  await expect(page.getByLabel('Population', { exact: true })).toHaveValue('12');
+  await expect(historyDialog.getByLabel('Effective date')).toHaveValue('01/01/2026');
+  await expect(historyDialog.getByLabel('Population', { exact: true })).toHaveValue('12');
   await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
   await page.getByRole('button', { name: 'Add Meter', exact: true }).click();
   await page.getByLabel('Meter code').fill('MAIN');
@@ -390,8 +385,8 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await expect(page.getByText('Import complete: 2 sites created.', { exact: false })).toBeVisible();
   await page.reload();
   await page.getByRole('link', { name: 'Sites', exact: true }).click();
-  await expect(sitesTable.getByRole('rowheader', { name: 'Imported Site', exact: true })).toBeVisible();
-  await expect(sitesTable.getByRole('rowheader', { name: 'Second Imported Site', exact: true })).toBeVisible();
+  await expect(sitesTable.getByRole('rowheader').getByText('Imported Site', { exact: true })).toBeVisible();
+  await expect(sitesTable.getByRole('rowheader').getByText('Second Imported Site', { exact: true })).toBeVisible();
   const sites = await (await page.request.get(`/api/v1/organisations/${orgPath.split('/')[2]}/sites`)).json();
   expect(sites).toHaveLength(3);
   const manualSite = sites.find((site: { name: string }) => site.name === 'Manual Site');
