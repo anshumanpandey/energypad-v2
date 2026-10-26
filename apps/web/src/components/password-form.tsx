@@ -15,7 +15,14 @@ export function PasswordForm({
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
       <label>
         Email address
-        <input name="email" type="email" placeholder="you@company.com" autoComplete="email" required maxLength={254} />
+        <input
+          name="email"
+          type="email"
+          placeholder={mode === 'login' ? 'name@example.com' : 'you@company.com'}
+          autoComplete="email"
+          required
+          maxLength={254}
+        />
       </label>
       <label>
         Password
@@ -48,7 +55,7 @@ export function PasswordForm({
         </label>
       )}
       <SubmitButton>
-        {mode === 'signup' ? 'Create account' : 'Sign in'} <ArrowUpRight size={17} />
+        {mode === 'signup' ? 'Create account' : 'Sign in'} {mode === 'signup' && <ArrowUpRight size={17} />}
       </SubmitButton>
     </form>
   );

@@ -430,6 +430,68 @@ small {
 .auth-form .notice {
   margin-bottom: 20px;
 }
+.auth-page-login .auth-content {
+  background: var(--surface);
+  font-family: 'Welcome Poppins', Arial, sans-serif;
+  padding-inline: 10%;
+}
+.auth-page-login .auth-form {
+  max-width: 620px;
+}
+.auth-page-login .auth-form h2 {
+  font-size: 22px;
+  letter-spacing: -0.4px;
+  margin: 0 0 30px;
+  font-weight: 500;
+}
+.auth-page-login .auth-form label {
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.auth-page-login .auth-form input:not([type='hidden']) {
+  min-height: 48px;
+  padding: 11px 12px;
+  border: 1px solid #e3e3e3;
+  border-radius: 0;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 400;
+}
+.auth-page-login .auth-form form > .button {
+  align-self: center;
+  min-height: 38px;
+  margin-top: 13px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #1676ed;
+  background: var(--blue);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 400;
+}
+.auth-page-login .auth-form form > .button:hover {
+  background: var(--link);
+}
+.login-home-link {
+  display: block;
+  width: fit-content;
+  margin: 16px auto 0;
+  color: var(--link);
+  text-decoration: underline;
+}
+.auth-page-login .auth-form .login-account-link {
+  margin: 28px 0 12px;
+  text-align: center;
+  font-size: 12px;
+}
+.auth-page-login .auth-form > .text-link {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 400;
+}
 .auth-note {
   display: flex;
   gap: 12px;
@@ -2276,20 +2338,20 @@ small {
   opacity: 0.65;
   cursor: wait;
 }
-:is(.waste-savings, .carbon-footprint-page) .waste-dashboard-filters .button {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .waste-dashboard-filters .button {
   background: #e97871;
   border-color: #e97871;
   color: #292f2c;
 }
-:is(.waste-savings, .carbon-footprint-page) .waste-dashboard-filters .button:hover:not(:disabled) {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .waste-dashboard-filters .button:hover:not(:disabled) {
   background: #df6861;
   border-color: #df6861;
 }
-:is(.waste-savings, .carbon-footprint-page) .waste-dashboard-filters .button:focus-visible {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .waste-dashboard-filters .button:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
-:is(.waste-savings, .carbon-footprint-page) .waste-view-toggle {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .waste-view-toggle {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   background: #f9eeeb;
   border-color: #ead5cf;
@@ -2310,12 +2372,12 @@ small {
   margin: 20px auto 0;
   overflow: visible;
 }
-:is(.waste-savings, .carbon-footprint-page) .waste-view-toggle .button[aria-pressed='false'] {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .waste-view-toggle .button[aria-pressed='false'] {
   background: transparent;
   border-color: transparent;
   color: var(--ink);
 }
-:is(.waste-savings, .carbon-footprint-page) .waste-view-toggle .button[aria-pressed='false']:hover {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .waste-view-toggle .button[aria-pressed='false']:hover {
   background: #f4dcd7;
 }
 @media (max-width: 1100px) {
@@ -3780,19 +3842,19 @@ select[aria-invalid='true'] {
 }
 
 @media (min-width: 1101px) {
-  .workspace-main:has(> :is(.waste-savings, .carbon-footprint-page) > .waste-dashboard-layout) {
+  .workspace-main:has(> :is(.waste-savings, .carbon-footprint-page, .consumption-page) > .waste-dashboard-layout) {
     max-width: none;
     padding: 0;
     margin: 0;
   }
-  :is(.waste-savings, .carbon-footprint-page):has(> .waste-dashboard-layout) {
+  :is(.waste-savings, .carbon-footprint-page, .consumption-page):has(> .waste-dashboard-layout) {
     grid-template-columns: minmax(0, 1fr) 300px;
     grid-template-rows: auto 1fr;
     grid-template-areas: 'heading filters' 'results filters';
     gap: 0;
     min-height: calc(100dvh - 76px);
   }
-  :is(.waste-savings, .carbon-footprint-page) > .page-heading {
+  :is(.waste-savings, .carbon-footprint-page, .consumption-page) > .page-heading {
     grid-area: heading;
     margin: 0;
     padding: 39px 32px 28px;
@@ -3857,7 +3919,7 @@ select[aria-invalid='true'] {
 }
 
 .chart-average-pair,
-.carbon-footprint-page .monthly-chart-values {
+:is(.carbon-footprint-page, .consumption-page) .monthly-chart-values {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -3868,7 +3930,7 @@ select[aria-invalid='true'] {
   max-width: 100%;
 }
 .chart-average-pair .chart-month-days,
-.carbon-footprint-page .monthly-chart-values > span {
+:is(.carbon-footprint-page, .consumption-page) .monthly-chart-values > span {
   min-width: 0;
   max-width: 100%;
   display: inline-flex;
@@ -3883,7 +3945,7 @@ select[aria-invalid='true'] {
   overflow-wrap: anywhere;
 }
 .chart-average-pair strong,
-.carbon-footprint-page .monthly-chart-values strong {
+:is(.carbon-footprint-page, .consumption-page) .monthly-chart-values strong {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
@@ -3893,7 +3955,7 @@ select[aria-invalid='true'] {
   color: #fff;
 }
 
-:is(.waste-savings, .carbon-footprint-page) .chart-average-pair {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .chart-average-pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
@@ -3904,7 +3966,7 @@ select[aria-invalid='true'] {
   border: 0;
   background: transparent;
 }
-:is(.waste-savings, .carbon-footprint-page) .chart-average-pair .chart-month-days {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .chart-average-pair .chart-month-days {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3919,24 +3981,24 @@ select[aria-invalid='true'] {
   white-space: normal;
   overflow-wrap: anywhere;
 }
-:is(.waste-savings, .carbon-footprint-page) .chart-average-pair .chart-daily-average {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .chart-average-pair .chart-daily-average {
   max-width: calc(100% + 40px);
   margin-right: -40px;
   padding-right: 50px;
 }
-:is(.waste-savings, .carbon-footprint-page) .chart-average-pair .chart-month-total {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .chart-average-pair .chart-month-total {
   position: relative;
   z-index: 1;
 }
-:is(.waste-savings, .carbon-footprint-page) .chart-average-pair strong {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .chart-average-pair strong {
   font-size: 12px;
   font-weight: 700;
 }
-.carbon-footprint-page .chart-average-pair {
+:is(.carbon-footprint-page, .consumption-page) .chart-average-pair {
   width: 300px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-.carbon-footprint-page .chart-average-pair .chart-daily-average {
+:is(.carbon-footprint-page, .consumption-page) .chart-average-pair .chart-daily-average {
   max-width: calc(100% + 56px);
   margin-right: -56px;
   padding-right: 66px;
@@ -3965,12 +4027,12 @@ select[aria-invalid='true'] {
 .waste-savings [aria-label='Actual consumption vs wastage graph'] .chart-average-pair strong {
   font-size: 11px;
 }
-:is(.waste-savings, .carbon-footprint-page) .chart-average-pair :is(span, strong) {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .chart-average-pair :is(span, strong) {
   min-width: 0;
   max-width: 100%;
 }
 
-:is(.waste-savings, .carbon-footprint-page) .metric-chart-summary-row {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .metric-chart-summary-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -3978,10 +4040,10 @@ select[aria-invalid='true'] {
   gap: 8px 12px;
   margin: 10px 0;
 }
-:is(.waste-savings, .carbon-footprint-page) .chart-month-summary {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .chart-month-summary {
   justify-content: flex-end;
 }
-:is(.waste-savings, .carbon-footprint-page) .chart-month-summary > .chart-month-days {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .chart-month-summary > .chart-month-days {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3993,22 +4055,22 @@ select[aria-invalid='true'] {
   border-radius: 50%;
   text-align: center;
 }
-:is(.waste-savings, .carbon-footprint-page) .chart-days-count {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .chart-days-count {
   font-size: 20px;
   font-weight: 700;
   line-height: 1.2;
 }
-:is(.waste-savings, .carbon-footprint-page) .chart-days-label {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .chart-days-label {
   font-size: 10px;
   font-weight: 500;
 }
-:is(.waste-savings, .carbon-footprint-page) .metric-chart-summary-row .chart-month-summary {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .metric-chart-summary-row .chart-month-summary {
   display: contents;
 }
-:is(.waste-savings, .carbon-footprint-page) .metric-chart-summary-row .chart-average-pair {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .metric-chart-summary-row .chart-average-pair {
   order: 1;
 }
-:is(.waste-savings, .carbon-footprint-page) .metric-chart-summary-row .metric-chart-detail {
+:is(.waste-savings, .carbon-footprint-page, .consumption-page) .metric-chart-summary-row .metric-chart-detail {
   flex: 0 1 auto;
   min-width: 0;
   min-height: 0;
@@ -4083,19 +4145,20 @@ select[aria-invalid='true'] {
   outline-offset: 2px;
 }
 
-.carbon-footprint-page .waste-view-toggle {
+:is(.carbon-footprint-page, .consumption-page) .waste-view-toggle {
   display: grid;
   gap: 4px;
 }
-.carbon-footprint-page {
+:is(.carbon-footprint-page, .consumption-page) {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.carbon-footprint-page .carbon-chart-grid {
+:is(.carbon-footprint-page, .consumption-page) .carbon-chart-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
 }
+.carbon-chart-grid > [aria-label='Consumption summary'],
 .carbon-chart-grid > [aria-label='Carbon Footprint summary'],
 .carbon-chart-grid > .page-note {
   grid-column: 1 / -1;
@@ -4116,7 +4179,7 @@ select[aria-invalid='true'] {
   width: 100%;
 }
 @media (max-width: 800px), (min-width: 1101px) and (max-width: 1250px) {
-  .carbon-footprint-page .carbon-chart-grid {
+  :is(.carbon-footprint-page, .consumption-page) .carbon-chart-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -4124,38 +4187,38 @@ select[aria-invalid='true'] {
 .monthly-chart-values {
   display: contents;
 }
-.carbon-footprint-page .monthly-chart-summary {
+:is(.carbon-footprint-page, .consumption-page) .monthly-chart-summary {
   align-items: center;
   gap: 8px;
 }
-.carbon-footprint-page .monthly-chart-values > span {
+:is(.carbon-footprint-page, .consumption-page) .monthly-chart-values > span {
   border-radius: 999px;
   color: #fff;
 }
-.carbon-footprint-page .monthly-chart-average {
+:is(.carbon-footprint-page, .consumption-page) .monthly-chart-average {
   order: -1;
   background: #4989c6;
 }
-.carbon-footprint-page .monthly-chart-actual {
+:is(.carbon-footprint-page, .consumption-page) .monthly-chart-actual {
   background: #4d505c;
 }
 
-.carbon-footprint-page .analysis-table {
+:is(.carbon-footprint-page, .consumption-page) .analysis-table {
   border: 1px solid var(--line);
   border-radius: 12px;
 }
-.carbon-footprint-page .analysis-table th {
+:is(.carbon-footprint-page, .consumption-page) .analysis-table th {
   background: #f3f5f5;
   color: #4d505c;
   font-size: 12px;
 }
-.carbon-footprint-page .analysis-table td {
+:is(.carbon-footprint-page, .consumption-page) .analysis-table td {
   font-variant-numeric: tabular-nums;
 }
-.carbon-footprint-page .analysis-table tbody tr:nth-child(even):not(.utility-selected-month) {
+:is(.carbon-footprint-page, .consumption-page) .analysis-table tbody tr:nth-child(even):not(.utility-selected-month) {
   background: #fafbfb;
 }
-.carbon-footprint-page .analysis-table .utility-selected-month > * {
+:is(.carbon-footprint-page, .consumption-page) .analysis-table .utility-selected-month > * {
   background: #edf5d7;
   font-weight: 600;
 }
@@ -4488,4 +4551,227 @@ select[aria-invalid='true'] {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+.sites-workspace {
+  min-width: 0;
+  gap: 22px;
+}
+.sites-page-actions {
+  justify-content: flex-end;
+}
+.sites-directory {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px #4d505c08;
+}
+.sites-directory-heading {
+  padding: 24px 30px;
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+.sites-directory-heading h1 {
+  font-size: 26px;
+  letter-spacing: -0.5px;
+}
+.sites-directory-heading > span {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sites-directory-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 28px;
+}
+.sites-sort {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.sites-sort legend {
+  float: left;
+  margin-right: 16px;
+  font-size: 13px;
+  padding: 0;
+}
+.sites-sort label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+.sites-sort label:has(:checked) {
+  font-weight: 700;
+}
+.sites-sort input {
+  width: 14px;
+  height: 14px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--charcoal);
+}
+.sites-fuel-filter {
+  min-width: 190px;
+  font-size: 12px;
+  gap: 5px;
+}
+.sites-fuel-filter select {
+  min-height: 40px;
+  padding: 8px 12px;
+}
+.sites-directory .sites-table-scroll {
+  margin-inline: 28px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.sites-directory-table {
+  min-width: 1050px;
+}
+.sites-directory-table th,
+.sites-directory-table td {
+  padding: 18px 14px;
+  vertical-align: middle;
+  border-right: 1px solid var(--line);
+  font-size: 12px;
+  max-width: 220px;
+  overflow-wrap: anywhere;
+}
+.sites-directory-table thead th {
+  background: var(--charcoal);
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-block: 15px;
+}
+.sites-directory-table tbody th {
+  min-width: 170px;
+}
+.sites-directory-table tbody th small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.sites-directory-table tr > :last-child {
+  border-right: 0;
+}
+.sites-directory-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.sites-directory-table tbody tr:nth-child(even) {
+  background: var(--surface-muted);
+}
+.sites-directory-table tbody tr {
+  transition: background-color 160ms ease;
+}
+.sites-directory-table tbody tr:hover,
+.sites-directory-table tbody tr.is-selected {
+  background: #f1f6e5;
+}
+.sites-directory-table .sites-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.sites-fuel-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.sites-fuel-tags span {
+  background: var(--blue-soft);
+  color: var(--link);
+  border-radius: 20px;
+  padding: 3px 7px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.sites-row-actions {
+  display: flex;
+  gap: 5px;
+}
+.sites-row-actions .icon-button {
+  min-width: 32px;
+  min-height: 32px;
+}
+.sites-row-actions .icon-button:hover {
+  background: var(--lime-soft);
+}
+.sites-row-actions .sites-archive {
+  color: #b44b45;
+}
+.sites-row-actions .sites-archive:hover {
+  background: var(--coral-soft);
+}
+.sites-directory-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.sites-add-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  font-weight: 600;
+  padding: 6px;
+}
+.sites-add-link > span {
+  display: grid;
+  place-items: center;
+  background: var(--coral);
+  color: #292f2c;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+}
+.sites-directory-table .sites-empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--muted);
+}
+@media (max-width: 600px) {
+  .sites-directory-toolbar {
+    padding: 20px 16px;
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .sites-directory .sites-table-scroll {
+    margin-inline: 16px;
+  }
+  .sites-directory-footer {
+    padding-inline: 16px;
+  }
+  .sites-page-actions {
+    justify-content: stretch;
+  }
+  .sites-page-actions > .button {
+    flex: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sites-directory-table tbody tr {
+    transition: none;
+  }
 }

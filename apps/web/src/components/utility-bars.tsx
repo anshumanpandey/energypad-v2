@@ -1,4 +1,5 @@
 'use client';
+import type { ReactNode } from 'react';
 import { ChartMonthDays } from './chart-month-days';
 import { formatMonth } from '../domain/format-month';
 import { formatEnergyValue } from './format-energy-value';
@@ -8,6 +9,7 @@ import { sortChartValues, type UtilityChartSort } from '@/domain/utility-chart-s
 
 export type UtilityBarPoint = { month: string; actual: string | null; target: string | null };
 export function UtilityBars({
+  controls,
   points: sourcePoints,
   title,
   unit,
@@ -29,6 +31,7 @@ export function UtilityBars({
   compactSummary = false,
   showActualChips = true,
 }: {
+  controls?: ReactNode;
   points: UtilityBarPoint[];
   title: string;
   unit: string;
@@ -62,6 +65,7 @@ export function UtilityBars({
       <h2>
         {title} ({unit})
       </h2>
+      {controls}
       <ChartMonthDays
         month={calendarMonth}
         hideMonth={hideCalendarMonth}

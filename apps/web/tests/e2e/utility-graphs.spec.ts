@@ -99,13 +99,11 @@ test('consumption and emissions menus filter the same data in graph and table vi
     requestKey: randomUUID(),
   });
   await page.reload();
-  await expect(page.getByLabel('Consumption site', { exact: true })).toHaveValue(leeds.id);
-  await expect(
-    page.getByLabel('Consumption site', { exact: true }).getByRole('option', { name: 'All sites', exact: true }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Leeds', exact: true })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'All Sites', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Consumption', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('img', { name: 'Consumption monthly line graph', exact: true })).toBeVisible();
-  await page.getByLabel('Consumption site', { exact: true }).selectOption(london.id);
+  await page.getByRole('radio', { name: 'London', exact: true }).check();
   await page.getByLabel('Consumption year', { exact: true }).selectOption('2025');
   await page.getByLabel('Consumption month', { exact: true }).selectOption('01');
   await page.getByLabel('Consumption fuel type', { exact: true }).selectOption('GAS');
@@ -123,12 +121,13 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await page.getByLabel('Consumption sort by', { exact: true }).selectOption('month');
   await page.getByRole('button', { name: 'Table view', exact: true }).click();
   const table = page.getByRole('region', { name: 'Consumption table', exact: true });
-  await expect(table.getByRole('row')).toHaveCount(2);
+  await expect(table.getByRole('row')).toHaveCount(13);
+  await expect(table.locator('tr[aria-current=true]')).toHaveCount(1);
   await expect(table.getByRole('cell', { name: '100.00', exact: true })).toBeVisible();
   const costTable = page.getByRole('region', { name: 'Cost table', exact: true });
   await expect(costTable.getByRole('cell', { name: '15.00 GBP', exact: true })).toBeVisible();
   await expect(costTable.getByRole('columnheader', { name: /target/i })).toHaveCount(0);
-  await page.getByLabel('Cost basis', { exact: true }).selectOption('gross');
+  await page.getByRole('checkbox', { name: 'Include VAT', exact: true }).check();
   await expect(costTable.getByRole('cell', { name: '18.00 GBP', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Graph view', exact: true }).click();
   await expect(page.getByLabel('Consumption year', { exact: true })).toHaveValue('2025');
@@ -144,6 +143,23 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await expect(
     page.getByRole('img', { name: 'Cost · GBP monthly bar graph', exact: true }).locator('[data-series="target"]'),
   ).toHaveCount(0);
+  await page.getByLabel('Consumption month', { exact: true }).selectOption('01');
+  await page.getByRole('button', { name: 'Gauge view', exact: true }).click();
+  await expect(
+    page.getByRole('img', { name: 'Selected month consumption gauge: 100.00 kWh', exact: true }),
+  ).toBeVisible();
+  await expect(diverging).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Cost · GBP monthly bar graph', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Graph view', exact: true }).click();
+  await expect(consumptionGraph.locator('path[stroke]').first()).toHaveAttribute('d', /C /);
+  await expect(page.getByRole('complementary', { name: 'Consumption filters' })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('consumption-desktop.png'), fullPage: true });
+  await page.getByRole('radio', { name: 'All Sites', exact: true }).check();
+  await expect(page.getByRole('radio', { name: 'All Sites', exact: true })).toBeChecked();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('consumption-mobile.png'), fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('link', { name: 'Carbon Footprint', exact: true }).click();
   await expect(page.getByRole('radio', { name: 'Leeds', exact: true })).toBeChecked();
   const filters = page.getByRole('complementary', { name: 'Carbon Footprint filters' });
@@ -239,15 +255,20 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await expect(page.getByRole('region', { name: 'Carbon gauge', exact: true })).toContainText('+25.00%');
   await expect(carbonBars.locator('[data-series="target"][data-value="25"]')).toHaveCount(1);
   await page.getByRole('link', { name: 'Consumption', exact: true }).click();
-  await page.getByLabel('Consumption site', { exact: true }).selectOption(london.id);
+  await expect(page.getByRole('heading', { name: 'Consumption', exact: true })).toBeVisible();
+  await page.getByRole('radio', { name: 'London', exact: true }).check();
   await page.getByLabel('Consumption year', { exact: true }).selectOption('2026');
   await page.getByLabel('Consumption fuel type', { exact: true }).selectOption('GAS');
   await expect(
     diverging.locator('[data-selected-month="2026-01"] [data-series="target"][data-value="80"]'),
   ).toHaveCount(1);
-  await expect(page.getByRole('region', { name: 'Actual vs target consumption graph', exact: true })).toContainText(
-    'site-wide total',
-  );
+  await page.getByRole('button', { name: 'Table view', exact: true }).click();
+  await expect(
+    page
+      .getByRole('region', { name: 'Actual vs target consumption table', exact: true })
+      .locator('tr[aria-current=true]'),
+  ).toContainText('Site-wide target');
+  await page.getByRole('button', { name: 'Graph view', exact: true }).click();
   await page.getByRole('link', { name: 'Carbon Footprint', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Carbon Footprint', exact: true })).toHaveAttribute(
     'aria-current',

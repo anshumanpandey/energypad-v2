@@ -1,4 +1,6 @@
 'use client';
+import { Eye, Archive, Plus, Upload } from 'lucide-react';
+import { utilityLabel } from '@/domain/consumption-sort';
 import { DateInput } from './ui/date-input';
 import { fuels } from '@/domain/fuels';
 import { siteTemplateFields, siteTemplateAttributeFields } from '@/domain/sites';
@@ -32,6 +34,10 @@ type Site = {
   externalLegacyId?: string | null;
   meters?: Meter[];
   attributes?: History[];
+  fuelTypes?: string[];
+  population?: string | null;
+  floorArea?: string | null;
+  weeklyHours?: string | null;
 };
 const fields = siteTemplateFields;
 const historyFields = [
@@ -60,6 +66,28 @@ export function SitesWorkspace({
   const [entry, setEntry] = useState<'meter' | 'history' | null>(null);
   const [mode, setMode] = useState<'manual' | 'upload' | null>(null);
   const [notice, setNotice] = useState('');
+  const [sortBy, setSortBy] = useState<'type' | 'town' | 'floorArea' | 'population'>('type');
+  const [fuelFilter, setFuelFilter] = useState('');
+  const listedSites = sites
+    .filter((site) => !fuelFilter || site.fuelTypes?.includes(fuelFilter))
+    .sort((a, b) => {
+      const left = a[sortBy],
+        right = b[sortBy];
+      if (left == null || left === '') return right == null || right === '' ? a.name.localeCompare(b.name) : 1;
+      if (right == null || right === '') return -1;
+      const comparison =
+        sortBy === 'floorArea' || sortBy === 'population'
+          ? Number(left) - Number(right)
+          : left.localeCompare(right, undefined, { numeric: true, sensitivity: 'base' });
+      return comparison || a.name.localeCompare(b.name);
+    });
+  function addSite() {
+    setSelected(null);
+    setEditing(true);
+    setMode('manual');
+    setEntry(null);
+  }
+
   const m = useMutation(),
     base = `organisations/${orgId}`;
   async function entrySaved(kind: string, id: string) {
@@ -77,23 +105,18 @@ export function SitesWorkspace({
     setMode(null);
   }
   return (
-    <div className="stack-form">
+    <div className="stack-form sites-workspace">
       {m.feedback}
       {manage && (
-        <div className="button-row">
+        <div className="button-row sites-page-actions">
           <Button
             variant={mode === 'manual' ? 'primary' : 'secondary'}
             aria-expanded={mode === 'manual'}
             aria-controls="manual-site-section"
             disabled={m.disabled}
-            onClick={() => {
-              setSelected(null);
-              setEditing(true);
-              setMode('manual');
-              setEntry(null);
-            }}
+            onClick={addSite}
           >
-            Add Manually
+            <Plus size={16} aria-hidden="true" /> Add Manually
           </Button>
           <Button
             variant={mode === 'upload' ? 'primary' : 'secondary'}
@@ -107,7 +130,7 @@ export function SitesWorkspace({
               setEntry(null);
             }}
           >
-            Upload Sites
+            <Upload size={16} aria-hidden="true" /> Upload Sites
           </Button>
         </div>
       )}
@@ -197,56 +220,156 @@ export function SitesWorkspace({
           </div>
         </form>
       )}
-      <section className="panel stack-form" aria-labelledby="sites-table-heading">
-        <h2 id="sites-table-heading">Site list</h2>
+      <section className="panel sites-directory" aria-labelledby="sites-table-heading">
+        <header className="sites-directory-heading">
+          <h1 id="sites-table-heading">Sites</h1>
+          <span>
+            {sites.length} {sites.length === 1 ? 'site' : 'sites'}
+          </span>
+        </header>
+        <div className="sites-directory-toolbar">
+          <fieldset className="sites-sort">
+            <legend>Sort by</legend>
+            {(
+              [
+                ['type', 'Property Type'],
+                ['town', 'Town'],
+                ['floorArea', 'Size'],
+                ['population', 'Population'],
+              ] as const
+            ).map(([value, label]) => (
+              <label key={value}>
+                <input
+                  type="radio"
+                  name="sites-sort"
+                  value={value}
+                  checked={sortBy === value}
+                  onChange={() => setSortBy(value)}
+                />
+                {label}
+              </label>
+            ))}
+          </fieldset>
+          <label className="sites-fuel-filter">
+            Fuel
+            <select aria-label="Fuel" value={fuelFilter} onChange={(event) => setFuelFilter(event.target.value)}>
+              <option value="">All fuels</option>
+              {[...new Set(sites.flatMap((site) => site.fuelTypes ?? []))].sort().map((fuel) => (
+                <option key={fuel} value={fuel}>
+                  {utilityLabel(fuel)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <div className="sites-table-scroll" role="region" aria-label="Sites table" tabIndex={0}>
-          <table className="import-preview-table">
+          <table className="import-preview-table sites-directory-table">
             <thead>
               <tr>
-                {fields.map(([key, label]) => (
-                  <th scope="col" key={key}>
+                {[
+                  'Site',
+                  'Property type',
+                  'Address',
+                  'Town',
+                  'Postcode',
+                  'Floor area (m²)',
+                  'Population',
+                  'Hours / week',
+                  'Fuel',
+                  'Actions',
+                ].map((label) => (
+                  <th scope="col" key={label}>
                     {label}
                   </th>
                 ))}
-                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {sites.map((site) => (
-                <tr key={site.id}>
-                  {fields.map(([key]) =>
-                    key === 'name' ? (
-                      <th scope="row" key={key}>
-                        {site.name}
-                      </th>
-                    ) : (
-                      <td key={key}>{site[key] || '—'}</td>
-                    ),
-                  )}
+              {listedSites.map((site) => (
+                <tr key={site.id} className={selected?.id === site.id ? 'is-selected' : undefined}>
+                  <th scope="row">
+                    <strong>{site.name}</strong>
+                    <small title={site.code}>{site.code}</small>
+                  </th>
+                  <td>{site.type || '—'}</td>
+                  <td>{[site.address, site.addressLine2].filter(Boolean).join(', ') || '—'}</td>
+                  <td>{site.town || '—'}</td>
+                  <td>{site.postCode || '—'}</td>
+                  <td className="sites-number">{site.floorArea ?? '—'}</td>
+                  <td className="sites-number">{site.population ?? '—'}</td>
+                  <td className="sites-number">{site.weeklyHours ?? '—'}</td>
                   <td>
-                    <Button
-                      variant="secondary"
-                      disabled={m.disabled}
-                      aria-label={`View site ${site.name}`}
-                      onClick={() => void m.run(() => detail(site.id), '')}
-                    >
-                      View site
-                    </Button>
+                    <div className="sites-fuel-tags">
+                      {site.fuelTypes?.length
+                        ? site.fuelTypes.map((fuel) => <span key={fuel}>{utilityLabel(fuel)}</span>)
+                        : '—'}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="sites-row-actions">
+                      <button
+                        type="button"
+                        className="icon-button"
+                        disabled={m.disabled}
+                        aria-label={`View site ${site.name}`}
+                        title="View site"
+                        onClick={() => void m.run(() => detail(site.id), '')}
+                      >
+                        <Eye size={18} />
+                      </button>
+                      {manage && (
+                        <button
+                          type="button"
+                          className="icon-button sites-archive"
+                          disabled={m.disabled}
+                          aria-label={`Archive site ${site.name}`}
+                          title="Archive site"
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                'Archive this site? It will disappear from active sites; its history remains.',
+                              )
+                            )
+                              void m.run(async () => {
+                                await request(`${base}/sites/${site.id}`, 'DELETE');
+                                if (selected?.id === site.id) setSelected(null);
+                              });
+                          }}
+                        >
+                          <Archive size={17} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
-              {!sites.length && (
+              {!listedSites.length && (
                 <tr>
-                  <td colSpan={fields.length + 1}>
-                    {manage
-                      ? 'No sites yet. Choose Add Manually or Upload Sites to create your sites.'
-                      : 'No sites assigned yet. Ask your owner or admin for access.'}
+                  <td colSpan={10} className="sites-empty">
+                    {sites.length
+                      ? 'No sites match this fuel. Choose All fuels to see every site.'
+                      : manage
+                        ? 'No sites yet. Choose Add Manually or Upload Sites to create your sites.'
+                        : 'No sites assigned yet. Ask your owner or admin for access.'}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        <footer className="sites-directory-footer">
+          <span>
+            {listedSites.length} of {sites.length} sites
+          </span>
+          {manage && (
+            <button type="button" className="sites-add-link" onClick={addSite} disabled={m.disabled}>
+              Add new{' '}
+              <span>
+                <Plus size={17} aria-hidden="true" />
+              </span>
+            </button>
+          )}
+        </footer>
       </section>
       {selected && !editing && (
         <section className="panel stack-form site-details">

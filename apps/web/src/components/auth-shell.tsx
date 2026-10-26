@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { Brand } from './brand';
 
-export function AuthShell({ children }: { children: ReactNode }) {
+export function AuthShell({ children, variant }: { children: ReactNode; variant?: 'login' }) {
   return (
-    <main className="auth-page">
+    <main className={variant === 'login' ? 'auth-page auth-page-login' : 'auth-page'}>
       <section className="auth-story">
         <Brand />
         <div>

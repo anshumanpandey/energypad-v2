@@ -66,7 +66,7 @@ export class SiteService extends FoundationService {
   }
   async siteTable(actor: Actor, org: string) {
     const accessibleSites = await this.listSites(actor, org);
-    return this.db.site.findMany({
+    const sites = await this.db.site.findMany({
       where: { organisationId: org, archivedAt: null, id: { in: accessibleSites.map((site) => site.id) } },
       select: {
         id: true,
@@ -77,9 +77,23 @@ export class SiteService extends FoundationService {
         town: true,
         region: true,
         postCode: true,
+        type: true,
+        meters: { where: { archivedAt: null }, select: { fuel: true } },
+        attributes: {
+          orderBy: { effectiveFrom: 'desc' },
+          take: 1,
+          select: { population: true, floorArea: true, weeklyHours: true },
+        },
       },
       orderBy: { name: 'asc' },
     });
+    return sites.map(({ meters, attributes, ...site }) => ({
+      ...site,
+      fuelTypes: [...new Set(meters.map((meter) => meter.fuel))],
+      population: attributes[0]?.population?.toString() ?? null,
+      floorArea: attributes[0]?.floorArea?.toString() ?? null,
+      weeklyHours: attributes[0]?.weeklyHours?.toString() ?? null,
+    }));
   }
   async createSite(actor: Actor, org: string, input: unknown) {
     const supplied = manualSiteInput.extend({ code: siteInput.shape.code.optional() }).parse(input);

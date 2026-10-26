@@ -25,3 +25,13 @@ it.each(['04', '12', ''])('keeps absent or unavailable month %s unavailable', (m
   expect(html).toContain('Selected month carbon gauge: N/A');
   expect(html).not.toContain('data-testid="monthly-carbon-needle"');
 });
+
+it('renders consumption with energy units and consumption labels', () => {
+  const html = renderToStaticMarkup(
+    createElement(MonthlyCarbonGauge, { kind: 'consumption', points, history: points, period: '2024-02' }),
+  );
+  expect(html).toContain('Selected month consumption gauge: 50.00 kWh');
+  expect(html).toContain('Consumption this month');
+  expect(html).toContain('1.72 kWh/day');
+  expect(html).not.toContain('Emissions this month');
+});

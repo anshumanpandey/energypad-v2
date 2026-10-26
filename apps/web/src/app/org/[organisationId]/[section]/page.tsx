@@ -603,11 +603,6 @@ export default async function WorkspacePage({
     const batches = manage ? await siteService.imports(actor, org.id) : [];
     return (
       <>
-        <Heading
-          eyebrow="YOUR SITES"
-          title="Sites"
-          text="Manage locations, meters and effective-dated site attributes."
-        />
         <SitesWorkspace orgId={org.id} sites={tableSites} batches={batches} manage={manage} />
       </>
     );

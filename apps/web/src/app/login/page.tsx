@@ -11,13 +11,14 @@ export default async function Login({
   const params = await searchParams;
   const query = new URLSearchParams({ callbackUrl: params.callbackUrl ?? '/' }).toString();
   return (
-    <AuthShell>
-      <span className="tag">Welcome to EnergiePad</span>
+    <AuthShell variant="login">
       <h2>Your workspace awaits.</h2>
-      <p>Sign in with your email address and password.</p>
       <LoginError error={params.error} />
       <PasswordForm action={login} mode="login" callbackUrl={params.callbackUrl ?? '/'} />
-      <p>
+      <Link href="/" className="login-home-link">
+        Back to home
+      </Link>
+      <p className="login-account-link">
         New to EnergiePad?{' '}
         <Link href={`/signup?${query}`} className="text-link">
           Create an account →

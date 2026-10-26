@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { ChartExpansionGroup, GroupedExpandableChart } from './expandable-chart';
 import { useRouter } from 'next/navigation';
 import { filterUtilityRows, type UtilityGraphRow, type UtilityCostTarget } from '@/domain/utility-graphs';
-import { utilityComparison } from '@/domain/utility-comparison';
+import { utilityComparison, sumUtilityAmounts } from '@/domain/utility-comparison';
 import { utilityLabel } from '@/domain/consumption-sort';
 import { formatEnergyValue } from './format-energy-value';
 import { Button } from './ui/button';
@@ -44,8 +44,6 @@ export function UtilityGraphs({
   targets: UtilityCostTarget[];
 }) {
   const router = useRouter();
-  const sidebar = kind === 'emissions';
-  const FilterContainer = sidebar ? 'aside' : 'section';
   const firstSite = sites[0]?.id ?? '';
   const [filters, setFilters] = useState({ site: firstSite, year: '', month: '01', fuel: '' });
   const [costBasis, setCostBasis] = useState<'net' | 'gross'>('net');
@@ -56,7 +54,7 @@ export function UtilityGraphs({
   const years = [...new Set(rows.map((r) => r.month.slice(0, 4)))].sort().reverse();
   const fuels = [...new Set(rows.map((r) => r.fuel))].sort();
   const selectedSite =
-    sidebar && filters.site === '' ? '' : sites.some((site) => site.id === filters.site) ? filters.site : firstSite;
+    filters.site === '' ? '' : sites.some((site) => site.id === filters.site) ? filters.site : firstSite;
   const visible = sortChartValues(filterUtilityRows(rows, { ...filters, site: selectedSite }), sortBy, (r) => r[kind]);
   const chartRows = filterUtilityRows(rows, { ...filters, site: selectedSite, month: '' });
   const history = filterUtilityRows(rows, { site: selectedSite, fuel: filters.fuel, year: '', month: '' });
@@ -90,11 +88,11 @@ export function UtilityGraphs({
   ];
   const filterActions = (
     <div className="utility-graph-actions">
-      <div className={sidebar ? 'waste-view-toggle' : undefined} role="group" aria-label={`${title} view`}>
+      <div className="waste-view-toggle" role="group" aria-label={`${title} view`}>
         <Button aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
           Graph view
         </Button>
-        {sidebar && (
+        {
           <Button
             aria-pressed={view === 'gauge'}
             onClick={() => {
@@ -104,7 +102,7 @@ export function UtilityGraphs({
           >
             Gauge view
           </Button>
-        )}
+        }
         <Button aria-pressed={view === 'table'} onClick={() => setView('table')}>
           Table view
         </Button>
@@ -133,7 +131,7 @@ export function UtilityGraphs({
     </section>
   );
   return (
-    <div className={`utility-graphs-page${sidebar ? ' carbon-footprint-page' : ''}`}>
+    <div className={`utility-graphs-page${kind === 'emissions' ? ' carbon-footprint-page' : ' consumption-page'}`}>
       <div className="page-heading">
         <div>
           <span className="eyebrow">MONTHLY UTILITY PERFORMANCE</span>
@@ -145,20 +143,17 @@ export function UtilityGraphs({
           </p>
         </div>
       </div>
-      <div className={sidebar ? 'waste-dashboard-layout' : 'utility-graphs-page'}>
-        <FilterContainer
-          className={`panel stack-form${sidebar ? ' waste-dashboard-filters' : ''}`}
-          aria-label={`${title} filters`}
-        >
-          {sidebar && <h2>Filters</h2>}
-          {sidebar && (
+      <div className="waste-dashboard-layout">
+        <aside className="panel stack-form waste-dashboard-filters" aria-label={`${title} filters`}>
+          <h2>Filters</h2>
+          {
             <fieldset className="waste-site-options">
               <legend>Sites</legend>
               {[{ id: '', name: 'All Sites' }, ...sites].map((site) => (
                 <label className="waste-site-option" key={site.id}>
                   <input
                     type="radio"
-                    name="carbon-site"
+                    name={`${kind}-site`}
                     checked={selectedSite === site.id}
                     onChange={() => setFilters((previous) => ({ ...previous, site: site.id }))}
                   />
@@ -166,23 +161,23 @@ export function UtilityGraphs({
                 </label>
               ))}
             </fieldset>
-          )}
-          {sidebar && filterActions}
+          }
+          {filterActions}
           <div className="form-grid">
             {options
-              .filter((option) => !sidebar || option.key !== 'site')
+              .filter((option) => option.key !== 'site')
               .map(({ key, label, all, items }) => (
                 <label key={key}>
                   {label}
                   <select
                     aria-label={`${title} ${label.toLowerCase()}`}
-                    value={key === 'site' ? selectedSite : filters[key]}
+                    value={filters[key]}
                     onChange={(event) => {
                       const value = event.target.value;
                       setFilters((previous) => ({ ...previous, [key]: value }));
                     }}
                   >
-                    {key !== 'site' && <option value="">{all}</option>}
+                    <option value="">{all}</option>
                     {items.map((item) => (
                       <option key={item.value} value={item.value}>
                         {item.label}
@@ -191,19 +186,6 @@ export function UtilityGraphs({
                   </select>
                 </label>
               ))}
-            {kind === 'consumption' && (
-              <label>
-                Cost basis
-                <select
-                  aria-label="Cost basis"
-                  value={costBasis}
-                  onChange={(event) => setCostBasis(event.target.value as 'net' | 'gross')}
-                >
-                  <option value="net">Net (excluding VAT)</option>
-                  <option value="gross">Gross (including VAT)</option>
-                </select>
-              </label>
-            )}
             <label>
               Sort by
               <select
@@ -217,23 +199,20 @@ export function UtilityGraphs({
               </select>
             </label>
           </div>
-          {!sidebar && filterActions}
-        </FilterContainer>
-        <ChartExpansionGroup enabled={sidebar && view !== 'table'} key={`${kind}-${view}`}>
-          <div
-            className={
-              sidebar ? `waste-dashboard-results${view !== 'table' ? ' carbon-chart-grid' : ''}` : 'utility-graphs-page'
-            }
-          >
-            {!sidebar && summary}
-            {!(sidebar ? chartRows : visible).length ? (
+        </aside>
+        <ChartExpansionGroup enabled={view !== 'table'} key={`${kind}-${view}`}>
+          <div className={`waste-dashboard-results${view !== 'table' ? ' carbon-chart-grid' : ''}`}>
+            {!chartRows.length ? (
               <section className="panel">
                 <p>No data for this selection. Upload consumption data or choose different filters.</p>
               </section>
             ) : view !== 'table' ? (
-              <GroupedExpandableChart title="Monthly carbon footprint">
+              <GroupedExpandableChart
+                title={kind === 'consumption' ? 'Monthly consumption' : 'Monthly carbon footprint'}
+              >
                 {view === 'gauge' ? (
                   <MonthlyCarbonGauge
+                    kind={kind}
                     points={monthlyActuals(chartRows, kind)}
                     history={monthlyActuals(history, kind)}
                     period={period}
@@ -253,12 +232,7 @@ export function UtilityGraphs({
               </GroupedExpandableChart>
             ) : (
               <section className="panel">
-                <MonthlyChartSummary
-                  compact={kind === 'emissions'}
-                  points={monthlyActuals(history, kind)}
-                  period={period}
-                  unit={unit}
-                />
+                <MonthlyChartSummary compact points={monthlyActuals(history, kind)} period={period} unit={unit} />
                 <div className="analysis-table" role="region" aria-label={`${title} table`} tabIndex={0}>
                   <table>
                     <thead>
@@ -275,7 +249,7 @@ export function UtilityGraphs({
                       </tr>
                     </thead>
                     <tbody>
-                      {(sidebar ? sortChartValues(chartRows, sortBy, (r) => r[kind]) : visible).map((row) => (
+                      {sortChartValues(chartRows, sortBy, (r) => r[kind]).map((row) => (
                         <tr
                           key={`${row.siteId}-${row.fuel}-${row.month}`}
                           className={row.month.slice(5, 7) === filters.month ? 'utility-selected-month' : undefined}
@@ -306,9 +280,9 @@ export function UtilityGraphs({
                 </div>
               </section>
             )}
-            {kind === 'consumption' && visible.length > 0 && (
+            {kind === 'consumption' && chartRows.length > 0 && (
               <CostComparison
-                rows={view === 'graph' ? chartRows : visible}
+                rows={chartRows}
                 history={history}
                 period={period}
                 targets={targets}
@@ -316,6 +290,7 @@ export function UtilityGraphs({
                 view={view === 'gauge' ? 'graph' : view}
                 selectedMonth={filters.month}
                 costBasis={costBasis}
+                onCostBasisChange={setCostBasis}
                 sortBy={sortBy}
               />
             )}
@@ -331,7 +306,7 @@ export function UtilityGraphs({
                 sortBy={sortBy}
               />
             )}
-            {sidebar && summary}
+            {summary}
           </div>
         </ChartExpansionGroup>
       </div>
@@ -348,6 +323,7 @@ function CostComparison({
   selectedMonth,
   period,
   costBasis,
+  onCostBasisChange,
   sortBy,
 }: {
   rows: UtilityGraphRow[];
@@ -358,38 +334,63 @@ function CostComparison({
   selectedMonth: string;
   period: string;
   costBasis: 'net' | 'gross';
+  onCostBasisChange: (basis: 'net' | 'gross') => void;
   sortBy: UtilityChartSort;
 }) {
-  const comparison = sortChartValues(utilityComparison(rows, targets, fuel), sortBy, (r) => r.consumption);
+  const siteComparisons = utilityComparison(rows, targets, fuel);
+  const comparison = sortChartValues(
+    [...new Set(siteComparisons.map((row) => row.month))].map((month) => {
+      const matching = siteComparisons.filter((row) => row.month === month);
+      return {
+        month,
+        consumption: sumUtilityAmounts(matching.map((row) => row.consumption)),
+        targetEnergy: sumUtilityAmounts(matching.map((row) => row.targetEnergy)),
+        targetScope: [...new Set(matching.map((row) => row.targetScope))].join(' / '),
+      };
+    }),
+    sortBy,
+    (row) => row.consumption,
+  );
+  const vatControl = (
+    <div className="waste-cost-basis">
+      <label>
+        <input
+          type="checkbox"
+          checked={costBasis === 'gross'}
+          onChange={(event) => onCostBasisChange(event.target.checked ? 'gross' : 'net')}
+        />
+        Include VAT
+      </label>
+    </div>
+  );
   const currencies = [...new Set(history.map((r) => r.currency).filter((c): c is string => !!c))];
   const costField = costBasis === 'gross' ? 'grossCost' : 'cost';
   return (
     <>
-      <section className="panel">
-        <h2>Actual vs target consumption</h2>
-        <p>
-          Fuel-specific targets take priority. When unavailable, the uploaded site-wide target is shown and labelled.
-        </p>
-      </section>
       {view === 'graph' ? (
-        <UtilityBars
-          points={comparison.map((row) => ({ month: row.month, actual: row.consumption, target: row.targetEnergy }))}
-          title="Actual vs target consumption"
-          unit="kWh"
-          diverging
-          sortBy={sortBy}
-          selectedMonth={selectedMonth}
-          period={period}
-          summaryPoints={monthlyActuals(history, 'consumption')}
-          targetNote={
-            comparison.some((r) => r.targetScope === 'Site-wide target')
-              ? 'Target: site-wide total from the uploaded workbook.'
-              : 'Target: selected fuel.'
-          }
-        />
+        <GroupedExpandableChart title="Actual vs target consumption">
+          <UtilityBars
+            points={comparison.map((row) => ({ month: row.month, actual: row.consumption, target: row.targetEnergy }))}
+            showHelp={false}
+            compactSummary
+            actualColor="#94c11f"
+            title="Actual vs target consumption"
+            unit="kWh"
+            diverging
+            sortBy={sortBy}
+            selectedMonth={selectedMonth}
+            period={period}
+            summaryPoints={monthlyActuals(history, 'consumption')}
+            targetNote={
+              comparison.some((r) => r.targetScope === 'Site-wide target')
+                ? 'Target: site-wide total from the uploaded workbook.'
+                : 'Target: selected fuel.'
+            }
+          />
+        </GroupedExpandableChart>
       ) : (
         <section className="panel">
-          <MonthlyChartSummary points={monthlyActuals(history, 'consumption')} period={period} unit="kWh" />
+          <MonthlyChartSummary compact points={monthlyActuals(history, 'consumption')} period={period} unit="kWh" />
           <div className="analysis-table" role="region" aria-label="Actual vs target consumption table" tabIndex={0}>
             <table>
               <thead>
@@ -402,7 +403,11 @@ function CostComparison({
               </thead>
               <tbody>
                 {comparison.map((r) => (
-                  <tr key={r.month}>
+                  <tr
+                    key={r.month}
+                    className={r.month.slice(5, 7) === selectedMonth ? 'utility-selected-month' : undefined}
+                    aria-current={r.month.slice(5, 7) === selectedMonth ? 'true' : undefined}
+                  >
                     <th>{formatMonth(r.month)}</th>
                     <td>{formatEnergyValue(r.consumption, 'Unavailable')}</td>
                     <td>{formatEnergyValue(r.targetEnergy, 'Unavailable')}</td>
@@ -428,24 +433,30 @@ function CostComparison({
           (r) => r.actual,
         );
         return view === 'graph' ? (
-          <UtilityBars
-            key={currency}
-            points={costPoints.map((r) => ({ ...r, target: null }))}
-            title={`Cost · ${currency}`}
-            unit={currency}
-            selectedMonth={selectedMonth}
-            actualOnly
-            sortBy={sortBy}
-            period={period}
-            summaryPoints={costHistory}
-            targetNote={costBasis === 'gross' ? 'Gross cost includes VAT.' : 'Net cost excludes VAT.'}
-          />
+          <GroupedExpandableChart key={currency} title={`Cost · ${currency}`}>
+            <UtilityBars
+              controls={vatControl}
+              showHelp={false}
+              compactSummary
+              actualColor="#4989c6"
+              points={costPoints.map((r) => ({ ...r, target: null }))}
+              title={`Cost · ${currency}`}
+              unit={currency}
+              selectedMonth={selectedMonth}
+              actualOnly
+              sortBy={sortBy}
+              period={period}
+              summaryPoints={costHistory}
+              targetNote={costBasis === 'gross' ? 'Gross cost includes VAT.' : 'Net cost excludes VAT.'}
+            />
+          </GroupedExpandableChart>
         ) : (
           <section key={currency} className="panel">
             <h2>
               {costBasis === 'gross' ? 'Gross' : 'Net'} cost ({currency})
             </h2>
-            <MonthlyChartSummary points={costHistory} period={period} unit={currency} />
+            {vatControl}
+            <MonthlyChartSummary compact points={costHistory} period={period} unit={currency} />
             <div className="analysis-table" role="region" aria-label="Cost table" tabIndex={0}>
               <table>
                 <thead>
@@ -456,7 +467,11 @@ function CostComparison({
                 </thead>
                 <tbody>
                   {costPoints.map((r) => (
-                    <tr key={r.month}>
+                    <tr
+                      key={r.month}
+                      className={r.month.slice(5, 7) === selectedMonth ? 'utility-selected-month' : undefined}
+                      aria-current={r.month.slice(5, 7) === selectedMonth ? 'true' : undefined}
+                    >
                       <th>{formatMonth(r.month)}</th>
                       <td>
                         {formatEnergyValue(r.actual, 'Unavailable')} {currency}
@@ -510,23 +525,10 @@ function UtilityLines({
       <h2>
         Monthly {title.toLowerCase()} ({unit})
       </h2>
-      <MonthlyChartSummary
-        compact={kind === 'emissions'}
-        points={monthlyActuals(history, kind)}
-        period={period}
-        unit={unit}
-      />
-      {kind === 'consumption' && (
-        <p>
-          Each line represents one site and fuel. Hover or focus a point for its exact value. Lines break where data is
-          unavailable.
-        </p>
-      )}
+      <MonthlyChartSummary compact points={monthlyActuals(history, kind)} period={period} unit={unit} />
       <div className="utility-chart-scroll">
         <svg viewBox="0 0 800 305" role="img" aria-label={`${title} monthly line graph`}>
-          <title>
-            {title} by site, month and fuel in {unit}
-          </title>
+          <title>{`${title} by site, month and fuel in ${unit}`}</title>
           {dates.map((date, index) =>
             date.slice(5, 7) === selectedMonth ? (
               <rect
@@ -570,7 +572,6 @@ function UtilityLines({
                 if (!row || row[kind] === null) return '';
                 const previous = points[index - 1];
                 if (!previous || previous[kind] === null) return `M ${x(index)} ${y(Number(row[kind]))}`;
-                if (kind !== 'emissions') return `L ${x(index)} ${y(Number(row[kind]))}`;
                 const midpoint = (x(index - 1) + x(index)) / 2;
                 return `C ${midpoint} ${y(Number(previous[kind]))} ${midpoint} ${y(Number(row[kind]))} ${x(index)} ${y(Number(row[kind]))}`;
               })
@@ -592,10 +593,7 @@ function UtilityLines({
                       role="img"
                       aria-label={`${row.siteName}, ${utilityLabel(row.fuel)}, ${formatMonth(row.month)}: ${row[kind]} ${unit}${row.zeroFilled ? ', confirmed zero fill' : ''}`}
                     >
-                      <title>
-                        {row.siteName} · {utilityLabel(row.fuel)} · {formatMonth(row.month)}: {row[kind]} {unit}
-                        {row.zeroFilled ? ' · confirmed zero fill' : ''}
-                      </title>
+                      <title>{`${row.siteName} · ${utilityLabel(row.fuel)} · ${formatMonth(row.month)}: ${row[kind]} ${unit}${row.zeroFilled ? ' · confirmed zero fill' : ''}`}</title>
                     </circle>
                   ) : null,
                 )}

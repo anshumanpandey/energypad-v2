@@ -20,7 +20,15 @@ export function MonthlyChartSummary({
         <ChartMonthDays
           month={period}
           hideMonth
-          averages={[{ label: 'Daily average', totalLabel: 'Emissions this month', value: summary.current, unit }]}
+          averages={[
+            {
+              label: 'Daily average',
+              totalLabel:
+                unit === 'kg' ? 'Emissions this month' : unit === 'kWh' ? 'Consumption this month' : 'Cost this month',
+              value: summary.current,
+              unit,
+            },
+          ]}
         />
         <p className="metric-chart-detail" aria-live="polite">
           <span

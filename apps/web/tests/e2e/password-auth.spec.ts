@@ -5,6 +5,13 @@ test('password signup and login work without email confirmation', async ({ page 
   const email = `password-${randomUUID()}@example.test`;
   const password = 'Browser password 123!';
   await page.goto('/login');
+  await expect(page.getByRole('link', { name: 'Back to home', exact: true })).toHaveAttribute('href', '/');
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: testInfo.outputPath('login-desktop.png'), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('login-mobile.png'), fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('link', { name: 'Create an account' }).click();
   await expect(page.getByRole('heading', { name: 'Create your account.' })).toBeVisible();
   await page.getByLabel('Email address').fill(email);
