@@ -167,7 +167,7 @@ test('consumption and emissions menus filter the same data in graph and table vi
   const headerBox = await page.locator('.topbar').boundingBox();
   expect(filterBox!.x + filterBox!.width).toBe(page.viewportSize()!.width);
   expect(filterBox!.y).toBe(headerBox!.y + headerBox!.height);
-  await expect(filters.getByRole('heading', { name: 'Filters', exact: true })).toBeVisible();
+  await expect(filters.getByRole('group', { name: 'Sites', exact: true })).toBeVisible();
 
   await page.getByRole('radio', { name: 'London', exact: true }).check();
   await page.getByLabel('Carbon Footprint year', { exact: true }).selectOption('2025');

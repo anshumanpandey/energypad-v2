@@ -72,13 +72,13 @@ export function UtilityGraphs({
       all: 'All sites',
       items: sites.map((s) => ({ value: s.id, label: s.name })),
     },
-    { key: 'year' as const, label: 'Year', all: 'All years', items: years.map((y) => ({ value: y, label: y })) },
     {
       key: 'month' as const,
       label: 'Month',
       all: 'All months',
       items: months.map((m, i) => ({ value: String(i + 1).padStart(2, '0'), label: m })),
     },
+    { key: 'year' as const, label: 'Year', all: 'All years', items: years.map((y) => ({ value: y, label: y })) },
     {
       key: 'fuel' as const,
       label: 'Fuel type',
@@ -92,6 +92,9 @@ export function UtilityGraphs({
         <Button aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
           Graph view
         </Button>
+        <Button aria-pressed={view === 'table'} onClick={() => setView('table')}>
+          Table view
+        </Button>
         {
           <Button
             aria-pressed={view === 'gauge'}
@@ -103,9 +106,6 @@ export function UtilityGraphs({
             Gauge view
           </Button>
         }
-        <Button aria-pressed={view === 'table'} onClick={() => setView('table')}>
-          Table view
-        </Button>
       </div>
       <Button
         onClick={() => {
@@ -132,20 +132,11 @@ export function UtilityGraphs({
   );
   return (
     <div className={`utility-graphs-page${kind === 'emissions' ? ' carbon-footprint-page' : ' consumption-page'}`}>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">MONTHLY UTILITY PERFORMANCE</span>
-          <h1>{title}</h1>
-          <p>
-            {kind === 'consumption'
-              ? 'Compare monthly energy consumption across sites and fuels.'
-              : 'Compare monthly emissions calculated from consumption and emission factors.'}
-          </p>
-        </div>
+      <div className="page-heading waste-page-heading">
+        <h1>{title}</h1>
       </div>
       <div className="waste-dashboard-layout">
         <aside className="panel stack-form waste-dashboard-filters" aria-label={`${title} filters`}>
-          <h2>Filters</h2>
           {
             <fieldset className="waste-site-options">
               <legend>Sites</legend>
@@ -162,7 +153,6 @@ export function UtilityGraphs({
               ))}
             </fieldset>
           }
-          {filterActions}
           <div className="form-grid">
             {options
               .filter((option) => option.key !== 'site')
@@ -199,6 +189,7 @@ export function UtilityGraphs({
               </select>
             </label>
           </div>
+          {filterActions}
         </aside>
         <ChartExpansionGroup enabled={view !== 'table'} key={`${kind}-${view}`}>
           <div className={`waste-dashboard-results${view !== 'table' ? ' carbon-chart-grid' : ''}`}>

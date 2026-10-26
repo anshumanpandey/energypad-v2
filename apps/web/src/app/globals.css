@@ -4919,11 +4919,11 @@ select[aria-invalid='true'] {
   }
 }
 
-/* Waste dashboard: reference layout, with the existing chart renderers retained. */
-.waste-savings {
+/* Shared analytics layout; each page retains its existing chart renderers. */
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) {
   background: #f3f3f3;
 }
-.waste-savings > .waste-page-heading {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) > .waste-page-heading {
   justify-content: center;
   text-align: center;
   padding: 24px 24px 22px;
@@ -4934,11 +4934,11 @@ select[aria-invalid='true'] {
   font-weight: 700;
   color: var(--charcoal);
 }
-.waste-savings .waste-charts {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-charts {
   gap: 28px;
   align-items: stretch;
 }
-.waste-savings .waste-expandable-chart > .panel {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-expandable-chart > .panel {
   padding: 0 20px 20px;
   border: 0;
   border-radius: 20px;
@@ -4946,26 +4946,26 @@ select[aria-invalid='true'] {
   box-shadow: 0 12px 36px rgb(77 80 92 / 7%);
   overflow: hidden;
 }
-.waste-savings .waste-expandable-chart .metric-chart-heading,
-.waste-savings .waste-expandable-chart > .panel > h2 {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-expandable-chart .metric-chart-heading,
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-expandable-chart > .panel > h2 {
   margin: 0 -20px 16px;
   padding: 18px 56px 18px 24px;
   min-height: 64px;
   border-bottom: 1px solid var(--line);
 }
-.waste-savings .waste-expandable-chart h2 {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-expandable-chart h2 {
   font-size: 17px;
   font-weight: 600;
   line-height: 1.4;
   color: var(--charcoal);
 }
-.waste-savings .metric-chart-heading h2 {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .metric-chart-heading h2 {
   margin: 0;
 }
-.waste-savings .metric-chart-heading .eyebrow {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .metric-chart-heading .eyebrow {
   display: none;
 }
-.waste-savings .waste-chart-expand {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-chart-expand {
   top: 16px;
   right: 16px;
   border: 0;
@@ -4973,43 +4973,43 @@ select[aria-invalid='true'] {
   background: transparent;
   color: var(--charcoal);
 }
-.waste-savings .waste-chart-expand:hover {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-chart-expand:hover {
   background: var(--surface-muted);
 }
-.waste-savings .waste-cost-basis {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-cost-basis {
   justify-content: flex-end;
   margin: 0 0 12px;
 }
-.waste-savings .waste-dashboard-filters {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-dashboard-filters {
   background: #fff;
   gap: 24px;
 }
-.waste-savings .waste-site-options {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-site-options {
   border: 0;
   border-bottom: 1px solid var(--line);
   border-radius: 0;
   padding: 0 0 24px;
   margin: 0;
 }
-.waste-savings .waste-site-options legend {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-site-options legend {
   margin-bottom: 10px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
 }
-.waste-savings .waste-site-option {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-site-option {
   padding: 5px 0;
   font-size: 13px;
 }
-.waste-savings .waste-dashboard-filters .form-grid {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-dashboard-filters .form-grid {
   gap: 16px;
 }
-.waste-savings .waste-dashboard-filters .form-grid label {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-dashboard-filters .form-grid label {
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
 }
-.waste-savings .waste-dashboard-filters select {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-dashboard-filters select {
   min-height: 46px;
   border-radius: 0;
   border-color: var(--line);
@@ -5018,32 +5018,41 @@ select[aria-invalid='true'] {
   font-size: 14px;
   font-weight: 400;
 }
-.waste-savings .waste-dashboard-filters .button {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-dashboard-filters .button {
   border-radius: 5px;
   font-size: 12px;
 }
-.waste-savings .waste-dashboard-filters > p,
-.waste-savings .waste-dashboard-filters > .utility-graph-actions > a {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-dashboard-filters > p,
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-dashboard-filters > .utility-graph-actions > a {
   font-size: 12px;
   line-height: 1.6;
 }
-.waste-savings .waste-sidebar-downloads {
+:is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-sidebar-downloads {
   border-top: 1px solid var(--line);
   padding-top: 20px;
 }
 @media (min-width: 1250px) {
-  .waste-savings .waste-dashboard-results .waste-charts {
+  :is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-dashboard-results .waste-charts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (max-width: 700px) {
-  .waste-savings .waste-expandable-chart > .panel {
+  :is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-expandable-chart > .panel {
     border-radius: 14px;
   }
   .waste-page-heading h1 {
     font-size: 20px;
   }
-  .waste-savings .waste-charts {
+  :is(.waste-savings, .consumption-page, .carbon-footprint-page) .waste-charts {
+    gap: 20px;
+  }
+}
+
+:is(.consumption-page, .carbon-footprint-page) .carbon-chart-grid {
+  gap: 28px;
+}
+@media (max-width: 700px) {
+  :is(.consumption-page, .carbon-footprint-page) .carbon-chart-grid {
     gap: 20px;
   }
 }
