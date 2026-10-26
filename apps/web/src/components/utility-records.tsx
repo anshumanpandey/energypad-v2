@@ -170,252 +170,250 @@ export function UtilityRecords({
     }, 'Record saved successfully. Previous values remain in revision history.');
   }
   return (
-    <div className="stack-form utility-records-page">
-      <header className="page-heading">
-        <div>
-          <span className="eyebrow">MANUAL RECORDS</span>
-          <h1>Utility &amp; Emissions</h1>
-          <p>View and edit consumption, emission factors, and monthly targets or monitoring records.</p>
-        </div>
+    <div className="utility-records-page">
+      <header className="utility-records-heading">
+        <h1>Utility &amp; Emissions</h1>
       </header>
-      <section className="panel">
-        <div className="utility-record-filters">
-          <label>
-            Site
-            <select
-              aria-label="Records site"
-              value={site}
-              disabled={mutation.disabled}
-              onChange={(e) => changeSelection(() => setSite(e.target.value))}
-            >
-              {sites.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Month
-            <select
-              aria-label="Records month"
-              value={month}
-              disabled={mutation.disabled}
-              onChange={(e) => changeSelection(() => setMonth(e.target.value))}
-            >
-              {months.map((m, i) => (
-                <option key={m} value={String(i + 1).padStart(2, '0')}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Year
-            <select
-              aria-label="Records year"
-              value={year}
-              disabled={mutation.disabled}
-              onChange={(e) => changeSelection(() => setYear(e.target.value))}
-            >
-              {Array.from({ length: currentYear - 1999 }, (_, i) => String(currentYear - i)).map((y) => (
-                <option key={y}>{y}</option>
-              ))}
-            </select>
-          </label>
-          <Button
-            disabled={mutation.disabled || loading || !site}
-            onClick={() => changeSelection(() => setGeneration((n) => n + 1))}
-          >
-            Refresh records
-          </Button>
-        </div>
-      </section>
-      {mutation.feedback}
-      {!site && <p className="notice">Add a site in Sites to view its records.</p>}
-      {loading && (
-        <p role="status" className="notice">
-          Loading utility records…
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="notice error">
-          {error}
-        </p>
-      )}
-      {editing && (
-        <form
-          key={editing.row.id}
-          className="panel stack-form utility-record-editor"
-          aria-label="Edit utility record"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save(event.currentTarget);
-          }}
-        >
-          <h2>
-            Edit{' '}
-            {editing.kind === 'reading'
-              ? 'consumption'
-              : editing.kind === 'factor'
-                ? 'emission factor'
-                : 'monthly plan'}
-          </h2>
-          <p>
-            {utilityLabel(editing.row.fuel)} · Revision {editing.row.revision}. Saving creates a correction and retains
-            the original record.
-          </p>
-          {editing.kind === 'factor' && (
-            <p className="notice">
-              {editing.row.siteId
-                ? 'Site-specific factor'
-                : 'Shared workspace factor: changes affect every site using it.'}{' '}
-              · {date(editing.row.validFrom)}–
-              {date(new Date(+new Date(editing.row.validUntil) - 86400000).toISOString())}
-            </p>
-          )}
-          <fieldset disabled={mutation.disabled} className="utility-record-fields form-grid">
-            {editing.kind === 'reading' ? (
-              <>
-                <Field
-                  name="quantity"
-                  label={`Consumption (${editing.row.sourceUnit})`}
-                  value={editing.row.sourceQuantity}
-                  required
-                  step="0.001"
-                />
-                <Field name="netCost" label="Net cost (excluding VAT)" value={editing.row.netCost} step="0.001" />
-                <Field name="vatPercent" label="VAT (%)" value={editing.row.vatPercent} step="0.001" max="100" />
-                <Field name="currency" label="Currency" value={editing.row.currency} text />
-              </>
-            ) : editing.kind === 'factor' ? (
-              <>
-                <Field name="factor" label="Emission factor (kgCO₂e/kWh)" value={editing.row.factor} required />
-                <Field name="source" label="Source" value={editing.row.source} text required />
-              </>
-            ) : (
-              <>
-                <Field
-                  name="energy"
-                  label={`Energy (${editing.row.unit})`}
-                  value={editing.row.payload.energy}
-                  required
-                />
-                <Field
-                  name="carbon"
-                  label="Carbon (kgCO₂e)"
-                  value={editing.row.payload.carbon}
-                  required={editing.row.kind === 'MONITORING'}
-                />
-                <Field
-                  name="conversionFactor"
-                  label="Conversion factor (to kWh)"
-                  value={editing.row.payload.conversionFactor}
-                  required
-                />
-                <Field name="cost" label="Net target cost" value={editing.row.payload.cost} />
-                <Field
-                  name="grossCost"
-                  label="Total target cost (including VAT)"
-                  value={editing.row.payload.grossCost}
-                />
-                <Field name="currency" label="Currency" value={editing.row.payload.currency} text />
-                <Field name="source" label="Source" value={editing.row.payload.source} text required />
-              </>
-            )}
+      <div className="utility-records-body stack-form">
+        <section aria-label="Record selection">
+          <div className="utility-record-filters">
             <label>
-              Reason for change
-              <input name="reason" required minLength={3} maxLength={1000} />
+              Site
+              <select
+                aria-label="Records site"
+                value={site}
+                disabled={mutation.disabled}
+                onChange={(e) => changeSelection(() => setSite(e.target.value))}
+              >
+                {sites.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
             </label>
-          </fieldset>
-          <div className="button-row">
-            <Button disabled={mutation.disabled}>Save changes</Button>
-            <Button type="button" variant="secondary" disabled={mutation.disabled} onClick={() => setEditing(null)}>
-              Cancel
+            <label>
+              Month
+              <select
+                aria-label="Records month"
+                value={month}
+                disabled={mutation.disabled}
+                onChange={(e) => changeSelection(() => setMonth(e.target.value))}
+              >
+                {months.map((m, i) => (
+                  <option key={m} value={String(i + 1).padStart(2, '0')}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Year
+              <select
+                aria-label="Records year"
+                value={year}
+                disabled={mutation.disabled}
+                onChange={(e) => changeSelection(() => setYear(e.target.value))}
+              >
+                {Array.from({ length: currentYear - 1999 }, (_, i) => String(currentYear - i)).map((y) => (
+                  <option key={y}>{y}</option>
+                ))}
+              </select>
+            </label>
+            <Button
+              disabled={mutation.disabled || loading || !site}
+              onClick={() => changeSelection(() => setGeneration((n) => n + 1))}
+            >
+              Refresh records
             </Button>
           </div>
-        </form>
-      )}
-      {data && (
-        <>
-          <RecordTable
-            title="Energy consumption and costs"
-            columns={[
-              'Utility / meter',
-              'Consumption',
-              'Fuel unit',
-              'VAT cost',
-              'Total cost',
-              'Conversion factor',
-              'Actions',
-            ]}
-            empty={!readings.length}
-          >
-            {readings.map((row) => (
-              <tr key={row.id}>
-                <th scope="row">
-                  {utilityLabel(row.fuel)}
-                  <small>{data.meters.find((m) => m.id === row.meterId)?.name ?? row.meterId}</small>
-                </th>
-                <td>{number(row.sourceQuantity)}</td>
-                <td>{row.sourceUnit}</td>
-                <td>
-                  {number(row.vatCost)} {row.currency}
-                </td>
-                <td>
-                  {number(row.grossCost)} {row.currency}
-                </td>
-                <td>{row.conversionFactor}</td>
-                <td>{editButton({ kind: 'reading', row })}</td>
-              </tr>
-            ))}
-          </RecordTable>
-          <RecordTable
-            title="Energy emissions"
-            columns={['Utility', 'Scope / validity', 'Basis', 'Emission factor (kgCO₂e/kWh)', 'Source', 'Actions']}
-            empty={!factors.length}
-          >
-            {factors.map((row) => (
-              <tr key={row.id}>
-                <th scope="row">{utilityLabel(row.fuel)}</th>
-                <td>
-                  {row.siteId ? 'This site' : 'Workspace-wide'}
-                  <small>
-                    {date(row.validFrom)}–{date(new Date(+new Date(row.validUntil) - 86400000).toISOString())}
-                  </small>
-                </td>
-                <td>
-                  {row.basis.replaceAll('_', ' ')} · {row.geography}
-                </td>
-                <td>{row.factor}</td>
-                <td>{row.source}</td>
-                <td>{editButton({ kind: 'factor', row })}</td>
-              </tr>
-            ))}
-          </RecordTable>
-          <RecordTable
-            title="Monitoring & targeting"
-            columns={['Utility', 'Kind', 'Fuel unit', 'Conversion factor', 'Energy', 'Carbon (kgCO₂e)', 'Actions']}
-            empty={!plans.length}
-          >
-            {plans.map((row) => (
-              <tr key={row.id}>
-                <th scope="row">{utilityLabel(row.fuel)}</th>
-                <td>{row.kind === 'TARGET' ? 'Target' : 'Monitoring'}</td>
-                <td>{row.unit}</td>
-                <td>{row.payload.conversionFactor}</td>
-                <td>{number(row.payload.energy)}</td>
-                <td>{number(row.payload.carbon || null)}</td>
-                <td>{editButton({ kind: 'plan', row })}</td>
-              </tr>
-            ))}
-          </RecordTable>
-          <p className="page-note">
-            Use Upload to add records from Excel or an API. Consumption edits retain the meter and conversion used for
-            that reading.
+        </section>
+        {mutation.feedback}
+        {!site && <p className="notice">Add a site in Sites to view its records.</p>}
+        {loading && (
+          <p role="status" className="notice">
+            Loading utility records…
           </p>
-        </>
-      )}
+        )}
+        {error && (
+          <p role="alert" className="notice error">
+            {error}
+          </p>
+        )}
+        {editing && (
+          <form
+            key={editing.row.id}
+            className="panel stack-form utility-record-editor"
+            aria-label="Edit utility record"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void save(event.currentTarget);
+            }}
+          >
+            <h2>
+              Edit{' '}
+              {editing.kind === 'reading'
+                ? 'consumption'
+                : editing.kind === 'factor'
+                  ? 'emission factor'
+                  : 'monthly plan'}
+            </h2>
+            <p>
+              {utilityLabel(editing.row.fuel)} · Revision {editing.row.revision}. Saving creates a correction and
+              retains the original record.
+            </p>
+            {editing.kind === 'factor' && (
+              <p className="notice">
+                {editing.row.siteId
+                  ? 'Site-specific factor'
+                  : 'Shared workspace factor: changes affect every site using it.'}{' '}
+                · {date(editing.row.validFrom)}–
+                {date(new Date(+new Date(editing.row.validUntil) - 86400000).toISOString())}
+              </p>
+            )}
+            <fieldset disabled={mutation.disabled} className="utility-record-fields form-grid">
+              {editing.kind === 'reading' ? (
+                <>
+                  <Field
+                    name="quantity"
+                    label={`Consumption (${editing.row.sourceUnit})`}
+                    value={editing.row.sourceQuantity}
+                    required
+                    step="0.001"
+                  />
+                  <Field name="netCost" label="Net cost (excluding VAT)" value={editing.row.netCost} step="0.001" />
+                  <Field name="vatPercent" label="VAT (%)" value={editing.row.vatPercent} step="0.001" max="100" />
+                  <Field name="currency" label="Currency" value={editing.row.currency} text />
+                </>
+              ) : editing.kind === 'factor' ? (
+                <>
+                  <Field name="factor" label="Emission factor (kgCO₂e/kWh)" value={editing.row.factor} required />
+                  <Field name="source" label="Source" value={editing.row.source} text required />
+                </>
+              ) : (
+                <>
+                  <Field
+                    name="energy"
+                    label={`Energy (${editing.row.unit})`}
+                    value={editing.row.payload.energy}
+                    required
+                  />
+                  <Field
+                    name="carbon"
+                    label="Carbon (kgCO₂e)"
+                    value={editing.row.payload.carbon}
+                    required={editing.row.kind === 'MONITORING'}
+                  />
+                  <Field
+                    name="conversionFactor"
+                    label="Conversion factor (to kWh)"
+                    value={editing.row.payload.conversionFactor}
+                    required
+                  />
+                  <Field name="cost" label="Net target cost" value={editing.row.payload.cost} />
+                  <Field
+                    name="grossCost"
+                    label="Total target cost (including VAT)"
+                    value={editing.row.payload.grossCost}
+                  />
+                  <Field name="currency" label="Currency" value={editing.row.payload.currency} text />
+                  <Field name="source" label="Source" value={editing.row.payload.source} text required />
+                </>
+              )}
+              <label>
+                Reason for change
+                <input name="reason" required minLength={3} maxLength={1000} />
+              </label>
+            </fieldset>
+            <div className="button-row">
+              <Button disabled={mutation.disabled}>Save changes</Button>
+              <Button type="button" variant="secondary" disabled={mutation.disabled} onClick={() => setEditing(null)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
+        {data && (
+          <>
+            <RecordTable
+              title="Energy consumption and costs"
+              columns={[
+                'Utility / meter',
+                'Consumption',
+                'Fuel unit',
+                'VAT cost',
+                'Total cost',
+                'Conversion factor',
+                'Actions',
+              ]}
+              empty={!readings.length}
+            >
+              {readings.map((row) => (
+                <tr key={row.id}>
+                  <th scope="row">
+                    {utilityLabel(row.fuel)}
+                    <small>{data.meters.find((m) => m.id === row.meterId)?.name ?? row.meterId}</small>
+                  </th>
+                  <td>{number(row.sourceQuantity)}</td>
+                  <td>{row.sourceUnit}</td>
+                  <td>
+                    {number(row.vatCost)} {row.currency}
+                  </td>
+                  <td>
+                    {number(row.grossCost)} {row.currency}
+                  </td>
+                  <td>{row.conversionFactor}</td>
+                  <td>{editButton({ kind: 'reading', row })}</td>
+                </tr>
+              ))}
+            </RecordTable>
+            <RecordTable
+              title="Energy emissions"
+              columns={['Utility', 'Scope / validity', 'Basis', 'Emission factor (kgCO₂e/kWh)', 'Source', 'Actions']}
+              empty={!factors.length}
+            >
+              {factors.map((row) => (
+                <tr key={row.id}>
+                  <th scope="row">{utilityLabel(row.fuel)}</th>
+                  <td>
+                    {row.siteId ? 'This site' : 'Workspace-wide'}
+                    <small>
+                      {date(row.validFrom)}–{date(new Date(+new Date(row.validUntil) - 86400000).toISOString())}
+                    </small>
+                  </td>
+                  <td>
+                    {row.basis.replaceAll('_', ' ')} · {row.geography}
+                  </td>
+                  <td>{row.factor}</td>
+                  <td>{row.source}</td>
+                  <td>{editButton({ kind: 'factor', row })}</td>
+                </tr>
+              ))}
+            </RecordTable>
+            <RecordTable
+              title="Monitoring & targeting"
+              columns={['Utility', 'Kind', 'Fuel unit', 'Conversion factor', 'Energy', 'Carbon (kgCO₂e)', 'Actions']}
+              empty={!plans.length}
+            >
+              {plans.map((row) => (
+                <tr key={row.id}>
+                  <th scope="row">{utilityLabel(row.fuel)}</th>
+                  <td>{row.kind === 'TARGET' ? 'Target' : 'Monitoring'}</td>
+                  <td>{row.unit}</td>
+                  <td>{row.payload.conversionFactor}</td>
+                  <td>{number(row.payload.energy)}</td>
+                  <td>{number(row.payload.carbon || null)}</td>
+                  <td>{editButton({ kind: 'plan', row })}</td>
+                </tr>
+              ))}
+            </RecordTable>
+            <p className="page-note utility-records-footer">
+              Use Upload to add records from Excel or an API. Consumption edits retain the meter and conversion used for
+              that reading.
+            </p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -464,7 +462,7 @@ function RecordTable({
   empty: boolean;
 }) {
   return (
-    <section className="panel utility-record-section">
+    <section className="utility-record-section">
       <header>
         <h2>{title}</h2>
       </header>

@@ -4776,31 +4776,103 @@ select[aria-invalid='true'] {
   }
 }
 
-.utility-record-filters {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
-  gap: 18px;
-  align-items: end;
-}
-.utility-record-section {
-  padding: 0;
+.utility-records-page {
+  width: 100%;
+  max-width: 1180px;
+  min-width: 0;
+  margin: 20px auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgb(77 80 92 / 6%);
   overflow: hidden;
 }
+.utility-records-heading {
+  padding: 26px 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--line);
+}
+.utility-records-heading h1 {
+  margin: 0;
+  font-size: 26px;
+  color: var(--charcoal);
+}
+.utility-records-body {
+  padding: 32px;
+  gap: 32px;
+}
+.utility-record-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 24px;
+  align-items: end;
+}
+.utility-record-filters > :first-child {
+  grid-column: 1 / -1;
+}
+.utility-record-filters > .button {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+.utility-record-filters label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.utility-record-filters select {
+  min-height: 46px;
+  border-radius: 4px;
+  background-color: #fff;
+  color: var(--charcoal);
+}
+.utility-record-section {
+  min-width: 0;
+}
 .utility-record-section > header {
-  padding: 22px 24px;
+  padding: 12px 0 18px;
   border-top: 4px solid var(--lime);
+}
+.utility-record-section h2 {
+  margin: 0;
+  color: #587814;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.utility-record-section table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
 }
 .utility-record-section th,
 .utility-record-section td {
   vertical-align: middle;
-  padding: 16px;
+  text-align: center;
+  padding: 16px 12px;
+  border: 1px solid var(--line);
 }
-.utility-record-section thead {
+.utility-record-section thead th {
   background: var(--charcoal);
   color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+.utility-record-section th:first-child {
+  text-align: left;
+  min-width: 160px;
 }
 .utility-record-section tbody tr:nth-child(even) {
-  background: var(--surface-muted);
+  background: #f2f2f2;
+}
+.utility-record-section tbody tr:hover {
+  background: #edf4fb;
+}
+.utility-record-section .button {
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 .utility-record-section small {
   display: block;
@@ -4816,12 +4888,162 @@ select[aria-invalid='true'] {
 }
 .utility-record-editor {
   border-top: 4px solid var(--blue);
+  background: #edf4fb;
+}
+.utility-records-footer {
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  margin: 0;
+  font-size: 12px;
 }
 @media (max-width: 700px) {
+  .utility-records-page {
+    margin: 0 auto;
+    border-radius: 12px;
+  }
+  .utility-records-heading {
+    padding: 20px 16px;
+  }
+  .utility-records-heading h1 {
+    font-size: 22px;
+  }
+  .utility-records-body {
+    padding: 20px 16px;
+    gap: 26px;
+  }
   .utility-record-filters {
-    grid-template-columns: 1fr 1fr;
+    gap: 16px 12px;
   }
   .utility-record-filters > :first-child {
     grid-column: 1 / -1;
+  }
+}
+
+/* Waste dashboard: reference layout, with the existing chart renderers retained. */
+.waste-savings {
+  background: #f3f3f3;
+}
+.waste-savings > .waste-page-heading {
+  justify-content: center;
+  text-align: center;
+  padding: 24px 24px 22px;
+}
+.waste-page-heading h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+.waste-savings .waste-charts {
+  gap: 28px;
+  align-items: stretch;
+}
+.waste-savings .waste-expandable-chart > .panel {
+  padding: 0 20px 20px;
+  border: 0;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 36px rgb(77 80 92 / 7%);
+  overflow: hidden;
+}
+.waste-savings .waste-expandable-chart .metric-chart-heading,
+.waste-savings .waste-expandable-chart > .panel > h2 {
+  margin: 0 -20px 16px;
+  padding: 18px 56px 18px 24px;
+  min-height: 64px;
+  border-bottom: 1px solid var(--line);
+}
+.waste-savings .waste-expandable-chart h2 {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--charcoal);
+}
+.waste-savings .metric-chart-heading h2 {
+  margin: 0;
+}
+.waste-savings .metric-chart-heading .eyebrow {
+  display: none;
+}
+.waste-savings .waste-chart-expand {
+  top: 16px;
+  right: 16px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--charcoal);
+}
+.waste-savings .waste-chart-expand:hover {
+  background: var(--surface-muted);
+}
+.waste-savings .waste-cost-basis {
+  justify-content: flex-end;
+  margin: 0 0 12px;
+}
+.waste-savings .waste-dashboard-filters {
+  background: #fff;
+  gap: 24px;
+}
+.waste-savings .waste-site-options {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0 0 24px;
+  margin: 0;
+}
+.waste-savings .waste-site-options legend {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.waste-savings .waste-site-option {
+  padding: 5px 0;
+  font-size: 13px;
+}
+.waste-savings .waste-dashboard-filters .form-grid {
+  gap: 16px;
+}
+.waste-savings .waste-dashboard-filters .form-grid label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.waste-savings .waste-dashboard-filters select {
+  min-height: 46px;
+  border-radius: 0;
+  border-color: var(--line);
+  background-color: #fff;
+  color: var(--charcoal);
+  font-size: 14px;
+  font-weight: 400;
+}
+.waste-savings .waste-dashboard-filters .button {
+  border-radius: 5px;
+  font-size: 12px;
+}
+.waste-savings .waste-dashboard-filters > p,
+.waste-savings .waste-dashboard-filters > .utility-graph-actions > a {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.waste-savings .waste-sidebar-downloads {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+@media (min-width: 1250px) {
+  .waste-savings .waste-dashboard-results .waste-charts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .waste-savings .waste-expandable-chart > .panel {
+    border-radius: 14px;
+  }
+  .waste-page-heading h1 {
+    font-size: 20px;
+  }
+  .waste-savings .waste-charts {
+    gap: 20px;
   }
 }

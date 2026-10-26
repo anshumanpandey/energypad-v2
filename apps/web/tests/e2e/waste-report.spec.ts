@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { readFile, readdir } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import ExcelJS from 'exceljs';
+import { createRequire } from 'node:module';
+const ExcelJS = createRequire(import.meta.url)('exceljs') as typeof import('exceljs');
 test('Energy Waste Report guides baseline and reporting steps', async ({ page }, testInfo) => {
   test.setTimeout(300_000);
   page.setDefaultTimeout(20_000);
@@ -200,6 +201,10 @@ test('Energy Waste Report guides baseline and reporting steps', async ({ page },
   await expect(wasteGaugePanel.locator('g[data-month]')).toHaveCount(3);
   await expect(wasteGaugePanel.locator('path')).toHaveCount(0);
   await graphPage.screenshot({ path: testInfo.outputPath('waste-savings-graphs.png'), fullPage: true });
+  await graphPage.setViewportSize({ width: 390, height: 844 });
+  expect(await graphPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await graphPage.screenshot({ path: testInfo.outputPath('waste-savings-mobile.png'), fullPage: true });
+  await graphPage.setViewportSize({ width: 1440, height: 1000 });
   await graphPage.getByRole('button', { name: 'Table view', exact: true }).click();
   await expect(graphPage.getByRole('button', { name: 'Table view', exact: true })).toHaveAttribute(
     'aria-pressed',

@@ -56,12 +56,8 @@ export function WasteDashboard({
   const value = (number: number | null) => formatEnergyValue(number, 'Unavailable');
   return (
     <div className="utility-graphs-page waste-savings">
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">EXPECTED VERSUS ACTUAL</span>
-          <h1>Waste &amp; Savings</h1>
-          <p>Monthly consumption, expected consumption and waste or savings calculated from uploaded site inputs.</p>
-        </div>
+      <div className="page-heading waste-page-heading">
+        <h1>Energy Waste and Savings</h1>
       </div>
       <div className="waste-dashboard-layout">
         <aside
@@ -87,7 +83,62 @@ export function WasteDashboard({
               </label>
             ))}
           </fieldset>
-          <h2>Filters</h2>
+          <div className="form-grid">
+            <label>
+              Month
+              <select aria-label="Waste result month" value={month} onChange={(event) => setMonth(event.target.value)}>
+                <option value="">All months</option>
+                {Array.from({ length: 12 }, (_, index) => {
+                  const code = String(index + 1).padStart(2, '0');
+                  return (
+                    <option key={code} value={code}>
+                      {new Intl.DateTimeFormat('en', { month: 'long', timeZone: 'UTC' }).format(
+                        new Date(Date.UTC(2000, index, 1)),
+                      )}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+            <label>
+              Year
+              <select
+                aria-label="Waste year"
+                disabled={pending}
+                value={preview.year}
+                onChange={(event) => update(siteId, Number(event.target.value))}
+              >
+                {[...new Set([preview.year, ...preview.years])].map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Fuel type
+              <select aria-label="Waste fuel type" value={fuel} onChange={(event) => setFuel(event.target.value)}>
+                <option value="">All fuels</option>
+                {[...new Set(preview.meters.map((meter) => meter.fuel))].map((type) => (
+                  <option key={type} value={type}>
+                    {type.replaceAll('_', ' ')}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Sort by
+              <select
+                aria-label="Waste sort by"
+                value={sort}
+                onChange={(event) => setSort(event.target.value as UtilityChartSort)}
+              >
+                <option value="month">Month</option>
+                <option value="high-to-low">High to low</option>
+                <option value="low-to-high">Low to high</option>
+              </select>
+            </label>
+          </div>
           <div className="waste-view-toggle" role="group" aria-label="Results view">
             <Button aria-pressed={view === 'graph'} onClick={() => setView('graph')}>
               Graph view
@@ -118,62 +169,6 @@ export function WasteDashboard({
               Reset filters
             </Button>
             <Button onClick={() => startTransition(() => router.refresh())}>Refresh data</Button>
-          </div>
-          <div className="form-grid">
-            <label>
-              Year
-              <select
-                aria-label="Waste year"
-                disabled={pending}
-                value={preview.year}
-                onChange={(event) => update(siteId, Number(event.target.value))}
-              >
-                {[...new Set([preview.year, ...preview.years])].map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Month
-              <select aria-label="Waste result month" value={month} onChange={(event) => setMonth(event.target.value)}>
-                <option value="">All months</option>
-                {Array.from({ length: 12 }, (_, index) => {
-                  const code = String(index + 1).padStart(2, '0');
-                  return (
-                    <option key={code} value={code}>
-                      {new Intl.DateTimeFormat('en', { month: 'long', timeZone: 'UTC' }).format(
-                        new Date(Date.UTC(2000, index, 1)),
-                      )}
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
-            <label>
-              Fuel type
-              <select aria-label="Waste fuel type" value={fuel} onChange={(event) => setFuel(event.target.value)}>
-                <option value="">All fuels</option>
-                {[...new Set(preview.meters.map((meter) => meter.fuel))].map((type) => (
-                  <option key={type} value={type}>
-                    {type.replaceAll('_', ' ')}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Sort by
-              <select
-                aria-label="Waste sort by"
-                value={sort}
-                onChange={(event) => setSort(event.target.value as UtilityChartSort)}
-              >
-                <option value="month">Month</option>
-                <option value="high-to-low">High to low</option>
-                <option value="low-to-high">Low to high</option>
-              </select>
-            </label>
           </div>
           <div className="utility-graph-actions" role="group" aria-label="Calculation drivers">
             {Object.entries(driverLabels)
