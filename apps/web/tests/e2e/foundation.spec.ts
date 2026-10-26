@@ -174,8 +174,9 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   await page.goto(`${orgPath}/overview`);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Open navigation' }).click();
-  await expect(page.getByRole('navigation')).toBeVisible();
-  await page.getByRole('link', { name: 'Sites', exact: true }).click();
+  const mainNavigation = page.getByRole('navigation', { name: 'Main navigation', exact: true });
+  await expect(mainNavigation).toBeVisible();
+  await mainNavigation.getByRole('link', { name: 'Sites', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Sites', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.goto(`${orgPath}/overview`);
