@@ -1,6 +1,14 @@
 import Link from 'next/link';
 
-export function OverviewShortcuts({ base, area }: { base: string; area: 'settings' | 'analytics' }) {
+export function OverviewShortcuts({
+  base,
+  area,
+  loginOnly = false,
+}: {
+  base: string;
+  area: 'settings' | 'analytics';
+  loginOnly?: boolean;
+}) {
   const cards =
     area === 'analytics'
       ? [
@@ -30,7 +38,7 @@ export function OverviewShortcuts({ base, area }: { base: string; area: 'setting
         {cards.map(({ title, section }) => (
           <article className="overview-settings-card" key={section}>
             <h2>{title}</h2>
-            <Link href={`${base}/${section}`} aria-label={`View ${title}`}>
+            <Link href={loginOnly ? '/login' : `${base}/${section}`} aria-label={`View ${title}`}>
               View
             </Link>
           </article>
@@ -57,19 +65,23 @@ export function OverviewShortcuts({ base, area }: { base: string; area: 'setting
                 <tr key={title}>
                   <th scope="row">{title}</th>
                   <td>
-                    <a href={`/templates/${template}`} download aria-label={`Download ${title} template`}>
+                    <a
+                      href={loginOnly ? '/login' : `/templates/${template}`}
+                      download={!loginOnly}
+                      aria-label={`Download ${title} template`}
+                    >
                       Download template
                     </a>
                   </td>
                   <td>
-                    <Link href={`${base}/${section}`} aria-label={`View ${title} records`}>
+                    <Link href={loginOnly ? '/login' : `${base}/${section}`} aria-label={`View ${title} records`}>
                       View
                     </Link>
                   </td>
                   <td>
                     <Link
                       className="overview-upload-link"
-                      href={`${base}/${title === 'Sites' ? 'sites' : 'energy'}`}
+                      href={loginOnly ? '/login' : `${base}/${title === 'Sites' ? 'sites' : 'energy'}`}
                       aria-label={`Upload ${title} file`}
                     >
                       Upload

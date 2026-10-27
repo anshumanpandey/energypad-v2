@@ -6,11 +6,13 @@ export function WorkspaceAreas({
   section,
   manageMembers,
   overviewArea,
+  loginOnly = false,
 }: {
   organisationId: string;
   section: string;
   manageMembers: boolean;
   overviewArea: 'settings' | 'analytics';
+  loginOnly?: boolean;
 }) {
   const base = `/org/${organisationId}`;
   const active =
@@ -58,7 +60,7 @@ export function WorkspaceAreas({
             <Link
               key={key}
               className={`overview-hub-option${active === key ? ' is-current' : ''}`}
-              href={href}
+              href={loginOnly ? '/login' : href}
               aria-current={active === key ? 'true' : undefined}
             >
               {content}

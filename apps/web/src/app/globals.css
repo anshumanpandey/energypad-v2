@@ -5579,3 +5579,97 @@ select[aria-invalid='true'] {
     font-size: 9px;
   }
 }
+
+.overview-landing-main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding-bottom: 48px;
+}
+.overview-landing-content {
+  padding: 32px;
+}
+@media (max-width: 600px) {
+  .overview-landing-content {
+    padding: 24px 16px;
+  }
+}
+
+/* Analytics navigation follows the reference's full-width, text-only menu. */
+.workspace > .analytics-sidebar {
+  padding: 0;
+  background: #4d505c;
+  font-family: 'Welcome Poppins', Arial, sans-serif;
+}
+.analytics-sidebar > nav {
+  flex-shrink: 0;
+  order: 1;
+}
+.analytics-sidebar .sidebar-brand {
+  order: 0;
+}
+.analytics-sidebar .organisation-switch {
+  order: 2;
+  margin: 24px;
+}
+.analytics-sidebar .sidebar-bottom {
+  order: 3;
+  padding: 0 24px 24px;
+}
+.analytics-sidebar .plan-card {
+  display: none;
+}
+.analytics-sidebar-links .nav-link {
+  min-height: max(90px, calc((100dvh - var(--app-header-height)) / 6));
+  padding: 24px 48px;
+  margin: 0;
+  border-radius: 0;
+  font-size: 16px;
+  font-weight: 400;
+  color: #a7a9b2;
+}
+.analytics-sidebar-links .nav-link.active {
+  background: #94c11f;
+  color: #fff;
+  font-weight: 700;
+}
+.analytics-sidebar-links .nav-link:hover {
+  background: #606371;
+  color: #fff;
+}
+.analytics-sidebar-links .nav-link.active:hover {
+  background: #a1cd2c;
+  color: #fff;
+}
+.analytics-overview-link {
+  display: block;
+  padding: 24px 28px;
+  color: #e0e4eb;
+  font-size: 13px;
+}
+.analytics-sidebar :is(.nav-link, .analytics-overview-link):focus-visible {
+  outline-offset: -4px;
+}
+@media (max-width: 900px) {
+  .analytics-sidebar-links .nav-link {
+    min-height: 64px;
+    padding: 20px 28px;
+  }
+}
+
+@media (min-width: 1151px) {
+  .workspace > .analytics-sidebar {
+    width: 310px;
+  }
+  .workspace:has(> .analytics-sidebar) > .workspace-body {
+    margin-left: 310px;
+  }
+}
+@media (min-width: 901px) and (max-width: 1150px) {
+  .analytics-sidebar-links .nav-link {
+    padding-inline: 28px;
+  }
+}
+
+.workspace-without-sidebar > .workspace-body {
+  margin-left: 0;
+}

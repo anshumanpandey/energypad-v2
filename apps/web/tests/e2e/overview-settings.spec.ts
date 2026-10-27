@@ -10,6 +10,8 @@ test('overview settings cards navigate to workspace tools and fit mobile', async
   const base = `/org/${org.id}`;
   await page.goto(`${base}/overview`);
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Main navigation', exact: true })).toHaveCount(0);
+  await expect(page.locator('.workspace-body')).toHaveCSS('margin-left', '0px');
   const areas = page.getByRole('navigation', { name: 'Workspace areas' });
   await expect(areas.getByRole('link', { name: 'Analytics', exact: true })).toHaveAttribute(
     'href',
@@ -45,7 +47,12 @@ test('overview settings cards navigate to workspace tools and fit mobile', async
   await expect(areas.getByRole('link', { name: 'Settings', exact: true })).toHaveAttribute('aria-current', 'true');
   await areas.getByRole('link', { name: 'Analytics', exact: true }).click();
   await expect(page).toHaveURL(`${base}/consumption`);
-  await expect(areas.getByRole('link', { name: 'Analytics', exact: true })).toHaveAttribute('aria-current', 'true');
+  await expect(areas).toHaveCount(0);
+  for (const section of ['emissions', 'waste-savings']) {
+    await page.goto(`${base}/${section}`);
+    await expect(areas).toHaveCount(0);
+  }
+  await page.goto(`${base}/overview`);
   await areas.getByRole('link', { name: 'User Management', exact: true }).click();
   await expect(page).toHaveURL(`${base}/members`);
   await expect(areas.getByRole('link', { name: 'User Management', exact: true })).toHaveAttribute(

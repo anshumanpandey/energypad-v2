@@ -46,6 +46,10 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
     ownerEmail = `owner-${suffix}@example.test`,
     memberEmail = `member-${suffix}@example.test`;
   await page.goto('/');
+  await page
+    .getByRole('navigation', { name: 'Workspace areas' })
+    .getByRole('link', { name: 'Analytics', exact: true })
+    .click();
   await expect(page).toHaveURL(/\/login/);
   expect((await page.request.get('/api/v1/organisations')).status()).toBe(401);
   await page.screenshot({ path: testInfo.outputPath('login-desktop.png'), fullPage: true });
@@ -81,10 +85,10 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
     ['AI Analyst', 'ai-analyst'],
     ['Billing', 'billing'],
   ]) {
-    await navigation.getByRole('link', { name, exact: true }).click();
+    await page.goto(`${orgPath}/${section}`);
     await expect(page).toHaveURL(new RegExp(`${orgPath}/${section}$`));
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
-    await expect(navigation.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(navigation).toHaveCount(section === 'emissions' ? 1 : 0);
     if (section === 'energy') {
       await expect(page.getByRole('heading', { name: 'Add a site to get started', exact: true })).toBeVisible();
       await expect(
@@ -108,17 +112,17 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   await expect(page.getByRole('combobox', { name: 'Carbon site', exact: true })).toHaveValue('');
   await page.goto(`${orgPath}/opportunities`);
   await expect(page.getByText('Add a site and save an analysis run to begin.', { exact: true })).toBeVisible();
-  await navigation.getByRole('link', { name: 'Upload', exact: true }).click();
+  await page.goto(`${orgPath}/energy`);
   await page.getByRole('link', { name: 'Advanced Analysis', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Advanced Analysis', exact: true })).toBeVisible();
-  await expect(navigation.getByRole('link', { name: 'Upload', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(navigation).toHaveCount(0);
   for (const name of ['Graphs', 'Data', 'Settings'])
     await expect(navigation.getByRole('link', { name, exact: true })).toHaveCount(0);
   await page.goto(`${orgPath}/settings`);
   await page.getByLabel('Organisation name').fill('Northstar Energy');
   await page.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByRole('status')).toContainText('Changes saved');
-  await page.getByRole('link', { name: 'Team members', exact: true }).click();
+  await page.goto(`${orgPath}/members`);
   await page.getByRole('button', { name: 'Manage', exact: true }).click();
   await page.getByLabel('Member role').selectOption('VIEWER');
   await page.getByRole('button', { name: 'Save role' }).click();
@@ -152,6 +156,7 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   await expect(member.getByRole('heading', { name: 'Add your first site', exact: true })).toBeVisible();
   const otherId = member.url().split('/')[4];
   expect((await page.request.get(`/api/v1/organisations/${otherId}`)).status()).toBe(404);
+  await member.goto(`/org/${otherId}/consumption`);
   await member.getByLabel('Switch organisation').selectOption(orgId);
   await expect(member).toHaveURL(new RegExp(`${orgPath}/overview`));
   await page.reload();
@@ -168,14 +173,14 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   await row.getByRole('button', { name: 'Confirm removal' }).click();
   await expect(row).toHaveCount(0);
   expect((await member.request.get(apiPath)).status()).toBe(404);
-  await page.getByRole('link', { name: 'Activity log' }).click();
+  await page.goto(`${orgPath}/audit`);
   await expect(page.getByText('Member access removed', { exact: true })).toBeVisible();
   await page.goto(`${orgPath}/overview`);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Open navigation' }).click();
+  await expect(page.getByRole('button', { name: 'Open navigation' })).toHaveCount(0);
   const mainNavigation = page.getByRole('navigation', { name: 'Main navigation', exact: true });
-  await expect(mainNavigation).toBeVisible();
-  await mainNavigation.getByRole('link', { name: 'Sites', exact: true }).click();
+  await expect(mainNavigation).toHaveCount(0);
+  await page.getByRole('link', { name: 'View Sites', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Sites', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.goto(`${orgPath}/overview`);
@@ -186,7 +191,6 @@ test('verified login, onboarding, membership lifecycle, tenant isolation and res
   await expect(freshPage).toHaveURL(/\/login/);
   expect((await freshPage.request.get('/api/v1/organisations')).status()).toBe(401);
   await fresh.close();
-  await page.getByRole('button', { name: 'Open navigation' }).click();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/\/login/);
   expect((await page.request.get('/api/v1/organisations')).status()).toBe(401);
@@ -281,11 +285,11 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await page.getByRole('button', { name: 'Create workspace' }).click();
   await expect(page).toHaveURL(/\/org\/[^/]+\/overview$/);
   const orgPath = new URL(page.url()).pathname.replace('/overview', '');
-  await page.getByRole('link', { name: 'Portfolio', exact: true }).click();
+  await page.goto(`${orgPath}/portfolio`);
   await page.getByLabel('New portfolio name').fill('Regional sites');
   await page.getByRole('button', { name: 'Create portfolio', exact: true }).click();
   await expect(page.getByLabel('Portfolio name', { exact: true })).toHaveValue('Regional sites');
-  await page.getByRole('link', { name: 'Sites', exact: true }).click();
+  await page.goto(`${orgPath}/sites`);
   await expect(page.getByRole('link', { name: 'Download Template', exact: true })).toHaveCount(0);
   await expect(page.getByLabel('Excel workbook')).toHaveCount(0);
   await expect(page.getByLabel('Site Name', { exact: true })).toHaveCount(0);
@@ -384,7 +388,7 @@ test('Sprint 2 site, meter and workbook import workflow', async ({ page }, testI
   await page.getByRole('button', { name: 'Create all sites' }).click();
   await expect(page.getByText('Import complete: 2 sites created.', { exact: false })).toBeVisible();
   await page.reload();
-  await page.getByRole('link', { name: 'Sites', exact: true }).click();
+  await page.goto(`${orgPath}/sites`);
   await expect(sitesTable.getByRole('rowheader').getByText('Imported Site', { exact: true })).toBeVisible();
   await expect(sitesTable.getByRole('rowheader').getByText('Second Imported Site', { exact: true })).toBeVisible();
   const sites = await (await page.request.get(`/api/v1/organisations/${orgPath.split('/')[2]}/sites`)).json();
@@ -419,7 +423,7 @@ test('Sprint 3 monthly energy entry, quality flags and persistence', async ({ pa
     data: { code: 'E1', name: 'Main electricity', fuel: 'ELECTRICITY', unit: 'MWh' },
   });
   expect(meterResponse.ok()).toBe(true);
-  await page.getByRole('link', { name: 'Upload', exact: true }).click();
+  await page.goto(`/org/${org}/energy`);
   await page.getByLabel('Year', { exact: true }).selectOption('2024');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   await expect(page.getByRole('heading', { name: 'Record monthly consumption' })).toBeVisible();
@@ -965,7 +969,7 @@ test('Sprint 3 operating patterns, corrections and reviewed import', async ({ pa
     data: { code: 'HEAT', name: 'Heating', fuel: 'ELECTRICITY', source: 'Reviewed end use' },
   });
   expect(use.ok()).toBe(true);
-  await page.getByRole('link', { name: 'Upload', exact: true }).click();
+  await page.goto(`/org/${org}/energy`);
   await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   const panel = page.getByRole('region', { name: 'Operating patterns', exact: true });
@@ -1073,7 +1077,7 @@ test('Sprint 3 operational events and log import', async ({ page }, testInfo) =>
     data: { code: 'HEAT', name: 'Heating', fuel: 'ELECTRICITY', source: 'Reviewed end use' },
   });
   expect(use.ok()).toBe(true);
-  await page.getByRole('link', { name: 'Upload', exact: true }).click();
+  await page.goto(`/org/${org}/energy`);
   await page.getByLabel('Year', { exact: true }).selectOption('2020');
   await page.getByRole('button', { name: 'Load energy records' }).click();
   const panel = page.getByRole('region', { name: 'Operational events', exact: true });

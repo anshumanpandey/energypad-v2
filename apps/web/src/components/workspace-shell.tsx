@@ -64,21 +64,30 @@ export function WorkspaceShell({
     { key: 'members', name: 'Team members', icon: Users, permission: 'members:manage' as const },
     { key: 'audit', name: 'Activity log', icon: ScrollText, permission: 'audit:read' as const },
   ].filter((item) => can(role, item.permission));
+  const isAnalytics = analytics.some((item) => item.key === section);
+  const analyticsNavigation = [
+    ...analytics,
+    { key: 'energy-tips', name: 'Energy Saving Tips' },
+    { key: 'reports', name: 'Reports' },
+    { key: 'portfolio', name: 'Portfolio' },
+  ];
   const activeSection = section === 'analysis' ? 'energy' : section === 'carbon-trends' ? 'carbon' : section;
   return (
-    <div className="workspace">
+    <div className={`workspace${isAnalytics ? '' : ' workspace-without-sidebar'}`}>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
       <header className="topbar app-reference-header">
-        <button
-          className="mobile-menu icon-button"
-          aria-label="Open navigation"
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
-        >
-          <Menu size={21} />
-        </button>
+        {isAnalytics && (
+          <button
+            className="mobile-menu icon-button"
+            aria-label="Open navigation"
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+          >
+            <Menu size={21} />
+          </button>
+        )}
         <Link href={`/org/${organisation.id}/overview`} className="app-header-brand" aria-label="EnergiePad home">
           <Image src="/assets/welcome/logo.png" alt="EnergiePad" width={84} height={52} priority />
         </Link>
@@ -106,96 +115,129 @@ export function WorkspaceShell({
           </button>
         </form>
       </header>
-      {open && <button className="sidebar-overlay" aria-label="Close navigation" onClick={() => setOpen(false)} />}
-      <aside className={`sidebar ${open ? 'is-open' : ''}`}>
-        <div className="sidebar-brand">
-          <button className="mobile-close icon-button" aria-label="Close navigation" onClick={() => setOpen(false)}>
-            <X />
-          </button>
-        </div>
-        <label className="organisation-switch">
-          <span>WORKSPACE</span>
-          <select
-            aria-label="Switch organisation"
-            value={organisation.id}
-            onChange={(e) => {
-              router.push(`/org/${e.target.value}/overview`);
-              setOpen(false);
-            }}
-          >
-            {organisations.map((org) => (
-              <option key={org.id} value={org.id}>
-                {org.name}
-              </option>
-            ))}
-          </select>
-          <small>{roleLabels[role]} access</small>
-        </label>
-        <nav aria-label="Main navigation">
-          {[
-            { label: 'Workspace', items: nav },
-            { label: 'Analytics', items: analytics },
-          ].map(({ label, items }, index) => (
-            <div key={label} role="group" aria-label={label}>
-              <span className={index === 0 ? 'nav-caption' : 'nav-caption admin-caption'}>{label.toUpperCase()}</span>
-              {items.map(({ key, name, icon: Icon }) => (
+      {isAnalytics && open && (
+        <button className="sidebar-overlay" aria-label="Close navigation" onClick={() => setOpen(false)} />
+      )}
+      {isAnalytics && (
+        <aside className={`sidebar ${open ? 'is-open' : ''}${isAnalytics ? ' analytics-sidebar' : ''}`}>
+          <div className="sidebar-brand">
+            <button className="mobile-close icon-button" aria-label="Close navigation" onClick={() => setOpen(false)}>
+              <X />
+            </button>
+          </div>
+          <label className="organisation-switch">
+            <span>WORKSPACE</span>
+            <select
+              aria-label="Switch organisation"
+              value={organisation.id}
+              onChange={(e) => {
+                router.push(`/org/${e.target.value}/overview`);
+                setOpen(false);
+              }}
+            >
+              {organisations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+            <small>{roleLabels[role]} access</small>
+          </label>
+          <nav aria-label="Main navigation">
+            {isAnalytics ? (
+              <div className="analytics-sidebar-links">
+                {analyticsNavigation.map(({ key, name }) => (
+                  <Link
+                    key={key}
+                    href={`/org/${organisation.id}/${key}`}
+                    className={`nav-link${section === key ? ' active' : ''}`}
+                    aria-current={section === key ? 'page' : undefined}
+                    onClick={() => setOpen(false)}
+                  >
+                    {name}
+                  </Link>
+                ))}
                 <Link
-                  key={key}
-                  href={`/org/${organisation.id}/${key}`}
-                  className={activeSection === key ? 'nav-link active' : 'nav-link'}
-                  aria-current={activeSection === key ? 'page' : undefined}
+                  className="analytics-overview-link"
+                  href={`/org/${organisation.id}/overview`}
                   onClick={() => setOpen(false)}
                 >
-                  <Icon size={19} />
-                  {name}
-                  {activeSection === key && <span className="nav-dot" />}
+                  ← Back to Overview
                 </Link>
-              ))}
+              </div>
+            ) : (
+              <>
+                {[
+                  { label: 'Workspace', items: nav },
+                  { label: 'Analytics', items: analytics },
+                ].map(({ label, items }, index) => (
+                  <div key={label} role="group" aria-label={label}>
+                    <span className={index === 0 ? 'nav-caption' : 'nav-caption admin-caption'}>
+                      {label.toUpperCase()}
+                    </span>
+                    {items.map(({ key, name, icon: Icon }) => (
+                      <Link
+                        key={key}
+                        href={`/org/${organisation.id}/${key}`}
+                        className={activeSection === key ? 'nav-link active' : 'nav-link'}
+                        aria-current={activeSection === key ? 'page' : undefined}
+                        onClick={() => setOpen(false)}
+                      >
+                        <Icon size={19} />
+                        {name}
+                        {activeSection === key && <span className="nav-dot" />}
+                      </Link>
+                    ))}
+                  </div>
+                ))}
+                {admin.length > 0 && (
+                  <>
+                    <span className="nav-caption admin-caption">MANAGE</span>
+                    {admin.map(({ key, name, icon: Icon }) => (
+                      <Link
+                        key={key}
+                        href={`/org/${organisation.id}/${key}`}
+                        className={activeSection === key ? 'nav-link active' : 'nav-link'}
+                        aria-current={activeSection === key ? 'page' : undefined}
+                        onClick={() => setOpen(false)}
+                      >
+                        <Icon size={19} />
+                        {name}
+                      </Link>
+                    ))}
+                  </>
+                )}
+              </>
+            )}
+          </nav>
+          <div className="sidebar-bottom">
+            <div className="plan-card">
+              <span className="plan-dot" />
+              <strong>{organisation.plan.name} plan</strong>
+              <p>A foundation for better energy.</p>
+              <Link href="/onboarding">
+                Create another workspace <ArrowUpRight size={14} />
+              </Link>
             </div>
-          ))}
-          {admin.length > 0 && (
-            <>
-              <span className="nav-caption admin-caption">MANAGE</span>
-              {admin.map(({ key, name, icon: Icon }) => (
-                <Link
-                  key={key}
-                  href={`/org/${organisation.id}/${key}`}
-                  className={activeSection === key ? 'nav-link active' : 'nav-link'}
-                  aria-current={activeSection === key ? 'page' : undefined}
-                  onClick={() => setOpen(false)}
-                >
-                  <Icon size={19} />
-                  {name}
-                </Link>
-              ))}
-            </>
-          )}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="plan-card">
-            <span className="plan-dot" />
-            <strong>{organisation.plan.name} plan</strong>
-            <p>A foundation for better energy.</p>
-            <Link href="/onboarding">
-              Create another workspace <ArrowUpRight size={14} />
-            </Link>
-          </div>
-          <div className="user-card">
-            <span className="avatar">{email.slice(0, 1).toUpperCase()}</span>
-            <div>
-              <strong title={email}>{email}</strong>
-              <small>{roleLabels[role]}</small>
+            <div className="user-card">
+              <span className="avatar">{email.slice(0, 1).toUpperCase()}</span>
+              <div>
+                <strong title={email}>{email}</strong>
+                <small>{roleLabels[role]}</small>
+              </div>
             </div>
           </div>
-        </div>
-      </aside>
+        </aside>
+      )}
       <div className="workspace-body">
-        <WorkspaceAreas
-          organisationId={organisation.id}
-          section={section}
-          overviewArea={searchParams.get('area') === 'analytics' ? 'analytics' : 'settings'}
-          manageMembers={can(role, 'members:manage')}
-        />
+        {!analytics.some((item) => item.key === section) && (
+          <WorkspaceAreas
+            organisationId={organisation.id}
+            section={section}
+            overviewArea={searchParams.get('area') === 'analytics' ? 'analytics' : 'settings'}
+            manageMembers={can(role, 'members:manage')}
+          />
+        )}
         <main id="main" className="workspace-main">
           {children}
         </main>

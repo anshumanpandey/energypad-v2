@@ -14,7 +14,7 @@ test('owner sees assigned plan and live site capacity without paid-subscription 
   await expect(page).toHaveURL(/\/overview$/);
   const org = page.url().split('/org/')[1].split('/')[0];
   const api = `/api/v1/organisations/${org}`;
-  await page.getByRole('link', { name: 'Billing', exact: true }).click();
+  await page.goto(`/org/${org}/billing`);
   await expect(page.getByRole('heading', { name: 'Billing', exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Current plan' })).toContainText('Starter plan');
   await expect(page.getByRole('region', { name: 'Current plan' })).toContainText(
