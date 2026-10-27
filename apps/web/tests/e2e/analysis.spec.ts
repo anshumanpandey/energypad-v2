@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { readFile, readdir } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import ExcelJS from 'exceljs';
+import { createRequire } from 'node:module';
+// Load this CommonJS dependency outside Playwright’s ESM import hook.
+const ExcelJS = createRequire(import.meta.url)('exceljs') as typeof import('exceljs');
 test('experimental analysis readiness, immutable runs and mobile history', async ({ page, browser }, testInfo) => {
   test.setTimeout(300_000);
   page.setDefaultTimeout(20_000);
@@ -267,7 +269,12 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     ).toBe(true);
     await viewer.reload({ waitUntil: 'domcontentloaded', timeout: 60_000 });
     await expect(viewer.getByRole('button', { name: 'Save experimental baseline' })).toBeVisible();
-    await expect(viewer.getByRole('link', { name: 'Settings', exact: true })).toHaveCount(0);
+    const workspaceAreas = viewer.getByRole('navigation', { name: 'Workspace areas' });
+    await expect(workspaceAreas.getByRole('link', { name: 'Settings', exact: true })).toHaveAttribute(
+      'href',
+      `/org/${org}/overview#overview-settings`,
+    );
+    await expect(workspaceAreas.getByRole('link', { name: 'User Management', exact: true })).toHaveCount(0);
     await expect(viewer.getByRole('link', { name: 'Team members', exact: true })).toHaveCount(0);
     expect((await viewer.request.get(`${base}/members`)).status()).toBe(403);
     await viewer.getByLabel('Baseline first month').fill('15/02/2020');

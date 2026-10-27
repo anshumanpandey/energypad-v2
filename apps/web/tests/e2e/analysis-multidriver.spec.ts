@@ -31,6 +31,12 @@ test('saved two/three-driver weather models preserve coefficients, provenance an
     .toBe(true);
   await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   const api = `/api/v1/organisations/${f.orgId}/sites/${f.siteId}/analysis`;
+  async function getJson(path: string) {
+    // Retry only transient connection resets on safe reads, never save requests.
+    const response = await page.request.get(path, { maxRetries: 2 });
+    expect(response.ok(), await response.text()).toBe(true);
+    return response.json();
+  }
   for (const scenario of [
     { meterId: f.twoId, drivers: ['HDD', 'CDD'], expected: 185, actual: 180 },
     { meterId: f.threeId, drivers: ['HDD', 'CDD', 'DAYLIGHT'], expected: 309, actual: 304 },
@@ -76,9 +82,9 @@ test('saved two/three-driver weather models preserve coefficients, provenance an
     await page.getByLabel('Reporting last month').fill('15/09/2020');
     await page.getByRole('button', { name: 'Save reporting run' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Experimental reporting run saved' })).toBeVisible();
-    const history = await (await page.request.get(`${api}/history`)).json();
+    const history = await getJson(`${api}/history`);
     const runId = history.items[0].runs[0].id;
-    const saved = await (await page.request.get(`${api}/runs/${runId}`)).json();
+    const saved = await getJson(`${api}/runs/${runId}`);
     expect(saved.baseline.fit.coefficients.map((c: { code: string }) => c.code)).toEqual(scenario.drivers);
     expect(saved.baseline.snapshot.assembly.evidence.weather[0]).toMatchObject({
       id: f.weatherId,
@@ -96,7 +102,7 @@ test('saved two/three-driver weather models preserve coefficients, provenance an
       .filter({ hasText: 'Sep-20' });
     await expect(row.getByRole('cell').nth(0)).toHaveText(scenario.actual.toFixed(2));
     await expect(row.getByRole('cell').nth(1)).toHaveText(scenario.expected.toFixed(2));
-    expect(await (await page.request.get(`${api}/runs/${runId}`)).json()).toEqual(saved);
+    expect(await getJson(`${api}/runs/${runId}`)).toEqual(saved);
     await page.goto(`/org/${f.orgId}/graphs?site=${f.siteId}&year=2020&run=${runId}`);
     const wasteChart = page.getByRole('region', { name: 'Waste & savings', exact: true });
     await wasteChart.locator('summary').click();

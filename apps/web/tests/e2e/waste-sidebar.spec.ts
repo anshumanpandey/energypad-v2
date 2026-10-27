@@ -90,9 +90,9 @@ test('wide waste tables do not cover sidebar controls', async ({ page }, testInf
   await page.getByRole('button', { name: 'Refresh data', exact: true }).click({ timeout: 10000 });
   await page.getByLabel('Waste result month', { exact: true }).selectOption('01');
   await page.evaluate(() => window.scrollTo(0, 0));
-  const headerBox = await page.locator('.topbar').boundingBox();
+  const contentBox = await page.getByRole('main').boundingBox();
   const sidebarTop = await sidebar.boundingBox();
-  expect(sidebarTop!.y).toBe(headerBox!.y + headerBox!.height);
+  expect(sidebarTop!.y).toBe(contentBox!.y);
   expect(sidebarTop!.x + sidebarTop!.width).toBe(page.viewportSize()!.width);
   await page.screenshot({ path: testInfo.outputPath('right-sidebar.png'), fullPage: true });
   await page.evaluate(() => window.scrollTo(0, 600));
