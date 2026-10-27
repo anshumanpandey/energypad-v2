@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 
-test('legacy tips and Reports restore menu, catalogue, overview, targets and coverage', async ({ page }, testInfo) => {
+test('legacy tips and Reports preserve catalogue, overview, targets and coverage without the sidebar', async ({
+  page,
+}, testInfo) => {
   page.setDefaultTimeout(20_000);
   await page.goto('/signup');
   await page.getByLabel('Email address').fill(`legacy-reports-${randomUUID()}@example.test`);
@@ -58,9 +60,8 @@ test('legacy tips and Reports restore menu, catalogue, overview, targets and cov
   });
   await page.goto(`/org/${org.id}/energy-tips`);
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
-  for (const label of ['Targets & Monitoring', 'Site Performance', 'Carbon', 'Opportunities'])
-    await expect(nav.getByRole('link', { name: label, exact: true })).toHaveCount(0);
-  await expect(nav.getByRole('link', { name: 'Carbon Footprint', exact: true })).toBeVisible();
+  await expect(nav).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: 'Workspace areas' })).toBeVisible();
   await expect(page.locator('.energy-tip-card')).toHaveCount(42);
   await page.getByLabel('Filter by category').selectOption('Power');
   await expect(page.locator('.energy-tip-card')).toHaveCount(16);
@@ -74,6 +75,7 @@ test('legacy tips and Reports restore menu, catalogue, overview, targets and cov
   await page.screenshot({ path: testInfo.outputPath('energy-tips.png'), fullPage: true });
 
   await page.goto(`/org/${org.id}/reports?site=${site.id}&year=2020`);
+  await expect(nav).toHaveCount(0);
   const filters = page.getByRole('region', { name: 'Reports dashboard filters' });
   await filters.getByLabel('Month', { exact: true }).selectOption('01');
   const overview = page.getByRole('region', { name: 'Reports overview' });

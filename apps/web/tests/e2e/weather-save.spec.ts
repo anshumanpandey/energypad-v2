@@ -109,7 +109,14 @@ test('saving weather fetches status and updates baseline configurations without 
   );
   await expect(configuration.locator('option')).toHaveCount(4);
   expect(queueCount).toBe(currentYearAvailable ? 3 : 2);
-  await page.getByRole('link', { name: 'HDD & CDD', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Workspace areas' })
+    .getByRole('link', { name: 'Settings', exact: true })
+    .click();
+  await page
+    .getByRole('navigation', { name: 'Settings shortcuts' })
+    .getByRole('link', { name: 'View HDD & CDD', exact: true })
+    .click();
   await expect(page.getByRole('heading', { name: 'HDD & CDD', exact: true })).toBeVisible();
   await page.getByLabel('Degree days year', { exact: true }).fill('2020');
   await expect(page.getByLabel('Weather settings version')).toBeVisible();
