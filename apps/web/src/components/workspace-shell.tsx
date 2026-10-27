@@ -73,7 +73,9 @@ export function WorkspaceShell({
   ];
   const activeSection = section === 'analysis' ? 'energy' : section === 'carbon-trends' ? 'carbon' : section;
   return (
-    <div className={`workspace${isAnalytics ? '' : ' workspace-without-sidebar'}`}>
+    <div
+      className={`workspace${isAnalytics ? '' : ' workspace-without-sidebar'}${section === 'overview' ? ' overview-reference' : ''}`}
+    >
       <a className="skip-link" href="#main">
         Skip to content
       </a>

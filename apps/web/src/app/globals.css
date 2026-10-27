@@ -5673,3 +5673,141 @@ select[aria-invalid='true'] {
 .workspace-without-sidebar > .workspace-body {
   margin-left: 0;
 }
+
+/* Overview follows the original Settings hub's banner, cards and file directory. */
+.overview-reference {
+  background: #fff;
+}
+.overview-reference .workspace-area-menu {
+  margin: 0;
+  padding: 48px max(24px, calc((100% - 1140px) / 2));
+  border-radius: 0;
+}
+.overview-reference .overview-hub-options {
+  max-width: 1140px;
+  margin: 0 auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 48px;
+}
+.overview-reference .overview-hub-option {
+  min-height: 244px;
+  border-radius: 24px;
+  gap: 26px;
+  box-shadow: 0 8px 30px rgb(77 80 92 / 6%);
+}
+.overview-reference .overview-hub-option img {
+  width: 80px;
+  height: 80px;
+}
+.overview-reference .overview-hub-option span {
+  font-size: 13px;
+}
+.overview-reference .overview-landing-main {
+  max-width: none;
+  padding-bottom: 0;
+}
+.overview-reference .workspace-main,
+.overview-reference .overview-landing-content {
+  width: 100%;
+  max-width: 1188px;
+  margin: 0 auto;
+  padding: 94px 24px 48px;
+}
+.overview-reference .overview-hub {
+  gap: 24px;
+}
+.overview-reference .overview-settings-grid {
+  gap: 24px 48px;
+  scroll-margin-top: 150px;
+}
+.overview-reference .overview-settings-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  box-shadow: 0 4px 28px rgb(77 80 92 / 6%);
+}
+.overview-reference .overview-settings-card h2 {
+  padding: 24px 16px;
+  font-size: 14px;
+  min-height: 69px;
+}
+.overview-reference .overview-settings-card > a {
+  padding: 24px 16px;
+  color: #e97871;
+  font-size: 15px;
+}
+.overview-reference .overview-files {
+  border-radius: 16px;
+  border-color: #d1d1d1;
+  box-shadow: 0 6px 32px rgb(77 80 92 / 5%);
+}
+.overview-reference .overview-files > h2 {
+  font-size: 24px;
+  padding: 18px;
+  border-bottom: 1px solid #d1d1d1;
+}
+.overview-reference .overview-files thead {
+  background: #fff;
+  color: #4d505c;
+}
+.overview-reference .overview-files th,
+.overview-reference .overview-files td {
+  padding: 16px;
+  border-color: #e0e0e0;
+  font-size: 14px;
+}
+.overview-reference .overview-files thead th {
+  padding-block: 18px;
+  font-size: 12px;
+}
+.overview-reference .overview-files tbody tr:nth-child(even) {
+  background: #f1f1f1;
+}
+.overview-reference .overview-files tbody td:nth-child(3) {
+  background: #fae4e3;
+}
+.overview-reference .overview-files tbody td:nth-child(3) a {
+  color: #bd514a;
+  font-weight: 700;
+  text-decoration: none;
+}
+.overview-reference .overview-upload-link {
+  background: #fff;
+  font-weight: 400;
+}
+@media (max-width: 800px) {
+  .overview-reference .overview-hub-options {
+    gap: 20px;
+  }
+  .overview-reference .overview-settings-grid {
+    gap: 20px;
+  }
+  .overview-reference .workspace-main,
+  .overview-reference .overview-landing-content {
+    padding-top: 48px;
+  }
+}
+@media (max-width: 600px) {
+  .overview-reference .workspace-area-menu {
+    padding: 24px 16px;
+  }
+  .overview-reference .overview-hub-options {
+    gap: 8px;
+  }
+  .overview-reference .overview-hub-option {
+    min-height: 140px;
+    padding: 16px 6px;
+    gap: 16px;
+    border-radius: 16px;
+  }
+  .overview-reference .overview-hub-option img {
+    width: 44px;
+    height: 44px;
+  }
+  .overview-reference .overview-hub-option span {
+    font-size: 10px;
+  }
+  .overview-reference .workspace-main,
+  .overview-reference .overview-landing-content {
+    padding: 32px 16px;
+  }
+}

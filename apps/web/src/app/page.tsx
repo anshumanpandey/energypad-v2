@@ -6,7 +6,7 @@ import { WorkspaceAreas } from '@/components/workspace-areas';
 
 export default function Landing() {
   return (
-    <div className="welcome-page overview-landing">
+    <div className="welcome-page overview-landing overview-reference">
       <header className="welcome-header">
         <Link href="/login" className="welcome-brand" aria-label="EnergiePad home">
           <Image src="/assets/welcome/logo.png" alt="EnergiePad" width={84} height={52} />

@@ -29,7 +29,7 @@ export function OverviewShortcuts({
         ];
   return (
     <>
-      <h1 className="overview-page-title">Overview</h1>
+      <h1 className="overview-page-title sr-only">Overview</h1>
       <nav
         id="overview-settings"
         className="overview-settings-grid"
