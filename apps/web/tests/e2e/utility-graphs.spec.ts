@@ -164,9 +164,9 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await expect(page.getByRole('radio', { name: 'Leeds', exact: true })).toBeChecked();
   const filters = page.getByRole('complementary', { name: 'Carbon Footprint filters' });
   const filterBox = await filters.boundingBox();
-  const headerBox = await page.locator('.topbar').boundingBox();
+  const contentBox = await page.getByRole('main').boundingBox();
   expect(filterBox!.x + filterBox!.width).toBe(page.viewportSize()!.width);
-  expect(filterBox!.y).toBe(headerBox!.y + headerBox!.height);
+  expect(filterBox!.y).toBe(contentBox!.y);
   await expect(filters.getByRole('group', { name: 'Sites', exact: true })).toBeVisible();
 
   await page.getByRole('radio', { name: 'London', exact: true }).check();

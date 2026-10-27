@@ -107,33 +107,6 @@ export function SitesWorkspace({
   return (
     <div className="stack-form sites-workspace">
       {m.feedback}
-      {manage && (
-        <div className="button-row sites-page-actions">
-          <Button
-            variant={mode === 'manual' ? 'primary' : 'secondary'}
-            aria-expanded={mode === 'manual'}
-            aria-controls="manual-site-section"
-            disabled={m.disabled}
-            onClick={addSite}
-          >
-            <Plus size={16} aria-hidden="true" /> Add Manually
-          </Button>
-          <Button
-            variant={mode === 'upload' ? 'primary' : 'secondary'}
-            aria-expanded={mode === 'upload'}
-            aria-controls="upload-sites-section"
-            disabled={m.disabled}
-            onClick={() => {
-              setMode('upload');
-              setSelected(null);
-              setEditing(false);
-              setEntry(null);
-            }}
-          >
-            <Upload size={16} aria-hidden="true" /> Upload Sites
-          </Button>
-        </div>
-      )}
       {manage && mode === 'upload' && (
         <section id="upload-sites-section" aria-label="Upload sites">
           <ImportWorkspace orgId={orgId} batches={batches} />
@@ -223,9 +196,6 @@ export function SitesWorkspace({
       <section className="panel sites-directory" aria-labelledby="sites-table-heading">
         <header className="sites-directory-heading">
           <h1 id="sites-table-heading">Sites</h1>
-          <span>
-            {sites.length} {sites.length === 1 ? 'site' : 'sites'}
-          </span>
         </header>
         <div className="sites-directory-toolbar">
           <fieldset className="sites-sort">
@@ -355,6 +325,20 @@ export function SitesWorkspace({
                 </tr>
               )}
             </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={10}>
+                  {manage && (
+                    <button type="button" className="sites-add-link" onClick={addSite} disabled={m.disabled}>
+                      Add new{' '}
+                      <span>
+                        <Plus size={17} aria-hidden="true" />
+                      </span>
+                    </button>
+                  )}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
         <footer className="sites-directory-footer">
@@ -362,12 +346,31 @@ export function SitesWorkspace({
             {listedSites.length} of {sites.length} sites
           </span>
           {manage && (
-            <button type="button" className="sites-add-link" onClick={addSite} disabled={m.disabled}>
-              Add new{' '}
-              <span>
-                <Plus size={17} aria-hidden="true" />
-              </span>
-            </button>
+            <div className="button-row sites-page-actions">
+              <Button
+                variant={mode === 'manual' ? 'primary' : 'secondary'}
+                aria-expanded={mode === 'manual'}
+                aria-controls="manual-site-section"
+                disabled={m.disabled}
+                onClick={addSite}
+              >
+                <Plus size={16} aria-hidden="true" /> Add Manually
+              </Button>
+              <Button
+                variant={mode === 'upload' ? 'primary' : 'secondary'}
+                aria-expanded={mode === 'upload'}
+                aria-controls="upload-sites-section"
+                disabled={m.disabled}
+                onClick={() => {
+                  setMode('upload');
+                  setSelected(null);
+                  setEditing(false);
+                  setEntry(null);
+                }}
+              >
+                <Upload size={16} aria-hidden="true" /> Upload Sites
+              </Button>
+            </div>
           )}
         </footer>
       </section>

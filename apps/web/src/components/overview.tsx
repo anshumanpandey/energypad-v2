@@ -13,9 +13,7 @@ export async function Overview({
   organisationId,
   sites,
   query,
-  manageMembers = false,
 }: {
-  manageMembers?: boolean;
   actor: Actor;
   organisationId: string;
   sites: { id: string; name: string }[];
@@ -38,7 +36,7 @@ export async function Overview({
   const display = (value: string | null, unit: string) => (value === null ? 'Unavailable' : `${value} ${unit}`);
   return (
     <div className="overview-hub">
-      <OverviewShortcuts base={base} manageMembers={manageMembers} />
+      <OverviewShortcuts base={base} area={query.area === 'analytics' ? 'analytics' : 'settings'} />
       <div className="overview-performance-heading">
         <h2>Site performance</h2>
       </div>
@@ -51,6 +49,7 @@ export async function Overview({
       ) : (
         <>
           <form method="get" className="panel stack-form" aria-label="Overview filters">
+            <input type="hidden" name="area" value={query.area === 'analytics' ? 'analytics' : 'settings'} />
             <div className="form-grid">
               <label>
                 Site

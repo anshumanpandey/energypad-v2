@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { request, useMutation } from './forms';
 import { Button } from './ui/button';
 import { utilityLabel } from '@/domain/consumption-sort';
@@ -169,6 +169,83 @@ export function UtilityRecords({
       setGeneration((n) => n + 1);
     }, 'Record saved successfully. Previous values remain in revision history.');
   }
+  const editor = editing ? (
+    <form
+      key={editing.row.id}
+      className="panel stack-form utility-record-editor"
+      aria-label="Edit utility record"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save(event.currentTarget);
+      }}
+    >
+      <h2>
+        Edit{' '}
+        {editing.kind === 'reading' ? 'consumption' : editing.kind === 'factor' ? 'emission factor' : 'monthly plan'}
+      </h2>
+      <p>
+        {utilityLabel(editing.row.fuel)} · Revision {editing.row.revision}. Saving creates a correction and retains the
+        original record.
+      </p>
+      {editing.kind === 'factor' && (
+        <p className="notice">
+          {editing.row.siteId ? 'Site-specific factor' : 'Shared workspace factor: changes affect every site using it.'}{' '}
+          · {date(editing.row.validFrom)}–{date(new Date(+new Date(editing.row.validUntil) - 86400000).toISOString())}
+        </p>
+      )}
+      <fieldset disabled={mutation.disabled} className="utility-record-fields form-grid">
+        {editing.kind === 'reading' ? (
+          <>
+            <Field
+              name="quantity"
+              label={`Consumption (${editing.row.sourceUnit})`}
+              value={editing.row.sourceQuantity}
+              required
+              step="0.001"
+            />
+            <Field name="netCost" label="Net cost (excluding VAT)" value={editing.row.netCost} step="0.001" />
+            <Field name="vatPercent" label="VAT (%)" value={editing.row.vatPercent} step="0.001" max="100" />
+            <Field name="currency" label="Currency" value={editing.row.currency} text />
+          </>
+        ) : editing.kind === 'factor' ? (
+          <>
+            <Field name="factor" label="Emission factor (kgCO₂e/kWh)" value={editing.row.factor} required />
+            <Field name="source" label="Source" value={editing.row.source} text required />
+          </>
+        ) : (
+          <>
+            <Field name="energy" label={`Energy (${editing.row.unit})`} value={editing.row.payload.energy} required />
+            <Field
+              name="carbon"
+              label="Carbon (kgCO₂e)"
+              value={editing.row.payload.carbon}
+              required={editing.row.kind === 'MONITORING'}
+            />
+            <Field
+              name="conversionFactor"
+              label="Conversion factor (to kWh)"
+              value={editing.row.payload.conversionFactor}
+              required
+            />
+            <Field name="cost" label="Net target cost" value={editing.row.payload.cost} />
+            <Field name="grossCost" label="Total target cost (including VAT)" value={editing.row.payload.grossCost} />
+            <Field name="currency" label="Currency" value={editing.row.payload.currency} text />
+            <Field name="source" label="Source" value={editing.row.payload.source} text required />
+          </>
+        )}
+        <label>
+          Reason for change
+          <input name="reason" required minLength={3} maxLength={500} />
+        </label>
+      </fieldset>
+      <div className="button-row">
+        <Button disabled={mutation.disabled}>Save changes</Button>
+        <Button type="button" variant="secondary" disabled={mutation.disabled} onClick={() => setEditing(null)}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  ) : null;
   return (
     <div className="utility-records-page">
       <header className="utility-records-heading">
@@ -240,105 +317,12 @@ export function UtilityRecords({
             {error}
           </p>
         )}
-        {editing && (
-          <form
-            key={editing.row.id}
-            className="panel stack-form utility-record-editor"
-            aria-label="Edit utility record"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void save(event.currentTarget);
-            }}
-          >
-            <h2>
-              Edit{' '}
-              {editing.kind === 'reading'
-                ? 'consumption'
-                : editing.kind === 'factor'
-                  ? 'emission factor'
-                  : 'monthly plan'}
-            </h2>
-            <p>
-              {utilityLabel(editing.row.fuel)} · Revision {editing.row.revision}. Saving creates a correction and
-              retains the original record.
-            </p>
-            {editing.kind === 'factor' && (
-              <p className="notice">
-                {editing.row.siteId
-                  ? 'Site-specific factor'
-                  : 'Shared workspace factor: changes affect every site using it.'}{' '}
-                · {date(editing.row.validFrom)}–
-                {date(new Date(+new Date(editing.row.validUntil) - 86400000).toISOString())}
-              </p>
-            )}
-            <fieldset disabled={mutation.disabled} className="utility-record-fields form-grid">
-              {editing.kind === 'reading' ? (
-                <>
-                  <Field
-                    name="quantity"
-                    label={`Consumption (${editing.row.sourceUnit})`}
-                    value={editing.row.sourceQuantity}
-                    required
-                    step="0.001"
-                  />
-                  <Field name="netCost" label="Net cost (excluding VAT)" value={editing.row.netCost} step="0.001" />
-                  <Field name="vatPercent" label="VAT (%)" value={editing.row.vatPercent} step="0.001" max="100" />
-                  <Field name="currency" label="Currency" value={editing.row.currency} text />
-                </>
-              ) : editing.kind === 'factor' ? (
-                <>
-                  <Field name="factor" label="Emission factor (kgCO₂e/kWh)" value={editing.row.factor} required />
-                  <Field name="source" label="Source" value={editing.row.source} text required />
-                </>
-              ) : (
-                <>
-                  <Field
-                    name="energy"
-                    label={`Energy (${editing.row.unit})`}
-                    value={editing.row.payload.energy}
-                    required
-                  />
-                  <Field
-                    name="carbon"
-                    label="Carbon (kgCO₂e)"
-                    value={editing.row.payload.carbon}
-                    required={editing.row.kind === 'MONITORING'}
-                  />
-                  <Field
-                    name="conversionFactor"
-                    label="Conversion factor (to kWh)"
-                    value={editing.row.payload.conversionFactor}
-                    required
-                  />
-                  <Field name="cost" label="Net target cost" value={editing.row.payload.cost} />
-                  <Field
-                    name="grossCost"
-                    label="Total target cost (including VAT)"
-                    value={editing.row.payload.grossCost}
-                  />
-                  <Field name="currency" label="Currency" value={editing.row.payload.currency} text />
-                  <Field name="source" label="Source" value={editing.row.payload.source} text required />
-                </>
-              )}
-              <label>
-                Reason for change
-                <input name="reason" required minLength={3} maxLength={1000} />
-              </label>
-            </fieldset>
-            <div className="button-row">
-              <Button disabled={mutation.disabled}>Save changes</Button>
-              <Button type="button" variant="secondary" disabled={mutation.disabled} onClick={() => setEditing(null)}>
-                Cancel
-              </Button>
-            </div>
-          </form>
-        )}
         {data && (
           <>
             <RecordTable
               title="Energy consumption and costs"
               columns={[
-                'Utility / meter',
+                'Utilities',
                 'Consumption',
                 'Fuel unit',
                 'VAT cost',
@@ -349,62 +333,85 @@ export function UtilityRecords({
               empty={!readings.length}
             >
               {readings.map((row) => (
-                <tr key={row.id}>
-                  <th scope="row">
-                    {utilityLabel(row.fuel)}
-                    <small>{data.meters.find((m) => m.id === row.meterId)?.name ?? row.meterId}</small>
-                  </th>
-                  <td>{number(row.sourceQuantity)}</td>
-                  <td>{row.sourceUnit}</td>
-                  <td>
-                    {number(row.vatCost)} {row.currency}
-                  </td>
-                  <td>
-                    {number(row.grossCost)} {row.currency}
-                  </td>
-                  <td>{row.conversionFactor}</td>
-                  <td>{editButton({ kind: 'reading', row })}</td>
-                </tr>
+                <Fragment key={row.id}>
+                  <tr className={editing?.row.id === row.id ? 'utility-record-selected' : undefined}>
+                    <th scope="row">
+                      {utilityLabel(row.fuel)}
+                      <small>{data.meters.find((m) => m.id === row.meterId)?.name ?? row.meterId}</small>
+                    </th>
+                    <td>{number(row.sourceQuantity)}</td>
+                    <td>{row.sourceUnit}</td>
+                    <td>
+                      {number(row.vatCost)} {row.currency}
+                    </td>
+                    <td>
+                      {number(row.grossCost)} {row.currency}
+                    </td>
+                    <td>{row.conversionFactor}</td>
+                    <td>{editButton({ kind: 'reading', row })}</td>
+                  </tr>
+                  {editing?.kind === 'reading' && editing.row.id === row.id && (
+                    <tr className="utility-record-editor-row">
+                      <td colSpan={7}>{editor}</td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </RecordTable>
             <RecordTable
               title="Energy emissions"
-              columns={['Utility', 'Scope / validity', 'Basis', 'Emission factor (kgCO₂e/kWh)', 'Source', 'Actions']}
+              columns={['Utilities', 'Emission factor (kgCO₂e/kWh)', 'Scope / validity', 'Reference', 'Actions']}
               empty={!factors.length}
             >
               {factors.map((row) => (
-                <tr key={row.id}>
-                  <th scope="row">{utilityLabel(row.fuel)}</th>
-                  <td>
-                    {row.siteId ? 'This site' : 'Workspace-wide'}
-                    <small>
-                      {date(row.validFrom)}–{date(new Date(+new Date(row.validUntil) - 86400000).toISOString())}
-                    </small>
-                  </td>
-                  <td>
-                    {row.basis.replaceAll('_', ' ')} · {row.geography}
-                  </td>
-                  <td>{row.factor}</td>
-                  <td>{row.source}</td>
-                  <td>{editButton({ kind: 'factor', row })}</td>
-                </tr>
+                <Fragment key={row.id}>
+                  <tr className={editing?.row.id === row.id ? 'utility-record-selected' : undefined}>
+                    <th scope="row">{utilityLabel(row.fuel)}</th>
+                    <td className="utility-record-value">{row.factor}</td>
+                    <td>
+                      {row.siteId ? 'This site' : 'Workspace-wide'}
+                      <small>
+                        {date(row.validFrom)}–{date(new Date(+new Date(row.validUntil) - 86400000).toISOString())}
+                      </small>
+                    </td>
+                    <td>
+                      {row.source}
+                      <small>
+                        {row.basis.replaceAll('_', ' ')} · {row.geography}
+                      </small>
+                    </td>
+                    <td>{editButton({ kind: 'factor', row })}</td>
+                  </tr>
+                  {editing?.kind === 'factor' && editing.row.id === row.id && (
+                    <tr className="utility-record-editor-row">
+                      <td colSpan={5}>{editor}</td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </RecordTable>
             <RecordTable
               title="Monitoring & targeting"
-              columns={['Utility', 'Kind', 'Fuel unit', 'Conversion factor', 'Energy', 'Carbon (kgCO₂e)', 'Actions']}
+              columns={['Utilities', 'Kind', 'Fuel unit', 'Conversion factor', 'Energy', 'Carbon (kgCO₂e)', 'Actions']}
               empty={!plans.length}
             >
               {plans.map((row) => (
-                <tr key={row.id}>
-                  <th scope="row">{utilityLabel(row.fuel)}</th>
-                  <td>{row.kind === 'TARGET' ? 'Target' : 'Monitoring'}</td>
-                  <td>{row.unit}</td>
-                  <td>{row.payload.conversionFactor}</td>
-                  <td>{number(row.payload.energy)}</td>
-                  <td>{number(row.payload.carbon || null)}</td>
-                  <td>{editButton({ kind: 'plan', row })}</td>
-                </tr>
+                <Fragment key={row.id}>
+                  <tr className={editing?.row.id === row.id ? 'utility-record-selected' : undefined}>
+                    <th scope="row">{utilityLabel(row.fuel)}</th>
+                    <td>{row.kind === 'TARGET' ? 'Target' : 'Monitoring'}</td>
+                    <td>{row.unit}</td>
+                    <td>{row.payload.conversionFactor}</td>
+                    <td>{number(row.payload.energy)}</td>
+                    <td>{number(row.payload.carbon || null)}</td>
+                    <td>{editButton({ kind: 'plan', row })}</td>
+                  </tr>
+                  {editing?.kind === 'plan' && editing.row.id === row.id && (
+                    <tr className="utility-record-editor-row">
+                      <td colSpan={7}>{editor}</td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </RecordTable>
             <p className="page-note utility-records-footer">

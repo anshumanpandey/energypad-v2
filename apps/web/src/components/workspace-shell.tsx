@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import {
   LayoutDashboard,
@@ -16,13 +17,12 @@ import {
   Layers3,
   Menu,
   X,
-  LogOut,
+  UserRound,
   ArrowUpRight,
-  ChevronRight,
   CloudSun,
 } from 'lucide-react';
-import { Brand } from './brand';
 import { can, roleLabels, type Role } from '@/domain/policy';
+import { WorkspaceAreas } from './workspace-areas';
 import { logout } from '@/app/login/actions';
 
 export function WorkspaceShell({
@@ -39,6 +39,7 @@ export function WorkspaceShell({
   email: string;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const section = pathname.split('/')[3] ?? 'overview';
@@ -64,23 +65,50 @@ export function WorkspaceShell({
     { key: 'audit', name: 'Activity log', icon: ScrollText, permission: 'audit:read' as const },
   ].filter((item) => can(role, item.permission));
   const activeSection = section === 'analysis' ? 'energy' : section === 'carbon-trends' ? 'carbon' : section;
-  const title =
-    section === 'analysis'
-      ? 'Advanced Analysis'
-      : section === 'carbon-trends'
-        ? 'Carbon trends'
-        : ([...nav, ...analytics, ...admin].find((item) => item.key === section)?.name ?? 'Workspace');
   return (
     <div className="workspace">
       <a className="skip-link" href="#main">
         Skip to content
       </a>
+      <header className="topbar app-reference-header">
+        <button
+          className="mobile-menu icon-button"
+          aria-label="Open navigation"
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+        >
+          <Menu size={21} />
+        </button>
+        <Link href={`/org/${organisation.id}/overview`} className="app-header-brand" aria-label="EnergiePad home">
+          <Image src="/assets/welcome/logo.png" alt="EnergiePad" width={84} height={52} priority />
+        </Link>
+        <nav className="app-header-navigation" aria-label="Website navigation">
+          {[
+            ['Home', `/org/${organisation.id}/overview`],
+            ['About', 'https://app.energiepad.com/About'],
+            ['Recognitions', 'https://app.energiepad.com/Recognitions'],
+            ['How does it work?', 'https://app.energiepad.com/Work'],
+            ['Progress', 'https://app.energiepad.com/Progress'],
+            ['Team', 'https://app.energiepad.com/Team'],
+            ['Blog', 'https://app.energiepad.com/Blog'],
+            ['Gallery', 'https://app.energiepad.com/Gallery'],
+            ['Contact us', 'https://app.energiepad.com/Contact'],
+          ].map(([label, href]) => (
+            <Link key={label} href={href} aria-current={label === 'Home' ? 'page' : undefined}>
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <form action={logout}>
+          <button className="app-header-logout" aria-label="Sign out">
+            <UserRound size={17} aria-hidden="true" />
+            Logout
+          </button>
+        </form>
+      </header>
       {open && <button className="sidebar-overlay" aria-label="Close navigation" onClick={() => setOpen(false)} />}
       <aside className={`sidebar ${open ? 'is-open' : ''}`}>
         <div className="sidebar-brand">
-          <Link href="/" aria-label="EnergiePad home">
-            <Brand />
-          </Link>
           <button className="mobile-close icon-button" aria-label="Close navigation" onClick={() => setOpen(false)}>
             <X />
           </button>
@@ -158,34 +186,16 @@ export function WorkspaceShell({
               <strong title={email}>{email}</strong>
               <small>{roleLabels[role]}</small>
             </div>
-            <form action={logout}>
-              <button className="icon-button" title="Sign out" aria-label="Sign out">
-                <LogOut size={17} />
-              </button>
-            </form>
           </div>
         </div>
       </aside>
       <div className="workspace-body">
-        <header className="topbar">
-          <div className="breadcrumb">
-            <button
-              className="mobile-menu icon-button"
-              aria-label="Open navigation"
-              aria-expanded={open}
-              onClick={() => setOpen(!open)}
-            >
-              <Menu size={21} />
-            </button>
-            <span>{organisation.name}</span>
-            <ChevronRight size={14} />
-            <strong>{title}</strong>
-          </div>
-          <span className="workspace-status">
-            <span />
-            Workspace V2
-          </span>
-        </header>
+        <WorkspaceAreas
+          organisationId={organisation.id}
+          section={section}
+          overviewArea={searchParams.get('area') === 'analytics' ? 'analytics' : 'settings'}
+          manageMembers={can(role, 'members:manage')}
+        />
         <main id="main" className="workspace-main">
           {children}
         </main>

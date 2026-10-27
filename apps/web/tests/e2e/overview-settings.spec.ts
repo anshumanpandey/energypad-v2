@@ -13,17 +13,45 @@ test('overview settings cards navigate to workspace tools and fit mobile', async
   const areas = page.getByRole('navigation', { name: 'Workspace areas' });
   await expect(areas.getByRole('link', { name: 'Analytics', exact: true })).toHaveAttribute(
     'href',
-    `${base}/consumption`,
+    `${base}/overview?area=analytics#overview-settings`,
   );
   await expect(areas.getByRole('link', { name: 'User Management', exact: true })).toHaveAttribute(
     'href',
     `${base}/members`,
   );
+  await areas.getByRole('link', { name: 'Analytics', exact: true }).click();
+  await expect(page).toHaveURL(`${base}/overview?area=analytics#overview-settings`);
+  await expect(areas.getByRole('link', { name: 'Analytics', exact: true })).toHaveAttribute('aria-current', 'true');
+  const charts = page.getByRole('navigation', { name: 'Analytics shortcuts' });
+  await expect(charts.getByRole('link')).toHaveCount(3);
+  for (const [title, section] of [
+    ['Consumption', 'consumption'],
+    ['Carbon Footprint', 'emissions'],
+    ['Waste & Savings', 'waste-savings'],
+  ]) {
+    await expect(charts.getByRole('link', { name: `View ${title}`, exact: true })).toHaveAttribute(
+      'href',
+      `${base}/${section}`,
+    );
+  }
+  await page.reload();
+  await expect(charts.getByRole('link')).toHaveCount(3);
   await areas.getByRole('link', { name: 'Settings', exact: true }).click();
   const shortcuts = page.getByRole('navigation', { name: 'Settings shortcuts' });
   await expect(shortcuts.getByRole('link')).toHaveCount(9);
   await shortcuts.getByRole('link', { name: 'View Utility & Emissions', exact: true }).click();
   await expect(page).toHaveURL(`${base}/utility-records`);
+  await expect(areas).toHaveCount(1);
+  await expect(areas.getByRole('link', { name: 'Settings', exact: true })).toHaveAttribute('aria-current', 'true');
+  await areas.getByRole('link', { name: 'Analytics', exact: true }).click();
+  await expect(page).toHaveURL(`${base}/consumption`);
+  await expect(areas.getByRole('link', { name: 'Analytics', exact: true })).toHaveAttribute('aria-current', 'true');
+  await areas.getByRole('link', { name: 'User Management', exact: true }).click();
+  await expect(page).toHaveURL(`${base}/members`);
+  await expect(areas.getByRole('link', { name: 'User Management', exact: true })).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
   await page.goto(`${base}/overview`);
   await expect(page.getByRole('link', { name: 'Download Sites template' })).toHaveAttribute(
     'href',

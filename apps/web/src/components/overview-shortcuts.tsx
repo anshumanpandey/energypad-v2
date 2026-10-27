@@ -1,46 +1,32 @@
-import Image from 'next/image';
 import Link from 'next/link';
 
-export function OverviewShortcuts({ base, manageMembers }: { base: string; manageMembers: boolean }) {
-  const cards = [
-    { title: 'Business & portfolio', section: 'portfolio' },
-    { title: 'Sites', section: 'sites' },
-    { title: 'Building energy profile', section: 'consumption' },
-    { title: 'Utility & Emissions', section: 'utility-records' },
-    { title: 'Energy Tips', section: 'energy-tips' },
-    { title: 'Consumption records', section: 'energy' },
-    { title: 'HDD & CDD', section: 'degree-days' },
-    { title: 'Reports & review', section: 'reports' },
-    { title: 'Waste & Savings', section: 'waste-savings' },
-  ];
+export function OverviewShortcuts({ base, area }: { base: string; area: 'settings' | 'analytics' }) {
+  const cards =
+    area === 'analytics'
+      ? [
+          { title: 'Consumption', section: 'consumption' },
+          { title: 'Carbon Footprint', section: 'emissions' },
+          { title: 'Waste & Savings', section: 'waste-savings' },
+        ]
+      : [
+          { title: 'Business & portfolio', section: 'portfolio' },
+          { title: 'Sites', section: 'sites' },
+          { title: 'Building energy profile', section: 'consumption' },
+          { title: 'Utility & Emissions', section: 'utility-records' },
+          { title: 'Energy Tips', section: 'energy-tips' },
+          { title: 'Consumption records', section: 'energy' },
+          { title: 'HDD & CDD', section: 'degree-days' },
+          { title: 'Reports & review', section: 'reports' },
+          { title: 'Waste & Savings', section: 'waste-savings' },
+        ];
   return (
     <>
-      <section className="overview-hub-hero" aria-labelledby="overview-title">
-        <h1 id="overview-title">Overview</h1>
-        <nav className="overview-hub-options" aria-label="Workspace areas">
-          <a className="overview-hub-option is-current" href="#overview-settings">
-            <Image src="/assets/welcome/settings.svg" alt="" width={100} height={100} />
-            <span>Settings</span>
-          </a>
-          <Link className="overview-hub-option" href={`${base}/consumption`}>
-            <Image src="/assets/welcome/dashboard.svg" alt="" width={100} height={100} />
-            <span>Analytics</span>
-          </Link>
-          {manageMembers ? (
-            <Link className="overview-hub-option" href={`${base}/members`}>
-              <Image src="/assets/welcome/key.svg" alt="" width={100} height={100} />
-              <span>User Management</span>
-            </Link>
-          ) : (
-            <div className="overview-hub-option is-unavailable">
-              <Image src="/assets/welcome/key.svg" alt="" width={100} height={100} />
-              <span>User Management</span>
-              <small>Managed by your workspace administrator</small>
-            </div>
-          )}
-        </nav>
-      </section>
-      <nav id="overview-settings" className="overview-settings-grid" aria-label="Settings shortcuts">
+      <h1 className="overview-page-title">Overview</h1>
+      <nav
+        id="overview-settings"
+        className="overview-settings-grid"
+        aria-label={area === 'analytics' ? 'Analytics shortcuts' : 'Settings shortcuts'}
+      >
         {cards.map(({ title, section }) => (
           <article className="overview-settings-card" key={section}>
             <h2>{title}</h2>
