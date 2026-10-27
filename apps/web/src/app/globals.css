@@ -5700,6 +5700,7 @@ select[aria-invalid='true'] {
   height: 80px;
 }
 .overview-reference .overview-hub-option span {
+  font-weight: 700;
   font-size: 13px;
 }
 .overview-reference .overview-landing-main {
@@ -5726,11 +5727,13 @@ select[aria-invalid='true'] {
   box-shadow: 0 4px 28px rgb(77 80 92 / 6%);
 }
 .overview-reference .overview-settings-card h2 {
+  font-weight: 700;
   padding: 24px 16px;
   font-size: 14px;
   min-height: 69px;
 }
 .overview-reference .overview-settings-card > a {
+  font-weight: 700;
   padding: 24px 16px;
   color: #e97871;
   font-size: 15px;
