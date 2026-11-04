@@ -59,6 +59,7 @@ export function WorkspaceAreas({
           ) : (
             <Link
               key={key}
+              data-area={key}
               className={`overview-hub-option${active === key ? ' is-current' : ''}`}
               href={loginOnly ? '/login' : href}
               aria-current={active === key ? 'true' : undefined}

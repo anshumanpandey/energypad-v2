@@ -100,7 +100,7 @@ test('viewers cannot open retention inventory or see its data-page link', async 
   await page.goto('/login');
   await page.getByLabel('Email address', { exact: true }).fill(fixture.viewerEmail);
   await page.getByLabel('Password', { exact: true }).fill(fixture.password);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByRole('button', { name: 'Login', exact: true }).click();
   await expect(page).toHaveURL(/\/overview$/);
   await page.goto(`/org/${fixture.organisationId}/data`);
   await expect(page.getByRole('link', { name: 'Review import retention' })).toHaveCount(0);

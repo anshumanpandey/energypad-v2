@@ -55,7 +55,7 @@ export function PasswordForm({
         </label>
       )}
       <SubmitButton>
-        {mode === 'signup' ? 'Create account' : 'Sign in'} {mode === 'signup' && <ArrowUpRight size={17} />}
+        {mode === 'signup' ? 'Create account' : 'Login'} {mode === 'signup' && <ArrowUpRight size={17} />}
       </SubmitButton>
     </form>
   );

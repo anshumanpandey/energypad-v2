@@ -12,6 +12,7 @@ test('password signup and login work without email confirmation', async ({ page 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('login-mobile.png'), fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByText('More sign-in options', { exact: true }).click();
   await page.getByRole('link', { name: 'Create an account' }).click();
   await expect(page.getByRole('heading', { name: 'Create your account.' })).toBeVisible();
   await page.getByLabel('Email address').fill(email);
@@ -38,13 +39,13 @@ test('password signup and login work without email confirmation', async ({ page 
   expect((await page.request.get('/api/v1/organisations')).status()).toBe(401);
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password', { exact: true }).fill('Wrong password 123');
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByRole('button', { name: 'Login', exact: true }).click();
   await expect(page.getByRole('main').getByRole('alert')).toContainText('Email or password is incorrect');
   await page.reload();
   await expect(page.getByRole('main').getByRole('alert')).toHaveCount(0);
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByRole('button', { name: 'Login', exact: true }).click();
   await expect(page).toHaveURL(workspace);
   await page.getByRole('button', { name: 'Sign out' }).click();
   await page.goto('/signup');

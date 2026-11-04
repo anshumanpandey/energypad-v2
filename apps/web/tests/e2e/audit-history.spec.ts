@@ -13,7 +13,7 @@ test('activity history exposes older records through scoped pages and API', asyn
   await page.goto('/login');
   await page.getByLabel('Email address', { exact: true }).fill(fixture.email);
   await page.getByLabel('Password', { exact: true }).fill(fixture.password);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByRole('button', { name: 'Login', exact: true }).click();
   await expect(page).toHaveURL(/\/overview$/);
   const inventoryResponse = await page.request.get(inventory + cutoff);
   expect(inventoryResponse.status()).toBe(200);

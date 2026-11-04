@@ -36,7 +36,10 @@ export function OverviewShortcuts({
         aria-label={area === 'analytics' ? 'Analytics shortcuts' : 'Settings shortcuts'}
       >
         {cards.map(({ title, section }) => (
-          <article className="overview-settings-card" key={section}>
+          <article
+            className={`overview-settings-card${area === 'settings' && ['energy', 'degree-days', 'reports'].includes(section) ? ' overview-settings-card-secondary' : ''}`}
+            key={section}
+          >
             <h2>{title}</h2>
             <Link href={loginOnly ? '/login' : `${base}/${section}`} aria-label={`View ${title}`}>
               View

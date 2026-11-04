@@ -5677,20 +5677,22 @@ select[aria-invalid='true'] {
 /* Overview follows the original Settings hub's banner, cards and file directory. */
 .overview-reference {
   background: #fff;
+  font-family: 'Welcome Poppins', Arial, sans-serif;
 }
 .overview-reference .workspace-area-menu {
   margin: 0;
-  padding: 48px max(24px, calc((100% - 1140px) / 2));
+  padding: 48px max(24px, calc((100% - 1086px) / 2));
   border-radius: 0;
+  background: url('/assets/welcome/turbines.png') center 60% / cover;
 }
 .overview-reference .overview-hub-options {
-  max-width: 1140px;
+  max-width: 1086px;
   margin: 0 auto;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 48px;
 }
 .overview-reference .overview-hub-option {
-  min-height: 244px;
+  min-height: 248px;
   border-radius: 24px;
   gap: 26px;
   box-shadow: 0 8px 30px rgb(77 80 92 / 6%);
@@ -5710,9 +5712,9 @@ select[aria-invalid='true'] {
 .overview-reference .workspace-main,
 .overview-reference .overview-landing-content {
   width: 100%;
-  max-width: 1188px;
+  max-width: 1134px;
   margin: 0 auto;
-  padding: 94px 24px 48px;
+  padding: 96px 24px 48px;
 }
 .overview-reference .overview-hub {
   gap: 24px;
@@ -5731,6 +5733,7 @@ select[aria-invalid='true'] {
   padding: 24px 16px;
   font-size: 14px;
   min-height: 69px;
+  color: #25282c;
 }
 .overview-reference .overview-settings-card > a {
   font-weight: 700;
@@ -5813,4 +5816,85 @@ select[aria-invalid='true'] {
   .overview-reference .overview-landing-content {
     padding: 32px 16px;
   }
+}
+
+.reference-login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+  background: #fff;
+  font-family: 'Welcome Poppins', Arial, sans-serif;
+}
+.reference-login .auth-form {
+  width: 50vw;
+  max-width: 960px;
+  position: relative;
+}
+.reference-login .auth-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.reference-login .auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #888;
+  font-size: 12px;
+}
+.reference-login .auth-form input:not([type='hidden']) {
+  width: 100%;
+}
+.reference-login .auth-form form > .button {
+  font-size: 16px;
+  padding: 6px 12px;
+}
+.reference-login .login-home-link {
+  font-size: 14px;
+  color: #1676ed;
+}
+.reference-login .login-options {
+  position: absolute;
+  top: calc(100% + 24px);
+  width: 100%;
+  padding-bottom: 24px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.reference-login .login-options summary {
+  cursor: pointer;
+}
+.reference-login .login-options a {
+  font-size: 12px;
+}
+@media (max-width: 700px) {
+  .reference-login .auth-form {
+    width: 100%;
+    max-width: 480px;
+  }
+}
+@media (max-height: 500px) {
+  .reference-login {
+    align-items: start;
+    padding-bottom: 160px;
+  }
+}
+
+.overview-reference .overview-hub-option:not(.is-current) {
+  color: #bcc3ce;
+}
+.overview-reference .overview-hub-option[data-area='users'],
+.overview-reference .overview-hub-option:is(a):hover,
+.overview-reference .overview-hub-option:is(a):focus-visible {
+  background: #4d505c;
+  color: #fff;
+}
+.overview-reference .overview-settings-card-secondary > a {
+  background: #808080;
+  color: #fff;
+}
+.overview-reference .overview-settings-card-secondary > a:hover {
+  background: #4d505c;
 }

@@ -14,7 +14,7 @@ test('manual retained report links preserve sign-in destination and current acce
   expect(new URL(page.url()).searchParams.get('callbackUrl')).toBe(reportPath);
   await page.getByLabel('Email address', { exact: true }).fill(fixture.email);
   await page.getByLabel('Password', { exact: true }).fill(fixture.password);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByRole('button', { name: 'Login', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`${reportPath}$`));
   const snapshot = page.getByRole('region', { name: 'Retained report snapshot' });
   await expect(snapshot.getByRole('heading', { name: 'Energy report', exact: true })).toBeVisible();
@@ -38,7 +38,7 @@ test('manual retained report links preserve sign-in destination and current acce
     await viewer.goto(reportPath);
     await viewer.getByLabel('Email address', { exact: true }).fill(fixture.viewerEmail);
     await viewer.getByLabel('Password', { exact: true }).fill(fixture.password);
-    await viewer.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await viewer.getByRole('button', { name: 'Login', exact: true }).click();
     await expect(viewer.getByRole('heading', { name: 'Energy report', exact: true })).toBeVisible();
     const revoke = await page.request.delete(
       `/api/v1/organisations/${fixture.organisationId}/members/${fixture.viewerMembershipId}`,
