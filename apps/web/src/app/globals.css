@@ -5898,3 +5898,133 @@ select[aria-invalid='true'] {
 .overview-reference .overview-settings-card-secondary > a:hover {
   background: #4d505c;
 }
+
+.team-members-page {
+  display: grid;
+  gap: 24px;
+  font-family: 'Welcome Poppins', Arial, sans-serif;
+}
+.team-members-page .page-heading {
+  justify-content: center;
+  text-align: center;
+  margin: 0;
+}
+.team-members-page .page-heading h1 {
+  font-size: 28px;
+  font-weight: 700;
+}
+.team-members-page .page-heading .eyebrow {
+  color: #bd514a;
+  font-weight: 700;
+}
+.team-members-page .invite-panel {
+  margin: 0;
+  text-align: center;
+}
+.team-members-page .invite-panel > .panel {
+  max-width: none;
+  text-align: left;
+}
+.team-members-page .panel {
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  padding: 28px;
+  background: #fff;
+  box-shadow: 0 4px 28px rgb(77 80 92 / 6%);
+}
+.team-members-page .section-heading {
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.team-members-page h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+.team-members-page .section-heading .muted {
+  font-size: 12px;
+}
+.team-members-page .count,
+.team-members-page .you-label {
+  background: #fae4e3;
+  color: #954039;
+  font-weight: 700;
+}
+.team-members-page .member-row {
+  padding: 24px 0;
+  gap: 18px;
+  align-items: flex-start;
+}
+.team-members-page .member-row:last-child {
+  padding-bottom: 0;
+}
+.team-members-page .member-identity strong,
+.team-members-page .invitation-row strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+.team-members-page .member-identity small,
+.team-members-page .invitation-row small {
+  font-size: 12px;
+}
+.team-members-page .avatar.light {
+  background: #dfedbc;
+  color: #4d505c;
+  font-weight: 700;
+}
+.team-members-page .role-badge {
+  background: #f3f5f7;
+  border-radius: 20px;
+  font-size: 11px;
+  padding: 7px 12px;
+}
+.team-members-page .button {
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.team-members-page .button-primary {
+  background: #e97871;
+  border-color: #e97871;
+  color: #25282c;
+}
+.team-members-page .button-primary:hover {
+  background: #df6861;
+}
+.team-members-page .member-actions > .button {
+  border-color: #e97871;
+  background: #fff;
+  color: #bd514a;
+  padding: 10px 18px;
+}
+.team-members-page .member-actions > .button:hover {
+  background: #fae4e3;
+}
+.team-members-page .member-editor {
+  border-radius: 14px;
+  background: #fafafa;
+  text-align: left;
+}
+.team-members-page .page-note {
+  margin: 0;
+  font-size: 12px;
+}
+@media (max-width: 600px) {
+  .team-members-page .panel {
+    padding: 20px 16px;
+  }
+  .team-members-page .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .team-members-page .member-actions {
+    width: 100%;
+    align-items: stretch;
+  }
+  .team-members-page .member-editor {
+    width: 100%;
+  }
+  .team-members-page .member-actions > .button {
+    align-self: flex-end;
+  }
+}

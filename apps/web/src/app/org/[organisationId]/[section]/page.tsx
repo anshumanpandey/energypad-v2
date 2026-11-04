@@ -336,7 +336,7 @@ export default async function WorkspacePage({
     const members = await accessible(() => foundation.listMembers(actor, org.id));
     const invitations = await foundation.listInvitations(actor, org.id);
     return (
-      <>
+      <div className="team-members-page">
         <Heading
           eyebrow="WORK BETTER TOGETHER"
           title="Team members"
@@ -401,7 +401,7 @@ export default async function WorkspacePage({
           <ShieldCheck size={16} /> Owners manage all access. Admins manage members below Owner. Site managers only see
           their assigned sites.
         </p>
-      </>
+      </div>
     );
   }
   if (section === 'import-retention') {
