@@ -196,6 +196,7 @@ test('experimental analysis readiness, immutable runs and mobile history', async
     await expect(viewer).toHaveURL(/\/login\?callbackUrl=/);
     const invitationPath = new URL(viewer.url()).searchParams.get('callbackUrl');
     expect(invitationPath).toMatch(/^\/invite\/[a-f0-9]{64}$/);
+    await viewer.getByText('More sign-in options', { exact: true }).click();
     await viewer.getByRole('link', { name: 'Previously used email links? Sign in with an email link.' }).click();
     await expect(viewer.getByRole('heading', { name: 'Sign in with an email link.' })).toBeVisible();
     await expect(viewer.locator('input[name="callbackUrl"]')).toHaveValue(invitationPath!);
