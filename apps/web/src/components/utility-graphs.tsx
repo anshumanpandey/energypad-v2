@@ -50,6 +50,7 @@ export function UtilityGraphs({
   const [view, setView] = useState<'graph' | 'table' | 'gauge'>('graph');
   const [sortBy, setSortBy] = useState<UtilityChartSort>('month');
   const title = kind === 'consumption' ? 'Consumption' : 'Carbon Footprint';
+  const pageTitle = kind === 'consumption' ? 'Consumption and Cost' : title;
   const unit = kind === 'consumption' ? 'kWh' : 'kg';
   const years = [...new Set(rows.map((r) => r.month.slice(0, 4)))].sort().reverse();
   const fuels = [...new Set(rows.map((r) => r.fuel))].sort();
@@ -119,21 +120,31 @@ export function UtilityGraphs({
       <Button onClick={() => router.refresh()}>Refresh data</Button>
     </div>
   );
-  const summary = (
-    <section className="panel" aria-label={`${title} summary`}>
-      <h2>
-        {title} · {formatEnergyValue(total, 'Unavailable')} {unit}
-      </h2>
-      <p>
-        {available.length} of {visible.length} site/fuel months available.
-        {kind === 'consumption' && ' Missing data remains unavailable; confirmed zero fills are included.'}
-      </p>
-    </section>
-  );
+  const summary =
+    kind === 'consumption' ? (
+      <GroupedExpandableChart title="Fuels">
+        <section className="panel utility-fuel-summary" aria-label={`${title} summary`}>
+          <h2>Fuels</h2>
+          <strong>{filters.fuel ? utilityLabel(filters.fuel) : 'All fuel sources'}</strong>
+          <p>
+            {formatEnergyValue(total, 'Unavailable')} {unit} across {available.length} available site/fuel months.
+          </p>
+        </section>
+      </GroupedExpandableChart>
+    ) : (
+      <section className="panel" aria-label={`${title} summary`}>
+        <h2>
+          {title} · {formatEnergyValue(total, 'Unavailable')} {unit}
+        </h2>
+        <p>
+          {available.length} of {visible.length} site/fuel months available.
+        </p>
+      </section>
+    );
   return (
     <div className={`utility-graphs-page${kind === 'emissions' ? ' carbon-footprint-page' : ' consumption-page'}`}>
       <div className="page-heading waste-page-heading">
-        <h1>{title}</h1>
+        <h1>{pageTitle}</h1>
       </div>
       <div className="waste-dashboard-layout">
         <aside className="panel stack-form waste-dashboard-filters" aria-label={`${title} filters`}>
@@ -198,9 +209,7 @@ export function UtilityGraphs({
                 <p>No data for this selection. Upload consumption data or choose different filters.</p>
               </section>
             ) : view !== 'table' ? (
-              <GroupedExpandableChart
-                title={kind === 'consumption' ? 'Monthly consumption' : 'Monthly carbon footprint'}
-              >
+              <GroupedExpandableChart title={kind === 'consumption' ? 'Consumption' : 'Monthly carbon footprint'}>
                 {view === 'gauge' ? (
                   <MonthlyCarbonGauge
                     kind={kind}
@@ -359,13 +368,13 @@ function CostComparison({
   return (
     <>
       {view === 'graph' ? (
-        <GroupedExpandableChart title="Actual vs target consumption">
+        <GroupedExpandableChart title="Fuel target / KPI">
           <UtilityBars
             points={comparison.map((row) => ({ month: row.month, actual: row.consumption, target: row.targetEnergy }))}
             showHelp={false}
             compactSummary
             actualColor="#94c11f"
-            title="Actual vs target consumption"
+            title="Fuel target / KPI"
             unit="kWh"
             diverging
             sortBy={sortBy}
@@ -424,14 +433,14 @@ function CostComparison({
           (r) => r.actual,
         );
         return view === 'graph' ? (
-          <GroupedExpandableChart key={currency} title={`Cost · ${currency}`}>
+          <GroupedExpandableChart key={currency} title={`Cost (${currency === 'GBP' ? '£' : currency})`}>
             <UtilityBars
               controls={vatControl}
               showHelp={false}
               compactSummary
               actualColor="#4989c6"
               points={costPoints.map((r) => ({ ...r, target: null }))}
-              title={`Cost · ${currency}`}
+              title={`Cost (${currency === 'GBP' ? '£' : currency})`}
               unit={currency}
               selectedMonth={selectedMonth}
               actualOnly
@@ -514,7 +523,7 @@ function UtilityLines({
   return (
     <section className="panel utility-lines" aria-label={`${title} graph`}>
       <h2>
-        Monthly {title.toLowerCase()} ({unit})
+        {title} ({unit})
       </h2>
       <MonthlyChartSummary compact points={monthlyActuals(history, kind)} period={period} unit={unit} />
       <div className="utility-chart-scroll">

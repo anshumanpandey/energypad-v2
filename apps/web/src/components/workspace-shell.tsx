@@ -65,6 +65,7 @@ export function WorkspaceShell({
     { key: 'audit', name: 'Activity log', icon: ScrollText, permission: 'audit:read' as const },
   ].filter((item) => can(role, item.permission));
   const isAnalytics = analytics.some((item) => item.key === section);
+  const isConsumptionReference = section === 'consumption';
   const analyticsNavigation = [
     ...analytics,
     { key: 'energy-tips', name: 'Energy Saving Tips' },
@@ -74,7 +75,7 @@ export function WorkspaceShell({
   const activeSection = section === 'analysis' ? 'energy' : section === 'carbon-trends' ? 'carbon' : section;
   return (
     <div
-      className={`workspace${isAnalytics ? '' : ' workspace-without-sidebar'}${['overview', 'members'].includes(section) ? ' overview-reference' : ''}`}
+      className={`workspace${isAnalytics ? '' : ' workspace-without-sidebar'}${['overview', 'members'].includes(section) ? ' overview-reference' : ''}${isConsumptionReference ? ' analytics-consumption-reference' : ''}`}
     >
       <a className="skip-link" href="#main">
         Skip to content
@@ -93,6 +94,12 @@ export function WorkspaceShell({
         <Link href={`/org/${organisation.id}/overview`} className="app-header-brand" aria-label="EnergiePad home">
           <Image src="/assets/welcome/logo.png" alt="EnergiePad" width={84} height={52} priority />
         </Link>
+        {isConsumptionReference && (
+          <div className="analytics-reference-title" aria-label="Analytics">
+            <LayoutDashboard size={42} strokeWidth={1.75} aria-hidden="true" />
+            <span>Analytics</span>
+          </div>
+        )}
         <nav className="app-header-navigation" aria-label="Website navigation">
           {[
             ['Home', `/org/${organisation.id}/overview`],
