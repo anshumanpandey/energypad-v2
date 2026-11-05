@@ -441,7 +441,8 @@ function CostComparison({
               compactSummary
               actualColor="#4989c6"
               points={costPoints.map((r) => ({ ...r, target: null }))}
-              title={`Cost (${currency === 'GBP' ? '£' : currency})`}
+              title={`Cost · ${currency}`}
+              heading={`Cost (${currency === 'GBP' ? '£' : currency})`}
               unit={currency}
               selectedMonth={selectedMonth}
               actualOnly
