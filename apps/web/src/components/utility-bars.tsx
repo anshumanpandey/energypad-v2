@@ -12,6 +12,7 @@ export function UtilityBars({
   controls,
   points: sourcePoints,
   title,
+  heading,
   unit,
   diverging = false,
   selectedMonth,
@@ -34,6 +35,7 @@ export function UtilityBars({
   controls?: ReactNode;
   points: UtilityBarPoint[];
   title: string;
+  heading?: string;
   unit: string;
   diverging?: boolean;
   selectedMonth: string;
@@ -63,7 +65,7 @@ export function UtilityBars({
   return (
     <section className="panel utility-lines" aria-label={`${title} graph`}>
       <h2>
-        {title} ({unit})
+        {heading ?? title} ({unit})
       </h2>
       {controls}
       <ChartMonthDays

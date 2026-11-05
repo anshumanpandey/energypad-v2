@@ -374,7 +374,8 @@ function CostComparison({
             showHelp={false}
             compactSummary
             actualColor="#94c11f"
-            title="Fuel target / KPI"
+            title="Actual vs target consumption"
+            heading="Fuel target / KPI"
             unit="kWh"
             diverging
             sortBy={sortBy}
