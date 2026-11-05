@@ -50,7 +50,6 @@ export function UtilityGraphs({
   const [view, setView] = useState<'graph' | 'table' | 'gauge'>('graph');
   const [sortBy, setSortBy] = useState<UtilityChartSort>('month');
   const title = kind === 'consumption' ? 'Consumption' : 'Carbon Footprint';
-  const pageTitle = kind === 'consumption' ? 'Consumption and Cost' : title;
   const unit = kind === 'consumption' ? 'kWh' : 'kg';
   const years = [...new Set(rows.map((r) => r.month.slice(0, 4)))].sort().reverse();
   const fuels = [...new Set(rows.map((r) => r.fuel))].sort();
@@ -144,7 +143,7 @@ export function UtilityGraphs({
   return (
     <div className={`utility-graphs-page${kind === 'emissions' ? ' carbon-footprint-page' : ' consumption-page'}`}>
       <div className="page-heading waste-page-heading">
-        <h1>{pageTitle}</h1>
+        <h1>{title}</h1>
       </div>
       <div className="waste-dashboard-layout">
         <aside className="panel stack-form waste-dashboard-filters" aria-label={`${title} filters`}>
