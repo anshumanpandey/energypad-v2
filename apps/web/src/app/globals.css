@@ -5697,6 +5697,7 @@ select[aria-invalid='true'] {
   .analytics-reference .app-reference-header.topbar {
     padding: 0;
     gap: 0;
+    justify-content: flex-start;
     background: #4d505c;
     border: 0;
     box-shadow: none;
@@ -5762,6 +5763,9 @@ select[aria-invalid='true'] {
     gap: 32px;
   }
   .analytics-consumption-reference .consumption-page .waste-dashboard-filters {
+    position: relative;
+    z-index: 41;
+    margin-top: calc(-1 * var(--app-header-height));
     padding: 24px;
     background: #fff;
   }
