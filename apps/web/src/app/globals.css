@@ -5729,9 +5729,6 @@ select[aria-invalid='true'] {
     padding-top: 24px;
     padding-bottom: 22px;
   }
-  .analytics-consumption-reference .consumption-page > .page-heading h1::after {
-    content: ' and Cost';
-  }
   .analytics-consumption-reference .consumption-page .waste-dashboard-results {
     gap: 32px;
     padding-bottom: 40px;

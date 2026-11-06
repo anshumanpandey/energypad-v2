@@ -143,7 +143,10 @@ export function UtilityGraphs({
   return (
     <div className={`utility-graphs-page${kind === 'emissions' ? ' carbon-footprint-page' : ' consumption-page'}`}>
       <div className="page-heading waste-page-heading">
-        <h1>{title}</h1>
+        <h1>
+          {title}
+          {kind === 'consumption' && <span aria-hidden="true"> and Cost</span>}
+        </h1>
       </div>
       <div className="waste-dashboard-layout">
         <aside className="panel stack-form waste-dashboard-filters" aria-label={`${title} filters`}>
