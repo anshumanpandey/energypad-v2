@@ -154,7 +154,8 @@ test('consumption and emissions menus filter the same data in graph and table vi
   await expect(consumptionGraph.locator('path[stroke]').first()).toHaveAttribute('d', /C /);
   const consumptionFilters = page.getByRole('complementary', { name: 'Consumption filters' });
   await expect(consumptionFilters).toBeVisible();
-  expect((await consumptionFilters.boundingBox())!.y).toBe(0);
+  const consumptionFilterBox = await consumptionFilters.boundingBox();
+  expect(Math.round(consumptionFilterBox!.y + (await page.evaluate(() => window.scrollY)))).toBe(0);
   await page.screenshot({ path: testInfo.outputPath('consumption-desktop.png'), fullPage: true });
   await page.getByRole('radio', { name: 'All Sites', exact: true }).check();
   await expect(page.getByRole('radio', { name: 'All Sites', exact: true })).toBeChecked();
