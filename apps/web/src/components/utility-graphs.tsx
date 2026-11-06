@@ -448,6 +448,7 @@ function CostComparison({
               unit={currency}
               selectedMonth={selectedMonth}
               actualOnly
+              roundedBars
               sortBy={sortBy}
               period={period}
               summaryPoints={costHistory}

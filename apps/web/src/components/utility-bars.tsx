@@ -31,6 +31,7 @@ export function UtilityBars({
   showSummary = true,
   compactSummary = false,
   showActualChips = true,
+  roundedBars = false,
 }: {
   controls?: ReactNode;
   points: UtilityBarPoint[];
@@ -54,6 +55,7 @@ export function UtilityBars({
   showSummary?: boolean;
   compactSummary?: boolean;
   showActualChips?: boolean;
+  roundedBars?: boolean;
 }) {
   const points = sortChartValues(sourcePoints, sortBy, (r) => r.actual);
   const maximum = Math.max(1, ...points.flatMap((p) => [Number(p.actual ?? 0), Number(p.target ?? 0)]));
@@ -232,6 +234,7 @@ export function UtilityBars({
                         y={barY}
                         width={width}
                         height={barHeight}
+                        rx={roundedBars && !diverging ? Math.min(12, width / 2, barHeight / 2) : undefined}
                         fill={color}
                         stroke={selected ? '#142d29' : undefined}
                         strokeWidth="1.5"
