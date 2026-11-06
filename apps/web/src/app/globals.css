@@ -5744,10 +5744,8 @@ select[aria-invalid='true'] {
   }
   .analytics-reference :is(.waste-savings, .carbon-footprint-page, .consumption-page) .waste-dashboard-filters {
     position: relative;
-    z-index: 41;
     align-self: stretch;
     min-height: 100dvh;
-    margin-top: calc(-1 * var(--app-header-height));
     padding: 30px 24px 36px;
     border-left-color: #d8dbe0;
     background: #fff;
