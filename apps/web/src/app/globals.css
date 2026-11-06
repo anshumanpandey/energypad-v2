@@ -5688,27 +5688,27 @@ select[aria-invalid='true'] {
   margin-left: 0;
 }
 
-/* Consumption follows the compact analytics dashboard reference. */
+/* Analytics follows the compact dashboard reference. */
 @media (min-width: 1101px) {
-  .analytics-consumption-reference {
+  .analytics-reference {
     --app-header-height: 100px;
     background: #f4f4f4;
   }
-  .analytics-consumption-reference .app-reference-header.topbar {
+  .analytics-reference .app-reference-header.topbar {
     padding: 0;
     gap: 0;
     background: #4d505c;
     border: 0;
     box-shadow: none;
   }
-  .analytics-consumption-reference .app-reference-header::before {
+  .analytics-reference .app-reference-header::before {
     content: '';
     position: absolute;
     inset: 0 auto 0 0;
     width: 310px;
     background: #fff;
   }
-  .analytics-consumption-reference .app-header-brand {
+  .analytics-reference .app-header-brand {
     position: relative;
     z-index: 1;
     width: 310px;
@@ -5716,8 +5716,8 @@ select[aria-invalid='true'] {
     justify-content: center;
     align-items: center;
   }
-  .analytics-consumption-reference .app-header-navigation,
-  .analytics-consumption-reference .app-reference-header form {
+  .analytics-reference .app-header-navigation,
+  .analytics-reference .app-reference-header form {
     display: none;
   }
   .analytics-reference-title {
@@ -5736,8 +5736,21 @@ select[aria-invalid='true'] {
   .analytics-reference-title svg {
     color: #e97871;
   }
-  .analytics-consumption-reference .workspace-main:has(> .consumption-page) {
+  .analytics-reference .workspace-main:has(> :is(.waste-savings, .carbon-footprint-page, .consumption-page)) {
     background: #f4f4f4;
+  }
+  .analytics-reference :is(.waste-savings, .carbon-footprint-page, .consumption-page):has(> .waste-dashboard-layout) {
+    grid-template-columns: minmax(0, 1fr) 310px;
+  }
+  .analytics-reference :is(.waste-savings, .carbon-footprint-page, .consumption-page) .waste-dashboard-filters {
+    position: relative;
+    z-index: 41;
+    align-self: stretch;
+    min-height: 100dvh;
+    margin-top: calc(-1 * var(--app-header-height));
+    padding: 30px 24px 36px;
+    border-left-color: #d8dbe0;
+    background: #fff;
   }
   .analytics-consumption-reference .consumption-page > .page-heading {
     padding-top: 24px;
