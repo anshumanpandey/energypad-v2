@@ -40,7 +40,11 @@ test('overview settings cards navigate to workspace tools and fit mobile', async
   await expect(charts.getByRole('link')).toHaveCount(3);
   await areas.getByRole('link', { name: 'Settings', exact: true }).click();
   const shortcuts = page.getByRole('navigation', { name: 'Settings shortcuts' });
-  await expect(shortcuts.getByRole('link')).toHaveCount(9);
+  await expect(shortcuts.getByRole('link')).toHaveCount(10);
+  await expect(shortcuts.getByRole('link', { name: 'View Performance', exact: true })).toHaveAttribute(
+    'href',
+    `${base}/performance`,
+  );
   await shortcuts.getByRole('link', { name: 'View Utility & Emissions', exact: true }).click();
   await expect(page).toHaveURL(`${base}/utility-records`);
   await expect(areas).toHaveCount(1);
@@ -59,6 +63,11 @@ test('overview settings cards navigate to workspace tools and fit mobile', async
     'aria-current',
     'true',
   );
+  await page.goto(`${base}/overview`);
+  await shortcuts.getByRole('link', { name: 'View Performance', exact: true }).click();
+  await expect(page).toHaveURL(`${base}/performance`);
+  await expect(page.getByRole('heading', { name: 'Performance', exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Monthly performance model', exact: true })).toBeVisible();
   await page.goto(`${base}/overview`);
   await expect(page.getByRole('link', { name: 'Download Sites template' })).toHaveAttribute(
     'href',

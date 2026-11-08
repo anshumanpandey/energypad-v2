@@ -5,7 +5,7 @@ test('public overview landing sends every link to login and fits mobile', async 
   await expect(page).toHaveURL('/');
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Workspace areas' }).getByRole('link')).toHaveCount(3);
-  await expect(page.getByRole('navigation', { name: 'Settings shortcuts' }).getByRole('link')).toHaveCount(9);
+  await expect(page.getByRole('navigation', { name: 'Settings shortcuts' }).getByRole('link')).toHaveCount(10);
   for (const link of await page.getByRole('link').all()) {
     await expect(link).toHaveAttribute('href', '/login');
     expect(await link.getAttribute('download')).toBeNull();

@@ -16,6 +16,7 @@ import { SitePerformance } from '@/components/site-performance';
 import { WasteSavings } from '@/components/waste-savings';
 import { DegreeDaysWorkspace } from '@/components/degree-days-workspace';
 import { Overview } from '@/components/overview';
+import { Performance } from '@/components/performance';
 import Link from 'next/link';
 import { PortfolioCarbon } from '@/components/portfolio-carbon';
 import { CarbonWorkspace } from '@/components/carbon-workspace';
@@ -332,6 +333,7 @@ export default async function WorkspacePage({
     );
   if (section === 'overview')
     return <Overview actor={actor} organisationId={org.id} sites={sites} query={await searchParams} />;
+  if (section === 'performance') return <Performance organisationId={org.id} />;
   if (section === 'members') {
     const members = await accessible(() => foundation.listMembers(actor, org.id));
     const invitations = await foundation.listInvitations(actor, org.id);

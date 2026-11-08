@@ -6022,6 +6022,79 @@ select[aria-invalid='true'] {
   background: #4d505c;
 }
 
+.performance-page {
+  display: grid;
+  gap: 28px;
+}
+.performance-page .page-heading {
+  justify-content: center;
+  margin: 0;
+  text-align: center;
+}
+.performance-page .page-heading h1 {
+  font-size: 28px;
+}
+.performance-introduction,
+.performance-next-steps {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 4px 28px rgb(77 80 92 / 6%);
+}
+.performance-introduction > :is(h2, p),
+.performance-next-steps > :is(h2, p) {
+  margin: 0;
+}
+.performance-introduction h2,
+.performance-next-steps h2 {
+  color: var(--charcoal);
+  font-size: 20px;
+}
+.performance-table table {
+  min-width: 1080px;
+}
+.performance-table caption {
+  padding: 0 0 14px;
+  color: var(--charcoal);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+}
+.performance-table th,
+.performance-table td {
+  vertical-align: top;
+  line-height: 1.5;
+}
+.performance-table thead th {
+  background: var(--charcoal);
+  color: #fff;
+}
+.performance-table tbody th {
+  min-width: 155px;
+  color: var(--charcoal);
+  font-weight: 700;
+}
+.performance-table tbody tr:nth-child(even) {
+  background: #f7f8f4;
+}
+.performance-next-steps .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+@media (max-width: 700px) {
+  .performance-page .page-heading h1 {
+    font-size: 24px;
+  }
+  .performance-introduction,
+  .performance-next-steps {
+    padding: 20px;
+  }
+}
+
 .team-members-page {
   display: grid;
   gap: 24px;

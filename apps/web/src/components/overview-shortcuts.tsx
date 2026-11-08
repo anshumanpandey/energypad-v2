@@ -23,6 +23,7 @@ export function OverviewShortcuts({
           { title: 'Utility & Emissions', section: 'utility-records' },
           { title: 'Energy Tips', section: 'energy-tips' },
           { title: 'Consumption records', section: 'energy' },
+          { title: 'Performance', section: 'performance' },
           { title: 'HDD & CDD', section: 'degree-days' },
           { title: 'Reports & review', section: 'reports' },
           { title: 'Waste & Savings', section: 'waste-savings' },
