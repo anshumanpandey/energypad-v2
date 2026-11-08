@@ -333,7 +333,8 @@ export default async function WorkspacePage({
     );
   if (section === 'overview')
     return <Overview actor={actor} organisationId={org.id} sites={sites} query={await searchParams} />;
-  if (section === 'performance') return <Performance organisationId={org.id} />;
+  if (section === 'performance')
+    return <Performance actor={actor} organisationId={org.id} sites={sites} query={await searchParams} />;
   if (section === 'members') {
     const members = await accessible(() => foundation.listMembers(actor, org.id));
     const invitations = await foundation.listInvitations(actor, org.id);

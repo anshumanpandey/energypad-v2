@@ -6035,6 +6035,8 @@ select[aria-invalid='true'] {
   font-size: 28px;
 }
 .performance-introduction,
+.performance-selection,
+.performance-results,
 .performance-next-steps {
   display: grid;
   gap: 16px;
@@ -6045,10 +6047,14 @@ select[aria-invalid='true'] {
   box-shadow: 0 4px 28px rgb(77 80 92 / 6%);
 }
 .performance-introduction > :is(h2, p),
+.performance-selection > :is(h2, p),
+.performance-results > :is(h2, p),
 .performance-next-steps > :is(h2, p) {
   margin: 0;
 }
 .performance-introduction h2,
+.performance-selection h2,
+.performance-results h2,
 .performance-next-steps h2 {
   color: var(--charcoal);
   font-size: 20px;
@@ -6080,6 +6086,60 @@ select[aria-invalid='true'] {
 .performance-table tbody tr:nth-child(even) {
   background: #f7f8f4;
 }
+.performance-selection {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+}
+.performance-selection > h2,
+.performance-selection > p {
+  grid-column: 1 / -1;
+}
+.performance-selection form {
+  margin: 0;
+}
+.performance-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  background: #e5e5e5;
+  box-shadow: 0 4px 28px rgb(77 80 92 / 6%);
+}
+.performance-summary > div {
+  display: grid;
+  gap: 8px;
+  min-height: 112px;
+  padding: 20px;
+  background: #fff;
+}
+.performance-summary span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.performance-summary strong {
+  color: var(--charcoal);
+  font-size: 19px;
+}
+.performance-results .performance-table {
+  margin-top: 4px;
+}
+.performance-results .performance-table table {
+  min-width: 1560px;
+}
+.performance-results .performance-table td small {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.performance-saving {
+  color: #5d9316;
+}
+.performance-waste {
+  color: #bd514a;
+}
 .performance-next-steps .button-row {
   display: flex;
   flex-wrap: wrap;
@@ -6090,8 +6150,16 @@ select[aria-invalid='true'] {
     font-size: 24px;
   }
   .performance-introduction,
+  .performance-selection,
+  .performance-results,
   .performance-next-steps {
     padding: 20px;
+  }
+  .performance-selection {
+    grid-template-columns: 1fr;
+  }
+  .performance-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
